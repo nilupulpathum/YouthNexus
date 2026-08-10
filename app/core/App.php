@@ -6,7 +6,7 @@ class App{
     private $method = 'index';
 
     private function splitURL(){
-        $url = $_GET['url'] ?? '404';
+        $url = $_GET['url'] ?? 'Home';
         $url = explode('/', $url);
         return $url;
     }
