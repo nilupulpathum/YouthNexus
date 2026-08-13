@@ -82,4 +82,75 @@ class ClubApplicationModel extends Model {
             [$reviewerId, $remarks, $applicationId]
         );
     }
+
+    // -----------------------------------------------------------------
+    // RECONCILIATION with feat-club_registration (the submission-wizard
+    // branch), which independently created a model with this same name.
+    // These methods cover the submission side and standard naming they
+    // used, kept here so either branch's controller works against this
+    // file once merged. Flagged to the team — needs a real merge review.
+    // -----------------------------------------------------------------
+
+    /** Create a new club application (submission wizard side). */
+    public function createApplication($data) {
+        $this->query(
+            "INSERT INTO ClubApplication (
+                proposer_user_id, club_name, description, club_logo_path, category,
+                date_establishment, no_of_members,
+                proposed_division_id, location_type, street_address, city,
+                state_province, postal_code, country,
+                bank_name, bank_branch, account_holder, account_number, bank_confirmed,
+                constitution_path, venue_proof_path,
+                nic_president_path, nic_secretary_path, nic_treasurer_path,
+                info_accuracy, terms_accepted, digital_signature,
+                status, submitted_at
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW()
+            )",
+            [
+                $data['proposer_user_id'], $data['club_name'], $data['description'], $data['club_logo_path'], $data['category'],
+                $data['date_establishment'] ?: null, $data['no_of_members'],
+                $data['proposed_division_id'] ?: null, $data['location_type'], $data['street_address'], $data['city'],
+                $data['state_province'], $data['postal_code'], $data['country'],
+                $data['bank_name'], $data['bank_branch'], $data['account_holder'], $data['account_number'], $data['bank_confirmed'] ? 1 : 0,
+                $data['constitution_path'], $data['venue_proof_path'],
+                $data['nic_president_path'], $data['nic_secretary_path'], $data['nic_treasurer_path'],
+                $data['info_accuracy'] ? 1 : 0, $data['terms_accepted'] ? 1 : 0, $data['digital_signature'],
+            ]
+        );
+        $row = $this->single("SELECT LAST_INSERT_ID() AS id");
+        return $row ? (int)$row->id : false;
+    }
+
+    /** All applications a given proposer submitted (submission wizard side). */
+    public function getByProposer($userId) {
+        return $this->resultSet(
+            "SELECT * FROM ClubApplication WHERE proposer_user_id = ? ORDER BY submitted_at DESC",
+            [$userId]
+        );
+    }
+
+    /** Alias of findPendingByDivision() — matches feat-club_registration's naming. */
+    public function getPending($divisionId = null) {
+        if ($divisionId) {
+            return $this->findPendingByDivision($divisionId);
+        }
+        return $this->resultSet(
+            "SELECT a.*, u.first_name, u.last_name, u.email
+             FROM ClubApplication a JOIN User u ON a.proposer_user_id = u.user_id
+             WHERE a.status = 'Pending' ORDER BY a.submitted_at ASC"
+        );
+    }
+
+    /** Alias of markApproved() — matches feat-club_registration's naming. */
+    public function approve($applicationId, $reviewerUserId) {
+        $this->markApproved($applicationId, $reviewerUserId);
+        return true;
+    }
+
+    /** Alias of markRejected() — matches feat-club_registration's naming. */
+    public function reject($applicationId, $reviewerUserId, $remarks = '') {
+        $this->markRejected($applicationId, $reviewerUserId, $remarks);
+        return true;
+    }
 }
