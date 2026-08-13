@@ -21,6 +21,10 @@
             </div>
         </div>
 
+        <!-- TODO(icons): nav icons below are PLACEHOLDERS — no icon set has
+             been decided for this project yet. Swap for the real icon set
+             once the team agrees on one; the class names/structure stay
+             the same either way. -->
         <nav class="db-nav">
             <a href="<?= ROOT ?>/dashboard" class="db-nav-link">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -44,6 +48,7 @@
                 Logout
             </a>
         </nav>
+        <!-- /TODO(icons) -->
 
         <div class="db-sidebar-footer">
             <div class="db-avatar"><?= htmlspecialchars($_SESSION['user_initials'] ?? 'RP') ?></div>
@@ -102,10 +107,37 @@
                     </span>
                     <input type="text" id="crSearchInput" placeholder="Search applications...">
                 </div>
-                <button type="button" class="cr-filter-btn" id="crFilterBtn">
+                <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
                     Filters
                 </button>
+            </div>
+
+            <!-- Filter panel: hidden until "Filters" is clicked (matches the
+                 inline expandable pattern used elsewhere in the app, e.g.
+                 Manage Reports / Monitor Club Health filter bars) -->
+            <div class="cr-filter-panel" id="crFilterPanel">
+                <div class="cr-filter-field">
+                    <label for="crFilterStatus">Status</label>
+                    <select id="crFilterStatus">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="cr-filter-field">
+                    <label for="crFilterDocs">Document Completeness</label>
+                    <select id="crFilterDocs">
+                        <option value="">All</option>
+                        <option value="complete">Complete</option>
+                        <option value="incomplete">Incomplete</option>
+                    </select>
+                </div>
+                <div class="cr-filter-actions">
+                    <button type="button" class="cr-btn" id="crClearFilterBtn">Clear Filter</button>
+                    <button type="button" class="cr-btn cr-btn-primary" id="crAddFilterBtn">Add Filter</button>
+                </div>
             </div>
 
             <h3 class="cr-section-heading">Applications</h3>
@@ -124,7 +156,8 @@
                     <div class="cr-card"
                          data-name="<?= htmlspecialchars(strtolower($app->club_name)) ?>"
                          data-proposer="<?= htmlspecialchars(strtolower($app->proposer_name)) ?>"
-                         data-status="Pending">
+                         data-status="Pending"
+                         data-docstatus="<?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
                         <div class="cr-card-top">
                             <div class="cr-card-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
