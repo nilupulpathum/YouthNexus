@@ -81,6 +81,40 @@
     cursor: pointer;
 }
 
+/* ---------- Filter panel (hidden until "Filters" is clicked) ---------- */
+.cr-filter-panel {
+    display: none;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius-lg);
+    padding: 16px 18px;
+    margin-top: 10px;
+}
+.cr-filter-panel.open { display: flex; }
+
+.cr-filter-field { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+.cr-filter-field label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--db-text-grey);
+}
+.cr-filter-field select {
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius);
+    padding: 9px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--db-text-dark);
+}
+
+.cr-filter-actions { display: flex; gap: 8px; margin-left: auto; }
+
 .cr-section-heading {
     font-size: 13px;
     font-weight: 700;
