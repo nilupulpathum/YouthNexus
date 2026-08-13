@@ -92,4 +92,45 @@ class ExecutiveNomineeModel extends Model {
             'password' => $tempPassword,
         ];
     }
+
+    // -----------------------------------------------------------------
+    // RECONCILIATION with feat-club_registration — submission-side methods
+    // and their naming, kept alongside the approval-side methods above.
+    // -----------------------------------------------------------------
+
+    /** Create a nominee record (submission wizard side). */
+    public function createNominee($data) {
+        $this->query(
+            "INSERT INTO ExecutiveNominee (application_id, role_type, name, email, NIC, phone_number, date_of_birth, photo_path)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $data['application_id'], $data['role_type'], $data['name'], $data['email'],
+                $data['NIC'], $data['phone_number'], $data['date_of_birth'] ?: null, $data['photo_path'],
+            ]
+        );
+        return true;
+    }
+
+    /** Alias of findByApplication() — matches feat-club_registration's naming. */
+    public function getByApplication($applicationId) {
+        return $this->findByApplication($applicationId);
+    }
+
+    public function getByRole($applicationId, $roleType) {
+        return $this->single(
+            "SELECT * FROM ExecutiveNominee WHERE application_id = ? AND role_type = ? LIMIT 1",
+            [$applicationId, $roleType]
+        );
+    }
+
+    /** Alias of setIndexNumber() — matches feat-club_registration's naming. */
+    public function updateIndexNumber($nomineeId, $indexNumber) {
+        $this->setIndexNumber($nomineeId, $indexNumber);
+        return true;
+    }
+
+    public function deleteByApplication($applicationId) {
+        $this->query("DELETE FROM ExecutiveNominee WHERE application_id = ?", [$applicationId]);
+        return true;
+    }
 }
