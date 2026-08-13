@@ -34,6 +34,53 @@
     }
 
     // ---------------------------------------------------------------
+    // Filter panel — toggled by the "Filters" button, matches the
+    // Add Filter / Clear Filter pattern used elsewhere in the app.
+    // NOTE: Status filtering currently only distinguishes within what's
+    // rendered (Pending applications only, per the controller's
+    // findPendingByDivision()). Filtering to Approved/Rejected won't show
+    // results yet until the controller is extended to fetch those too —
+    // flagging this rather than pretending it's fully wired.
+    // ---------------------------------------------------------------
+    var filterBtn      = document.getElementById('crFilterBtn');
+    var filterPanel      = document.getElementById('crFilterPanel');
+    var filterStatus        = document.getElementById('crFilterStatus');
+    var filterDocs             = document.getElementById('crFilterDocs');
+    var addFilterBtn              = document.getElementById('crAddFilterBtn');
+    var clearFilterBtn               = document.getElementById('crClearFilterBtn');
+
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', function () {
+            var isOpen = filterPanel.classList.toggle('open');
+            filterBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+
+    function applyFilters() {
+        if (!grid) return;
+        var status = filterStatus.value;
+        var docs   = filterDocs.value;
+        var cards  = grid.querySelectorAll('.cr-card');
+
+        cards.forEach(function (card) {
+            var statusMatch = !status || card.dataset.status === status;
+            var docsMatch    = !docs || card.dataset.docstatus === docs;
+            card.style.display = (statusMatch && docsMatch) ? '' : 'none';
+        });
+    }
+
+    if (addFilterBtn) {
+        addFilterBtn.addEventListener('click', applyFilters);
+    }
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function () {
+            filterStatus.value = '';
+            filterDocs.value = '';
+            applyFilters();
+        });
+    }
+
+    // ---------------------------------------------------------------
     // Stat cards as filters (improvement #2)
     // ---------------------------------------------------------------
     function setActiveStat(button) {
