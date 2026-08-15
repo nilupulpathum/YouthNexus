@@ -17,6 +17,23 @@ class ClubApplicationModel extends Model {
         );
     }
 
+    /**
+     * Applications already approved in the coordinator's division,
+     * most recently reviewed first — powers the Approved card grid.
+     */
+    public function findApprovedByDivision($divisionId) {
+        return $this->resultSet(
+            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.NIC AS proposer_nic,
+                    a.reviewed_at, CONCAT(reviewer.first_name, ' ', reviewer.last_name) AS reviewed_by_name
+             FROM ClubApplication a
+             JOIN User u ON u.user_id = a.proposer_user_id
+             LEFT JOIN User reviewer ON reviewer.user_id = a.reviewed_by
+             WHERE a.proposed_division_id = ? AND a.status = 'Approved'
+             ORDER BY a.reviewed_at DESC, a.submitted_at DESC",
+            [$divisionId]
+        );
+    }
+
     /** Pending / Approved / Rejected counts for the stats bar. */
     public function countsByDivision($divisionId) {
         $row = $this->single(
@@ -38,9 +55,11 @@ class ClubApplicationModel extends Model {
     public function findById($applicationId) {
         return $this->single(
             "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.phone_number AS proposer_phone,
-                    d.division_name, z.zonal_name AS zone_name
+                    d.division_name, z.zonal_name AS zone_name,
+                    CONCAT(reviewer.first_name, ' ', reviewer.last_name) AS reviewed_by_name
              FROM ClubApplication a
              JOIN User u ON u.user_id = a.proposer_user_id
+             LEFT JOIN User reviewer ON reviewer.user_id = a.reviewed_by
              LEFT JOIN Division d ON d.division_id = a.proposed_division_id
              LEFT JOIN Zone z ON z.zonal_id = d.zonal_id
              WHERE a.application_id = ? LIMIT 1",
