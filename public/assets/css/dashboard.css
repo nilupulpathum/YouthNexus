@@ -120,12 +120,23 @@ body.dashboard {
 
 .db-nav-badge {
     margin-left: auto;
-    background: var(--db-accent-orange);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 7px;
-    border-radius: 10px;
+    background: #ffffff;
+    border: 2px solid var(--db-accent-orange);
+    color: var(--db-accent-orange);
+    font-size: 11px;
+    font-weight: 800;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-align: center;
+    padding: 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .db-sidebar-footer {
