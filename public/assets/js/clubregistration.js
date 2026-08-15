@@ -19,41 +19,31 @@
         setTimeout(function () { toast.className = 'cr-toast'; }, 3500);
     }
 
-    var statusFilter = document.getElementById('crStatusFilter');
+    // ---------------------------------------------------------------
+    // Filter panel & Search (client-side, over cards already rendered)
+    // ---------------------------------------------------------------
+    var filterBtn      = document.getElementById('crFilterBtn');
+    var filterPanel    = document.getElementById('crFilterPanel');
+    var filterStatus   = document.getElementById('crFilterStatus');
+    var filterDocs     = document.getElementById('crFilterDocs');
+    var addFilterBtn   = document.getElementById('crAddFilterBtn');
+    var clearFilterBtn = document.getElementById('crClearFilterBtn');
 
-    // ---------------------------------------------------------------
-    // Combined filter: status dropdown + text search — both live
-    // ---------------------------------------------------------------
     function filterCards() {
         if (!grid) return;
         var query  = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        var status = statusFilter ? statusFilter.value : '';
+        var status = filterStatus ? filterStatus.value : '';
+        var docs   = filterDocs ? filterDocs.value : '';
         var cards  = grid.querySelectorAll('.cr-card');
         cards.forEach(function (card) {
             var textMatch   = !query  || card.dataset.name.indexOf(query) !== -1 || (card.dataset.proposer || '').toLowerCase().indexOf(query) !== -1;
             var statusMatch = !status || card.dataset.status === status;
-            card.style.display = (textMatch && statusMatch) ? '' : 'none';
+            var docsMatch   = !docs   || card.dataset.docstatus === docs;
+            card.style.display = (textMatch && statusMatch && docsMatch) ? '' : 'none';
         });
     }
 
     if (searchInput) searchInput.addEventListener('input', filterCards);
-    if (statusFilter) statusFilter.addEventListener('change', filterCards);
-
-    // ---------------------------------------------------------------
-    // Filter panel — toggled by the "Filters" button, matches the
-    // Add Filter / Clear Filter pattern used elsewhere in the app.
-    // NOTE: Status filtering currently only distinguishes within what's
-    // rendered (Pending applications only, per the controller's
-    // findPendingByDivision()). Filtering to Approved/Rejected won't show
-    // results yet until the controller is extended to fetch those too —
-    // flagging this rather than pretending it's fully wired.
-    // ---------------------------------------------------------------
-    var filterBtn      = document.getElementById('crFilterBtn');
-    var filterPanel      = document.getElementById('crFilterPanel');
-    var filterStatus        = document.getElementById('crFilterStatus');
-    var filterDocs             = document.getElementById('crFilterDocs');
-    var addFilterBtn              = document.getElementById('crAddFilterBtn');
-    var clearFilterBtn               = document.getElementById('crClearFilterBtn');
 
     if (filterBtn && filterPanel) {
         filterBtn.addEventListener('click', function () {
@@ -62,20 +52,13 @@
         });
     }
 
-    function applyFilters() {
-        // Sync the panel's status select → toolbar dropdown so filterCards sees it
-        if (statusFilter && filterStatus) statusFilter.value = filterStatus.value;
-        filterCards();
-    }
-
     if (addFilterBtn) {
-        addFilterBtn.addEventListener('click', applyFilters);
+        addFilterBtn.addEventListener('click', filterCards);
     }
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function () {
             if (filterStatus) filterStatus.value = '';
             if (filterDocs)   filterDocs.value   = '';
-            if (statusFilter) statusFilter.value  = '';
             filterCards();
         });
     }
@@ -291,7 +274,6 @@
                     '<div class="cr-field"><label>PROVINCE</label><span class="cr-field-val-bold">' + escapeHtml(app.state_province || '—') + '</span></div>' +
                     '<div class="cr-field"><label>DISTRICT</label><span class="cr-field-val-bold">' + escapeHtml(app.district || '—') + '</span></div>' +
                     '<div class="cr-field"><label>DIVISION</label><span class="cr-field-val-bold">' + escapeHtml(app.division_name || '—') + (app.zone_name ? ' — ' + escapeHtml(app.zone_name) : '') + '</span></div>' +
-                    '<div class="cr-field"><label>DIVISIONAL SECRETARIAT</label><span class="cr-field-val-bold">' + escapeHtml(app.division_name || '—') + '</span></div>' +
                 '</div>' +
                 '<div class="cr-venue-section">' +
                     '<label class="cr-section-field-label">MEETING VENUE / OFFICIAL ADDRESS</label>' +
