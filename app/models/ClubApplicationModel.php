@@ -8,7 +8,7 @@ class ClubApplicationModel extends Model {
      */
     public function findPendingByDivision($divisionId) {
         return $this->resultSet(
-            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email
+            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.NIC AS proposer_nic, u.eligibility_checked AS proposer_eligible
              FROM ClubApplication a
              JOIN User u ON u.user_id = a.proposer_user_id
              WHERE a.proposed_division_id = ? AND a.status = 'Pending'
@@ -37,9 +37,12 @@ class ClubApplicationModel extends Model {
     /** Single application with proposer details joined in, for the review modal. */
     public function findById($applicationId) {
         return $this->single(
-            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.phone_number AS proposer_phone
+            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.phone_number AS proposer_phone,
+                    d.division_name, z.zonal_name AS zone_name
              FROM ClubApplication a
              JOIN User u ON u.user_id = a.proposer_user_id
+             LEFT JOIN Division d ON d.division_id = a.proposed_division_id
+             LEFT JOIN Zone z ON z.zonal_id = d.zonal_id
              WHERE a.application_id = ? LIMIT 1",
             [$applicationId]
         );
