@@ -99,18 +99,9 @@
                 </button>
             </div>
 
-            <!-- Search + filter bar (refined combined structure) -->
+            <!-- Search + filter bar -->
             <div class="cr-toolbar">
                 <div class="cr-search-group">
-                    <div class="cr-search-select-wrapper">
-                        <select id="crStatusFilter" aria-label="Filter by status">
-                            <option value="">All Applications</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-                    <div class="cr-search-divider"></div>
                     <div class="cr-search-input-wrapper">
                         <span class="cr-search-icon">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
