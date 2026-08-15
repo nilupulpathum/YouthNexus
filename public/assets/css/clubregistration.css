@@ -4,6 +4,49 @@
    Figma mockup (Athens Gray #e7e9f0 borders, Woodsmoke #12141a text, etc.)
    ========================================================================== */
 
+/* Typography Assignments (Option 2: Outfit + Inter + JetBrains Mono + Caveat) */
+.cr-stat-value,
+.cr-card-name,
+.cr-header-title-row h2,
+.cr-header-phase-tag,
+.cr-section-title,
+.cr-section-number,
+.cr-card-section-title,
+.cr-sub-section-title-grey,
+.cr-btn,
+.cr-btn-primary,
+.cr-btn-submit-decision,
+.cr-btn-view-doc,
+.cr-btn-view-photos,
+.cr-btn-view-nic,
+.cr-btn-success-primary,
+.cr-btn-success-secondary,
+.cr-badge,
+.cr-nic-modal-title-group h3,
+.cr-nic-side-tag,
+.cr-success-title,
+.cr-filter-btn {
+    font-family: var(--font-heading);
+}
+
+.cr-account-number-masked,
+.cr-account-number-display,
+.cr-nic-val-mono,
+.cr-success-val-bold {
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+
+.cr-signature-cursive,
+.cr-sig-text {
+    font-family: var(--font-signature) !important;
+    font-size: 26px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    color: #1e3a8a !important;
+    line-height: 1.2;
+}
+
 /* ---------- Stat cards (Figma metrics boxes layout) ---------- */
 .cr-stats {
     display: flex;
@@ -2358,3 +2401,339 @@
     color: var(--db-text-dark);
     line-height: 1.5;
 }
+
+/* ==========================================================================
+   Dual-Sided NIC Modal & Media Gallery Lightbox
+   ========================================================================== */
+.cr-submodal-backdrop {
+    z-index: 1050;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+/* ---------- NIC Modal ---------- */
+.cr-nic-modal {
+    max-width: 860px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.cr-nic-modal-header {
+    background: #1e40af;
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cr-nic-modal-title-group h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
+
+.cr-nic-modal-title-group p {
+    margin: 0;
+    font-size: 12px;
+    color: #bfdbfe;
+}
+
+.cr-nic-modal-close {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.cr-nic-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.cr-nic-modal-body {
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.cr-nic-meta-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+}
+
+.cr-nic-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cr-nic-meta-item label {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+.cr-nic-meta-item span {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+}
+
+.cr-nic-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.cr-nic-dual-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.cr-nic-side-card {
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.cr-nic-side-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.cr-nic-side-tag {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #1e40af;
+    background: #eff6ff;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.cr-nic-img-container {
+    width: 100%;
+    height: 220px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+}
+
+.cr-nic-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.cr-nic-side-footer {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+}
+
+/* ---------- Nominee Card "VIEW NIC" Button ---------- */
+.cr-btn-nominee-nic {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.cr-btn-nominee-nic:hover {
+    background: #1e40af;
+    color: #fff;
+    border-color: #1e40af;
+}
+
+.cr-nominee-horizontal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cr-nominee-subcard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ---------- Asset Photos & Remaining Overlays ---------- */
+.cr-asset-photo-box {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.cr-asset-photo-box img {
+    transition: transform 0.2s ease;
+}
+
+.cr-asset-photo-box:hover img {
+    transform: scale(1.04);
+}
+
+.cr-asset-more-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 4px;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+    transition: background 0.15s ease;
+}
+
+.cr-asset-more-overlay:hover {
+    background: rgba(30, 64, 175, 0.9);
+}
+
+.cr-asset-more-overlay svg {
+    width: 20px;
+    height: 20px;
+    color: #38bdf8;
+}
+
+/* ---------- Lightbox Gallery Modal ---------- */
+.cr-gallery-modal {
+    max-width: 800px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #fff;
+    color: var(--db-text-dark);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.cr-gallery-stage {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    overflow: hidden;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+}
+
+.cr-gallery-stage img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.cr-gallery-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e40af;
+    border: 1px solid var(--db-border);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s ease;
+}
+
+.cr-gallery-nav-btn:hover {
+    background: #1e40af;
+    color: #fff;
+    border-color: #1e40af;
+}
+
+.cr-gallery-nav-btn.prev { left: 14px; }
+.cr-gallery-nav-btn.next { right: 14px; }
+
+.cr-gallery-thumbs {
+    margin-top: 14px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+}
+
+.cr-gallery-thumb {
+    width: 60px;
+    height: 44px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.6;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    background: #f8fafc;
+}
+
+.cr-gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cr-gallery-thumb.active {
+    border-color: #1e40af;
+    opacity: 1;
+    transform: scale(1.04);
+}
