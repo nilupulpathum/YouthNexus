@@ -6,10 +6,42 @@
     var statPending      = document.getElementById('statPending');
     var statApproved       = document.getElementById('statApproved');
     var statRejected       = document.getElementById('statRejected');
+    var notifBellBtn       = document.getElementById('notifBellBtn');
+    var notifCountEl       = document.getElementById('notifCount');
+    var navPendingBadge    = document.getElementById('navPendingBadge');
     var modalBackdrop         = document.getElementById('crModalBackdrop');
     var modalContent            = document.getElementById('crModalContent');
     var toast                     = document.getElementById('crToast');
     var csrfToken                    = document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '';
+
+    function updateNotifCount(count) {
+        if (notifCountEl) {
+            if (count > 0) {
+                notifCountEl.textContent = count;
+                notifCountEl.style.display = '';
+                if (notifBellBtn) notifBellBtn.setAttribute('title', count + ' pending applications awaiting review');
+            } else {
+                notifCountEl.textContent = '0';
+                notifCountEl.style.display = 'none';
+                if (notifBellBtn) notifBellBtn.setAttribute('title', 'No pending notifications');
+            }
+        }
+        if (navPendingBadge) {
+            if (count > 0) {
+                navPendingBadge.textContent = count;
+                navPendingBadge.style.display = '';
+            } else {
+                navPendingBadge.textContent = '0';
+                navPendingBadge.style.display = 'none';
+            }
+        }
+    }
+
+    if (notifBellBtn && statPending) {
+        notifBellBtn.addEventListener('click', function () {
+            statPending.click();
+        });
+    }
 
     // ---------------------------------------------------------------
     // Toast helper
@@ -90,7 +122,7 @@
     // ---------------------------------------------------------------
     // Stat cards as filters / views
     // ---------------------------------------------------------------
-    var pendingGridHtml = null; // Cache initial pending cards HTML
+    var pendingGridHtml = grid ? grid.innerHTML : null; // Cache initial pending cards HTML
 
     function renderApprovedGrid(apps) {
         if (!grid) return;
@@ -178,6 +210,7 @@
     if (statPending) {
         statPending.addEventListener('click', function () {
             setActiveStat(statPending);
+            if (filterStatus) filterStatus.value = '';
             if (pendingGridHtml !== null && grid) {
                 grid.innerHTML = pendingGridHtml;
                 filterCards();
@@ -188,6 +221,7 @@
     if (statApproved) {
         statApproved.addEventListener('click', function () {
             setActiveStat(statApproved);
+            if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
@@ -208,6 +242,7 @@
     if (statRejected) {
         statRejected.addEventListener('click', function () {
             setActiveStat(statRejected);
+            if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
@@ -334,8 +369,11 @@
 
     function formatDOB(dobStr) {
         if (!dobStr) return '—';
-        var d = new Date(dobStr);
-        if (isNaN(d.getTime())) return escapeHtml(dobStr);
+        var clean = String(dobStr).trim();
+        var d = new Date(clean.replace(' ', 'T'));
+        if (isNaN(d.getTime())) d = new Date(clean.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) d = new Date(clean);
+        if (isNaN(d.getTime())) return escapeHtml(clean);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
@@ -855,7 +893,9 @@
             var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
             var valApproved = statApproved ? statApproved.querySelector('.cr-stat-value') : null;
             if (valPending && parseInt(valPending.textContent, 10) > 0) {
-                valPending.textContent = parseInt(valPending.textContent, 10) - 1;
+                var newCount = parseInt(valPending.textContent, 10) - 1;
+                valPending.textContent = newCount;
+                updateNotifCount(newCount);
             }
             if (valApproved) {
                 valApproved.textContent = parseInt(valApproved.textContent, 10) + 1;
@@ -946,7 +986,9 @@
                     var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
                     var valRejected = statRejected ? statRejected.querySelector('.cr-stat-value') : null;
                     if (valPending && parseInt(valPending.textContent, 10) > 0) {
-                        valPending.textContent = parseInt(valPending.textContent, 10) - 1;
+                        var newPendingCount = parseInt(valPending.textContent, 10) - 1;
+                        valPending.textContent = newPendingCount;
+                        updateNotifCount(newPendingCount);
                     }
                     if (valRejected) {
                         valRejected.textContent = parseInt(valRejected.textContent, 10) + 1;
