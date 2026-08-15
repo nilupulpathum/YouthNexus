@@ -73,6 +73,24 @@ class ClubRegistration extends Controller {
     }
 
     // ---------------------------------------------------------------
+    // APPROVED — list of approved applications as JSON (AJAX)
+    // ---------------------------------------------------------------
+    public function approved() {
+        $this->requireCoordinator();
+
+        $applicationModel = $this->model('ClubApplicationModel');
+        $divisionId        = $_SESSION['division_id'] ?? null;
+
+        $applications = $divisionId ? $applicationModel->findApprovedByDivision($divisionId) : [];
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'applications' => $applications,
+        ]);
+        exit();
+    }
+
+    // ---------------------------------------------------------------
     // APPROVE — creates the Club, promotes nominees to User accounts,
     // emails credentials (or a role-assigned notice for linked accounts).
     // ---------------------------------------------------------------
