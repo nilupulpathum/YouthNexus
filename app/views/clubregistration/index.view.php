@@ -13,7 +13,7 @@
     <aside class="db-sidebar">
         <div class="db-brand">
             <div class="db-brand-mark">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                <svg viewBox="0 0 24 24" fill="var(--db-sidebar-bg)" stroke="none"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
             </div>
             <div class="db-brand-text">
                 <b>YouthNexus</b>
@@ -31,7 +31,7 @@
                 Dashboard
             </a>
             <a href="<?= ROOT ?>/clubregistration" class="db-nav-link active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 Approve Registration
                 <span class="db-nav-badge"><?= (int)$counts['Pending'] ?></span>
             </a>
@@ -99,13 +99,24 @@
                 </button>
             </div>
 
-            <!-- Search + filter bar -->
+            <!-- Search + filter bar (refined combined structure) -->
             <div class="cr-toolbar">
-                <div class="cr-search">
-                    <span class="cr-search-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    </span>
-                    <input type="text" id="crSearchInput" placeholder="Search applications...">
+                <div class="cr-search-group">
+                    <div class="cr-search-select-wrapper">
+                        <select id="crStatusFilter" aria-label="Filter by status">
+                            <option value="">All Applications</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="cr-search-divider"></div>
+                    <div class="cr-search-input-wrapper">
+                        <span class="cr-search-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </span>
+                        <input type="text" id="crSearchInput" placeholder="Search applications...">
+                    </div>
                 </div>
                 <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
@@ -113,9 +124,7 @@
                 </button>
             </div>
 
-            <!-- Filter panel: hidden until "Filters" is clicked (matches the
-                 inline expandable pattern used elsewhere in the app, e.g.
-                 Manage Reports / Monitor Club Health filter bars) -->
+            <!-- Filter panel: hidden until "Filters" is clicked -->
             <div class="cr-filter-panel" id="crFilterPanel">
                 <div class="cr-filter-field">
                     <label for="crFilterStatus">Status</label>
@@ -159,30 +168,31 @@
                          data-status="Pending"
                          data-docstatus="<?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
                         <div class="cr-card-top">
-                            <div class="cr-card-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-                            </div>
+                            <?php if ($app->documents_complete): ?>
+                                <div class="cr-card-icon complete" title="Documents Complete">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="16 13 12 17 9 14"/></svg>
+                                </div>
+                            <?php else: ?>
+                                <div class="cr-card-icon incomplete" title="Documents Incomplete">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                </div>
+                            <?php endif; ?>
                             <span class="cr-badge pending">Pending</span>
                         </div>
 
                         <div class="cr-card-date<?= $isWaitingLong ? ' cr-waiting-long' : '' ?>">
-                            Submitted <?= date('M j, Y', strtotime($app->submitted_at)) ?><?= $isWaitingLong ? ' · ' . $submittedDaysAgo . ' days ago' : '' ?>
+                            SUBMITTED <?= strtoupper(date('M j, Y', strtotime($app->submitted_at))) ?><?= $isWaitingLong ? ' · ' . $submittedDaysAgo . ' DAYS AGO' : '' ?>
                         </div>
 
                         <div class="cr-card-name"><?= htmlspecialchars($app->club_name) ?></div>
 
                         <div class="cr-card-proposer">
-                            Proposer: <?= htmlspecialchars($app->proposer_name) ?>
+                            Proposer: <?= htmlspecialchars($app->proposer_name) ?><?= (!empty($app->proposer_nic) && !empty($app->proposer_eligible)) ? ' — NIC Verified' : '' ?>
                         </div>
 
-                        <span class="cr-doc-status <?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
-                            <?php if ($app->documents_complete): ?>
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
-                            <?php else: ?>
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-                            <?php endif; ?>
-                            <?= htmlspecialchars($app->missing_summary) ?>
-                        </span>
+                        <div class="cr-card-docs <?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
+                            Documents: <?= $app->documents_complete ? 'Complete' : htmlspecialchars($app->missing_summary) ?>
+                        </div>
 
                         <div class="cr-card-footer">
                             <button type="button" class="cr-btn cr-review-btn" data-id="<?= (int)$app->application_id ?>">Review</button>
@@ -206,7 +216,7 @@
 <div class="cr-toast" id="crToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
-<script>var ROOT_URL = "<?= ROOT ?>";</script>
+<script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
 <script src="<?= ROOT ?>/assets/js/clubregistration.js"></script>
 </body>
 </html>
