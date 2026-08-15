@@ -4,7 +4,7 @@
    Figma mockup (Athens Gray #e7e9f0 borders, Woodsmoke #12141a text, etc.)
    ========================================================================== */
 
-/* Typography Assignments (Option 2: Outfit + Inter + JetBrains Mono + Caveat) */
+/* Typography Assignments */
 .cr-stat-value,
 .cr-card-name,
 .cr-header-title-row h2,
@@ -26,22 +26,22 @@
 .cr-nic-side-tag,
 .cr-success-title,
 .cr-filter-btn {
-    font-family: var(--font-heading);
+    font-family: var(--db-font-family);
 }
 
 .cr-account-number-masked,
 .cr-account-number-display,
 .cr-nic-val-mono,
 .cr-success-val-bold {
-    font-family: var(--font-mono);
+    font-family: monospace;
     letter-spacing: 0.5px;
 }
 
 .cr-signature-cursive,
 .cr-sig-text {
-    font-family: var(--font-signature) !important;
-    font-size: 26px !important;
-    font-style: normal !important;
+    font-family: Georgia, serif !important;
+    font-size: 24px !important;
+    font-style: italic !important;
     font-weight: 700 !important;
     color: #1e3a8a !important;
     line-height: 1.2;
