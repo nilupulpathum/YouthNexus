@@ -962,7 +962,7 @@
        Figma mockups show Nimbus/Serif font for the digital signature.
        Consistent with the application architecture, we use the standard system font stack.
     */
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-family: var(--db-font-family);
     letter-spacing: 0.5px;
 }
 
