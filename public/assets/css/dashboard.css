@@ -16,15 +16,23 @@
     --db-bg-page: #f8fafc;
     --db-radius: 8px;
     --db-radius-lg: 12px;
+
+    /* Typography System (Option 2: Outfit + Inter + JetBrains Mono) */
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Outfit', 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --font-signature: 'Caveat', cursive, sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body.dashboard {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-family: var(--font-body);
     background: var(--db-bg-page);
     color: var(--db-text-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .db-app {
@@ -69,8 +77,10 @@ body.dashboard {
 
 .db-brand-text b {
     display: block;
-    font-size: 14px;
-    font-weight: 700;
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
 }
 
 .db-brand-text span {
@@ -96,8 +106,10 @@ body.dashboard {
     border-radius: 9999px;
     color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
+    font-family: var(--font-heading);
     font-size: 13.5px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.1px;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -187,7 +199,14 @@ body.dashboard {
     z-index: 10;
 }
 
-.db-topbar h1 { margin: 0; font-size: 19px; font-weight: 700; }
+.db-topbar h1 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--db-text-dark);
+}
 .db-topbar p { margin: 2px 0 0; font-size: 12.5px; color: var(--db-text-grey); }
 
 .db-topbar-right { display: flex; align-items: center; gap: 14px; }
