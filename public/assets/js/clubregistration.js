@@ -64,20 +64,81 @@
     }
 
     // ---------------------------------------------------------------
-    // Stat cards as filters (improvement #2)
+    // Stat cards as filters / views
     // ---------------------------------------------------------------
+    var pendingGridHtml = null; // Cache initial pending cards HTML
+
+    function renderApprovedGrid(apps) {
+        if (!grid) return;
+        if (!apps || apps.length === 0) {
+            grid.innerHTML =
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><path d="M20 6 9 17l-5-5"/></svg>' +
+                    '<p>No approved applications found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        var html = '';
+        apps.forEach(function (app) {
+            var dateStr = app.reviewed_at ? formatDOB(app.reviewed_at) : (app.submitted_at ? formatDOB(app.submitted_at) : '—');
+            var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
+
+            html +=
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                    '<div class="cr-card-top">' +
+                        '<div class="cr-card-icon complete" title="Approved">' +
+                            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
+                        '</div>' +
+                        '<span class="cr-badge approved">Approved</span>' +
+                    '</div>' +
+                    '<div class="cr-card-date">' +
+                        'APPROVED ' + escapeHtml(dateStr) + reviewerText +
+                    '</div>' +
+                    '<div class="cr-card-name">' + escapeHtml(app.club_name) + '</div>' +
+                    '<div class="cr-card-proposer">' +
+                        'Proposer: ' + escapeHtml(app.proposer_name || '—') +
+                    '</div>' +
+                    '<div class="cr-card-footer">' +
+                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
+    }
+
     function setActiveStat(button) {
         [statPending, statApproved].forEach(function (b) { if (b) b.classList.remove('is-active'); });
         if (button) button.classList.add('is-active');
     }
 
     if (statPending) {
-        statPending.addEventListener('click', function () { setActiveStat(statPending); });
+        statPending.addEventListener('click', function () {
+            setActiveStat(statPending);
+            if (pendingGridHtml !== null && grid) {
+                grid.innerHTML = pendingGridHtml;
+                filterCards();
+            }
+        });
     }
+
     if (statApproved) {
         statApproved.addEventListener('click', function () {
             setActiveStat(statApproved);
-            showToast('Approved applications view is on the way — this queue only shows Pending for now.');
+            // Cache current pending HTML if not yet cached
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved applications…</p>';
+            fetch(ROOT_URL + '/clubregistration/approved', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    renderApprovedGrid(data.applications || []);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved applications.</p>';
+                });
         });
     }
 
@@ -544,80 +605,132 @@
                 '</div>' +
             '</div>' +
 
-            // Final Review Decision (Decision section)
-            '<div class="cr-decision-panel">' +
-                '<div class="cr-section-header">' +
-                    '<span class="cr-section-icon-decision">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17l-5-5"/></svg>' +
-                    '</span>' +
-                    '<h3 class="cr-section-title">FINAL REVIEW DECISION</h3>' +
-                '</div>' +
-                '<div class="cr-decision-fields-row">' +
-                    '<div class="cr-field">' +
-                        '<label>REVIEW RESULT</label>' +
-                        '<select id="crReviewResultSelect">' +
-                            '<option value="approve">Approve Registration</option>' +
-                            '<option value="reject">Reject Registration</option>' +
-                        '</select>' +
-                    '</div>' +
-                    '<div class="cr-field">' +
-                        '<label>REVIEWED BY</label>' +
-                        '<input type="text" readonly value="' + escapeHtml(COORDINATOR_NAME) + ' — Divisional Coordinator" class="cr-readonly-input">' +
-                    '</div>' +
-                '</div>' +
-                '<div class="cr-decision-remarks-section">' +
-                    '<label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>' +
-                    '<textarea id="crRemarks" placeholder="Provide detailed feedback for the club executives..."></textarea>' +
-                '</div>' +
-                '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert">' +
-                    '<div class="cr-impact-icon-circle approve">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
-                    '</div>' +
-                    '<div class="cr-impact-text-content">' +
-                        '<strong>IMPACT OF APPROVAL</strong>' +
-                        '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="cr-decision-footer-bar">' +
-                    '<div class="cr-decision-footer-actions">' +
-                        '<button type="button" class="cr-btn-cancel-link" id="crCancelReviewBtn">Cancel Review</button>' +
-                        '<button type="button" class="cr-btn cr-btn-submit-decision" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
-                    '</div>' +
-                '</div>' +
+            // Final Review Decision / Status summary
+            (function () {
+                if (app.status === 'Pending') {
+                    return '<div class="cr-decision-panel">' +
+                        '<div class="cr-section-header">' +
+                            '<span class="cr-section-icon-decision">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</span>' +
+                            '<h3 class="cr-section-title">FINAL REVIEW DECISION</h3>' +
+                        '</div>' +
+                        '<div class="cr-decision-fields-row">' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEW RESULT</label>' +
+                                '<select id="crReviewResultSelect">' +
+                                    '<option value="approve">Approve Registration</option>' +
+                                    '<option value="reject">Reject Registration</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED BY</label>' +
+                                '<input type="text" readonly value="' + escapeHtml(COORDINATOR_NAME) + ' — Divisional Coordinator" class="cr-readonly-input">' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-decision-remarks-section">' +
+                            '<label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>' +
+                            '<textarea id="crRemarks" placeholder="Provide detailed feedback for the club executives..."></textarea>' +
+                        '</div>' +
+                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert">' +
+                            '<div class="cr-impact-icon-circle approve">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF APPROVAL</strong>' +
+                                '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-decision-footer-bar">' +
+                            '<div class="cr-decision-footer-actions">' +
+                                '<button type="button" class="cr-btn-cancel-link" id="crCancelReviewBtn">Cancel Review</button>' +
+                                '<button type="button" class="cr-btn cr-btn-submit-decision" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                } else {
+                    return '<div class="cr-decision-panel readonly">' +
+                        '<div class="cr-section-header">' +
+                            '<span class="cr-section-icon-decision">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                            '</span>' +
+                            '<h3 class="cr-section-title">REVIEW DECISION &amp; STATUS</h3>' +
+                        '</div>' +
+                        '<div class="cr-readonly-summary-grid">' +
+                            '<div class="cr-field">' +
+                                '<label>FINAL STATUS</label>' +
+                                '<div><span class="cr-badge ' + escapeHtml((app.status || '').toLowerCase()) + '">' + escapeHtml(app.status || '—') + '</span></div>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED BY</label>' +
+                                '<span class="cr-field-val-bold">' + escapeHtml(app.reviewed_by_name || COORDINATOR_NAME) + '</span>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED AT</label>' +
+                                '<span class="cr-field-val-bold">' + (app.reviewed_at ? formatDOB(app.reviewed_at) : '—') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        (app.remarks ?
+                        '<div class="cr-decision-remarks-section" style="margin-top:14px;">' +
+                            '<label>REVIEW REMARKS</label>' +
+                            '<div class="cr-readonly-remarks-box">' + escapeHtml(app.remarks) + '</div>' +
+                        '</div>' : '') +
+                        '<div class="cr-decision-footer-bar">' +
+                            '<div class="cr-decision-footer-actions">' +
+                                '<button type="button" class="cr-btn cr-btn-primary" id="crCloseReadonlyBtn" style="padding: 10px 24px;">Close</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }
+            })() +
             '</div>';
 
-        var selectEl = document.getElementById('crReviewResultSelect');
-        var alertEl = document.getElementById('crDecisionImpactAlert');
+        if (app.status === 'Pending') {
+            var selectEl = document.getElementById('crReviewResultSelect');
+            var alertEl = document.getElementById('crDecisionImpactAlert');
 
-        selectEl.addEventListener('change', function () {
-            if (selectEl.value === 'approve') {
-                alertEl.className = 'cr-decision-impact-alert approve';
-                alertEl.innerHTML = 
-                    '<div class="cr-impact-icon-circle approve">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
-                    '</div>' +
-                    '<div class="cr-impact-text-content">' +
-                        '<strong>IMPACT OF APPROVAL</strong>' +
-                        '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
-                    '</div>';
-            } else {
-                alertEl.className = 'cr-decision-impact-alert reject';
-                alertEl.innerHTML = 
-                    '<div class="cr-impact-icon-circle reject">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-                    '</div>' +
-                    '<div class="cr-impact-text-content">' +
-                        '<strong>IMPACT OF REJECTION</strong>' +
-                        '<p>Rejecting this application will notify the proposer and nominees with the provided remarks. They will need to correct and resubmit the application.</p>' +
-                    '</div>';
+            if (selectEl && alertEl) {
+                selectEl.addEventListener('change', function () {
+                    if (selectEl.value === 'approve') {
+                        alertEl.className = 'cr-decision-impact-alert approve';
+                        alertEl.innerHTML = 
+                            '<div class="cr-impact-icon-circle approve">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF APPROVAL</strong>' +
+                                '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
+                            '</div>';
+                    } else {
+                        alertEl.className = 'cr-decision-impact-alert reject';
+                        alertEl.innerHTML = 
+                            '<div class="cr-impact-icon-circle reject">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF REJECTION</strong>' +
+                                '<p>Rejecting this application will notify the proposer and nominees with the provided remarks. They will need to correct and resubmit the application.</p>' +
+                            '</div>';
+                    }
+                });
             }
-        });
 
-        document.getElementById('crModalCloseBtn').addEventListener('click', closeModal);
-        document.getElementById('crCancelReviewBtn').addEventListener('click', closeModal);
-        document.getElementById('crConfirmSubmitBtn').addEventListener('click', function () {
-            submitDecision(app.application_id, selectEl.value, app.club_name);
-        });
+            var cancelBtn = document.getElementById('crCancelReviewBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+            var confirmBtn = document.getElementById('crConfirmSubmitBtn');
+            if (confirmBtn && selectEl) {
+                confirmBtn.addEventListener('click', function () {
+                    submitDecision(app.application_id, selectEl.value, app.club_name);
+                });
+            }
+        } else {
+            var closeReadonlyBtn = document.getElementById('crCloseReadonlyBtn');
+            if (closeReadonlyBtn) closeReadonlyBtn.addEventListener('click', closeModal);
+        }
+
+        var closeHeaderBtn = document.getElementById('crModalCloseBtn');
+        if (closeHeaderBtn) closeHeaderBtn.addEventListener('click', closeModal);
     }
 
     function renderSuccessModal(clubName, clubCode, applicationId) {
@@ -646,6 +759,17 @@
             if (cardEl) {
                 var card = cardEl.closest('.cr-card');
                 if (card) card.remove();
+            }
+            if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
+            var valApproved = statApproved ? statApproved.querySelector('.cr-stat-value') : null;
+            if (valPending && parseInt(valPending.textContent, 10) > 0) {
+                valPending.textContent = parseInt(valPending.textContent, 10) - 1;
+            }
+            if (valApproved) {
+                valApproved.textContent = parseInt(valApproved.textContent, 10) + 1;
             }
         }
 
