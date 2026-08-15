@@ -261,11 +261,41 @@
     }
 
     // ---------------------------------------------------------------
-    // Review modal
+    // Review modal & Submodals (NIC Verification & Media Lightbox)
     // ---------------------------------------------------------------
+    var nicModalBackdrop = document.getElementById('crNicModalBackdrop');
+    var nicModalContent  = document.getElementById('crNicModalContent');
+    var galleryModalBackdrop = document.getElementById('crGalleryModalBackdrop');
+    var galleryModalContent  = document.getElementById('crGalleryModalContent');
+    var currentGalleryItems = [];
+    var currentGalleryIndex = 0;
+
     function closeModal() {
         modalBackdrop.classList.remove('open');
         modalContent.innerHTML = '';
+    }
+
+    function closeNicModal() {
+        if (nicModalBackdrop) nicModalBackdrop.classList.remove('open');
+        if (nicModalContent) nicModalContent.innerHTML = '';
+    }
+
+    function closeGalleryModal() {
+        if (galleryModalBackdrop) galleryModalBackdrop.classList.remove('open');
+        if (galleryModalContent) galleryModalContent.innerHTML = '';
+        currentGalleryItems = [];
+    }
+
+    if (nicModalBackdrop) {
+        nicModalBackdrop.addEventListener('click', function (e) {
+            if (e.target === nicModalBackdrop) closeNicModal();
+        });
+    }
+
+    if (galleryModalBackdrop) {
+        galleryModalBackdrop.addEventListener('click', function (e) {
+            if (e.target === galleryModalBackdrop) closeGalleryModal();
+        });
     }
 
     var mousedownTarget = null;
@@ -280,8 +310,18 @@
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modalBackdrop.classList.contains('open')) {
-            closeModal();
+        if (e.key === 'Escape') {
+            if (galleryModalBackdrop && galleryModalBackdrop.classList.contains('open')) {
+                closeGalleryModal();
+                return;
+            }
+            if (nicModalBackdrop && nicModalBackdrop.classList.contains('open')) {
+                closeNicModal();
+                return;
+            }
+            if (modalBackdrop && modalBackdrop.classList.contains('open')) {
+                closeModal();
+            }
         }
     });
 
@@ -306,6 +346,140 @@
         return masked;
     }
 
+    function formatDOB(dobStr) {
+        if (!dobStr) return '—';
+        var clean = String(dobStr).trim();
+        var d = new Date(clean.replace(' ', 'T'));
+        if (isNaN(d.getTime())) d = new Date(clean.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) d = new Date(clean);
+        if (isNaN(d.getTime())) return escapeHtml(clean);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // ---------- Dual-Sided NIC Modal ----------
+    function openNicModal(nominee, frontPath, backPath) {
+        if (!nicModalBackdrop || !nicModalContent) return;
+        var name = nominee ? (nominee.name || nominee.role_type || 'Executive Official') : 'Executive Official';
+        var role = nominee ? (nominee.role_type || 'Executive Nominee') : 'Executive Nominee';
+        var nic = nominee ? (nominee.NIC || '—') : '—';
+        var dob = nominee ? formatDOB(nominee.date_of_birth) : '—';
+
+        var front = frontPath || (nominee ? nominee.photo_path : null) || '/uploads/club_demo/nic_pres_front.svg';
+        var back  = backPath || (front ? front.replace('_front.', '_back.').replace('president.', 'nic_pres_back.').replace('secretary.', 'nic_sec_back.').replace('treasurer.', 'nic_tres_back.') : null) || '/uploads/club_demo/nic_pres_back.svg';
+
+        nicModalContent.innerHTML =
+            '<div class="cr-nic-modal-header">' +
+                '<div class="cr-nic-modal-title-group">' +
+                    '<h3>National Identity Card (NIC) Verification</h3>' +
+                    '<p>' + escapeHtml(name) + ' &bull; ' + escapeHtml(role) + '</p>' +
+                '</div>' +
+                '<button type="button" class="cr-nic-modal-close" id="crNicCloseBtn">&times;</button>' +
+            '</div>' +
+            '<div class="cr-nic-modal-body">' +
+                '<div class="cr-nic-meta-banner">' +
+                    '<div class="cr-nic-meta-item"><label>FULL NAME</label><span>' + escapeHtml(name) + '</span></div>' +
+                    '<div class="cr-nic-meta-item"><label>NIC NUMBER</label><span class="cr-nic-val-mono" style="color:#1e40af;font-size:14px;font-weight:700;">' + escapeHtml(nic) + '</span></div>' +
+                    '<div class="cr-nic-meta-item"><label>DATE OF BIRTH</label><span>' + escapeHtml(dob) + '</span></div>' +
+                '</div>' +
+                '<div class="cr-nic-dual-grid">' +
+                    '<div class="cr-nic-side-card">' +
+                        '<div class="cr-nic-side-header">' +
+                            '<span class="cr-nic-side-tag">FRONT SIDE</span>' +
+                        '</div>' +
+                        '<div class="cr-nic-img-container">' +
+                            '<img src="' + escapeHtml(ROOT_URL + front) + '" alt="NIC Front">' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-nic-side-card">' +
+                        '<div class="cr-nic-side-header">' +
+                            '<span class="cr-nic-side-tag">BACK / REVERSE SIDE</span>' +
+                        '</div>' +
+                        '<div class="cr-nic-img-container">' +
+                            '<img src="' + escapeHtml(ROOT_URL + back) + '" alt="NIC Back">' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        nicModalBackdrop.classList.add('open');
+        var closeBtn = document.getElementById('crNicCloseBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeNicModal);
+    }
+
+    window._openNicModal = openNicModal;
+
+    // ---------- Lightbox Photo Gallery ----------
+    function renderGallerySlide(idx) {
+        if (!currentGalleryItems || currentGalleryItems.length === 0) return;
+        currentGalleryIndex = (idx + currentGalleryItems.length) % currentGalleryItems.length;
+        var item = currentGalleryItems[currentGalleryIndex];
+        var total = currentGalleryItems.length;
+
+        var thumbsHtml = '';
+        currentGalleryItems.forEach(function (it, tIdx) {
+            thumbsHtml += '<div class="cr-gallery-thumb ' + (tIdx === currentGalleryIndex ? 'active' : '') + '" onclick="window._switchGallerySlide(' + tIdx + ')"><img src="' + escapeHtml(ROOT_URL + it.path) + '" alt="Thumbnail"></div>';
+        });
+
+        galleryModalContent.innerHTML =
+            '<div class="cr-nic-modal-header">' +
+                '<div class="cr-nic-modal-title-group">' +
+                    '<h3>' + escapeHtml(item.galleryTitle || 'Photo Inspection') + '</h3>' +
+                    '<p>' + escapeHtml(item.title || '') + (item.meta ? ' &bull; ' + escapeHtml(item.meta) : '') + ' &bull; Item ' + (currentGalleryIndex + 1) + ' of ' + total + '</p>' +
+                '</div>' +
+                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn">&times;</button>' +
+            '</div>' +
+            '<div class="cr-nic-modal-body" style="padding: 16px;">' +
+                '<div class="cr-gallery-stage">' +
+                    '<img src="' + escapeHtml(ROOT_URL + item.path) + '" alt="' + escapeHtml(item.title || 'Image') + '">' +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">&#10094;</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">&#10095;</button>' : '') +
+                '</div>' +
+                (total > 1 ? '<div class="cr-gallery-thumbs">' + thumbsHtml + '</div>' : '') +
+            '</div>';
+
+        var closeBtn = document.getElementById('crGalleryCloseBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeGalleryModal);
+        var prevBtn = document.getElementById('crGalleryPrevBtn');
+        if (prevBtn) prevBtn.addEventListener('click', function () { renderGallerySlide(currentGalleryIndex - 1); });
+        var nextBtn = document.getElementById('crGalleryNextBtn');
+        if (nextBtn) nextBtn.addEventListener('click', function () { renderGallerySlide(currentGalleryIndex + 1); });
+    }
+
+    window._switchGallerySlide = function (idx) {
+        renderGallerySlide(idx);
+    };
+
+    function openAssetGallery(assets, initialIdx) {
+        if (!galleryModalBackdrop || !galleryModalContent) return;
+        currentGalleryItems = (assets || []).filter(function (a) { return !!a.photo_path; }).map(function (a) {
+            return {
+                path: a.photo_path,
+                title: a.asset_name,
+                meta: 'Quantity: ' + a.quantity + ' • Condition: ' + a.condition,
+                galleryTitle: 'Initial Club Assets Inspection'
+            };
+        });
+        if (currentGalleryItems.length === 0) return;
+        renderGallerySlide(initialIdx || 0);
+        galleryModalBackdrop.classList.add('open');
+    }
+
+    function openActivityGallery(photos, initialIdx) {
+        if (!galleryModalBackdrop || !galleryModalContent) return;
+        currentGalleryItems = (photos || []).filter(function (p) { return !!p.photo_path; }).map(function (p, i) {
+            var fileName = (p.photo_path || '').split('/').pop().replace(/\.[^/.]+$/, "").replace(/_/g, " ").toUpperCase();
+            return {
+                path: p.photo_path,
+                title: fileName || ('Activity Photo #' + (i + 1)),
+                meta: 'Uploaded with Application',
+                galleryTitle: 'Club Activity Photos Inspection'
+            };
+        });
+        if (currentGalleryItems.length === 0) return;
+        renderGallerySlide(initialIdx || 0);
+        galleryModalBackdrop.classList.add('open');
+    }
+
     function renderDocumentCard(title, subtitle, tagText, tagClass, path) {
         if (!path) {
             return '<div class="cr-doc-big-card empty">' +
@@ -325,9 +499,9 @@
             ? '<svg class="cr-doc-type-icon pdf" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8m8 4H8m4-8H8"/></svg>'
             : '<svg class="cr-doc-type-icon img" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
 
-        var displayMeta = '1.2 MB &bull; Uploaded Oct 25';
+        var displayMeta = '1.2 MB &bull; Official Document';
         if (title.indexOf('Venue') >= 0) {
-            displayMeta = '840 KB &bull; Uploaded Oct 26';
+            displayMeta = '840 KB &bull; Official Document';
         }
 
         return '<div class="cr-doc-big-card">' +
@@ -345,13 +519,13 @@
         '</div>';
     }
 
-    function renderNicCopyCard(roleLabel, path) {
+    function renderNicCopyCard(roleLabel, path, nomineeData) {
         var btnHtml = path
-            ? '<a href="' + escapeHtml(ROOT_URL + path) + '" target="_blank" class="cr-btn cr-btn-view-nic">VIEW NIC</a>'
+            ? '<button type="button" class="cr-btn cr-btn-view-nic btn-open-nic" data-role="' + escapeHtml(roleLabel) + '" data-path="' + escapeHtml(path) + '">VIEW NIC</button>'
             : '<button type="button" class="cr-btn cr-btn-view-nic disabled" disabled>VIEW NIC</button>';
         return '<div class="cr-nic-copy-card">' +
             '<div class="cr-nic-placeholder-box">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>' +
+                (path ? '<img src="' + escapeHtml(ROOT_URL + path) + '" alt="NIC Preview" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">' : '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>') +
             '</div>' +
             '<div class="cr-nic-copy-footer">' +
                 '<span class="cr-nic-role-label">' + roleLabel + '</span>' +
@@ -367,20 +541,11 @@
         return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + (n ? escapeHtml(n.name.charAt(0)) : '?') + '</div>';
     }
 
-    function formatDOB(dobStr) {
-        if (!dobStr) return '—';
-        var clean = String(dobStr).trim();
-        var d = new Date(clean.replace(' ', 'T'));
-        if (isNaN(d.getTime())) d = new Date(clean.replace(/-/g, '/'));
-        if (isNaN(d.getTime())) d = new Date(clean);
-        if (isNaN(d.getTime())) return escapeHtml(clean);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
     function renderModal(data) {
         var app = data.application;
         var nominees = data.nominees || [];
         var assets = data.assets || [];
+        var photos = data.photos || [];
 
         var estDate = formatDOB(app.date_establishment);
         var submittedDate = formatDOB(app.submitted_at);
@@ -388,6 +553,14 @@
         var president = nominees.filter(function(n) { return n.role_type === 'President'; })[0];
         var secretary = nominees.filter(function(n) { return n.role_type === 'Secretary'; })[0];
         var treasurer = nominees.filter(function(n) { return n.role_type === 'Treasurer'; })[0];
+
+        // Global helpers for inline clicks in this modal session
+        window._openAssetGallery = function (idx) {
+            openAssetGallery(assets, idx);
+        };
+        window._openActivityGallery = function (idx) {
+            openActivityGallery(photos, idx);
+        };
 
         modalContent.innerHTML =
             '<div class="cr-modal-header">' +
@@ -513,8 +686,10 @@
                         // Secretary
                         '<div class="cr-nominee-subcard">' +
                             '<div class="cr-nominee-subcard-header">' +
-                                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
-                                'SECRETARY' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+                                    'SECRETARY' +
+                                '</div>' +
                             '</div>' +
                             '<div class="cr-nominee-subcard-content">' +
                                 '<div class="cr-nominee-photo-block">' +
@@ -532,8 +707,10 @@
                         // Treasurer
                         '<div class="cr-nominee-subcard">' +
                             '<div class="cr-nominee-subcard-header">' +
-                                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
-                                'TREASURER' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
+                                    'TREASURER' +
+                                '</div>' +
                             '</div>' +
                             '<div class="cr-nominee-subcard-content">' +
                                 '<div class="cr-nominee-photo-block">' +
@@ -581,18 +758,36 @@
                         '</table>' +
                     '</div>' +
                     '<div class="cr-assets-photos-col">' +
-                        '<label class="cr-section-field-label">ASSET PHOTOS</label>' +
-                        '<div class="cr-assets-photos-grid">' +
-                            [0, 1, 2, 3].map(function(idx) {
-                                var asset = assets[idx];
-                                if (asset && asset.photo_path) {
-                                    return '<div class="cr-asset-photo-box"><img src="' + escapeHtml(ROOT_URL + asset.photo_path) + '" alt="Asset Photo" class="cr-asset-photo-img"></div>';
+                        '<label class="cr-section-field-label">ASSET PHOTOS (CLICK TO INSPECT)</label>' +
+                        (function () {
+                            var assetPhotos = assets.filter(function (a) { return !!a.photo_path; });
+                            var totalPhotos = assetPhotos.length;
+                            var html = '<div class="cr-assets-photos-grid">';
+                            for (var idx = 0; idx < 4; idx++) {
+                                var asset = assetPhotos[idx];
+                                if (idx === 3 && totalPhotos > 4) {
+                                    var remainingCount = totalPhotos - 3;
+                                    html += '<div class="cr-asset-photo-box overlay-more" onclick="window._openAssetGallery(' + idx + ')">' +
+                                                '<img src="' + escapeHtml(ROOT_URL + asset.photo_path) + '" alt="Asset Photo" class="cr-asset-photo-img">' +
+                                                '<div class="cr-asset-more-overlay">' +
+                                                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+                                                    '<span style="font-size:15px;font-weight:900;">+' + remainingCount + '</span>' +
+                                                    '<span style="font-size:9.5px;letter-spacing:0.5px;">REMAINING</span>' +
+                                                '</div>' +
+                                            '</div>';
+                                } else if (asset) {
+                                    html += '<div class="cr-asset-photo-box" onclick="window._openAssetGallery(' + idx + ')">' +
+                                                '<img src="' + escapeHtml(ROOT_URL + asset.photo_path) + '" alt="' + escapeHtml(asset.asset_name) + '" class="cr-asset-photo-img">' +
+                                            '</div>';
+                                } else {
+                                    html += '<div class="cr-asset-photo-box empty">' +
+                                                '<svg class="cr-photo-icon" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+                                            '</div>';
                                 }
-                                return '<div class="cr-asset-photo-box empty">' +
-                                       '<svg class="cr-photo-icon" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
-                                       '</div>';
-                            }).join('') +
-                        '</div>' +
+                            }
+                            html += '</div>';
+                            return html;
+                        })() +
                     '</div>' +
                 '</div>' +
             '</div>' +
@@ -652,9 +847,9 @@
                             'NIC COPIES OF KEY OFFICIALS' +
                         '</h4>' +
                         '<div class="cr-nic-copies-grid">' +
-                            renderNicCopyCard('PRESIDENT', app.nic_president_path) +
-                            renderNicCopyCard('SECRETARY', app.nic_secretary_path) +
-                            renderNicCopyCard('TREASURER', app.nic_treasurer_path) +
+                            renderNicCopyCard('PRESIDENT', app.nic_president_path, president) +
+                            renderNicCopyCard('SECRETARY', app.nic_secretary_path, secretary) +
+                            renderNicCopyCard('TREASURER', app.nic_treasurer_path, treasurer) +
                         '</div>' +
                     '</div>' +
                     '<div class="cr-photos-section-container">' +
@@ -664,11 +859,10 @@
                         '</h4>' +
                         '<div class="cr-photos-dashed-container">' +
                             (function() {
-                                var photos = data.photos || [];
                                 var photosCount = photos.length;
                                 var photosStackedHtml = '';
                                 if (photosCount > 0) {
-                                    photosStackedHtml = '<div class="cr-photos-stacked-container">';
+                                    photosStackedHtml = '<div class="cr-photos-stacked-container" onclick="window._openActivityGallery(0)" style="cursor:pointer;">';
                                     var limit = Math.min(photosCount, 3);
                                     for (var pIdx = 0; pIdx < limit; pIdx++) {
                                         photosStackedHtml += '<div class="cr-photo-stacked-circle" style="z-index: ' + (10 - pIdx) + ';"><img src="' + escapeHtml(ROOT_URL + photos[pIdx].photo_path) + '" alt="Activity Photo"></div>';
@@ -678,7 +872,7 @@
                                     }
                                     photosStackedHtml += '</div>';
                                     photosStackedHtml += '<div class="cr-photos-count-label">' + photosCount + ' Photos Uploaded</div>';
-                                    photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos" onclick="window.open(\'' + escapeHtml(ROOT_URL + photos[0].photo_path) + '\', \'_blank\')">VIEW ALL PHOTOS</button>';
+                                    photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos" id="btnViewAllActivityPhotos">VIEW ALL PHOTOS</button>';
                                 } else {
                                     photosStackedHtml = '<div class="cr-photos-empty-state">No activity photos uploaded</div>';
                                 }
@@ -709,7 +903,7 @@
                                 '</span>' +
                                 '<span>I confirm all information provided is accurate to the best of my knowledge.</span>' +
                             '</div>' +
-                            '<div class="cr-decl-check-item" onclick="var cb = this.querySelector(\'.cr-decl-checkbox\'); cb.classList.toggle(\'checked\'); if (cb.classList.contains(\'checked\')) { cb.innerHTML = \'<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#1e40af&quot; stroke-width=&quot;3&quot; width=&quot;12&quot; height=&quot;12&quot;><polyline points=&quot;20 6 9 17 4 12&quot;/></svg>\'; } else { cb.innerHTML = \'\'; }">' +
+                            '<div class="cr-decl-check-item" onclick="var cb = this.querySelector(\'.cr-decl-checkbox\'); cb.classList.toggle(\'checked\'); if (cb.classList.contains(\'checked\')) { cb.innerHTML = \'<svg viewBox=&quot;0 0 24&quot; fill=&quot;none&quot; stroke=&quot;#1e40af&quot; stroke-width=&quot;3&quot; width=&quot;12&quot; height=&quot;12&quot;><polyline points=&quot;20 6 9 17 4 12&quot;/></svg>\'; } else { cb.innerHTML = \'\'; }">' +
                                 '<span class="cr-decl-checkbox ' + (app.terms_accepted ? 'checked' : '') + '">' +
                                     (app.terms_accepted ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
                                 '</span>' +
@@ -811,6 +1005,24 @@
                 }
             })() +
             '</div>';
+
+        // Bind Section 6 NIC buttons
+        modalContent.querySelectorAll('.btn-open-nic').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var role = btn.dataset.role;
+                var p = btn.dataset.path;
+                var targetNominee = role === 'PRESIDENT' ? president : (role === 'SECRETARY' ? secretary : treasurer);
+                openNicModal(targetNominee, p, p ? p.replace('_front.', '_back.') : null);
+            });
+        });
+
+        // Bind Section 6 Activity Photos View All
+        var btnActivityAll = document.getElementById('btnViewAllActivityPhotos');
+        if (btnActivityAll) {
+            btnActivityAll.addEventListener('click', function () {
+                openActivityGallery(photos, 0);
+            });
+        }
 
         if (app.status === 'Pending') {
             var selectEl = document.getElementById('crReviewResultSelect');
