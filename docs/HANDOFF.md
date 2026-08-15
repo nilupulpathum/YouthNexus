@@ -9,49 +9,68 @@ This is not a permanent log of every conversation. The current handoff describes
 ## Current Handoff
 
 ### Task
-`[feature/task name]`
+Club Registration & Approval — Full Lifecycle, Stat Views, Modal Refinements & Badge Sync
 
 ### Working Branch
-`[branch name]`
+`feat-club-registration-approval`
 
 ### Objective
-`[what the task is trying to achieve]`
+Complete the divisional coordinator club registration approval interface, including full 3-way stat filtering (Pending, Approved, Rejected), robust modal review, confirmation flows, and live pending queue indicators.
 
 ### Current Status
-`[Not Started / In Progress / Implemented / Tested / Verified / Blocked / Complete]`
+Complete on feature branch — ready for integration review.
 
 ### Confirmed Decisions
-- `[decision]`
+- `#crGrid` wrapper must always exist in the DOM so client-side JavaScript can dynamically render card states even when pending application counts start at 0.
+- Approved and Rejected applications render read-only review summaries with reviewer names, decision dates, and rejection remarks (where applicable).
+- Topbar notification bell and sidebar nav badge reflect live pending application counts, automatically hiding when the count is 0.
+- The sidebar navigation badge is styled as a 22px circle with a white fill, 2px orange outline, and bold orange text.
+- Rejection remarks are saved in `ClubApplication.rejection_remarks` (not `remarks`).
+- Confirmation dialogs (`confirm()`) are prompted before executing Approve and Reject actions.
+- Review modals can be dismissed with the Escape key or by clicking the outer backdrop.
 
 ### Files Created
-- `[file]`
+- None (built on existing architecture)
 
 ### Files Modified
-- `[file]`
+- `app/views/clubregistration/index.view.php`
+- `app/models/ClubApplicationModel.php`
+- `app/controllers/ClubRegistration.php`
+- `public/assets/js/clubregistration.js`
+- `public/assets/css/clubregistration.css`
+- `public/assets/css/dashboard.css`
 
 ### Database Changes
-- `[change or None]`
+- None (utilizes existing `ClubApplication`, `ExecutiveNominee`, `ClubAsset`, and `User` schema)
 
 ### Important Implementation Details
-- `[detail]`
+- `findApprovedByDivision()` and `findRejectedByDivision()` join the `User` table as `reviewer` to supply `reviewed_by_name`.
+- `filterCards()` handles dynamic card filtering with empty search state `#crNoFilterMatch`.
+- Date formatting (`formatDOB`) handles ISO dates, space-separated datetime strings, and dash-separated date strings robustly.
 
 ### Testing Performed
-- `[test]`
+- Tested 3-way stat card switching between Pending, Approved, and Rejected views.
+- Verified rendering of approved applications when pending count is 0.
+- Verified live decrement and auto-hiding of notification bell and sidebar nav badges.
+- Verified approval and rejection flows with modal submission and confirmation prompts.
+- PHP linting on all modified controller, model, and view files (0 syntax errors).
 
 ### Known Issues
-- `[issue]`
+- `ISSUE-006`: `App.php` routing fix remains a local patch on `feat-club-registration-approval` requiring merge into `feat-signin`.
+- `ISSUE-007`: Model filename collisions between club registration branches require real merge review.
+- `ISSUE-013`: Centralized notification system architecture recommended for a dedicated feature branch.
 
 ### Blockers
-- `[blocker]`
+- None for this feature branch.
 
 ### Assumptions
-- `[assumption]`
+- Global notification system will be implemented on a dedicated branch rather than fragmented across feature branches.
 
 ### Context Updates Recommended
-- `[recommended update]`
+- Keep `docs/CURRENT_STATE.md` and `docs/OPEN_ISSUES.md` up to date with branch status.
 
 ### Next Action
-`[specific next action]`
+Submit pull request / merge review against `feat-signin` or `dev`.
 
 ## Handoff Rules
 A handoff must distinguish:
