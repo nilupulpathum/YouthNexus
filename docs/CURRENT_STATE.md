@@ -77,22 +77,24 @@ The Club Registration & Approval feature is functionally complete on the
 
 Current implementation includes:
 
-- Club application list
-- Application search
-- Application filters
-- Pending applications view
-- Approved applications view
-- Rejected applications view
-- Full seven-section application review modal
-- Figma-aligned review modal
-- Approve flow
-- Reject flow
+- Club application list with persistent DOM grid container
+- Application text search and multi-criteria filter panel
+- 3-way stat cards: Pending, Approved, and Rejected application views
+- Dynamic feedback message on empty filter matches (`#crNoFilterMatch`)
+- Topbar notification bell linked to live pending count with auto-hide at 0
+- Sidebar navigation badge styled as a 22px circle (white fill, 2px orange border, bold orange text), auto-hiding at 0
+- Full seven-section application review modal (interactive for Pending, read-only for Approved/Rejected)
+- Figma-aligned design and color palette (`#1e40af` sidebar and modal headers)
+- Automatic reviewer name and decision timestamp tracking
+- Rejection remarks logging (`ClubApplication.rejection_remarks`)
+- Approve flow with executive credential generation and email dispatch
+- Reject flow with proposer notification
 - NIC-collision account linking
-- Confirm-before-submit dialogs
-- Escape-to-close modal behavior
+- Native confirmation dialogs (`confirm()`) before executing decisions
+- Escape-to-close and backdrop-click modal dismiss behaviors
+- Robust datetime formatting for all date fields
 
-The feature is currently under a pull request against
-`feat-signin` and has not yet been merged.
+The feature is currently on `feat-club-registration-approval` and ready for integration review.
 
 Therefore, the feature should be considered:
 

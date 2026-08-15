@@ -302,3 +302,24 @@ message, or chat message.
 
 The credential should be considered compromised until rotated/revoked.
 
+### ISSUE-013 — Centralized Notification System Architecture
+
+**Category:** Architecture / Cross-Cutting Feature  
+**Priority:** Medium  
+**Status:** Open / Recommended
+
+The system requires an integrated notification mechanism across multiple modules (Club Registration, Event Approvals, Budget Requests, Announcements).
+
+Currently, feature branches use localized pending queue indicators (such as the topbar bell and sidebar nav badge in Club Registration & Approval).
+
+**Impact:**
+Building ad-hoc notification logic independently in each feature branch will cause schema duplication, inconsistent APIs, and merge conflicts.
+
+**Recommended action:**
+1. Implement the notification system on a dedicated feature branch (`feat-notifications`).
+2. Create a centralized `Notification` table (`notification_id`, `user_id`, `type`, `title`, `message`, `link_url`, `is_read`, `created_at`).
+3. Create a shared `NotificationModel` and `/notifications` controller with standard unread/read endpoints.
+4. Integrate a global dropdown panel into the shared `dashboard.css` topbar component.
+5. Merge into `dev` / `main` so all other feature branches can emit notifications uniformly.
+
+
