@@ -20,13 +20,13 @@ SET @damik_id = (SELECT user_id FROM User WHERE username = 'damikrajithuru');
 INSERT INTO ClubApplication (proposer_user_id, club_name, description, category, date_establishment, no_of_members,
                               proposed_division_id, location_type, street_address, city, state_province,
                               bank_name, bank_branch, account_holder, account_number, bank_confirmed,
-                              constitution_path, venue_proof_path, nic_president_path,
+                              constitution_path, venue_proof_path, nic_president_path, nic_secretary_path, nic_treasurer_path,
                               info_accuracy, terms_accepted, digital_signature, status, submitted_at)
 VALUES (@damik_id, 'Athurugiriya Chess Club', 'To cultivate strategic thinking and community engagement through chess.',
         'Sports & Recreation', '2026-01-15', 15,
         1, 'Community Hall', 'Athurugiriya Community Hall', 'Athurugiriya', 'Western',
         'Bank of Ceylon', 'Athurugiriya', 'Athurugiriya Chess Club', '****4821', TRUE,
-        '/uploads/app1/constitution.pdf', '/uploads/app1/venue_proof.pdf', '/uploads/app1/nic_president.jpg',
+        '/uploads/app1/constitution.pdf', '/uploads/app1/venue_proof.pdf', '/uploads/app1/nic_president.jpg', '/uploads/app1/nic_secretary.jpg', '/uploads/app1/nic_treasurer.jpg',
         TRUE, TRUE, 'Kasun Perera', 'Pending', NOW());
 SET @app1 = LAST_INSERT_ID();
 INSERT INTO ExecutiveNominee (application_id, role_type, name, email, NIC, phone_number) VALUES
@@ -67,13 +67,13 @@ SET @tharindu_id = (SELECT user_id FROM User WHERE username = 'tharindu.b');
 INSERT INTO ClubApplication (proposer_user_id, club_name, description, category, date_establishment, no_of_members,
                               proposed_division_id, location_type, street_address, city, state_province,
                               bank_name, bank_branch, account_holder, account_number, bank_confirmed,
-                              constitution_path, venue_proof_path, nic_president_path,
+                              constitution_path, venue_proof_path, nic_president_path, nic_secretary_path, nic_treasurer_path,
                               info_accuracy, terms_accepted, digital_signature, status, submitted_at)
 VALUES (@tharindu_id, 'Malabe Robotics Circle', 'To introduce robotics and STEM skills to Malabe youth.',
         'Science & Technology', '2026-02-01', 18,
         1, 'Community Wing', 'SLIIT Community Wing', 'Malabe', 'Western',
         'Sampath Bank', 'Malabe', 'Malabe Robotics Circle', '****9012', TRUE,
-        '/uploads/app3/constitution.pdf', '/uploads/app3/venue_proof.pdf', '/uploads/app3/nic_president.jpg',
+        '/uploads/app3/constitution.pdf', '/uploads/app3/venue_proof.pdf', '/uploads/app3/nic_president.jpg', '/uploads/app3/nic_secretary.jpg', '/uploads/app3/nic_treasurer.jpg',
         TRUE, TRUE, 'Tharindu Bandara', 'Pending', NOW());
 SET @app3 = LAST_INSERT_ID();
 INSERT INTO ExecutiveNominee (application_id, role_type, name, email, NIC, phone_number) VALUES
