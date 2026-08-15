@@ -95,7 +95,7 @@
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
                     </div>
                     <div class="cr-stat-value"><?= (int)$counts['Approved'] ?></div>
-                    <div class="cr-stat-label">Approved This Term</div>
+                    <div class="cr-stat-label">Approved Applications</div>
                 </button>
             </div>
 
