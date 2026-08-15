@@ -97,6 +97,13 @@
                     <div class="cr-stat-value"><?= (int)$counts['Approved'] ?></div>
                     <div class="cr-stat-label">Approved Applications</div>
                 </button>
+                <button type="button" class="cr-stat-card" data-filter="Rejected" id="statRejected">
+                    <div class="cr-stat-icon rejected">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </div>
+                    <div class="cr-stat-value"><?= (int)$counts['Rejected'] ?></div>
+                    <div class="cr-stat-label">Rejected Applications</div>
+                </button>
             </div>
 
             <!-- Search + filter bar -->
