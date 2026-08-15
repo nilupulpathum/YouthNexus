@@ -34,6 +34,23 @@ class ClubApplicationModel extends Model {
         );
     }
 
+    /**
+     * Applications rejected in the coordinator's division,
+     * most recently reviewed first — powers the Rejected card grid.
+     */
+    public function findRejectedByDivision($divisionId) {
+        return $this->resultSet(
+            "SELECT a.*, CONCAT(u.first_name, ' ', u.last_name) AS proposer_name, u.email AS proposer_email, u.NIC AS proposer_nic,
+                    a.reviewed_at, a.rejection_remarks, CONCAT(reviewer.first_name, ' ', reviewer.last_name) AS reviewed_by_name
+             FROM ClubApplication a
+             JOIN User u ON u.user_id = a.proposer_user_id
+             LEFT JOIN User reviewer ON reviewer.user_id = a.reviewed_by
+             WHERE a.proposed_division_id = ? AND a.status = 'Rejected'
+             ORDER BY a.reviewed_at DESC, a.submitted_at DESC",
+            [$divisionId]
+        );
+    }
+
     /** Pending / Approved / Rejected counts for the stats bar. */
     public function countsByDivision($divisionId) {
         $row = $this->single(

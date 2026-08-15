@@ -5,6 +5,7 @@
     var searchInput    = document.getElementById('crSearchInput');
     var statPending      = document.getElementById('statPending');
     var statApproved       = document.getElementById('statApproved');
+    var statRejected       = document.getElementById('statRejected');
     var modalBackdrop         = document.getElementById('crModalBackdrop');
     var modalContent            = document.getElementById('crModalContent');
     var toast                     = document.getElementById('crToast');
@@ -35,12 +36,35 @@
         var status = filterStatus ? filterStatus.value : '';
         var docs   = filterDocs ? filterDocs.value : '';
         var cards  = grid.querySelectorAll('.cr-card');
+        var visibleCount = 0;
+
         cards.forEach(function (card) {
             var textMatch   = !query  || card.dataset.name.indexOf(query) !== -1 || (card.dataset.proposer || '').toLowerCase().indexOf(query) !== -1;
             var statusMatch = !status || card.dataset.status === status;
             var docsMatch   = !docs   || card.dataset.docstatus === docs;
-            card.style.display = (textMatch && statusMatch && docsMatch) ? '' : 'none';
+            var isVisible   = (textMatch && statusMatch && docsMatch);
+            card.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
         });
+
+        // If cards exist but none match the search/filter criteria, show feedback message
+        var noMatchEl = grid.querySelector('#crNoFilterMatch');
+        if (cards.length > 0) {
+            if (visibleCount === 0) {
+                if (!noMatchEl) {
+                    var msg = document.createElement('div');
+                    msg.id = 'crNoFilterMatch';
+                    msg.className = 'cr-empty';
+                    msg.style.gridColumn = '1 / -1';
+                    msg.innerHTML =
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+                        '<p>No applications match your search/filters.</p>';
+                    grid.appendChild(msg);
+                }
+            } else if (noMatchEl) {
+                noMatchEl.remove();
+            }
+        }
     }
 
     if (searchInput) searchInput.addEventListener('input', filterCards);
@@ -108,8 +132,47 @@
     }
 
     function setActiveStat(button) {
-        [statPending, statApproved].forEach(function (b) { if (b) b.classList.remove('is-active'); });
+        [statPending, statApproved, statRejected].forEach(function (b) { if (b) b.classList.remove('is-active'); });
         if (button) button.classList.add('is-active');
+    }
+
+    function renderRejectedGrid(apps) {
+        if (!grid) return;
+        if (!apps || apps.length === 0) {
+            grid.innerHTML =
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '<p>No rejected applications found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        var html = '';
+        apps.forEach(function (app) {
+            var dateStr = app.reviewed_at ? formatDOB(app.reviewed_at) : (app.submitted_at ? formatDOB(app.submitted_at) : '—');
+            var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
+
+            html +=
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                    '<div class="cr-card-top">' +
+                        '<div class="cr-card-icon incomplete" title="Rejected">' +
+                            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                        '</div>' +
+                        '<span class="cr-badge rejected">Rejected</span>' +
+                    '</div>' +
+                    '<div class="cr-card-date">' +
+                        'REJECTED ' + escapeHtml(dateStr) + reviewerText +
+                    '</div>' +
+                    '<div class="cr-card-name">' + escapeHtml(app.club_name) + '</div>' +
+                    '<div class="cr-card-proposer">' +
+                        'Proposer: ' + escapeHtml(app.proposer_name || '—') +
+                    '</div>' +
+                    '<div class="cr-card-footer">' +
+                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
     }
 
     if (statPending) {
@@ -142,6 +205,26 @@
         });
     }
 
+    if (statRejected) {
+        statRejected.addEventListener('click', function () {
+            setActiveStat(statRejected);
+            // Cache current pending HTML if not yet cached
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected applications…</p>';
+            fetch(ROOT_URL + '/clubregistration/rejected', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    renderRejectedGrid(data.applications || []);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected applications.</p>';
+                });
+        });
+    }
+
     // ---------------------------------------------------------------
     // Review modal
     // ---------------------------------------------------------------
@@ -157,6 +240,12 @@
 
     modalBackdrop.addEventListener('click', function (e) {
         if (e.target === modalBackdrop && mousedownTarget === modalBackdrop) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modalBackdrop.classList.contains('open')) {
             closeModal();
         }
     });
@@ -670,10 +759,10 @@
                                 '<span class="cr-field-val-bold">' + (app.reviewed_at ? formatDOB(app.reviewed_at) : '—') + '</span>' +
                             '</div>' +
                         '</div>' +
-                        (app.remarks ?
+                        (app.rejection_remarks ?
                         '<div class="cr-decision-remarks-section" style="margin-top:14px;">' +
                             '<label>REVIEW REMARKS</label>' +
-                            '<div class="cr-readonly-remarks-box">' + escapeHtml(app.remarks) + '</div>' +
+                            '<div class="cr-readonly-remarks-box">' + escapeHtml(app.rejection_remarks) + '</div>' +
                         '</div>' : '') +
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
@@ -814,6 +903,14 @@
             return;
         }
 
+        var confirmMsg = action === 'approve'
+            ? 'Approve ' + clubName + '? This will create login accounts for the executive committee and email their credentials. This cannot be undone.'
+            : 'Reject ' + clubName + '? The proposer will be notified by email with your remarks.';
+
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
         var submitBtn = document.getElementById('crConfirmSubmitBtn');
         if (submitBtn) submitBtn.disabled = true;
 
@@ -842,6 +939,17 @@
                     if (cardEl) {
                         var card = cardEl.closest('.cr-card');
                         if (card) card.remove();
+                    }
+                    if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+                        pendingGridHtml = grid.innerHTML;
+                    }
+                    var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
+                    var valRejected = statRejected ? statRejected.querySelector('.cr-stat-value') : null;
+                    if (valPending && parseInt(valPending.textContent, 10) > 0) {
+                        valPending.textContent = parseInt(valPending.textContent, 10) - 1;
+                    }
+                    if (valRejected) {
+                        valRejected.textContent = parseInt(valRejected.textContent, 10) + 1;
                     }
                     showToast('Application rejected. The proposer has been notified.');
                 }

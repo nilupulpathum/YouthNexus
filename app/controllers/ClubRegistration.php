@@ -91,6 +91,24 @@ class ClubRegistration extends Controller {
     }
 
     // ---------------------------------------------------------------
+    // REJECTED — list of rejected applications as JSON (AJAX)
+    // ---------------------------------------------------------------
+    public function rejected() {
+        $this->requireCoordinator();
+
+        $applicationModel = $this->model('ClubApplicationModel');
+        $divisionId        = $_SESSION['division_id'] ?? null;
+
+        $applications = $divisionId ? $applicationModel->findRejectedByDivision($divisionId) : [];
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'applications' => $applications,
+        ]);
+        exit();
+    }
+
+    // ---------------------------------------------------------------
     // APPROVE — creates the Club, promotes nominees to User accounts,
     // emails credentials (or a role-assigned notice for linked accounts).
     // ---------------------------------------------------------------
