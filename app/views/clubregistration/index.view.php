@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title) ?></title>
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistration.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistration.css?v=<?= time() ?>">
 </head>
 <body class="dashboard">
 <div class="db-app">
@@ -211,10 +214,24 @@
     </div>
 </div>
 
+<!-- ============ Dual-Sided NIC Verification Modal ============ -->
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crNicModalBackdrop">
+    <div class="cr-modal cr-nic-modal" id="crNicModalContent">
+        <!-- filled dynamically -->
+    </div>
+</div>
+
+<!-- ============ Media Gallery / Lightbox Modal ============ -->
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crGalleryModalBackdrop">
+    <div class="cr-modal cr-gallery-modal" id="crGalleryModalContent">
+        <!-- filled dynamically -->
+    </div>
+</div>
+
 <div class="cr-toast" id="crToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
 <script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
-<script src="<?= ROOT ?>/assets/js/clubregistration.js"></script>
+<script src="<?= ROOT ?>/assets/js/clubregistration.js?v=<?= time() ?>"></script>
 </body>
 </html>
