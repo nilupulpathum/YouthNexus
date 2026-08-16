@@ -32,11 +32,11 @@ class ClubModel extends Model {
      * @return int  the new club_id
      */
     public function createFromApplication($application, $clubCode) {
-        $this->query(
-            "INSERT INTO Club (club_name, description, division_id, registration_date, status, no_of_members, club_code)
-             VALUES (?, ?, ?, NOW(), 'Active', ?, ?)",
-            [$application->club_name, $application->description, $application->proposed_division_id, $application->no_of_members, $clubCode]
-        );
-        return (int)Database::getInstance()->getConnection()->lastInsertId();
+    $this->query(
+        "INSERT INTO Club (club_name, description, division_id, registration_date, status, no_of_members, club_code, source_application_id)
+         VALUES (?, ?, ?, NOW(), 'Active', ?, ?, ?)",
+        [$application->club_name, $application->description, $application->proposed_division_id, $application->no_of_members, $clubCode, $application->application_id]
+    );
+    return (int)Database::getInstance()->getConnection()->lastInsertId();
     }
 }
