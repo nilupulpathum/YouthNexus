@@ -31,9 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLocation      = document.getElementById('mchModalLocation');
     const modalEstDate       = document.getElementById('mchModalEstDate');
     const modalActiveMembers = document.getElementById('mchModalActiveMembers');
-    const modalEventScore    = document.getElementById('mchModalEventScore');
-    const modalFinanceScore  = document.getElementById('mchModalFinanceScore');
-    const modalAttendanceScore = document.getElementById('mchModalAttendanceScore');
+    const modalExecList      = document.getElementById('mchModalExecList');
     const modalOverallScore  = document.getElementById('mchModalOverallScore');
     const openFlagModalBtn   = document.getElementById('mchOpenFlagModalBtn');
     const editDetailsBtn     = document.getElementById('mchEditDetailsBtn');
@@ -67,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toastEl.classList.add('show');
         setTimeout(() => {
             toastEl.classList.remove('show');
-        }, 3200);
+        }, 3600);
     }
 
     /**
@@ -80,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let visibleCount = 0;
 
         cards.forEach(card => {
-            const clubName  = (card.dataset.name || '').toLowerCase();
-            const clubCode  = (card.dataset.code || '').toLowerCase();
+            const clubName   = (card.dataset.name || '').toLowerCase();
+            const clubCode   = (card.dataset.code || '').toLowerCase();
             const cardStatus = card.dataset.status || '';
 
             const textMatch   = !query || clubName.includes(query) || clubCode.includes(query);
@@ -244,6 +242,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // MODALS LOGIC
     // =========================================================================
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function openDetailModal(card) {
         if (!detailModal) return;
 
@@ -252,11 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const status   = card.dataset.status || 'Green';
         const score    = parseFloat(card.dataset.score) || 0;
         const members  = card.dataset.members || '0';
-        const desc     = card.dataset.desc || 'Empowering local youth through community service and skill development.';
+        const desc     = card.dataset.desc || 'No description provided.';
         const division = card.dataset.division || 'Colombo';
-        const estDate  = card.dataset.date || 'March 2021';
+        const estDate  = card.dataset.date || 'Not available';
 
-        currentClubData = { name, code, status, score, members, division, estDate };
+        let committee = [];
+        try {
+            committee = JSON.parse(card.dataset.committee || '[]');
+        } catch (e) {
+            committee = [];
+        }
+
+        currentClubData = { name, code, status, score, members, division, estDate, committee };
 
         if (modalTitle) modalTitle.textContent = name;
         if (modalCode) modalCode.textContent = code;
@@ -274,15 +289,34 @@ document.addEventListener('DOMContentLoaded', () => {
             modalStatusPill.textContent = label;
         }
 
-        // Proportional component scores
-        const eventScore = Math.round(score * 0.35 * 30 / 35);
-        const financeScore = Math.round(score * 0.35 * 30 / 35);
-        const attendanceScore = Math.max(0, Math.round(score - eventScore - financeScore));
+        // Issue #5 Fixed: Render real Executive Committee dynamically
+        if (modalExecList) {
+            if (Array.isArray(committee) && committee.length > 0) {
+                let html = '';
+                committee.forEach(member => {
+                    const initials = member.initials || 'U';
+                    const memberName = member.name || 'Member';
+                    const roleType = member.role_type || 'Officer';
+                    html += `
+                        <div class="mch-exec-member">
+                            <div class="mch-exec-avatar">${escapeHtml(initials)}</div>
+                            <div class="mch-exec-info">
+                                <b>${escapeHtml(memberName)}</b>
+                                <span>${escapeHtml(roleType)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                modalExecList.innerHTML = html;
+            } else {
+                modalExecList.innerHTML = '<p class="mch-empty-subtext">No committee members recorded</p>';
+            }
+        }
 
-        if (modalEventScore) modalEventScore.textContent = `${Math.min(30, Math.max(0, eventScore))} / 30`;
-        if (modalFinanceScore) modalFinanceScore.textContent = `${Math.min(30, Math.max(0, financeScore))} / 30`;
-        if (modalAttendanceScore) modalAttendanceScore.textContent = `${Math.min(30, Math.max(0, attendanceScore))} / 30`;
-        if (modalOverallScore) modalOverallScore.textContent = `${Math.round(score)} / 100`;
+        // Issue #7 Fixed: Real Overall Health Score (no fake component formula)
+        if (modalOverallScore) {
+            modalOverallScore.textContent = `${Math.round(score)} / 100`;
+        }
 
         detailModal.classList.add('is-open');
     }
@@ -308,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach click listeners to cards
     cards.forEach(card => {
-        card.addEventListener('click', (e) => {
+        card.addEventListener('click', () => {
             openDetailModal(card);
         });
     });
@@ -337,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Issue #8 Fixed: Honest confirmation copy on flag submission preview
     if (flagSubmitBtn) {
         flagSubmitBtn.addEventListener('click', () => {
             const comment = (flagComment ? flagComment.value : '').trim();
@@ -346,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             closeFlagModal();
-            showToast(`Flag report submitted to NYSC Admin for ${currentClubData.name}.`);
+            showToast('This flag was not saved. The review workflow will be enabled once the Club Health Flag system is built.');
         });
     }
 
