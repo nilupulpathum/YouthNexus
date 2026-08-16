@@ -49,12 +49,14 @@ class Monitorclubhealth extends Controller {
         $clubs        = $divisionId ? $healthModel->getClubsByDivision($divisionId) : [];
         $counts       = $divisionId ? $healthModel->getHealthStatusCounts($divisionId) : ['Green' => 0, 'Yellow' => 0, 'Red' => 0, 'Total' => 0];
         $divisionName = $divisionId ? $healthModel->getDivisionName($divisionId) : 'All Divisions';
+        $committees   = $divisionId ? $healthModel->getExecutiveCommitteesByDivision($divisionId) : [];
 
         $this->view('monitorclubhealth/index', [
             'title'        => 'Monitor Club Health — YouthNexus Pulse',
             'clubs'        => $clubs,
             'counts'       => $counts,
             'divisionName' => $divisionName,
+            'committees'   => $committees,
             'csrf_token'   => $_SESSION['csrf_token'],
         ]);
     }
@@ -65,8 +67,6 @@ class Monitorclubhealth extends Controller {
      */
     public function details($id = null) {
         $this->requireCoordinator();
-        
-        // Phase 2 scope: Redirect back to the index view or show placeholder
         $this->redirect('monitorclubhealth');
     }
 }
