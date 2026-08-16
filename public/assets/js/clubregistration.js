@@ -207,9 +207,51 @@
         grid.innerHTML = html;
     }
 
+    // ---------------------------------------------------------------
+    // Sort toggle for Pending Applications (Oldest vs Newest first)
+    // ---------------------------------------------------------------
+    var sortToggleBtn = document.getElementById('crSortToggleBtn');
+    var currentSortOrder = 'asc'; // 'asc' = oldest first (default), 'desc' = newest first
+
+    function sortPendingCards(order) {
+        if (!grid) return;
+        var cards = [].slice.call(grid.querySelectorAll('.cr-card'));
+        if (cards.length === 0) return;
+
+        cards.sort(function (a, b) {
+            var timeA = parseInt(a.getAttribute('data-submitted') || '0', 10);
+            var timeB = parseInt(b.getAttribute('data-submitted') || '0', 10);
+            return order === 'asc' ? (timeA - timeB) : (timeB - timeA);
+        });
+
+        cards.forEach(function (card) {
+            grid.appendChild(card);
+        });
+
+        if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+            pendingGridHtml = grid.innerHTML;
+        }
+    }
+
+    if (sortToggleBtn) {
+        sortToggleBtn.addEventListener('click', function () {
+            if (currentSortOrder === 'asc') {
+                currentSortOrder = 'desc';
+                sortToggleBtn.textContent = 'Sort: Newest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'desc');
+            } else {
+                currentSortOrder = 'asc';
+                sortToggleBtn.textContent = 'Sort: Oldest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'asc');
+            }
+            sortPendingCards(currentSortOrder);
+        });
+    }
+
     if (statPending) {
         statPending.addEventListener('click', function () {
             setActiveStat(statPending);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'inline-flex';
             if (filterStatus) filterStatus.value = '';
             if (pendingGridHtml !== null && grid) {
                 grid.innerHTML = pendingGridHtml;
@@ -221,6 +263,7 @@
     if (statApproved) {
         statApproved.addEventListener('click', function () {
             setActiveStat(statApproved);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'none';
             if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
@@ -242,6 +285,7 @@
     if (statRejected) {
         statRejected.addEventListener('click', function () {
             setActiveStat(statRejected);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'none';
             if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
