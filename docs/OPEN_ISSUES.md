@@ -236,35 +236,40 @@ Confirm:
 
 **Category:** Database / Architecture  
 **Priority:** Medium  
-**Status:** Proposed
+**Status:** Resolved (feat-club-registration-approval only — not yet integrated)
 
-The current `Club` table does not contain a relationship back to the
-`ClubApplication` that created the club.
+The `Club` table now contains a nullable `source_application_id` foreign key
+referencing `ClubApplication(application_id)`.
 
-A proposed solution is a nullable:
+**What was done:**
 
-`Club.source_application_id`
+1. `database/youthnexus.sql` on `feat-club-registration-approval` updated to
+   include `source_application_id INT NULL` with its foreign key, matching
+   the live database.
+2. `ClubModel::createFromApplication()` on the same branch now populates
+   `source_application_id` with the approving application's ID at club
+   creation.
 
-foreign key referencing the relevant `ClubApplication`.
+**Verified:**
 
-**Reason:**
+Schema definition and model code reviewed directly against the committed
+diff on `feat-club-registration-approval`. Not yet verified via an actual
+end-to-end approval test run.
 
-Maintaining this relationship would allow the system to trace a created
-Club back to the application from which it originated.
+**Remaining work:**
 
-**Safety consideration:**
-
-The proposed change is currently considered low-risk because the relevant
-Club-writing code is limited to the current feature branch.
-
-**Required action:**
-
-Confirm the data-model decision before adding the field to the canonical
-schema.
+- Clubs approved before this fix remain `NULL` and are not backfilled.
+- This fix exists only on `feat-club-registration-approval`. Branches based
+  on `feat-signin` (including `feat-monitor-club-health`) will not have this
+  fix until it is integrated (merge or cherry-pick).
+- `feat-monitor-club-health`'s "About" section (category, location,
+  established date) depends on this fix reaching that branch before it can
+  be implemented against real data.
 
 **Important:**
 
-This is a proposed database improvement, not yet an approved schema change.
+Do not treat this as globally available until it has been integrated
+into `feat-signin` / `dev` / `main`, consistent with ISSUE-006.
 
 ### ISSUE-012 — Gmail app password committed to feat-signin
 
