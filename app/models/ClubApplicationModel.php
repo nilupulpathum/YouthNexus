@@ -12,7 +12,7 @@ class ClubApplicationModel extends Model {
              FROM ClubApplication a
              JOIN User u ON u.user_id = a.proposer_user_id
              WHERE a.proposed_division_id = ? AND a.status = 'Pending'
-             ORDER BY a.submitted_at DESC",
+             ORDER BY a.submitted_at ASC",
             [$divisionId]
         );
     }
