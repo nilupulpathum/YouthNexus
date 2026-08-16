@@ -1,7 +1,7 @@
 /* ==========================================================================
    monitorclubhealth.css — page-specific styles for Monitor Club Health
    Matches Figma design specifications, Club Registration & Approval toolbar
-   patterns, and centered circular-avatar card rhythm.
+   patterns, centered circular-avatar cards, and honest pending/empty states.
    ========================================================================== */
 
 :root {
@@ -757,6 +757,7 @@
     flex-shrink: 0;
 }
 
+/* Executive Committee dynamic list */
 .mch-exec-list {
     display: flex;
     flex-direction: column;
@@ -774,8 +775,8 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #e2e8f0;
-    color: #475569;
+    background: #eff6ff;
+    color: #1e40af;
     font-size: 11px;
     font-weight: 700;
     display: flex;
@@ -795,9 +796,17 @@
     color: #64748b;
 }
 
+.mch-empty-subtext {
+    font-size: 12.5px;
+    color: #94a3b8;
+    font-style: italic;
+    margin: 4px 0;
+}
+
+/* Performance Overview */
 .mch-perf-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 20px;
 }
@@ -806,7 +815,7 @@
     background: #f8fafc;
     border: 1px solid var(--db-border);
     border-radius: 10px;
-    padding: 14px;
+    padding: 14px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -822,15 +831,15 @@
 
 .mch-perf-card-info b {
     display: block;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--db-text-dark);
     line-height: 1;
 }
 
 .mch-perf-icon {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: #eff6ff;
     color: #2563eb;
@@ -840,98 +849,42 @@
 }
 
 .mch-perf-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
 }
 
-.mch-events-header {
+/* Pending Placeholder Container */
+.mch-pending-box {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 18px 16px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-}
-
-.mch-link-view-all {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #2563eb;
-    text-decoration: none;
-}
-
-.mch-events-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-.mch-events-table th {
-    text-align: left;
-    padding: 6px 8px;
+    gap: 12px;
     color: #64748b;
-    font-size: 10.5px;
-    font-weight: 700;
-    border-bottom: 1px solid var(--db-border);
 }
 
-.mch-events-table td {
-    padding: 8px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
-}
-
-.mch-event-name-cell b {
-    display: block;
-    font-size: 12px;
-    color: var(--db-text-dark);
-}
-
-.mch-event-name-cell span {
-    display: block;
-    font-size: 10.5px;
+.mch-pending-box svg {
+    width: 20px;
+    height: 20px;
     color: #94a3b8;
+    flex-shrink: 0;
 }
 
-.mch-event-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
+.mch-pending-box p {
+    font-size: 12.5px;
+    margin: 0;
+    color: #64748b;
+    line-height: 1.4;
 }
 
-.mch-event-badge.completed { background: #dcfce7; color: #15803d; }
-.mch-event-badge.upcoming { background: #eff6ff; color: #1e40af; }
-
+/* Health Breakdown */
 .mch-health-breakdown {
     background: #f8fafc;
     border: 1px solid var(--db-border);
     border-radius: 12px;
     padding: 18px;
-}
-
-.mch-score-breakdown-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.mch-breakdown-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12.5px;
-    color: #475569;
-}
-
-.mch-breakdown-row b {
-    font-family: monospace;
-    font-size: 13px;
-    color: var(--db-text-dark);
-}
-
-.mch-breakdown-divider {
-    height: 1px;
-    background: var(--db-border);
-    margin: 8px 0;
 }
 
 .mch-overall-row {
@@ -945,7 +898,7 @@
 }
 
 .mch-overall-row b {
-    font-size: 18px;
+    font-size: 20px;
     color: #1e40af;
 }
 
