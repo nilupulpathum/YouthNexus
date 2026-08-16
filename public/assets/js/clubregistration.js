@@ -400,6 +400,43 @@
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
+    // ---------------------------------------------------------------
+    // Safe Image Renderer with automatic SVG placeholder fallback
+    // ---------------------------------------------------------------
+    function getFallbackSvg(type) {
+        if (type === 'nic' || type === 'id') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>';
+        }
+        if (type === 'avatar' || type === 'profile') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        }
+        if (type === 'thumb') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        if (type === 'logo') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        if (type === 'stage') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="48" height="48"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        // Default / photo
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+
+    function renderImg(src, alt, cssClass, fallbackType, extraStyle) {
+        var type = fallbackType || 'photo';
+        if (!src) {
+            return '<div class="cr-fallback-box ' + type + '">' + getFallbackSvg(type) + '</div>';
+        }
+        var fullSrc = (src.indexOf('://') === -1 && src.indexOf('data:') !== 0) ? (ROOT_URL + src) : src;
+        var clsAttr = cssClass ? (' class="' + escapeHtml(cssClass) + '"') : '';
+        var styleAttr = extraStyle ? (' style="' + escapeHtml(extraStyle) + '"') : '';
+        var svgEscaped = getFallbackSvg(type).replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+        return '<img src="' + escapeHtml(fullSrc) + '" alt="' + escapeHtml(alt || '') + '"' + clsAttr + styleAttr +
+            ' onerror="this.onerror=null;this.outerHTML=\'<div class=&quot;cr-fallback-box ' + type + '&quot;>' + svgEscaped + '</div>\';">';
+    }
+
     // ---------- Dual-Sided NIC Modal ----------
     function openNicModal(nominee, frontPath, backPath) {
         if (!nicModalBackdrop || !nicModalContent) return;
@@ -431,7 +468,7 @@
                             '<span class="cr-nic-side-tag">FRONT SIDE</span>' +
                         '</div>' +
                         '<div class="cr-nic-img-container">' +
-                            '<img src="' + escapeHtml(ROOT_URL + front) + '" alt="NIC Front">' +
+                            renderImg(front, 'NIC Front', '', 'nic') +
                         '</div>' +
                     '</div>' +
                     '<div class="cr-nic-side-card">' +
@@ -439,7 +476,7 @@
                             '<span class="cr-nic-side-tag">BACK / REVERSE SIDE</span>' +
                         '</div>' +
                         '<div class="cr-nic-img-container">' +
-                            '<img src="' + escapeHtml(ROOT_URL + back) + '" alt="NIC Back">' +
+                            renderImg(back, 'NIC Back', '', 'nic') +
                         '</div>' +
                     '</div>' +
                 '</div>' +
@@ -461,7 +498,9 @@
 
         var thumbsHtml = '';
         currentGalleryItems.forEach(function (it, tIdx) {
-            thumbsHtml += '<div class="cr-gallery-thumb ' + (tIdx === currentGalleryIndex ? 'active' : '') + '" onclick="window._switchGallerySlide(' + tIdx + ')"><img src="' + escapeHtml(ROOT_URL + it.path) + '" alt="Thumbnail"></div>';
+            thumbsHtml += '<div class="cr-gallery-thumb ' + (tIdx === currentGalleryIndex ? 'active' : '') + '" onclick="window._switchGallerySlide(' + tIdx + ')">' +
+                renderImg(it.path, 'Thumbnail', '', 'thumb') +
+            '</div>';
         });
 
         galleryModalContent.innerHTML =
@@ -474,7 +513,7 @@
             '</div>' +
             '<div class="cr-nic-modal-body" style="padding: 16px;">' +
                 '<div class="cr-gallery-stage">' +
-                    '<img src="' + escapeHtml(ROOT_URL + item.path) + '" alt="' + escapeHtml(item.title || 'Image') + '">' +
+                    renderImg(item.path, item.title || 'Image', '', 'stage') +
                     (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">&#10094;</button>' : '') +
                     (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">&#10095;</button>' : '') +
                 '</div>' +
@@ -543,11 +582,6 @@
             ? '<svg class="cr-doc-type-icon pdf" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8m8 4H8m4-8H8"/></svg>'
             : '<svg class="cr-doc-type-icon img" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
 
-        var displayMeta = '1.2 MB &bull; Official Document';
-        if (title.indexOf('Venue') >= 0) {
-            displayMeta = '840 KB &bull; Official Document';
-        }
-
         return '<div class="cr-doc-big-card">' +
             '<div class="cr-doc-card-header">' +
                 '<h4>' + escapeHtml(title) + '</h4>' +
@@ -557,7 +591,6 @@
             '<div class="cr-doc-dashed-box">' +
                 iconSvg +
                 '<span class="cr-doc-filename-large">' + escapeHtml(fileName) + '</span>' +
-                '<span class="cr-doc-meta-large">' + displayMeta + '</span>' +
                 '<a href="' + escapeHtml(ROOT_URL + path) + '" target="_blank" class="cr-btn cr-btn-view-doc">VIEW DOCUMENT</a>' +
             '</div>' +
         '</div>';
@@ -567,9 +600,10 @@
         var btnHtml = path
             ? '<button type="button" class="cr-btn cr-btn-view-nic btn-open-nic" data-role="' + escapeHtml(roleLabel) + '" data-path="' + escapeHtml(path) + '">VIEW NIC</button>'
             : '<button type="button" class="cr-btn cr-btn-view-nic disabled" disabled>VIEW NIC</button>';
+
         return '<div class="cr-nic-copy-card">' +
             '<div class="cr-nic-placeholder-box">' +
-                (path ? '<img src="' + escapeHtml(ROOT_URL + path) + '" alt="NIC Preview" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">' : '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>') +
+                renderImg(path, 'NIC Preview', '', 'nic', 'width:100%;height:100%;object-fit:cover;border-radius:4px;') +
             '</div>' +
             '<div class="cr-nic-copy-footer">' +
                 '<span class="cr-nic-role-label">' + roleLabel + '</span>' +
@@ -580,7 +614,9 @@
 
     function renderAvatar(n, size) {
         if (n && n.photo_path) {
-            return '<div class="cr-avatar-circle size-' + size + '"><img src="' + escapeHtml(ROOT_URL + n.photo_path) + '" alt="' + escapeHtml(n.name) + '"></div>';
+            return '<div class="cr-avatar-circle size-' + size + '">' +
+                renderImg(n.photo_path, n.name || 'Nominee', '', 'avatar') +
+            '</div>';
         }
         return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + (n ? escapeHtml(n.name.charAt(0)) : '?') + '</div>';
     }
@@ -629,7 +665,7 @@
                         '<label class="cr-section-field-label">CLUB LOGO</label>' +
                         '<div class="cr-dashed-logo-box">' +
                             (app.club_logo_path 
-                                ? '<img src="' + escapeHtml(ROOT_URL + app.club_logo_path) + '" alt="Club Logo" class="cr-logo-preview">' +
+                                ? renderImg(app.club_logo_path, 'Club Logo', 'cr-logo-preview', 'logo') +
                                   '<span class="cr-logo-filename">' + escapeHtml(app.club_logo_path.split('/').pop()) + '</span>'
                                 : '<svg class="cr-logo-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
                                   '<span class="cr-logo-filename">No logo uploaded</span>') +
@@ -812,7 +848,7 @@
                                 if (idx === 3 && totalPhotos > 4) {
                                     var remainingCount = totalPhotos - 3;
                                     html += '<div class="cr-asset-photo-box overlay-more" onclick="window._openAssetGallery(' + idx + ')">' +
-                                                '<img src="' + escapeHtml(ROOT_URL + asset.photo_path) + '" alt="Asset Photo" class="cr-asset-photo-img">' +
+                                                renderImg(asset.photo_path, 'Asset Photo', 'cr-asset-photo-img', 'photo') +
                                                 '<div class="cr-asset-more-overlay">' +
                                                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
                                                     '<span style="font-size:15px;font-weight:900;">+' + remainingCount + '</span>' +
@@ -821,7 +857,7 @@
                                             '</div>';
                                 } else if (asset) {
                                     html += '<div class="cr-asset-photo-box" onclick="window._openAssetGallery(' + idx + ')">' +
-                                                '<img src="' + escapeHtml(ROOT_URL + asset.photo_path) + '" alt="' + escapeHtml(asset.asset_name) + '" class="cr-asset-photo-img">' +
+                                                renderImg(asset.photo_path, asset.asset_name || 'Asset Photo', 'cr-asset-photo-img', 'photo') +
                                             '</div>';
                                 } else {
                                     html += '<div class="cr-asset-photo-box empty">' +
@@ -861,15 +897,6 @@
                         '</div>' +
                         '<div class="cr-processing-title">Secure Processing</div>' +
                         '<div class="cr-processing-subtitle">Financial details are verified for disbursement purposes.</div>' +
-                        '<div class="cr-processing-checklist">' +
-                            '<div class="cr-checklist-item"><svg class="cr-check-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17l-5-5"/></svg> Cancelled Cheque</div>' +
-                            '<div class="cr-checklist-item"><svg class="cr-check-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17l-5-5"/></svg> Bank Statement (Last 3 mo.)</div>' +
-                            '<div class="cr-checklist-item"><svg class="cr-check-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17l-5-5"/></svg> Auth Signatory List</div>' +
-                        '</div>' +
-                        '<button type="button" class="cr-btn cr-btn-chat-support">' +
-                            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-                            'CHAT WITH SUPPORT' +
-                        '</button>' +
                     '</div>' +
                 '</div>' +
             '</div>' +
@@ -909,7 +936,9 @@
                                     photosStackedHtml = '<div class="cr-photos-stacked-container" onclick="window._openActivityGallery(0)" style="cursor:pointer;">';
                                     var limit = Math.min(photosCount, 3);
                                     for (var pIdx = 0; pIdx < limit; pIdx++) {
-                                        photosStackedHtml += '<div class="cr-photo-stacked-circle" style="z-index: ' + (10 - pIdx) + ';"><img src="' + escapeHtml(ROOT_URL + photos[pIdx].photo_path) + '" alt="Activity Photo"></div>';
+                                        photosStackedHtml += '<div class="cr-photo-stacked-circle" style="z-index: ' + (10 - pIdx) + ';">' +
+                                            renderImg(photos[pIdx].photo_path, 'Activity Photo', '', 'avatar') +
+                                        '</div>';
                                     }
                                     if (photosCount > 3) {
                                         photosStackedHtml += '<div class="cr-photo-stacked-circle count-more" style="z-index: 5;">+' + (photosCount - 3) + '</div>';
@@ -918,7 +947,7 @@
                                     photosStackedHtml += '<div class="cr-photos-count-label">' + photosCount + ' Photos Uploaded</div>';
                                     photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos" id="btnViewAllActivityPhotos">VIEW ALL PHOTOS</button>';
                                 } else {
-                                    photosStackedHtml = '<div class="cr-photos-empty-state">No activity photos uploaded</div>';
+                                    photosStackedHtml = '<div class="cr-photos-placeholder-text">No activity photos uploaded</div>';
                                 }
                                 return photosStackedHtml;
                             })() +
@@ -941,13 +970,13 @@
                         '</h4>' +
                         '<p class="cr-legal-subtitle">Submission of fraudulent data is a punishable offense under the Youth Development Act.</p>' +
                         '<div class="cr-declaration-checks">' +
-                            '<div class="cr-decl-check-item" onclick="var cb = this.querySelector(\'.cr-decl-checkbox\'); cb.classList.toggle(\'checked\'); if (cb.classList.contains(\'checked\')) { cb.innerHTML = \'<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#1e40af&quot; stroke-width=&quot;3&quot; width=&quot;12&quot; height=&quot;12&quot;><polyline points=&quot;20 6 9 17 4 12&quot;/></svg>\'; } else { cb.innerHTML = \'\'; }">' +
+                            '<div class="cr-decl-check-item">' +
                                 '<span class="cr-decl-checkbox ' + (app.info_accuracy ? 'checked' : '') + '">' +
                                     (app.info_accuracy ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
                                 '</span>' +
                                 '<span>I confirm all information provided is accurate to the best of my knowledge.</span>' +
                             '</div>' +
-                            '<div class="cr-decl-check-item" onclick="var cb = this.querySelector(\'.cr-decl-checkbox\'); cb.classList.toggle(\'checked\'); if (cb.classList.contains(\'checked\')) { cb.innerHTML = \'<svg viewBox=&quot;0 0 24&quot; fill=&quot;none&quot; stroke=&quot;#1e40af&quot; stroke-width=&quot;3&quot; width=&quot;12&quot; height=&quot;12&quot;><polyline points=&quot;20 6 9 17 4 12&quot;/></svg>\'; } else { cb.innerHTML = \'\'; }">' +
+                            '<div class="cr-decl-check-item">' +
                                 '<span class="cr-decl-checkbox ' + (app.terms_accepted ? 'checked' : '') + '">' +
                                     (app.terms_accepted ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
                                 '</span>' +
@@ -959,11 +988,11 @@
                         '<svg class="cr-endorsement-stamp-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
                         '<div class="cr-endorsement-label">OFFICIAL ENDORSEMENT</div>' +
                         '<div class="cr-signature-white-box">' +
-                            '<span class="cr-signature-cursive">' + escapeHtml(app.digital_signature || 'Not signed') + '</span>' +
+                            '<span class="cr-signature-cursive">' + escapeHtml(app.digital_signature || (president ? president.name : app.proposer_name)) + '</span>' +
                             '<div class="cr-signature-subtext">DIGITAL SIGNATURE OF PRESIDENT</div>' +
                         '</div>' +
                         '<div class="cr-endorsement-date-row">' +
-                            '<span class="cr-endorsement-date-label">DATE</span>' +
+                            '<span class="cr-endorsement-date-label">DATE:</span>' +
                             '<span class="cr-endorsement-date-val">' + escapeHtml(formatDOB(app.submitted_at)) + '</span>' +
                         '</div>' +
                     '</div>' +
@@ -976,7 +1005,7 @@
                     return '<div class="cr-decision-panel">' +
                         '<div class="cr-section-header">' +
                             '<span class="cr-section-icon-decision">' +
-                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#12141a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
                             '</span>' +
                             '<h3 class="cr-section-title">FINAL REVIEW DECISION</h3>' +
                         '</div>' +
@@ -1017,7 +1046,7 @@
                     return '<div class="cr-decision-panel readonly">' +
                         '<div class="cr-section-header">' +
                             '<span class="cr-section-icon-decision">' +
-                                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#12141a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
                             '</span>' +
                             '<h3 class="cr-section-title">REVIEW DECISION &amp; STATUS</h3>' +
                         '</div>' +
