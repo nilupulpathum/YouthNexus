@@ -147,7 +147,10 @@
                 </div>
             </div>
 
-            <h3 class="cr-section-heading">Applications</h3>
+            <div class="cr-section-header-row" id="crSectionHeaderRow">
+                <h3 class="cr-section-heading">Applications</h3>
+                <button type="button" class="cr-sort-toggle-btn" id="crSortToggleBtn" data-sort="asc">Sort: Oldest First ▾</button>
+            </div>
 
             <div class="cr-grid" id="crGrid">
                 <?php if (empty($applications)): ?>
@@ -163,6 +166,7 @@
                     <div class="cr-card"
                          data-name="<?= htmlspecialchars(strtolower($app->club_name)) ?>"
                          data-proposer="<?= htmlspecialchars(strtolower($app->proposer_name)) ?>"
+                         data-submitted="<?= strtotime($app->submitted_at) ?>"
                          data-status="Pending"
                          data-docstatus="<?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
                         <div class="cr-card-top">
