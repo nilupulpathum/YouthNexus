@@ -106,47 +106,52 @@
                 </div>
             </div>
 
-            <!-- Controls Bar: Search, Filter Chips, Sort, Export -->
-            <div class="mch-controls-bar">
-                <div class="mch-controls-left">
-                    <div class="mch-search-box">
-                        <svg class="mch-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input type="text" id="mchSearchInput" class="mch-search-input" placeholder="Search clubs...">
+            <!-- PART 2 — Combined Search + Filter bar (matching Club Registration) -->
+            <div class="mch-toolbar">
+                <div class="mch-search-group">
+                    <div class="mch-search-input-wrapper">
+                        <span class="mch-search-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </span>
+                        <input type="text" id="mchSearchInput" placeholder="Search clubs...">
                         <button type="button" id="mchSearchClear" class="mch-search-clear" aria-label="Clear search">&times;</button>
-                    </div>
-
-                    <div class="mch-filter-chips">
-                        <button type="button" class="mch-chip is-active" data-filter="All">
-                            All Clubs
-                        </button>
-                        <button type="button" class="mch-chip" data-filter="Healthy">
-                            <span class="mch-chip-dot green"></span> Healthy
-                        </button>
-                        <button type="button" class="mch-chip" data-filter="At Risk">
-                            <span class="mch-chip-dot yellow"></span> At Risk
-                        </button>
-                        <button type="button" class="mch-chip" data-filter="Dormant">
-                            <span class="mch-chip-dot red"></span> Dormant
-                        </button>
                     </div>
                 </div>
 
-                <div class="mch-controls-right">
-                    <select id="mchSortSelect" class="mch-sort-select">
-                        <option value="score-desc" selected>Sort: Highest Score</option>
-                        <option value="score-asc">Sort: Lowest Score</option>
-                        <option value="name-asc">Sort: Club Name (A-Z)</option>
-                        <option value="name-desc">Sort: Club Name (Z-A)</option>
-                        <option value="members-desc">Sort: Most Members</option>
-                    </select>
+                <button type="button" class="mch-filter-btn" id="mchFilterBtn" aria-expanded="false">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    Filters
+                </button>
 
-                    <button type="button" class="mch-btn-export" id="mchExportBtn" title="Export club health overview">
-                        Export
-                    </button>
+                <button type="button" class="mch-btn-export" id="mchExportBtn" title="Export club health overview">
+                    Export
+                </button>
+            </div>
+
+            <!-- Filter panel: hidden until "Filters" is clicked -->
+            <div class="mch-filter-panel" id="mchFilterPanel">
+                <div class="mch-filter-field">
+                    <label for="mchFilterStatus">Health Status</label>
+                    <select id="mchFilterStatus">
+                        <option value="">All Health Statuses</option>
+                        <option value="Green">Healthy</option>
+                        <option value="Yellow">At Risk</option>
+                        <option value="Red">Dormant</option>
+                    </select>
+                </div>
+                <div class="mch-filter-actions">
+                    <button type="button" class="mch-btn" id="mchClearFilterBtn">Clear Filter</button>
+                    <button type="button" class="mch-btn mch-btn-primary" id="mchAddFilterBtn">Add Filter</button>
                 </div>
             </div>
 
-            <!-- Club Cards Grid (4 Columns) -->
+            <!-- Section Header Row with Sort Toggle Button -->
+            <div class="mch-section-header-row" id="mchSectionHeaderRow">
+                <h3 class="mch-section-heading">Clubs</h3>
+                <button type="button" class="mch-sort-toggle-btn" id="mchSortToggleBtn" data-sort="desc">Sort: Highest Score First ▾</button>
+            </div>
+
+            <!-- PART 1 — Club Cards Grid (4 Columns, Centered Avatar Layout) -->
             <div class="mch-grid" id="mchClubGrid">
                 <?php if (empty($clubs)): ?>
                     <!-- Empty state: zero clubs in division -->
@@ -174,6 +179,16 @@
                             $membersCount = (int)($club->live_members ?? 0);
                             $membersText = $membersCount > 0 ? ($membersCount . ' active members') : 'No activity recorded';
                             $locationText = htmlspecialchars($club->division_name ?? $divisionName);
+
+                            // Circular initials avatar calculation
+                            $words = explode(' ', trim($club->club_name));
+                            $initials = '';
+                            foreach ($words as $w) {
+                                if (!empty($w) && ctype_alnum($w[0])) {
+                                    $initials .= strtoupper($w[0]);
+                                }
+                            }
+                            $clubInitials = substr($initials, 0, 2) ?: 'CL';
                         ?>
                         <div class="mch-card <?= $statusKey ?>"
                              data-id="<?= (int)$club->club_id ?>"
@@ -187,43 +202,38 @@
                              data-division="<?= htmlspecialchars($club->division_name ?? $divisionName, ENT_QUOTES) ?>"
                              data-date="<?= htmlspecialchars($club->registration_date ?? 'March 2021', ENT_QUOTES) ?>">
 
-                            <!-- Top Row: Icon + Badge -->
-                            <div class="mch-card-top">
-                                <div class="mch-card-icon-wrap">
-                                    <div class="mch-card-icon <?= $statusKey ?>">
-                                        <?php if ($statusKey === 'green'): ?>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                        <?php elseif ($statusKey === 'yellow'): ?>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                        <?php else: ?>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if ($isFlagged === '1'): ?>
-                                        <span class="mch-flag-icon-mini" title="Flagged Club">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#dc2626"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15" stroke="#dc2626" stroke-width="2"/></svg>
-                                        </span>
-                                    <?php endif; ?>
+                            <!-- 1. Circular Avatar & 2. Flagged Badge -->
+                            <div class="mch-card-avatar-wrap">
+                                <div class="mch-card-avatar <?= $statusKey ?>">
+                                    <?= htmlspecialchars($clubInitials) ?>
                                 </div>
-
-                                <span class="mch-card-badge <?= $statusKey ?>">
-                                    <?= $statusLabel ?>
-                                </span>
+                                <?php if ($isFlagged === '1'): ?>
+                                    <div class="mch-card-flag-badge" title="Flagged Club">
+                                        <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
-                            <!-- Score Row -->
+                            <!-- 3. Score Row -->
                             <div class="mch-card-score-row">
                                 <span class="mch-card-score-num <?= $statusKey ?>"><?= $formattedScore ?></span>
                                 <span class="mch-card-score-denom">/100</span>
                             </div>
 
-                            <!-- Club Info -->
-                            <div class="mch-card-info">
-                                <h3 class="mch-card-club-name"><?= htmlspecialchars($club->club_name) ?></h3>
-                                <p class="mch-card-subline"><?= $locationText ?> • <?= $membersText ?></p>
+                            <!-- 4. Status Badge -->
+                            <div class="mch-card-badge-wrap">
+                                <span class="mch-card-badge <?= $statusKey ?>">
+                                    <?= $statusLabel ?>
+                                </span>
                             </div>
 
-                            <!-- Bottom Action Button -->
+                            <!-- 5. Club Name -->
+                            <h3 class="mch-card-club-name"><?= htmlspecialchars($club->club_name) ?></h3>
+
+                            <!-- 6. Location & Member Count -->
+                            <p class="mch-card-subline"><?= $locationText ?> • <?= $membersText ?></p>
+
+                            <!-- 7. Bottom View Details Button -->
                             <div class="mch-card-bottom">
                                 <button type="button" class="mch-card-arrow-btn" title="View details for <?= htmlspecialchars($club->club_name) ?>">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -249,7 +259,7 @@
 </div>
 
 <!-- ==========================================================================
-     CLUB HEALTH DETAIL MODAL (Figma Center Panel)
+     CLUB HEALTH DETAIL MODAL
      ========================================================================== -->
 <div class="mch-modal-backdrop" id="mchDetailModal" role="dialog" aria-modal="true" aria-labelledby="mchModalTitle">
     <div class="mch-modal-card mch-detail-modal">
@@ -275,7 +285,7 @@
             <div class="mch-detail-columns">
                 <!-- Left Column: About + Executive Committee -->
                 <div>
-                    <div class="mch-section-heading">About</div>
+                    <div class="mch-section-heading-sm">About</div>
                     <p class="mch-about-text" id="mchModalDesc">
                         Empowering local youth through community service, environmental awareness, and skill development programs in the region.
                     </p>
@@ -296,7 +306,7 @@
                     </div>
 
                     <div style="margin-top: 24px;">
-                        <div class="mch-section-heading">Executive Committee</div>
+                        <div class="mch-section-heading-sm">Executive Committee</div>
                         <div class="mch-exec-list">
                             <div class="mch-exec-member">
                                 <div class="mch-exec-avatar">AR</div>
@@ -325,7 +335,7 @@
 
                 <!-- Right Column: Performance Overview + Recent Events -->
                 <div>
-                    <div class="mch-section-heading">Performance Overview</div>
+                    <div class="mch-section-heading-sm">Performance Overview</div>
                     <div class="mch-perf-grid">
                         <div class="mch-perf-card">
                             <div class="mch-perf-card-info">
@@ -349,7 +359,7 @@
                     </div>
 
                     <div class="mch-events-header">
-                        <div class="mch-section-heading" style="margin-bottom: 0;">Recent Events</div>
+                        <div class="mch-section-heading-sm" style="margin-bottom: 0;">Recent Events</div>
                         <a href="#" class="mch-link-view-all" onclick="return false;">View all</a>
                     </div>
                     <table class="mch-events-table">
@@ -390,9 +400,9 @@
                 </div>
             </div>
 
-            <!-- Health Detail Breakdown (Bottom Section) -->
+            <!-- Health Detail Breakdown -->
             <div class="mch-health-breakdown">
-                <div class="mch-section-heading">Health Detail</div>
+                <div class="mch-section-heading-sm">Health Detail</div>
                 <div class="mch-score-breakdown-list">
                     <div class="mch-breakdown-row">
                         <span>Event Score</span>
@@ -440,7 +450,7 @@
 </div>
 
 <!-- ==========================================================================
-     FLAG FOR NYSC ADMIN REVIEW MODAL (Figma Right Panel)
+     FLAG FOR NYSC ADMIN REVIEW MODAL
      ========================================================================== -->
 <div class="mch-modal-backdrop" id="mchFlagModal" role="dialog" aria-modal="true" aria-labelledby="mchFlagModalTitle">
     <div class="mch-modal-card mch-flag-modal">
