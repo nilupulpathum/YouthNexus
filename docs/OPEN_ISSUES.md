@@ -323,3 +323,84 @@ Building ad-hoc notification logic independently in each feature branch will cau
 5. Merge into `dev` / `main` so all other feature branches can emit notifications uniformly.
 
 
+### ISSUE-013 — Development-only authentication helpers must remain excluded
+
+**Category:** Security / Development Process  
+**Priority:** High  
+**Status:** Open
+
+A local session-forging development login script was accidentally committed
+during Club Registration & Approval development and was subsequently
+removed.
+
+The script was intended only for local testing without the real 2FA login
+flow.
+
+**Impact:**
+
+Development-only authentication helpers can create serious security risks
+if committed to the repository or deployed accidentally.
+
+**Required action:**
+
+For future features:
+
+1. Development-only login/session helpers must remain local.
+2. `.gitignore` coverage must be verified before committing.
+3. `git status` and the staged diff must be reviewed before every commit.
+4. No development helper may bypass production authentication in committed
+   application code.
+5. Any accidentally committed authentication bypass must be removed
+   immediately and the repository history/exposure reviewed.
+
+**Important:**
+
+This issue does NOT mean the removed development script is currently part
+of the feature. It records the development-process lesson so the same
+mistake is not repeated in future branches.
+
+### ISSUE-014 — Prevent fabricated UI data when database support is absent
+
+**Category:** Product / Data Integrity / Development Process  
+**Priority:** High  
+**Status:** Open
+
+During Club Registration & Approval development, several UI elements were
+found to display realistic-looking values that were not actually backed by
+the database or confirmed requirements.
+
+Examples included:
+
+- Placeholder registration numbers presented as real values
+- Fake credential-delivery counts
+- Fake bank-document verification information
+- Fake document file sizes
+- Fake document upload dates
+
+All identified instances were removed.
+
+**Impact:**
+
+Fabricated values can make a UI appear functionally complete while
+misrepresenting the actual system state.
+
+This is particularly dangerous for administrative screens where users may
+make decisions based on displayed information.
+
+**Required action:**
+
+When implementing future screens:
+
+1. Every displayed dynamic value must have a confirmed data source.
+2. Developers must inspect the actual database/schema before introducing
+   fields.
+3. Figma-only fields must not automatically become database-backed fields.
+4. AI-generated placeholder data must not be presented as real data.
+5. If a required value is unavailable, either omit it or clearly indicate
+   that it is not provided.
+6. Review completed screens specifically for fabricated or hardcoded
+   business data.
+
+**Established rule:**
+
+UI completeness must never take priority over data correctness.
