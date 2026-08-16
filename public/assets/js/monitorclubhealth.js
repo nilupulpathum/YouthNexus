@@ -1,6 +1,6 @@
 /**
  * monitorclubhealth.js
- * Client-side search, filtering, sorting, and modal interactivity for Monitor Club Health
+ * Client-side search, collapsible filter panel, sort toggle, and modal interactivity for Monitor Club Health
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,9 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput        = document.getElementById('mchSearchInput');
     const topSearchInput     = document.getElementById('mchTopSearch');
     const searchClearBtn     = document.getElementById('mchSearchClear');
-    const filterChips        = document.querySelectorAll('.mch-chip');
+    const filterBtn          = document.getElementById('mchFilterBtn');
+    const filterPanel        = document.getElementById('mchFilterPanel');
+    const filterStatus       = document.getElementById('mchFilterStatus');
+    const addFilterBtn       = document.getElementById('mchAddFilterBtn');
+    const clearFilterBtn     = document.getElementById('mchClearFilterBtn');
+    const sortToggleBtn      = document.getElementById('mchSortToggleBtn');
     const statCards          = document.querySelectorAll('.mch-stat-card');
-    const sortSelect         = document.getElementById('mchSortSelect');
     const gridContainer      = document.getElementById('mchClubGrid');
     const noFilterMatch      = document.getElementById('mchNoFilterMatch');
     const resetFilterBtn     = document.getElementById('mchResetFilters');
@@ -47,9 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!gridContainer) return;
 
-    let currentFilter = 'All';
-    let currentSearch = '';
-    let currentSort   = 'score-desc';
+    let currentSortOrder = 'desc'; // 'desc' = Highest Score First, 'asc' = Lowest Score First
     let currentClubData = null;
 
     // Get all initial card elements
@@ -69,72 +71,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Filter and Sort cards
+     * Filter cards based on search query and health status filter
      */
-    function applyFiltersAndSort() {
+    function filterCards() {
+        if (!gridContainer) return;
+        const query  = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const status = filterStatus ? filterStatus.value : '';
         let visibleCount = 0;
-        const searchTerms = currentSearch.toLowerCase().trim();
 
-        // 1. Filter
         cards.forEach(card => {
-            const clubName   = (card.dataset.name || '').toLowerCase();
-            const clubCode   = (card.dataset.code || '').toLowerCase();
-            const status     = card.dataset.status || '';
-            const isFlagged  = card.dataset.flagged === '1';
+            const clubName  = (card.dataset.name || '').toLowerCase();
+            const clubCode  = (card.dataset.code || '').toLowerCase();
+            const cardStatus = card.dataset.status || '';
 
-            // Check Search
-            const matchesSearch = !searchTerms || clubName.includes(searchTerms) || clubCode.includes(searchTerms);
+            const textMatch   = !query || clubName.includes(query) || clubCode.includes(query);
+            const statusMatch = !status || cardStatus === status;
 
-            // Check Status Filter
-            let matchesFilter = false;
-            if (currentFilter === 'All') {
-                matchesFilter = true;
-            } else if (currentFilter === 'Healthy' && status === 'Green') {
-                matchesFilter = true;
-            } else if (currentFilter === 'At Risk' && status === 'Yellow') {
-                matchesFilter = true;
-            } else if (currentFilter === 'Dormant' && status === 'Red') {
-                matchesFilter = true;
-            }
-
-            if (matchesSearch && matchesFilter) {
-                card.style.display = 'flex';
+            if (textMatch && statusMatch) {
+                card.style.display = '';
                 visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
 
-        // 2. Sort visible cards
-        const sortedCards = [...cards].sort((a, b) => {
-            const scoreA   = parseFloat(a.dataset.score) || 0;
-            const scoreB   = parseFloat(b.dataset.score) || 0;
-            const nameA    = (a.dataset.name || '').toLowerCase();
-            const nameB    = (b.dataset.name || '').toLowerCase();
-            const membersA = parseInt(a.dataset.members, 10) || 0;
-            const membersB = parseInt(b.dataset.members, 10) || 0;
-
-            switch (currentSort) {
-                case 'score-asc':
-                    return scoreA - scoreB;
-                case 'name-asc':
-                    return nameA.localeCompare(nameB);
-                case 'name-desc':
-                    return nameB.localeCompare(nameA);
-                case 'members-desc':
-                    return membersB - membersA;
-                case 'score-desc':
-                default:
-                    return scoreB - scoreA;
+        // Sync stat card active visual state with current status filter
+        statCards.forEach(stat => {
+            const filterVal = stat.dataset.filter;
+            const mappedStatus = filterVal === 'Healthy' ? 'Green' : (filterVal === 'At Risk' ? 'Yellow' : (filterVal === 'Dormant' ? 'Red' : ''));
+            if (status && mappedStatus === status) {
+                stat.classList.add('is-active');
+            } else {
+                stat.classList.remove('is-active');
             }
         });
 
-        // Re-append sorted cards to the DOM
-        sortedCards.forEach(card => {
-            gridContainer.appendChild(card);
-        });
+        // Toggle clear search button
+        if (searchClearBtn) {
+            searchClearBtn.style.display = query.length > 0 ? 'inline-block' : 'none';
+        }
 
-        // 3. Update empty state
+        // Empty state feedback
         if (noFilterMatch) {
             if (visibleCount === 0 && totalCount > 0) {
                 noFilterMatch.style.display = 'flex';
@@ -145,42 +122,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Set active filter chip and sync stat card active states
+     * Sort cards by overall health score
      */
-    function setActiveFilter(filterName) {
-        currentFilter = filterName;
-
-        // Update chips
-        filterChips.forEach(chip => {
-            if (chip.dataset.filter === filterName) {
-                chip.classList.add('is-active');
-            } else {
-                chip.classList.remove('is-active');
-            }
+    function sortCards(order) {
+        currentSortOrder = order;
+        const sortedCards = [...cards].sort((a, b) => {
+            const scoreA = parseFloat(a.dataset.score) || 0;
+            const scoreB = parseFloat(b.dataset.score) || 0;
+            return order === 'asc' ? scoreA - scoreB : scoreB - scoreA;
         });
 
-        // Update stat cards
-        statCards.forEach(stat => {
-            if (stat.dataset.filter === filterName) {
-                stat.classList.add('is-active');
-            } else {
-                stat.classList.remove('is-active');
-            }
+        sortedCards.forEach(card => {
+            gridContainer.appendChild(card);
         });
-
-        applyFiltersAndSort();
     }
 
     // --- Search input listener ---
     function handleSearch(val) {
-        currentSearch = val;
         if (searchInput && searchInput.value !== val) searchInput.value = val;
         if (topSearchInput && topSearchInput.value !== val) topSearchInput.value = val;
-
-        if (searchClearBtn) {
-            searchClearBtn.style.display = currentSearch.length > 0 ? 'block' : 'none';
-        }
-        applyFiltersAndSort();
+        filterCards();
     }
 
     if (searchInput) {
@@ -197,51 +158,85 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Filter chip click listener ---
-    filterChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            const filterVal = chip.dataset.filter || 'All';
-            setActiveFilter(filterVal);
+    // --- Filter panel toggle button ---
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', () => {
+            const isExpanded = filterBtn.getAttribute('aria-expanded') === 'true';
+            filterBtn.setAttribute('aria-expanded', !isExpanded);
+            filterPanel.classList.toggle('open', !isExpanded);
         });
-    });
+    }
 
-    // --- Stat card click listener ---
+    // --- Filter panel action buttons ---
+    if (addFilterBtn) {
+        addFilterBtn.addEventListener('click', () => {
+            filterCards();
+        });
+    }
+
+    if (filterStatus) {
+        filterStatus.addEventListener('change', () => {
+            filterCards();
+        });
+    }
+
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', () => {
+            if (filterStatus) filterStatus.value = '';
+            if (searchInput) searchInput.value = '';
+            if (topSearchInput) topSearchInput.value = '';
+            filterCards();
+        });
+    }
+
+    // --- Sort toggle button ---
+    if (sortToggleBtn) {
+        sortToggleBtn.addEventListener('click', () => {
+            if (currentSortOrder === 'desc') {
+                currentSortOrder = 'asc';
+                sortToggleBtn.textContent = 'Sort: Lowest Score First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'asc');
+            } else {
+                currentSortOrder = 'desc';
+                sortToggleBtn.textContent = 'Sort: Highest Score First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'desc');
+            }
+            sortCards(currentSortOrder);
+        });
+    }
+
+    // --- Stat cards click listener (bridges to Health Status filter) ---
     statCards.forEach(stat => {
         stat.addEventListener('click', () => {
             const filterVal = stat.dataset.filter;
-            if (currentFilter === filterVal) {
-                setActiveFilter('All');
-            } else {
-                setActiveFilter(filterVal);
+            const mappedStatus = filterVal === 'Healthy' ? 'Green' : (filterVal === 'At Risk' ? 'Yellow' : (filterVal === 'Dormant' ? 'Red' : ''));
+
+            if (filterStatus) {
+                if (filterStatus.value === mappedStatus) {
+                    filterStatus.value = '';
+                } else {
+                    filterStatus.value = mappedStatus;
+                }
             }
+            filterCards();
         });
     });
 
-    // --- Sort dropdown listener ---
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            applyFiltersAndSort();
-        });
-    }
-
-    // --- Reset filters button ---
+    // --- Reset filters button in empty state ---
     if (resetFilterBtn) {
         resetFilterBtn.addEventListener('click', () => {
-            handleSearch('');
-            if (sortSelect) {
-                sortSelect.value = 'score-desc';
-                currentSort = 'score-desc';
-            }
-            setActiveFilter('All');
+            if (filterStatus) filterStatus.value = '';
+            if (searchInput) searchInput.value = '';
+            if (topSearchInput) topSearchInput.value = '';
+            filterCards();
         });
     }
 
-    // --- Export button stub handler ---
+    // --- Export button handler ---
     if (exportBtn) {
         exportBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            showToast('Exporting club health metrics summary...');
+            showToast('Exporting club health overview...');
         });
     }
 
@@ -252,14 +247,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function openDetailModal(card) {
         if (!detailModal) return;
 
-        const name    = card.dataset.name || 'Club';
-        const code    = card.dataset.code || 'CLB-000000';
-        const status  = card.dataset.status || 'Green';
-        const score   = parseFloat(card.dataset.score) || 0;
-        const members = card.dataset.members || '0';
-        const desc    = card.dataset.desc || 'Empowering local youth through community service and skill development.';
+        const name     = card.dataset.name || 'Club';
+        const code     = card.dataset.code || 'CLB-000000';
+        const status   = card.dataset.status || 'Green';
+        const score    = parseFloat(card.dataset.score) || 0;
+        const members  = card.dataset.members || '0';
+        const desc     = card.dataset.desc || 'Empowering local youth through community service and skill development.';
         const division = card.dataset.division || 'Colombo';
-        const estDate = card.dataset.date || 'March 2021';
+        const estDate  = card.dataset.date || 'March 2021';
 
         currentClubData = { name, code, status, score, members, division, estDate };
 
@@ -279,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalStatusPill.textContent = label;
         }
 
-        // Proportional component scores derived for detail view
+        // Proportional component scores
         const eventScore = Math.round(score * 0.35 * 30 / 35);
         const financeScore = Math.round(score * 0.35 * 30 / 35);
         const attendanceScore = Math.max(0, Math.round(score - eventScore - financeScore));
@@ -311,10 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (flagModal) flagModal.classList.remove('is-open');
     }
 
-    // Attach click listeners to cards and arrow buttons
+    // Attach click listeners to cards
     cards.forEach(card => {
         card.addEventListener('click', (e) => {
-            // Prevent if clicking on something else if needed
             openDetailModal(card);
         });
     });
@@ -376,6 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial run
-    applyFiltersAndSort();
+    // Initial sort
+    sortCards('desc');
 });
