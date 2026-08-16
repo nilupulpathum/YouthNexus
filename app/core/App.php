@@ -1,33 +1,45 @@
 <?php
 
-class App{
+class App {
 
     private $controller = 'Home';
-    private $method = 'index';
+    private $method     = 'index';
 
-    private function splitURL(){
-        $url = $_GET['url'] ?? '404';
-        $url = explode('/', $url);
-        return $url;
+    private function splitURL() {
+        $url = $_GET['url'] ?? 'home';
+        // Sanitise: strip tags, trim slashes, remove any ../ traversal
+        $url = filter_var(trim($url, '/'), FILTER_SANITIZE_URL);
+        return explode('/', $url);
     }
 
-    public function loadController(){
+    public function loadController() {
 
         $URL = $this->splitURL();
-        $filename = "../app/controllers/".ucfirst($URL[0]).".php";
-        if(file_exists($filename)){
-            require $filename;
-            $this->controller = ucfirst($URL[0]);
-        }else{
 
-            $filename = "../app/controllers/_404.php";
+        // Segment 1 → Controller filename  (e.g. 'auth' → Auth.php)
+        $controllerName = ucfirst(strtolower($URL[0]));
+        $filename = "../app/controllers/" . $controllerName . ".php";
+
+        if (file_exists($filename)) {
             require $filename;
-             $this->controller = '_404';
+            $this->controller = $controllerName;
+        } else {
+            require "../app/controllers/_404.php";
+            $this->controller = '_404';
+        }
+
+        // Segment 2 → Method  (e.g. 'signin')
+        if (isset($URL[1]) && !empty($URL[1])) {
+            $methodName = strtolower($URL[1]);
+            if (method_exists($this->controller, $methodName)) {
+                $this->method = $methodName;
+            } else {
+                // Method not found — fall through to 404 output
+                $this->method = 'index';
+            }
         }
 
         $controller = new $this->controller;
-        call_user_func_array([$controller , $this->method ],[]);
-
+        call_user_func_array([$controller, $this->method], []);
     }
-
 }
