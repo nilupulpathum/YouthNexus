@@ -76,4 +76,68 @@ class MonitorClubHealthModel extends Model {
         $row = $this->single("SELECT division_name FROM Division WHERE division_id = ? LIMIT 1", [(int)$divisionId]);
         return $row->division_name ?? 'General Division';
     }
+
+    /**
+     * Fetch executive committee members for all clubs in a division (batched for performance).
+     *
+     * @param  int   $divisionId
+     * @return array Associative array indexed by club_id containing array of committee members
+     */
+    public function getExecutiveCommitteesByDivision($divisionId) {
+        $sql = "
+            SELECT u.user_id, u.first_name, u.last_name, u.role, u.club_id, u.profile_picture_url
+            FROM User u
+            JOIN Club c ON u.club_id = c.club_id
+            WHERE c.division_id = ? AND u.role IN ('ClubPresident', 'ClubSecretary', 'ClubTreasurer')
+            ORDER BY FIELD(u.role, 'ClubPresident', 'ClubSecretary', 'ClubTreasurer'), u.user_id ASC
+        ";
+
+        $rows = $this->resultSet($sql, [(int)$divisionId]);
+        $committees = [];
+
+        foreach ($rows as $row) {
+            $roleLabel = 'Member';
+            if ($row->role === 'ClubPresident') {
+                $roleLabel = 'President';
+            } elseif ($row->role === 'ClubSecretary') {
+                $roleLabel = 'Secretary';
+            } elseif ($row->role === 'ClubTreasurer') {
+                $roleLabel = 'Treasurer';
+            }
+
+            $firstName = trim($row->first_name ?? '');
+            $lastName  = trim($row->last_name ?? '');
+            $initials  = '';
+            if (!empty($firstName)) $initials .= strtoupper($firstName[0]);
+            if (!empty($lastName))  $initials .= strtoupper($lastName[0]);
+            if (empty($initials))   $initials = 'U';
+
+            $committees[$row->club_id][] = [
+                'user_id'   => (int)$row->user_id,
+                'name'      => trim($firstName . ' ' . $lastName),
+                'role_type' => $roleLabel,
+                'photo'     => $row->profile_picture_url ?? null,
+                'initials'  => $initials,
+            ];
+        }
+
+        return $committees;
+    }
+
+    /**
+     * Fetch executive committee members for a single club.
+     *
+     * @param  int   $clubId
+     * @return array
+     */
+    public function getExecutiveCommitteeByClub($clubId) {
+        $sql = "
+            SELECT user_id, first_name, last_name, role, profile_picture_url
+            FROM User
+            WHERE club_id = ? AND role IN ('ClubPresident', 'ClubSecretary', 'ClubTreasurer')
+            ORDER BY FIELD(role, 'ClubPresident', 'ClubSecretary', 'ClubTreasurer'), user_id ASC
+        ";
+
+        return $this->resultSet($sql, [(int)$clubId]);
+    }
 }
