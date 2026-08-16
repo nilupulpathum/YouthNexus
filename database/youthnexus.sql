@@ -27,8 +27,10 @@ CREATE TABLE Club (
     overall_health_score  DECIMAL(5,2) DEFAULT 0,
     health_status        ENUM('Green', 'Yellow', 'Red') DEFAULT 'Green',
     flagged              BOOLEAN NOT NULL DEFAULT FALSE,
- 
+    source_application_id INT NULL,
+
     FOREIGN KEY (division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (source_application_id) REFERENCES ClubApplication(application_id),
     UNIQUE (club_name, division_id)
 );
 
