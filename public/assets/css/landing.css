@@ -1566,3 +1566,53 @@ ul {
     height: 320px;
   }
 }
+
+/* ========== NAVBAR PROFILE AVATAR & LOGOUT ========== */
+.navbar__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar__profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #002d72 0%, #0056b3 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 45, 114, 0.25);
+  border: 2px solid #ffffff;
+}
+
+.navbar__profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.btn--outline-danger {
+  background: transparent;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn--outline-danger:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
