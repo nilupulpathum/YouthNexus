@@ -1,16 +1,7 @@
 <?php 
 
 if($_SERVER['SERVER_NAME'] == 'localhost'){
-    // Detect if running via PHP built-in server (document root is public/)
-    // vs Apache/XAMPP (document root is htdocs/, needs full path)
-    $port = $_SERVER['SERVER_PORT'] ?? '80';
-    if(php_sapi_name() === 'cli-server'){
-        // PHP built-in server: document root is already public/
-        define('ROOT', 'http://localhost:' . $port);
-    }else{
-        // Apache/XAMPP: need full path to public directory
-        define('ROOT', 'http://localhost:' . $port . '/YouthNexus/public');
-    }
+    define('ROOT', 'http://localhost:8080/mvc/public');
 }else{
     define('ROOT', 'https://websitename.com');
 }
