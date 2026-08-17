@@ -22,12 +22,8 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // PHPMailer SMTP credentials
-if (file_exists(__DIR__ . '/config.local.php')) {
-    require_once __DIR__ . '/config.local.php';
-} else {
-    define('MAIL_HOST', 'smtp.gmail.com');
-    define('MAIL_USER', 'your-email@gmail.com');
-    define('MAIL_PASS', 'your-app-password');
-    define('MAIL_FROM', 'noreply@youthnexus.com');
-    define('MAIL_FROM_NAME', 'YouthNexus Pulse');
-}
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_USER', 'damikarajithuru@gmail.com');
+define('MAIL_PASS', 'kkidjhebomlvtsvy');
+define('MAIL_FROM', 'noreply@youthnexus.com');
+define('MAIL_FROM_NAME', 'YouthNexus Pulse');

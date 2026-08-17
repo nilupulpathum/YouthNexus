@@ -32,8 +32,18 @@
       </ul>
 
       <div class="navbar__actions" id="navbar-actions">
-        <a href="#" class="btn btn--primary" id="btn-signup">Sign Up</a>
-        <a href="#" class="btn btn--primary" id="btn-login">Login</a>
+        <?php if (!empty($isLoggedIn)): ?>
+          <div class="navbar__profile">
+            <div class="navbar__profile-avatar" title="<?= htmlspecialchars($userName ?? 'User') ?>">
+              <?= htmlspecialchars(strtoupper(substr($userName ?? 'U', 0, 1))) ?>
+            </div>
+            <span class="navbar__profile-name"><?= htmlspecialchars($userName ?? 'User') ?></span>
+            <a href="<?=ROOT?>/auth/logout" class="btn btn--outline-danger btn--sm" id="btn-logout">Logout</a>
+          </div>
+        <?php else: ?>
+          <a href="<?=ROOT?>/auth/signup" class="btn btn--primary" id="btn-signup">Sign Up</a>
+          <a href="<?=ROOT?>/auth/signin" class="btn btn--primary" id="btn-login">Login</a>
+        <?php endif; ?>
       </div>
 
       <button class="navbar__hamburger" id="navbar-hamburger" aria-label="Toggle navigation menu">
@@ -135,7 +145,7 @@
       <h2 class="ecosystem__title fade-in delay-1">Empowering Sri Lanka's Youth,<br>Connecting Communities.</h2>
       <p class="ecosystem__description fade-in delay-2">YouthNexus Pulse is the definitive digital ecosystem designed to streamline club management, foster national leadership, and amplify the voices of 150,000+ active youth members across the island.</p>
       <div class="ecosystem__cta fade-in delay-3">
-        <a href="#" class="btn btn--primary btn--large" id="btn-create-club">
+        <a href="<?= !empty($isLoggedIn) ? ROOT . '/registration' : ROOT . '/auth/signin' ?>" class="btn btn--primary btn--large" id="btn-create-club">
           Create Club
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -413,9 +423,9 @@
           <div class="footer__links-col">
             <p class="footer__links-heading">LEGAL</p>
             <ul class="footer__links-list">
-              <li><a href="#" class="footer__link">Privacy Policy</a></li>
-              <li><a href="#" class="footer__link">Terms of Service</a></li>
-              <li><a href="#" class="footer__link">Guidelines</a></li>
+              <li><a href="<?= ROOT ?>/privacy" class="footer__link">Privacy Policy</a></li>
+              <li><a href="<?= ROOT ?>/terms" class="footer__link">Terms of Service</a></li>
+              <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=governance@youthnexus.gov.lk" target="_blank" class="footer__link">Contact Support</a></li>
             </ul>
           </div>
         </div>

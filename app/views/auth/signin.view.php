@@ -48,7 +48,7 @@
       </ul>
 
       <figure class="event-card">
-        <img src="<?= ROOT ?>/assets/images/img1.jpg" alt="Youth conference" />
+        <img src="<?= ROOT ?>/assets/images/conference.png" alt="Youth conference" />
         <figcaption>National Youth Conference 2025 · Colombo</figcaption>
       </figure>
     </aside>
@@ -66,7 +66,6 @@
         <?php endif; ?>
 
         <form method="POST" action="<?= ROOT ?>/auth/signin">
-          <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
           <label class="field-label" for="email">Email</label>
           <div class="input">
             <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -115,9 +114,9 @@
           <p class="signup">New to YouthNexus Pulse? <a href="<?= ROOT ?>/auth/signup">Sign Up</a></p>
 
           <nav class="footer-links">
-            <a href="#">PRIVACY POLICY</a>
-            <a href="#">TERMS OF SERVICE</a>
-            <a href="#">HELP</a>
+            <a href="<?= ROOT ?>/privacy">PRIVACY POLICY</a>
+            <a href="<?= ROOT ?>/terms">TERMS OF SERVICE</a>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=governance@youthnexus.gov.lk" target="_blank">HELP</a>
           </nav>
         </form>
       </div>
