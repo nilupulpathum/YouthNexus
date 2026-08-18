@@ -1,5 +1,10 @@
 <?php
 $dashboardRoot = defined('ROOT') ? ROOT : '';
+$sidebarDisplayName = trim((string) ($userName ?? 'YouthNexus User')) ?: 'YouthNexus User';
+$sidebarInitials = function_exists('mb_substr')
+    ? strtoupper(mb_substr($sidebarDisplayName, 0, 1))
+    : strtoupper(substr($sidebarDisplayName, 0, 1));
+$sidebarRoleLabel = ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
 $activePath = trim((string) ($currentRoute ?? $_GET['url'] ?? 'home'), '/');
 $roleKey = strtolower(trim((string) $userRole));
 
@@ -18,6 +23,7 @@ $navigation = [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
         ['label' => 'Members', 'route' => 'club/members', 'href' => $dashboardRoot . '/club/members', 'icon' => 'users'],
         ['label' => 'Events', 'route' => 'club/events', 'href' => $dashboardRoot . '/club/events', 'icon' => 'calendar'],
+        ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
@@ -50,16 +56,25 @@ $navigation = [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
         ['label' => 'Pending Approvals', 'route' => 'approvals', 'href' => $dashboardRoot . '/approvals', 'icon' => 'clock'],
         ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
+        ['label' => 'Manage Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
+        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+    ],
+    'divisionalsecretary' => [
+        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Manage Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
+        ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
+        ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionaltreasurer' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Pending Approvals', 'route' => 'approvals', 'href' => $dashboardRoot . '/approvals', 'icon' => 'clock'],
-        ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
+        ['label' => 'Assets', 'route' => 'assets', 'href' => $dashboardRoot . '/assets', 'icon' => 'briefcase'],
+        ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -69,6 +84,23 @@ $navigation = [
         ['label' => 'Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+    ],
+    'zonalsecretary' => [
+        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Manage Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
+        ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
+        ['label' => 'Clubs in Zone', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
+        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+    ],
+    'zonaltreasurer' => [
+        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
+        ['label' => 'Assets', 'route' => 'assets', 'href' => $dashboardRoot . '/assets', 'icon' => 'briefcase'],
+        ['label' => 'Clubs in Zone', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
+        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'admin' => [
@@ -101,6 +133,8 @@ $roleAliases = [
     'clubtreasurer' => 'treasurer',
     'clubmember' => 'member',
     'zonal' => 'zonalcoordinator',
+    'zonalcoordinator' => 'zonalcoordinator',
+    'divisionalsecretary' => 'divisionalsecretary',
     'divisional' => 'divisionalcoordinator',
     'nysc' => 'nyscadmin',
 ];
@@ -127,7 +161,17 @@ $icons = [
     'check' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 ];
 ?>
-<aside class="dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
+<aside class="db-sidebar dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
+  <div class="db-brand">
+    <span class="db-brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="var(--db-sidebar-bg)" stroke="none"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+    </span>
+    <span class="db-brand-text">
+      <b>YouthNexus</b>
+      <span><?= htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8') ?></span>
+    </span>
+  </div>
+
   <div class="dashboard-sidebar__top">
     <div class="dashboard-sidebar__role">
       <span class="dashboard-sidebar__role-dot"></span>
@@ -138,7 +182,7 @@ $icons = [
     </button>
   </div>
 
-  <nav class="dashboard-nav">
+  <nav class="db-nav dashboard-nav" aria-label="Workspace navigation">
     <p class="dashboard-nav__label">Main menu</p>
     <ul>
       <?php foreach ($roleItems as $item):
@@ -146,8 +190,8 @@ $icons = [
         $isActive = $activePath === $itemRoute || ($itemRoute !== 'home' && str_starts_with($activePath, $itemRoute . '/'));
       ?>
         <li>
-          <a class="dashboard-nav__link<?= $isActive ? ' is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
-            <span class="dashboard-nav__icon" aria-hidden="true"><?= $icons[$item['icon']] ?? $icons['grid'] ?></span>
+          <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
+            <span class="db-nav-icon dashboard-nav__icon" aria-hidden="true"><?= $icons[$item['icon']] ?? $icons['grid'] ?></span>
             <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
           </a>
         </li>
@@ -155,12 +199,11 @@ $icons = [
     </ul>
   </nav>
 
-  <div class="dashboard-sidebar__support">
-    <div class="dashboard-sidebar__support-icon" aria-hidden="true">
-      <?= $icons['help'] ?>
-    </div>
-    <strong>Need a hand?</strong>
-    <p>Visit Help for quick guidance on your workspace.</p>
-    <a href="<?= $dashboardRoot ?>/help">Open Help <span aria-hidden="true">→</span></a>
+  <div class="db-sidebar-footer dashboard-sidebar__support">
+    <span class="db-avatar" aria-hidden="true"><?= htmlspecialchars($sidebarInitials, ENT_QUOTES, 'UTF-8') ?></span>
+    <span class="db-who">
+      <b><?= htmlspecialchars($sidebarDisplayName, ENT_QUOTES, 'UTF-8') ?></b>
+      <span><?= htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8') ?></span>
+    </span>
   </div>
 </aside>

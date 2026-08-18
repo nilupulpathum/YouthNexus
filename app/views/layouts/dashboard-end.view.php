@@ -1,8 +1,8 @@
         </div>
       </main>
-    </div>
 
-    <?php require __DIR__ . '/../partials/dashboard-footer.view.php'; ?>
+      <?php require __DIR__ . '/../partials/dashboard-footer.view.php'; ?>
+    </div>
   </div>
 
   <script src="<?= ROOT ?>/assets/js/dashboard.js" defer></script>

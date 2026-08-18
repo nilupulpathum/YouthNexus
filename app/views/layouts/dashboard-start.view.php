@@ -22,28 +22,20 @@ $notificationUrl = $notificationUrl ?? (defined('ROOT') ? ROOT . '/notifications
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#173a8f">
+  <meta name="theme-color" content="#1e40af">
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
 </head>
-<body class="dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
+<body class="dashboard dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
   <a class="dashboard-skip-link" href="#main-content">Skip to main content</a>
-  <div class="dashboard-app">
-    <?php require __DIR__ . '/../partials/dashboard-header.view.php'; ?>
 
-    <div class="dashboard-workspace">
-      <?php require __DIR__ . '/../partials/dashboard-sidebar.view.php'; ?>
-      <div class="dashboard-sidebar-scrim" data-sidebar-scrim hidden></div>
+  <div class="db-app dashboard-app">
+    <?php require __DIR__ . '/../partials/dashboard-sidebar.view.php'; ?>
+    <div class="dashboard-sidebar-scrim" data-sidebar-scrim hidden></div>
 
-      <main class="dashboard-main" id="main-content" tabindex="-1">
+    <div class="db-main dashboard-main">
+      <?php require __DIR__ . '/../partials/dashboard-header.view.php'; ?>
+
+      <main class="db-content dashboard-content" id="main-content" tabindex="-1">
         <div class="dashboard-main__inner">
-          <div class="dashboard-page-heading">
-            <div>
-              <p class="dashboard-eyebrow">YouthNexus workspace</p>
-              <h1><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></h1>
-              <?php if ($pageDescription !== ''): ?>
-                <p class="dashboard-page-description"><?= htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8') ?></p>
-              <?php endif; ?>
-            </div>
-          </div>
