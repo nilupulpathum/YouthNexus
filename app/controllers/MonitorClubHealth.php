@@ -1,6 +1,6 @@
 <?php
 
-class Clubhealth extends Controller {
+class MonitorClubHealth extends Controller {
 
     /**
      * Server-side role protection. Only logged-in users with role 'DivisionalCoordinator'
@@ -44,14 +44,14 @@ class Clubhealth extends Controller {
         }
 
         $divisionId  = $_SESSION['division_id'] ?? null;
-        $healthModel = $this->model('ClubHealthModel');
+        $healthModel = $this->model('MonitorClubHealthModel');
 
         $clubs        = $divisionId ? $healthModel->getClubsByDivision($divisionId) : [];
         $counts       = $divisionId ? $healthModel->getHealthStatusCounts($divisionId) : ['Green' => 0, 'Yellow' => 0, 'Red' => 0, 'Total' => 0];
         $divisionName = $divisionId ? $healthModel->getDivisionName($divisionId) : 'All Divisions';
         $committees   = $divisionId ? $healthModel->getExecutiveCommitteesByDivision($divisionId) : [];
 
-        $this->view('club-health/dashboard', [
+        $this->view('monitorclubhealth/monitor-club-health', [
             'title'        => 'Monitor Club Health — YouthNexus Pulse',
             'clubs'        => $clubs,
             'counts'       => $counts,
@@ -67,6 +67,6 @@ class Clubhealth extends Controller {
      */
     public function details($id = null) {
         $this->requireCoordinator();
-        $this->redirect('clubhealth');
+        $this->redirect('monitorclubhealth');
     }
 }
