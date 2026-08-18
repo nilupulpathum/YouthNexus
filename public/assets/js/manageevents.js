@@ -1,7 +1,7 @@
 /**
  * manageevents.js — Divisional Event Management frontend logic
  * Handles modal workflows, event type quick chips, real-time datetime validation,
- * and AJAX form submission.
+ * target audience toggle + club checklist, filter panel, and AJAX form submission.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDate   = endVal ? new Date(endVal) : null;
 
         let hasError = false;
-        let errorMessage = 'Event start must be after now, and end must be after start';
+        const errorMessage = 'Event start must be after now, and end must be after start';
 
         if (startDate && startDate <= now) {
             hasError = true;
@@ -152,7 +152,72 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // 4. Form Submission & AJAX Handling
+    // 4. Target Audience Toggle + Club Checklist
+    // Applies to both Create and Edit modals.
+    // -------------------------------------------------------------
+    function setupAudienceToggle(modalEl) {
+        if (!modalEl) return;
+
+        const radios    = modalEl.querySelectorAll('input[name="target_scope"]');
+        const checklist = modalEl.querySelector('.me-club-checklist');
+
+        function syncChecklistVisibility() {
+            const selected = modalEl.querySelector('input[name="target_scope"]:checked');
+            if (!checklist) return;
+            if (selected && selected.value === 'SelectedClubs') {
+                checklist.classList.remove('hidden');
+            } else {
+                checklist.classList.add('hidden');
+                // Uncheck all clubs when switching to AllInScope
+                if (selected && selected.value === 'AllInScope') {
+                    checklist.querySelectorAll('.me-club-checkbox').forEach(cb => {
+                        cb.checked = false;
+                        const row = cb.closest('.me-club-check-row');
+                        if (row) {
+                            const override = row.querySelector('.me-club-override');
+                            if (override) override.classList.add('hidden');
+                        }
+                    });
+                }
+            }
+        }
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', syncChecklistVisibility);
+        });
+
+        // Initial state
+        syncChecklistVisibility();
+
+        // Club checkbox → show/hide override input
+        if (checklist) {
+            checklist.querySelectorAll('.me-club-checkbox').forEach(cb => {
+                function toggleOverride() {
+                    const row = cb.closest('.me-club-check-row');
+                    if (!row) return;
+                    const override = row.querySelector('.me-club-override');
+                    if (!override) return;
+                    if (cb.checked) {
+                        override.classList.remove('hidden');
+                    } else {
+                        override.classList.add('hidden');
+                        const input = override.querySelector('input[type="number"]');
+                        if (input) input.value = '';
+                    }
+                }
+                cb.addEventListener('change', toggleOverride);
+                // Initialise (for edit modal pre-population)
+                toggleOverride();
+            });
+        }
+    }
+
+    // Wire up both modals
+    setupAudienceToggle(document.getElementById('createEventModal'));
+    setupAudienceToggle(document.getElementById('editEventModal'));
+
+    // -------------------------------------------------------------
+    // 5. Form Submission & AJAX Handling
     // -------------------------------------------------------------
     function setupForm(formId) {
         const form = document.getElementById(formId);
@@ -172,6 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Client-side date check
             if (!validateDateRange(form)) {
                 return;
+            }
+
+            // Client-side: require at least one club if SelectedClubs
+            const scopeSelected = form.querySelector('input[name="target_scope"]:checked');
+            if (scopeSelected && scopeSelected.value === 'SelectedClubs') {
+                const anyChecked = form.querySelector('.me-club-checkbox:checked');
+                if (!anyChecked) {
+                    const alertBox = form.querySelector('.me-validation-alert');
+                    const alertMsg = form.querySelector('.me-validation-msg');
+                    if (alertBox && alertMsg) {
+                        alertMsg.innerHTML = 'Please select at least one target club.';
+                        alertBox.classList.add('is-visible');
+                    } else {
+                        alert('Please select at least one target club.');
+                    }
+                    return;
+                }
             }
 
             const submitBtn = form.querySelector('button[type="submit"]');
@@ -231,15 +313,39 @@ document.addEventListener('DOMContentLoaded', () => {
     setupForm('editEventForm');
 
     // -------------------------------------------------------------
-    // 5. Search & Filters on List Page
+    // 6. Filter Panel Toggle (Filters Button)
     // -------------------------------------------------------------
-    const filterForm = document.getElementById('eventFilterForm');
-    if (filterForm) {
-        const autoSubmitFields = filterForm.querySelectorAll('select, input[type="date"]');
-        autoSubmitFields.forEach(field => {
-            field.addEventListener('change', () => {
-                filterForm.submit();
-            });
+    const meFilterBtn   = document.getElementById('meFilterBtn');
+    const meFilterPanel = document.getElementById('meFilterPanel');
+
+    if (meFilterBtn && meFilterPanel) {
+        meFilterBtn.addEventListener('click', () => {
+            const isOpen = meFilterPanel.classList.contains('open');
+            if (isOpen) {
+                meFilterPanel.classList.remove('open');
+                meFilterBtn.setAttribute('aria-expanded', 'false');
+            } else {
+                meFilterPanel.classList.add('open');
+                meFilterBtn.setAttribute('aria-expanded', 'true');
+            }
         });
+    }
+
+    // Two-tier audience filter: show/hide club picker
+    const audienceScopeFilter = document.getElementById('meFilterAudienceScope');
+    const clubPickerWrap      = document.getElementById('meFilterClubPickerWrap');
+
+    if (audienceScopeFilter && clubPickerWrap) {
+        function syncClubPicker() {
+            if (audienceScopeFilter.value === 'SelectedClubs') {
+                clubPickerWrap.classList.remove('hidden');
+            } else {
+                clubPickerWrap.classList.add('hidden');
+                const clubSelect = document.getElementById('meFilterTargetClub');
+                if (clubSelect) clubSelect.value = '';
+            }
+        }
+        audienceScopeFilter.addEventListener('change', syncClubPicker);
+        syncClubPicker(); // initial state
     }
 });
