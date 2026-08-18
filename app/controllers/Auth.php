@@ -41,11 +41,17 @@ class Auth extends Controller {
                     // Store temporary login state in session
                     $_SESSION['verification_code'] = $code;
                     $_SESSION['temp_login'] = [
-                        'user_id'   => $user->user_id,
-                        'user_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
-                        'username'  => $user->username ?? '',
-                        'email'     => $user->email,
-                        'user_role' => $user->role ?? 'UnassignedUser',
+                        'user_id'      => $user->user_id,
+                        'user_name'    => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                        'username'     => $user->username ?? '',
+                        'email'        => $user->email,
+                        'user_role'    => $user->role ?? 'UnassignedUser',
+                        'division_id'  => $user->division_id ?? null,
+                        'zonal_id'     => $user->zonal_id ?? null,
+                        'user_initials'=> strtoupper(
+                            substr($user->first_name ?? 'U', 0, 1) .
+                            substr($user->last_name  ?? 'U', 0, 1)
+                        ),
                     ];
 
                     // Send 2FA verification email
@@ -172,16 +178,29 @@ class Auth extends Controller {
                     $s = $_SESSION['temp_login'];
                     $userModel->updateLastLogin($s['user_id']);
 
-                    $_SESSION['user_id']   = $s['user_id'];
-                    $_SESSION['user_name'] = $s['user_name'];
-                    $_SESSION['username']  = $s['username'];
-                    $_SESSION['user_email']= $s['email'];
-                    $_SESSION['user_role'] = $s['user_role'];
+                    $_SESSION['user_id']      = $s['user_id'];
+                    $_SESSION['user_name']     = $s['user_name'];
+                    $_SESSION['username']      = $s['username'];
+                    $_SESSION['user_email']    = $s['email'];
+                    $_SESSION['user_role']     = $s['user_role'];
+                    $_SESSION['division_id']   = $s['division_id'];
+                    $_SESSION['zonal_id']      = $s['zonal_id'];
+                    $_SESSION['user_initials'] = $s['user_initials'];
 
                     unset($_SESSION['verification_code']);
                     unset($_SESSION['temp_login']);
 
-                    $this->redirect('home');
+                    // Role-based redirect after successful login
+                    switch ($s['user_role']) {
+                        case 'DivisionalCoordinator':
+                            $this->redirect('clubregistration/index');
+                            break;
+                        case 'DivisionalSecretary':
+                            $this->redirect('manageevents');
+                            break;
+                        default:
+                            $this->redirect('home');
+                    }
                 } elseif (isset($_SESSION['temp_signup'])) {
                     // 2FA for Sign Up: Create user account
                     $s = $_SESSION['temp_signup'];
