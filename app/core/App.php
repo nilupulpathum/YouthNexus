@@ -40,6 +40,12 @@ class App {
         }
 
         $controller = new $this->controller;
-        call_user_func_array([$controller, $this->method], []);
+
+        // TEMPORARY LOCAL PATCH — flagged to team, not yet fixed upstream on
+        // feat-signin. Without this, any URL segment beyond controller/method
+        // (e.g. the :id in clubregistration/review/5) is silently dropped,
+        // so every method expecting a parameter always receives null.
+        $params = array_slice($URL, 2);
+        call_user_func_array([$controller, $this->method], $params);
     }
 }
