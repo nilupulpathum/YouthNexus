@@ -25,7 +25,7 @@ if ($roleParam === 'coordinator') {
     $_SESSION['user_initials'] = $user ? strtoupper(substr($user->first_name ?? 'S', 0, 1) . substr($user->last_name ?? 'P', 0, 1)) : 'SP';
     header('Location: ' . ROOT . '/clubregistration/index');
 } else {
-    $_SESSION['user_id']       = $user ? $user->user_id : 14;
+    $_SESSION['user_id']       = $user ? $user->user_id : 19;
     $_SESSION['user_role']     = 'DivisionalSecretary';
     $_SESSION['division_id']   = $user ? $user->division_id : 1;
     $_SESSION['user_name']     = $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : 'N. Fernando';
