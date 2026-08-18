@@ -610,6 +610,7 @@
     display: flex;
     flex-direction: column;
     max-height: 90vh;
+    overflow: hidden;
     animation: meModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -624,6 +625,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .me-modal-header h3 {
@@ -652,9 +654,20 @@
     color: var(--db-text-dark);
 }
 
+/* The <form> tag inside modal must also be a flex column so body scrolls & footer pins */
+.me-modal > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
 .me-modal-body {
     padding: 24px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .me-form-grid {
@@ -772,6 +785,7 @@
     gap: 12px;
     background: #f8fafc;
     border-radius: 0 0 var(--db-radius-lg) var(--db-radius-lg);
+    flex-shrink: 0;
 }
 
 /* ---------- Status View Layout ---------- */
@@ -985,12 +999,13 @@
     border: 1px solid var(--db-border);
     border-radius: var(--db-radius);
     overflow: hidden;
-    width: fit-content;
+    width: 100%;
     margin-bottom: 10px;
 }
 
 .me-toggle-option {
     flex: 1;
+    min-width: 0;
 }
 
 .me-toggle-option input[type="radio"] {
@@ -1002,6 +1017,7 @@
 .me-toggle-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
     padding: 9px 18px;
     font-size: 13px;
@@ -1014,6 +1030,7 @@
     transition: all 0.15s ease;
     white-space: nowrap;
     user-select: none;
+    width: 100%;
 }
 
 .me-toggle-option:last-child .me-toggle-btn {
@@ -1034,9 +1051,11 @@
 .me-club-checklist {
     border: 1px solid var(--db-border);
     border-radius: var(--db-radius);
-    max-height: 260px;
+    max-height: 220px;
     overflow-y: auto;
     background: #fafbfc;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .me-club-check-row {
