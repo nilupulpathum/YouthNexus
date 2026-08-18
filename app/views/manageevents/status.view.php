@@ -50,13 +50,10 @@
     <div class="db-main">
         <header class="db-topbar">
             <div>
-                <h1>Event Details & Submission Status</h1>
+                <h1>Event Details &amp; Submission Status</h1>
                 <p>Track review progress and specifications for this event</p>
             </div>
             <div class="db-topbar-right">
-                <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary">
-                    ← Back to Manage Events
-                </a>
                 <div class="db-topbar-avatar"><?= htmlspecialchars($user_initials ?? 'NF') ?></div>
             </div>
         </header>
@@ -64,8 +61,9 @@
         <main class="db-content">
             <div class="me-status-page">
 
-                <a href="<?= ROOT ?>/manageevents" class="me-back-link">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                <!-- Back button (styled as me-btn-secondary) -->
+                <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary me-back-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                     Back to Manage Events
                 </a>
 
@@ -112,20 +110,38 @@
                             <div class="me-field-item">
                                 <span class="me-field-label">Target Audience</span>
                                 <span class="me-field-value">
-                                    <?= htmlspecialchars($event->target_club_name ?: 'Divisional Club') ?>
-                                    <?php if (!empty($event->target_club_code)): ?>
-                                        <small style="color: var(--db-text-grey);"> (<?= htmlspecialchars($event->target_club_code) ?>)</small>
+                                    <?php if ($event->target_scope === 'AllInScope'): ?>
+                                        <span class="me-target-all">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            All Clubs in Division
+                                        </span>
+                                    <?php elseif (!empty($targets)): ?>
+                                        <ul class="me-target-list">
+                                            <?php foreach ($targets as $t): ?>
+                                                <?php if (!empty($t->target_club_id)): ?>
+                                                    <li class="me-target-list-item">
+                                                        <span><?= htmlspecialchars($t->target_club_name ?? 'Club') ?></span>
+                                                        <small class="me-club-code"><?= htmlspecialchars($t->target_club_code ?? '') ?></small>
+                                                        <?php if (!empty($t->max_attendance)): ?>
+                                                            <small class="me-target-max">Max: <?= (int)$t->max_attendance ?></small>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <em style="color: var(--db-text-grey);">No clubs targeted</em>
                                     <?php endif; ?>
                                 </span>
                             </div>
 
                             <div class="me-field-item">
-                                <span class="me-field-label">Start Date & Time</span>
+                                <span class="me-field-label">Start Date &amp; Time</span>
                                 <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->start_datetime)) ?></span>
                             </div>
 
                             <div class="me-field-item">
-                                <span class="me-field-label">End Date & Time</span>
+                                <span class="me-field-label">End Date &amp; Time</span>
                                 <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->end_datetime)) ?></span>
                             </div>
 
@@ -136,7 +152,7 @@
 
                             <div class="me-field-item">
                                 <span class="me-field-label">Max Attendees</span>
-                                <span class="me-field-value"><?= !empty($event->max_attendance) ? (int)$event->max_attendance . ' attendees' : 'Unlimited / Not specified' ?></span>
+                                <span class="me-field-value"><?= !empty($event->max_attendance) ? (int)$event->max_attendance . ' attendees (event-wide)' : 'Unlimited / Not specified' ?></span>
                             </div>
 
                             <div class="me-field-item">
@@ -152,11 +168,11 @@
 
                             <div class="me-field-item">
                                 <span class="me-field-label">Created By</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? 'Secretary') ?> (<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</span>
+                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? 'Secretary') ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
                             </div>
 
                             <div class="me-field-item full">
-                                <span class="me-field-label">Description & Objectives</span>
+                                <span class="me-field-label">Description &amp; Objectives</span>
                                 <div class="me-field-value desc">
                                     <?= !empty($event->description) ? nl2br(htmlspecialchars($event->description)) : '<em>No detailed description provided.</em>' ?>
                                 </div>
@@ -164,7 +180,7 @@
                         </div>
                     </div>
 
-                    <!-- Right: Submission Status Panel (Read-only replacement for Figma approval card) -->
+                    <!-- Right: Submission Status Panel -->
                     <div class="me-submission-panel">
                         <h3 class="me-panel-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--db-sidebar-bg)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -281,30 +297,71 @@
                         </div>
                     </div>
 
-                    <div class="me-form-group">
-                        <label class="me-form-label">Select Target Audience <span class="required">*</span></label>
-                        <select name="target_club_id" class="me-form-select" required>
-                            <option value="">-- Choose Target Club --</option>
+                    <!-- Target Audience — toggle + checklist (pre-populated from existing targets) -->
+                    <div class="me-form-group me-form-full">
+                        <label class="me-form-label">Target Audience <span class="required">*</span></label>
+                        <div class="me-audience-toggle" role="group" aria-label="Target Audience">
+                            <label class="me-toggle-option">
+                                <input type="radio" name="target_scope" value="AllInScope" <?= ($event->target_scope === 'AllInScope') ? 'checked' : '' ?>>
+                                <span class="me-toggle-btn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    All Clubs
+                                </span>
+                            </label>
+                            <label class="me-toggle-option">
+                                <input type="radio" name="target_scope" value="SelectedClubs" <?= ($event->target_scope === 'SelectedClubs') ? 'checked' : '' ?>>
+                                <span class="me-toggle-btn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                    Specific Clubs
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Pre-populated club checklist -->
+                        <div class="me-club-checklist <?= ($event->target_scope === 'SelectedClubs') ? '' : 'hidden' ?>" id="editClubChecklist">
                             <?php foreach ($clubs as $club): ?>
-                                <option value="<?= (int)$club->club_id ?>" <?= ((int)$event->target_club_id === (int)$club->club_id) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($club->club_name) ?> (<?= htmlspecialchars($club->club_code) ?>)
-                                </option>
+                                <?php
+                                $isChecked      = array_key_exists((int)$club->club_id, $target_map);
+                                $overrideVal    = $target_map[(int)$club->club_id] ?? null;
+                                ?>
+                                <label class="me-club-check-row" data-club-id="<?= (int)$club->club_id ?>">
+                                    <div class="me-club-check-left">
+                                        <input type="checkbox" name="target_clubs[]" value="<?= (int)$club->club_id ?>" class="me-club-checkbox" <?= $isChecked ? 'checked' : '' ?>>
+                                        <span class="me-club-check-name">
+                                            <?= htmlspecialchars($club->club_name) ?>
+                                            <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
+                                        </span>
+                                    </div>
+                                    <div class="me-club-override <?= $isChecked ? '' : 'hidden' ?>">
+                                        <label class="me-override-label" for="edit_max_<?= (int)$club->club_id ?>">Max attendees for this club</label>
+                                        <input type="number"
+                                               name="max_attendance_club_<?= (int)$club->club_id ?>"
+                                               id="edit_max_<?= (int)$club->club_id ?>"
+                                               class="me-form-input me-override-input"
+                                               placeholder="Optional override"
+                                               min="1"
+                                               value="<?= !empty($overrideVal) ? (int)$overrideVal : '' ?>">
+                                    </div>
+                                </label>
                             <?php endforeach; ?>
-                        </select>
+                            <?php if (empty($clubs)): ?>
+                                <p class="me-club-checklist-empty">No active clubs found in your division.</p>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Max Attendees</label>
+                        <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
                         <input type="number" name="max_attendance" class="me-form-input" value="<?= !empty($event->max_attendance) ? (int)$event->max_attendance : '' ?>" min="1">
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Start Date & Time <span class="required">*</span></label>
+                        <label class="me-form-label">Start Date &amp; Time <span class="required">*</span></label>
                         <input type="datetime-local" name="start_datetime" class="me-form-input" value="<?= date('Y-m-d\TH:i', strtotime($event->start_datetime)) ?>" required>
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">End Date & Time <span class="required">*</span></label>
+                        <label class="me-form-label">End Date &amp; Time <span class="required">*</span></label>
                         <input type="datetime-local" name="end_datetime" class="me-form-input" value="<?= date('Y-m-d\TH:i', strtotime($event->end_datetime)) ?>" required>
                     </div>
 
