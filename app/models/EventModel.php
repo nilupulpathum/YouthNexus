@@ -27,7 +27,7 @@ class EventModel extends Model {
             $data['organizer_division_id'] ?? null,
             $data['organizer_club_id'] ?? null,
             $data['organizer_zonal_id'] ?? null,
-            $data['target_scope'] ?? 'SingleTarget',
+            $data['target_scope'] ?? 'AllInScope',
             $data['status'] ?? 'PendingApproval',
             $data['created_by'],
         ];
@@ -54,7 +54,8 @@ class EventModel extends Model {
                     max_attendance = ?,
                     start_datetime = ?,
                     end_datetime = ?,
-                    location = ?
+                    location = ?,
+                    target_scope = ?
                 WHERE event_id = ?
                   AND organizer_division_id = ?
                   AND created_by = ?
@@ -68,6 +69,7 @@ class EventModel extends Model {
             $data['start_datetime'],
             $data['end_datetime'],
             $data['location'] ?? null,
+            $data['target_scope'] ?? 'AllInScope',
             $eventId,
             $divisionId,
             $userId,
@@ -79,6 +81,7 @@ class EventModel extends Model {
 
     /**
      * Find full details of a single event by ID.
+     * Does NOT join EventTarget here — caller should use EventTargetModel::findByEventId().
      *
      * @param  int $eventId
      * @return object|false
@@ -93,18 +96,12 @@ class EventModel extends Model {
                     uc.role AS creator_role,
                     uc.email AS creator_email,
                     CONCAT(ua.first_name, ' ', ua.last_name) AS approver_name,
-                    ua.role AS approver_role,
-                    tc.club_name AS target_club_name,
-                    tc.club_code AS target_club_code,
-                    et.target_club_id,
-                    et.target_id
+                    ua.role AS approver_role
                 FROM Event e
                 LEFT JOIN Division d ON e.organizer_division_id = d.division_id
                 LEFT JOIN Club c ON e.organizer_club_id = c.club_id
                 LEFT JOIN User uc ON e.created_by = uc.user_id
                 LEFT JOIN User ua ON e.approved_by = ua.user_id
-                LEFT JOIN EventTarget et ON e.event_id = et.event_id
-                LEFT JOIN Club tc ON et.target_club_id = tc.club_id
                 WHERE e.event_id = ?
                 LIMIT 1";
 
@@ -112,8 +109,8 @@ class EventModel extends Model {
     }
 
     /**
-     * Retrieve all events within a division (both divisional events and club events in this division),
-     * with optional search and filtering.
+     * Retrieve all events within a division (both divisional events and club events),
+     * with optional search and filtering. Uses GROUP BY to avoid duplicates from multi-target events.
      *
      * @param  int   $divisionId
      * @param  array $filters
@@ -124,8 +121,8 @@ class EventModel extends Model {
                     e.*,
                     d.division_name AS organizer_division_name,
                     c.club_name AS organizer_club_name,
-                    tc.club_name AS target_club_name,
-                    et.target_club_id,
+                    GROUP_CONCAT(DISTINCT tc.club_name ORDER BY tc.club_name ASC SEPARATOR ', ') AS target_club_names,
+                    GROUP_CONCAT(DISTINCT et.target_club_id ORDER BY et.target_club_id ASC SEPARATOR ',') AS target_club_ids,
                     CONCAT(uc.first_name, ' ', uc.last_name) AS creator_name
                 FROM Event e
                 LEFT JOIN Division d ON e.organizer_division_id = d.division_id
@@ -147,7 +144,22 @@ class EventModel extends Model {
             $params['status'] = $filters['status'];
         }
 
-        // Filter: Target Audience (Club ID)
+        // Filter: Event Type
+        if (!empty($filters['event_type'])) {
+            $sql .= " AND e.event_type = :event_type";
+            $params['event_type'] = $filters['event_type'];
+        }
+
+        // Filter: Target Audience scope (AllInScope vs SelectedClubs)
+        if (!empty($filters['target_scope'])) {
+            if ($filters['target_scope'] === 'AllInScope') {
+                $sql .= " AND e.target_scope = 'AllInScope'";
+            } elseif ($filters['target_scope'] === 'SelectedClubs') {
+                $sql .= " AND e.target_scope = 'SelectedClubs'";
+            }
+        }
+
+        // Filter: Specific club within SelectedClubs events
         if (!empty($filters['target_club_id'])) {
             $sql .= " AND et.target_club_id = :target_club_id";
             $params['target_club_id'] = (int)$filters['target_club_id'];
@@ -180,7 +192,7 @@ class EventModel extends Model {
             $params['s_tclub'] = $search;
         }
 
-        $sql .= " ORDER BY e.start_datetime DESC, e.event_id DESC";
+        $sql .= " GROUP BY e.event_id ORDER BY e.start_datetime DESC, e.event_id DESC";
 
         return $this->resultSet($sql, $params);
     }
@@ -220,7 +232,7 @@ class EventModel extends Model {
     }
 
     /**
-     * Fetch all clubs in a division for the Target Audience dropdown.
+     * Fetch all clubs in a division for the Target Audience picker.
      *
      * @param  int $divisionId
      * @return array
@@ -232,6 +244,25 @@ class EventModel extends Model {
                 ORDER BY club_name ASC";
 
         return $this->resultSet($sql, [$divisionId]);
+    }
+
+    /**
+     * Fetch distinct event types that exist in a division's events.
+     * Used to populate the Event Type filter dropdown.
+     *
+     * @param  int $divisionId
+     * @return array
+     */
+    public function getUniqueEventTypes($divisionId) {
+        $sql = "SELECT DISTINCT event_type 
+                FROM Event 
+                WHERE (organizer_division_id = ? 
+                       OR organizer_club_id IN (SELECT club_id FROM Club WHERE division_id = ?))
+                  AND event_type IS NOT NULL 
+                  AND event_type != ''
+                ORDER BY event_type ASC";
+
+        return $this->resultSet($sql, [$divisionId, $divisionId]);
     }
 
     /**
