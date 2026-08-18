@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'Monitor Club Health — YouthNexus Pulse') ?></title>
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/monitorclubhealth.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/club-health.css?v=<?= time() ?>">
 </head>
 <body class="dashboard">
 <div class="db-app">
@@ -31,7 +31,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 Approve Registration
             </a>
-            <a href="<?= ROOT ?>/monitorclubhealth" class="db-nav-link active">
+            <a href="<?= ROOT ?>/clubhealth" class="db-nav-link active">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 Monitor Club Health
             </a>
@@ -443,6 +443,6 @@
 <!-- Toast notification element -->
 <div class="mch-toast" id="mchToast"></div>
 
-<script src="<?= ROOT ?>/assets/js/monitorclubhealth.js?v=<?= time() ?>"></script>
+<script src="<?= ROOT ?>/assets/js/club-health.js?v=<?= time() ?>"></script>
 </body>
 </html>
