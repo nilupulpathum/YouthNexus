@@ -25,13 +25,14 @@ class Controller {
 
     /**
      * Load a model class by name.
-     * Models are pre-loaded by init.php via glob — no file require needed here.
      *
      * @param string $model  Model class name e.g. 'UserModel'
      * @return object        Instance of the model
      */
     public function model($model) {
-        if (class_exists($model)) {
+        $filename = "../app/models/" . $model . ".php";
+        if (file_exists($filename)) {
+            require_once $filename;
             return new $model();
         }
         die("Model '{$model}' not found.");

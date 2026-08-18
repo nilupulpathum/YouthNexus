@@ -34,10 +34,8 @@ class App {
             if (method_exists($this->controller, $methodName)) {
                 $this->method = $methodName;
             } else {
-                // Fix #9: Method not found — show 404 instead of silently calling index()
-                require "../app/controllers/_404.php";
-                $this->controller = '_404';
-                $this->method     = 'index';
+                // Method not found — fall through to 404 output
+                $this->method = 'index';
             }
         }
 

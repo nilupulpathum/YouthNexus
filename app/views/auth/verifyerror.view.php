@@ -22,7 +22,7 @@
     <a href="<?= ROOT ?>/auth/verify" class="error-btn try">Try Again</a>
     <a href="<?= ROOT ?>/auth/verify?resend=1" class="error-btn resend">↻ Resend Code</a>
     <div class="error-footer">
-      Didn't receive the email? Check your spam folder or <a href="#">Contact Support</a>
+      Didn't receive the email? Check your spam folder or <a href="https://mail.google.com/mail/?view=cm&fs=1&to=governance@youthnexus.gov.lk" target="_blank">Contact Support</a>
     </div>
   </div>
 </div>
