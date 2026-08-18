@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title) ?></title>
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistration.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistrationapproval.css?v=<?= time() ?>">
 </head>
 <body class="dashboard">
 <div class="db-app">
@@ -30,7 +30,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Dashboard
             </a>
-            <a href="<?= ROOT ?>/clubregistration" class="db-nav-link active">
+            <a href="<?= ROOT ?>/clubregistrationapproval" class="db-nav-link active">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 Approve Registration
                 <span class="db-nav-badge" id="navPendingBadge" style="<?= (int)$counts['Pending'] > 0 ? '' : 'display: none;' ?>"><?= (int)$counts['Pending'] ?></span>
@@ -211,7 +211,7 @@
 <!-- ============ Review Modal (populated via JS) ============ -->
 <div class="cr-modal-backdrop" id="crModalBackdrop">
     <div class="cr-modal" id="crModalContent">
-        <!-- filled dynamically by clubregistration.js -->
+        <!-- filled dynamically by clubregistrationapproval.js -->
     </div>
 </div>
 
@@ -233,6 +233,6 @@
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
 <script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
-<script src="<?= ROOT ?>/assets/js/clubregistration.js?v=<?= time() ?>"></script>
+<script src="<?= ROOT ?>/assets/js/clubregistrationapproval.js?v=<?= time() ?>"></script>
 </body>
 </html>
