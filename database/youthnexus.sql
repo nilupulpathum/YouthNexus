@@ -213,6 +213,44 @@ CREATE TABLE AuditLog (
     INDEX idx_target (target_entity, target_id)
 );
 
+CREATE TABLE Event (
+    event_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description VARCHAR(1000),
+    event_type VARCHAR(50),
+    max_attendance INT,
+    start_datetime DATETIME NOT NULL,
+    end_datetime DATETIME NOT NULL,
+    location VARCHAR(255),
+    organizer_club_id INT NULL,
+    organizer_division_id INT NULL,
+    organizer_zonal_id INT NULL,
+    target_scope ENUM('AllInScope','SingleTarget') NOT NULL,
+    status ENUM('Draft','PendingApproval','Approved','Rejected','Completed') NOT NULL DEFAULT 'PendingApproval',
+    created_by INT NOT NULL,
+    approved_by INT NULL,
+    rejection_remarks VARCHAR(500) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizer_club_id) REFERENCES Club(club_id),
+    FOREIGN KEY (organizer_division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (organizer_zonal_id) REFERENCES Zone(zonal_id),
+    FOREIGN KEY (created_by) REFERENCES User(user_id),
+    FOREIGN KEY (approved_by) REFERENCES User(user_id)
+);
+
+CREATE TABLE EventTarget (
+    target_id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    target_club_id INT NULL,
+    target_division_id INT NULL,
+    target_zonal_id INT NULL,
+    FOREIGN KEY (event_id) REFERENCES Event(event_id),
+    FOREIGN KEY (target_club_id) REFERENCES Club(club_id),
+    FOREIGN KEY (target_division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (target_zonal_id) REFERENCES Zone(zonal_id)
+);
+
+
 INSERT INTO Zone (zonal_id, zonal_name) VALUES
 (1, 'Western Zone'),
 (2, 'Central Zone'),
