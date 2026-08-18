@@ -16,8 +16,8 @@ class ManageEvents extends Controller {
      */
     private function isJsonRequest() {
         $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $accept = $_SERVER['HTTP_ACCEPT'] ?? ($headers['Accept'] ?? '');
-        $xReq   = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? ($headers['X-Requested-With'] ?? '');
+        $accept  = $_SERVER['HTTP_ACCEPT'] ?? ($headers['Accept'] ?? '');
+        $xReq    = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? ($headers['X-Requested-With'] ?? '');
         return strpos($accept, 'application/json') !== false || strtolower($xReq) === 'xmlhttprequest';
     }
 
@@ -34,19 +34,22 @@ class ManageEvents extends Controller {
         $divisionId = (int)($_SESSION['division_id'] ?? 0);
         $eventModel = $this->model('EventModel');
 
-        // Extract query filters
+        // Extract query filters — now includes event_type and target_scope
         $filters = [
             'search'         => trim($_GET['search'] ?? ''),
             'status'         => trim($_GET['status'] ?? 'All'),
+            'event_type'     => trim($_GET['event_type'] ?? ''),
+            'target_scope'   => trim($_GET['target_scope'] ?? ''),
             'target_club_id' => !empty($_GET['target_club_id']) ? (int)$_GET['target_club_id'] : null,
             'date_from'      => trim($_GET['date_from'] ?? ''),
             'date_to'        => trim($_GET['date_to'] ?? ''),
         ];
 
-        $stats    = $eventModel->getDivisionStats($divisionId);
-        $events   = $eventModel->getEventsByDivision($divisionId, $filters);
-        $clubs    = $eventModel->getClubsByDivision($divisionId);
-        $division = $eventModel->getDivisionById($divisionId);
+        $stats      = $eventModel->getDivisionStats($divisionId);
+        $events     = $eventModel->getEventsByDivision($divisionId, $filters);
+        $clubs      = $eventModel->getClubsByDivision($divisionId);
+        $division   = $eventModel->getDivisionById($divisionId);
+        $eventTypes = $eventModel->getUniqueEventTypes($divisionId);
 
         $this->view('manageevents/list', [
             'title'         => 'Manage Events — YouthNexus',
@@ -55,6 +58,7 @@ class ManageEvents extends Controller {
             'clubs'         => $clubs,
             'filters'       => $filters,
             'division'      => $division,
+            'event_types'   => $eventTypes,
             'csrf_token'    => $_SESSION['csrf_token'],
             'user_name'     => $_SESSION['user_name'] ?? 'N. Fernando',
             'user_role'     => 'DivisionalSecretary',
@@ -95,7 +99,13 @@ class ManageEvents extends Controller {
         $startDatetime = trim($_POST['start_datetime'] ?? '');
         $endDatetime   = trim($_POST['end_datetime'] ?? '');
         $location      = trim($_POST['location'] ?? '');
-        $targetClubId  = (int)($_POST['target_club_id'] ?? 0);
+        $targetScope   = trim($_POST['target_scope'] ?? 'AllInScope');
+        $targetClubs   = $_POST['target_clubs'] ?? []; // array of club_id strings
+
+        // Normalise target_scope
+        if (!in_array($targetScope, ['AllInScope', 'SelectedClubs'])) {
+            $targetScope = 'AllInScope';
+        }
 
         $errors = [];
 
@@ -142,23 +152,33 @@ class ManageEvents extends Controller {
             }
         }
 
-        // Target audience validation: must be a valid club in the secretary's division
-        $eventModel = $this->model('EventModel');
-        $targetClubValid = false;
+        // Target audience validation
+        $eventModel    = $this->model('EventModel');
+        $divisionClubs = $eventModel->getClubsByDivision($divisionId);
+        $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
 
-        if ($targetClubId > 0) {
-            $divisionClubs = $eventModel->getClubsByDivision($divisionId);
-            foreach ($divisionClubs as $c) {
-                if ((int)$c->club_id === $targetClubId) {
-                    $targetClubValid = true;
-                    break;
+        $validatedTargets = [];
+        if ($targetScope === 'SelectedClubs') {
+            if (empty($targetClubs)) {
+                $errors['target_clubs'] = 'Please select at least one target club.';
+            } else {
+                foreach ($targetClubs as $cid) {
+                    $cid = (int)$cid;
+                    if (!in_array($cid, $validClubIds)) {
+                        $errors['target_clubs'] = 'One or more selected clubs are invalid.';
+                        break;
+                    }
+                    $maxKey = 'max_attendance_club_' . $cid;
+                    $override = trim($_POST[$maxKey] ?? '');
+                    $overrideVal = null;
+                    if ($override !== '' && ctype_digit($override) && (int)$override > 0) {
+                        $overrideVal = (int)$override;
+                    }
+                    $validatedTargets[] = ['club_id' => $cid, 'max_attendance' => $overrideVal];
                 }
             }
         }
-
-        if (!$targetClubValid) {
-            $errors['target_club_id'] = 'Please select a valid target club from your division.';
-        }
+        // AllInScope: validatedTargets stays empty — no EventTarget rows needed
 
         // If validation errors exist
         if (!empty($errors)) {
@@ -185,15 +205,14 @@ class ManageEvents extends Controller {
             'organizer_division_id' => $divisionId,
             'organizer_club_id'     => null,
             'organizer_zonal_id'    => null,
-            'target_scope'          => 'SingleTarget',
+            'target_scope'          => $targetScope,
             'status'                => 'PendingApproval',
             'created_by'            => $userId,
         ];
 
-        $newEventId = $eventModel->createEvent($eventData);
-
+        $newEventId  = $eventModel->createEvent($eventData);
         $targetModel = $this->model('EventTargetModel');
-        $targetModel->createTarget($newEventId, $targetClubId);
+        $targetModel->saveTargets($newEventId, $validatedTargets);
 
         // Regenerate CSRF token
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -256,13 +275,28 @@ class ManageEvents extends Controller {
 
         $clubs = $eventModel->getClubsByDivision($divisionId);
 
+        // Fetch event targets for display and edit pre-population
+        $targetModel = $this->model('EventTargetModel');
+        $targets     = $targetModel->findByEventId($eventId);
+
+        // Build a lookup map for the edit modal: club_id => max_attendance
+        $targetMap = [];
+        foreach ($targets as $t) {
+            if (!empty($t->target_club_id)) {
+                $targetMap[(int)$t->target_club_id] = $t->max_attendance;
+            }
+        }
+
         // Check if editable: Only if status is PendingApproval AND created by the logged-in user
+        // Both $event->created_by and $userId come from the same source (Event.created_by joined to User.user_id)
         $canEdit = ($event->status === 'PendingApproval' && (int)$event->created_by === $userId);
 
         $this->view('manageevents/status', [
             'title'         => htmlspecialchars($event->title) . ' — Event Status — YouthNexus',
             'event'         => $event,
             'clubs'         => $clubs,
+            'targets'       => $targets,
+            'target_map'    => $targetMap,
             'can_edit'      => $canEdit,
             'csrf_token'    => $_SESSION['csrf_token'],
             'user_name'     => $_SESSION['user_name'] ?? 'N. Fernando',
@@ -325,7 +359,13 @@ class ManageEvents extends Controller {
         $startDatetime = trim($_POST['start_datetime'] ?? '');
         $endDatetime   = trim($_POST['end_datetime'] ?? '');
         $location      = trim($_POST['location'] ?? '');
-        $targetClubId  = (int)($_POST['target_club_id'] ?? 0);
+        $targetScope   = trim($_POST['target_scope'] ?? 'AllInScope');
+        $targetClubs   = $_POST['target_clubs'] ?? [];
+
+        // Normalise target_scope
+        if (!in_array($targetScope, ['AllInScope', 'SelectedClubs'])) {
+            $targetScope = 'AllInScope';
+        }
 
         $errors = [];
 
@@ -356,7 +396,7 @@ class ManageEvents extends Controller {
             }
         }
 
-        // Datetime validation: end_datetime > start_datetime > NOW()
+        // Datetime validation
         if (empty($startDatetime) || empty($endDatetime)) {
             $errors['datetime'] = 'Both start and end dates and times are required.';
         } else {
@@ -372,19 +412,29 @@ class ManageEvents extends Controller {
         }
 
         // Target audience validation
-        $targetClubValid = false;
-        if ($targetClubId > 0) {
-            $divisionClubs = $eventModel->getClubsByDivision($divisionId);
-            foreach ($divisionClubs as $c) {
-                if ((int)$c->club_id === $targetClubId) {
-                    $targetClubValid = true;
-                    break;
+        $divisionClubs = $eventModel->getClubsByDivision($divisionId);
+        $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
+
+        $validatedTargets = [];
+        if ($targetScope === 'SelectedClubs') {
+            if (empty($targetClubs)) {
+                $errors['target_clubs'] = 'Please select at least one target club.';
+            } else {
+                foreach ($targetClubs as $cid) {
+                    $cid = (int)$cid;
+                    if (!in_array($cid, $validClubIds)) {
+                        $errors['target_clubs'] = 'One or more selected clubs are invalid.';
+                        break;
+                    }
+                    $maxKey      = 'max_attendance_club_' . $cid;
+                    $override    = trim($_POST[$maxKey] ?? '');
+                    $overrideVal = null;
+                    if ($override !== '' && ctype_digit($override) && (int)$override > 0) {
+                        $overrideVal = (int)$override;
+                    }
+                    $validatedTargets[] = ['club_id' => $cid, 'max_attendance' => $overrideVal];
                 }
             }
-        }
-
-        if (!$targetClubValid) {
-            $errors['target_club_id'] = 'Please select a valid target club from your division.';
         }
 
         if (!empty($errors)) {
@@ -406,14 +456,15 @@ class ManageEvents extends Controller {
             'start_datetime' => date('Y-m-d H:i:s', strtotime($startDatetime)),
             'end_datetime'   => date('Y-m-d H:i:s', strtotime($endDatetime)),
             'location'       => $location ?: null,
+            'target_scope'   => $targetScope,
         ];
 
-        // Update event record (immutable division_id)
+        // Update event record (organizer_division_id is immutable)
         $eventModel->updateEvent($eventId, $divisionId, $userId, $updateData);
 
-        // Update target record
+        // Save target records atomically
         $targetModel = $this->model('EventTargetModel');
-        $targetModel->updateTargetClub($eventId, $targetClubId);
+        $targetModel->saveTargets($eventId, $validatedTargets);
 
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
