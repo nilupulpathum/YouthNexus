@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
+    <meta name="description" content="Manage and track divisional events and club activities for <?= htmlspecialchars($division->division_name ?? 'your division') ?>">
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
 </head>
@@ -57,6 +58,10 @@
                 <p>Track divisional events and club activities across <?= htmlspecialchars($division->division_name ?? 'your division') ?></p>
             </div>
             <div class="db-topbar-right">
+                <button type="button" class="me-btn-primary" id="btnOpenCreateModal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Event
+                </button>
                 <button class="db-icon-btn" title="Pending Approvals">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     <?php if (!empty($stats['awaiting_approval'])): ?>
@@ -68,18 +73,6 @@
         </header>
 
         <main class="db-content">
-
-            <!-- Top Action Header -->
-            <div class="me-header-row">
-                <div class="me-header-title">
-                    <h2>Events Overview</h2>
-                    <p>Overview of scheduled and submitted events in <?= htmlspecialchars($division->division_name ?? 'your division') ?></p>
-                </div>
-                <button type="button" class="me-btn-primary" id="btnOpenCreateModal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Create Divisional Event
-                </button>
-            </div>
 
             <!-- Stat Cards -->
             <div class="me-stats-grid">
@@ -114,40 +107,101 @@
                 </div>
             </div>
 
-            <!-- Search and Filter Bar -->
-            <form method="GET" action="<?= ROOT ?>/manageevents" class="me-filter-bar" id="eventFilterForm">
-                <div class="me-search-wrap">
-                    <span class="me-search-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    </span>
-                    <input type="text" name="search" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+            <!-- Search & Filter Toolbar (matches cr-toolbar pattern) -->
+            <form method="GET" action="<?= ROOT ?>/manageevents" id="eventFilterForm">
+                <div class="me-toolbar">
+                    <div class="me-search-group">
+                        <div class="me-search-input-wrapper">
+                            <span class="me-search-icon">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </span>
+                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+                        </div>
+                    </div>
+                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="false">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                        Filters
+                        <?php
+                        $activeFilters = 0;
+                        if (!empty($filters['status']) && $filters['status'] !== 'All') $activeFilters++;
+                        if (!empty($filters['event_type'])) $activeFilters++;
+                        if (!empty($filters['target_scope'])) $activeFilters++;
+                        if (!empty($filters['target_club_id'])) $activeFilters++;
+                        if (!empty($filters['date_from']) || !empty($filters['date_to'])) $activeFilters++;
+                        ?>
+                        <?php if ($activeFilters > 0): ?>
+                            <span class="me-filter-count"><?= $activeFilters ?></span>
+                        <?php endif; ?>
+                    </button>
+                    <?php if ($activeFilters > 0 || !empty($filters['search'])): ?>
+                        <a href="<?= ROOT ?>/manageevents" class="me-btn-reset" title="Clear all filters">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            Clear
+                        </a>
+                    <?php endif; ?>
                 </div>
 
-                <div class="me-filter-group">
-                    <select name="status" class="me-select">
-                        <option value="All" <?= ($filters['status'] ?? '') === 'All' ? 'selected' : '' ?>>All Statuses</option>
-                        <option value="PendingApproval" <?= ($filters['status'] ?? '') === 'PendingApproval' ? 'selected' : '' ?>>Pending Approval</option>
-                        <option value="Approved" <?= ($filters['status'] ?? '') === 'Approved' ? 'selected' : '' ?>>Approved</option>
-                        <option value="Rejected" <?= ($filters['status'] ?? '') === 'Rejected' ? 'selected' : '' ?>>Rejected</option>
-                        <option value="Completed" <?= ($filters['status'] ?? '') === 'Completed' ? 'selected' : '' ?>>Completed</option>
-                    </select>
+                <!-- Expandable Filter Panel -->
+                <div class="me-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="meFilterPanel">
+                    <!-- Date Range -->
+                    <div class="me-filter-field">
+                        <label for="meFilterDateFrom">Date From</label>
+                        <input type="date" id="meFilterDateFrom" name="date_from" value="<?= htmlspecialchars($filters['date_from'] ?? '') ?>">
+                    </div>
+                    <div class="me-filter-field">
+                        <label for="meFilterDateTo">Date To</label>
+                        <input type="date" id="meFilterDateTo" name="date_to" value="<?= htmlspecialchars($filters['date_to'] ?? '') ?>">
+                    </div>
 
-                    <select name="target_club_id" class="me-select">
-                        <option value="">All Target Clubs</option>
-                        <?php foreach ($clubs as $club): ?>
-                            <option value="<?= (int)$club->club_id ?>" <?= ((int)($filters['target_club_id'] ?? 0) === (int)$club->club_id) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($club->club_name) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <!-- Event Type -->
+                    <div class="me-filter-field">
+                        <label for="meFilterType">Event Type</label>
+                        <select id="meFilterType" name="event_type">
+                            <option value="">All Types</option>
+                            <?php foreach ($event_types as $et): ?>
+                                <option value="<?= htmlspecialchars($et->event_type) ?>" <?= ($filters['event_type'] ?? '') === $et->event_type ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($et->event_type) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                    <input type="date" name="date_from" class="me-date-input" title="From Date" value="<?= htmlspecialchars($filters['date_from'] ?? '') ?>">
-                    <input type="date" name="date_to" class="me-date-input" title="To Date" value="<?= htmlspecialchars($filters['date_to'] ?? '') ?>">
+                    <!-- Event Status -->
+                    <div class="me-filter-field">
+                        <label for="meFilterStatus">Event Status</label>
+                        <select id="meFilterStatus" name="status">
+                            <option value="All" <?= ($filters['status'] ?? 'All') === 'All' ? 'selected' : '' ?>>All Statuses</option>
+                            <option value="PendingApproval" <?= ($filters['status'] ?? '') === 'PendingApproval' ? 'selected' : '' ?>>Pending Approval</option>
+                            <option value="Approved" <?= ($filters['status'] ?? '') === 'Approved' ? 'selected' : '' ?>>Approved</option>
+                            <option value="Rejected" <?= ($filters['status'] ?? '') === 'Rejected' ? 'selected' : '' ?>>Rejected</option>
+                            <option value="Completed" <?= ($filters['status'] ?? '') === 'Completed' ? 'selected' : '' ?>>Completed</option>
+                        </select>
+                    </div>
 
-                    <button type="submit" class="me-btn-secondary">Filter</button>
-                    <?php if (!empty($filters['search']) || ($filters['status'] ?? 'All') !== 'All' || !empty($filters['target_club_id']) || !empty($filters['date_from']) || !empty($filters['date_to'])): ?>
-                        <a href="<?= ROOT ?>/manageevents" class="me-btn-reset">Reset</a>
-                    <?php endif; ?>
+                    <!-- Target Audience — two-tiered -->
+                    <div class="me-filter-field">
+                        <label for="meFilterAudienceScope">Target Audience</label>
+                        <select id="meFilterAudienceScope" name="target_scope">
+                            <option value="">All Events</option>
+                            <option value="AllInScope" <?= ($filters['target_scope'] ?? '') === 'AllInScope' ? 'selected' : '' ?>>All Clubs</option>
+                            <option value="SelectedClubs" <?= ($filters['target_scope'] ?? '') === 'SelectedClubs' ? 'selected' : '' ?>>Specific Club</option>
+                        </select>
+                    </div>
+                    <div class="me-filter-field me-filter-club-picker<?= ($filters['target_scope'] ?? '') === 'SelectedClubs' ? '' : ' hidden' ?>" id="meFilterClubPickerWrap">
+                        <label for="meFilterTargetClub">Club</label>
+                        <select id="meFilterTargetClub" name="target_club_id">
+                            <option value="">Any Club</option>
+                            <?php foreach ($clubs as $club): ?>
+                                <option value="<?= (int)$club->club_id ?>" <?= ((int)($filters['target_club_id'] ?? 0) === (int)$club->club_id) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($club->club_name) ?> (<?= htmlspecialchars($club->club_code) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="me-filter-actions">
+                        <button type="submit" class="me-btn-secondary">Apply Filters</button>
+                    </div>
                 </div>
             </form>
 
@@ -205,16 +259,22 @@
                                                 <span><?= htmlspecialchars($event->location) ?></span>
                                             </div>
                                         <?php endif; ?>
-                                        <?php if (!empty($event->target_club_name)): ?>
-                                            <div class="me-meta-item">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                                <span>Target: <?= htmlspecialchars($event->target_club_name) ?></span>
-                                            </div>
-                                        <?php endif; ?>
+                                        <div class="me-meta-item">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            <?php if ($event->target_scope === 'AllInScope'): ?>
+                                                <span>All Clubs in Division</span>
+                                            <?php elseif (!empty($event->target_club_names)): ?>
+                                                <span title="<?= htmlspecialchars($event->target_club_names) ?>">
+                                                    <?= htmlspecialchars(mb_strlen($event->target_club_names) > 40 ? mb_substr($event->target_club_names, 0, 37) . '…' : $event->target_club_names) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span>Specific Clubs</span>
+                                            <?php endif; ?>
+                                        </div>
                                         <?php if (!empty($event->max_attendance)): ?>
                                             <div class="me-meta-item">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-                                                <span>Max Attendees: <?= (int)$event->max_attendance ?></span>
+                                                <span>Max: <?= (int)$event->max_attendance ?></span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -268,30 +328,61 @@
                         </div>
                     </div>
 
-                    <div class="me-form-group">
-                        <label class="me-form-label">Select Target Audience <span class="required">*</span></label>
-                        <select name="target_club_id" class="me-form-select" required>
-                            <option value="">-- Choose Target Club --</option>
+                    <!-- Target Audience — toggle + checklist -->
+                    <div class="me-form-group me-form-full">
+                        <label class="me-form-label">Target Audience <span class="required">*</span></label>
+                        <div class="me-audience-toggle" role="group" aria-label="Target Audience">
+                            <label class="me-toggle-option">
+                                <input type="radio" name="target_scope" value="AllInScope" checked>
+                                <span class="me-toggle-btn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    All Clubs
+                                </span>
+                            </label>
+                            <label class="me-toggle-option">
+                                <input type="radio" name="target_scope" value="SelectedClubs">
+                                <span class="me-toggle-btn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                    Specific Clubs
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Club checklist (shown only when Specific Clubs is selected) -->
+                        <div class="me-club-checklist hidden" id="createClubChecklist">
                             <?php foreach ($clubs as $club): ?>
-                                <option value="<?= (int)$club->club_id ?>">
-                                    <?= htmlspecialchars($club->club_name) ?> (<?= htmlspecialchars($club->club_code) ?>)
-                                </option>
+                                <label class="me-club-check-row" data-club-id="<?= (int)$club->club_id ?>">
+                                    <div class="me-club-check-left">
+                                        <input type="checkbox" name="target_clubs[]" value="<?= (int)$club->club_id ?>" class="me-club-checkbox">
+                                        <span class="me-club-check-name">
+                                            <?= htmlspecialchars($club->club_name) ?>
+                                            <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
+                                        </span>
+                                    </div>
+                                    <div class="me-club-override hidden">
+                                        <label class="me-override-label" for="create_max_<?= (int)$club->club_id ?>">Max attendees for this club</label>
+                                        <input type="number" name="max_attendance_club_<?= (int)$club->club_id ?>" id="create_max_<?= (int)$club->club_id ?>" class="me-form-input me-override-input" placeholder="Optional override" min="1">
+                                    </div>
+                                </label>
                             <?php endforeach; ?>
-                        </select>
+                            <?php if (empty($clubs)): ?>
+                                <p class="me-club-checklist-empty">No active clubs found in your division.</p>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Max Attendees</label>
+                        <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
                         <input type="number" name="max_attendance" class="me-form-input" placeholder="e.g., 100" min="1">
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Start Date & Time <span class="required">*</span></label>
+                        <label class="me-form-label">Start Date &amp; Time <span class="required">*</span></label>
                         <input type="datetime-local" name="start_datetime" class="me-form-input" required>
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">End Date & Time <span class="required">*</span></label>
+                        <label class="me-form-label">End Date &amp; Time <span class="required">*</span></label>
                         <input type="datetime-local" name="end_datetime" class="me-form-input" required>
                     </div>
 
