@@ -109,6 +109,14 @@
 
             <!-- Search & Filter Toolbar (matches cr-toolbar pattern) -->
             <form method="GET" action="<?= ROOT ?>/manageevents" id="eventFilterForm">
+                <?php
+                $activeFilters = 0;
+                if (!empty($filters['status']) && $filters['status'] !== 'All') $activeFilters++;
+                if (!empty($filters['event_type'])) $activeFilters++;
+                if (!empty($filters['target_scope'])) $activeFilters++;
+                if (!empty($filters['target_club_id'])) $activeFilters++;
+                if (!empty($filters['date_from']) || !empty($filters['date_to'])) $activeFilters++;
+                ?>
                 <div class="me-toolbar">
                     <div class="me-search-group">
                         <div class="me-search-input-wrapper">
@@ -118,27 +126,13 @@
                             <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                         </div>
                     </div>
-                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="false">
+                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
                         Filters
-                        <?php
-                        $activeFilters = 0;
-                        if (!empty($filters['status']) && $filters['status'] !== 'All') $activeFilters++;
-                        if (!empty($filters['event_type'])) $activeFilters++;
-                        if (!empty($filters['target_scope'])) $activeFilters++;
-                        if (!empty($filters['target_club_id'])) $activeFilters++;
-                        if (!empty($filters['date_from']) || !empty($filters['date_to'])) $activeFilters++;
-                        ?>
                         <?php if ($activeFilters > 0): ?>
                             <span class="me-filter-count"><?= $activeFilters ?></span>
                         <?php endif; ?>
                     </button>
-                    <?php if ($activeFilters > 0 || !empty($filters['search'])): ?>
-                        <a href="<?= ROOT ?>/manageevents" class="me-btn-reset" title="Clear all filters">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            Clear
-                        </a>
-                    <?php endif; ?>
                 </div>
 
                 <!-- Expandable Filter Panel -->
@@ -200,7 +194,8 @@
                     </div>
 
                     <div class="me-filter-actions">
-                        <button type="submit" class="me-btn-secondary">Apply Filters</button>
+                        <a href="<?= ROOT ?>/manageevents" class="me-btn" id="meClearFilterBtn">Clear Filters</a>
+                        <button type="submit" class="me-btn me-btn-primary" id="meAddFilterBtn">Apply Filters</button>
                     </div>
                 </div>
             </form>

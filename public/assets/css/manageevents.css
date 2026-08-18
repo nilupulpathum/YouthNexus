@@ -166,9 +166,11 @@
 
 .me-toolbar {
     display: flex;
+    gap: 16px;
     align-items: center;
-    gap: 12px;
+    padding-top: 8px;
     flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
 .me-search-group {
@@ -179,7 +181,7 @@
     border-radius: 8px;
     height: 40px;
     flex: 1;
-    min-width: 280px;
+    min-width: 320px;
     box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
 }
 
@@ -221,6 +223,8 @@
     font-family: var(--db-font-family);
     cursor: pointer;
     color: var(--db-text-dark);
+    height: 40px;
+    box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
     transition: background-color 0.15s ease, border-color 0.15s ease;
     white-space: nowrap;
 }
@@ -286,7 +290,7 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    min-width: 160px;
+    min-width: 180px;
 }
 
 .me-filter-field label {
@@ -301,7 +305,7 @@
 .me-filter-field select {
     border: 1px solid var(--db-border);
     border-radius: var(--db-radius);
-    padding: 8px 10px;
+    padding: 9px 10px;
     font-size: 13px;
     font-family: var(--db-font-family);
     background: #fff;
@@ -324,6 +328,37 @@
     gap: 8px;
     margin-left: auto;
     align-items: flex-end;
+}
+
+.me-filter-actions .me-btn {
+    border: 1px solid var(--db-border);
+    background: #fff;
+    border-radius: var(--db-radius);
+    padding: 7px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--db-font-family);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    transition: background-color 0.15s ease;
+}
+
+.me-filter-actions .me-btn:hover {
+    background: #f5f6fa;
+}
+
+.me-filter-actions .me-btn-primary {
+    background: var(--db-sidebar-bg);
+    border-color: var(--db-sidebar-bg);
+    color: #fff;
+}
+
+.me-filter-actions .me-btn-primary:hover {
+    opacity: 0.9;
 }
 
 /* Helper */
