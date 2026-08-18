@@ -1,6 +1,6 @@
 <?php
 
-class ClubHealthModel extends Model {
+class MonitorClubHealthModel extends Model {
 
     /**
      * Fetch all clubs for a specific division with their division name and live member counts.
