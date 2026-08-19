@@ -31,6 +31,8 @@ class EventApproval extends Controller {
             'pendingEvents' => $pendingEvents,
             'counts'        => $counts,
             'csrf_token'    => $_SESSION['csrf_token'],
+            'userName'      => $_SESSION['user_name'] ?? 'R. Perera',
+            'userRole'      => 'DivisionalCoordinator',
         ]);
     }
 
