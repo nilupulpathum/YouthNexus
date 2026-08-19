@@ -104,7 +104,7 @@ class EventApproval extends Controller {
         }
 
         // Apply approval
-        $this->updateEventStatus($eventModel, $event->event_id, 'Approved', null);
+        $eventModel->updateEventStatus($event->event_id, 'Approved', $_SESSION['user_id'], null);
         $auditModel->log($_SESSION['user_id'], 'APPROVE_EVENT', 'Event', $event->event_id, "Approved event '{$event->title}'");
 
         header('Content-Type: application/json');
@@ -145,7 +145,7 @@ class EventApproval extends Controller {
         }
 
         // Apply rejection
-        $this->updateEventStatus($eventModel, $event->event_id, 'Rejected', $remarks);
+        $eventModel->updateEventStatus($event->event_id, 'Rejected', $_SESSION['user_id'], $remarks);
         $auditModel->log($_SESSION['user_id'], 'REJECT_EVENT', 'Event', $event->event_id, $remarks);
 
         header('Content-Type: application/json');
@@ -153,20 +153,6 @@ class EventApproval extends Controller {
         exit();
     }
 
-    private function updateEventStatus($eventModel, $eventId, $status, $remarks) {
-        $sql = "UPDATE Event SET status = ?, approved_by = ?";
-        $params = [$status, $_SESSION['user_id']];
-
-        if ($remarks !== null) {
-            $sql .= ", rejection_remarks = ?";
-            $params[] = $remarks;
-        }
-
-        $sql .= " WHERE event_id = ?";
-        $params[] = $eventId;
-
-        $eventModel->query($sql, $params);
-    }
 
     private function jsonError($message) {
         header('Content-Type: application/json');
