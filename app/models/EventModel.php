@@ -277,4 +277,45 @@ class EventModel extends Model {
             [$divisionId]
         );
     }
+
+    /**
+     * Find pending club events for a division.
+     *
+     * @param  int $divisionId
+     * @return array
+     */
+    public function findPendingClubEventsByDivision($divisionId) {
+        $sql = "SELECT e.*, c.club_name, c.club_code, u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name
+                FROM Event e
+                JOIN Club c ON e.organizer_club_id = c.club_id
+                JOIN User u ON e.created_by = u.user_id
+                WHERE c.division_id = ?
+                  AND e.organizer_club_id IS NOT NULL
+                  AND e.organizer_division_id IS NULL
+                  AND e.status = 'PendingApproval'
+                ORDER BY e.created_at ASC";
+
+        return $this->resultSet($sql, [$divisionId]);
+    }
+
+    /**
+     * Count club events by division and status.
+     *
+     * @param  int    $divisionId
+     * @param  string $status
+     * @return int
+     */
+    public function countClubEventsByDivisionAndStatus($divisionId, $status) {
+        $sql = "SELECT COUNT(*) AS total
+                FROM Event e
+                JOIN Club c ON e.organizer_club_id = c.club_id
+                WHERE c.division_id = ?
+                  AND e.organizer_club_id IS NOT NULL
+                  AND e.organizer_division_id IS NULL
+                  AND e.status = ?";
+        
+        $res = $this->single($sql, [$divisionId, $status]);
+        return (int)($res->total ?? 0);
+    }
 }
