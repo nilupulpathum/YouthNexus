@@ -318,4 +318,28 @@ class EventModel extends Model {
         $res = $this->single($sql, [$divisionId, $status]);
         return (int)($res->total ?? 0);
     }
+
+    /**
+     * Update the status and approval details of an event.
+     *
+     * @param  int    $eventId
+     * @param  string $status
+     * @param  int    $userId
+     * @param  string|null $remarks
+     * @return void
+     */
+    public function updateEventStatus($eventId, $status, $userId, $remarks = null) {
+        $sql = "UPDATE Event SET status = ?, approved_by = ?";
+        $params = [$status, $userId];
+
+        if ($remarks !== null) {
+            $sql .= ", rejection_remarks = ?";
+            $params[] = $remarks;
+        }
+
+        $sql .= " WHERE event_id = ?";
+        $params[] = $eventId;
+
+        $this->query($sql, $params);
+    }
 }
