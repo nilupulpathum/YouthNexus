@@ -33,7 +33,7 @@ class ClubRegistration extends Controller {
             $app->missing_summary    = empty($missing) ? 'Complete' : ('Missing ' . $missing[0]);
         }
 
-        $this->view('clubregistration/index', [
+        $this->view('clubregistration/application-list', [
             'title'        => 'Approve Club Registration — YouthNexus Pulse',
             'applications' => $applications,
             'counts'       => $counts,
