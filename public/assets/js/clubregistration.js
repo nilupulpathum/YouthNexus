@@ -1,0 +1,1290 @@
+(function () {
+    'use strict';
+
+    var grid          = document.getElementById('crGrid');
+    var searchInput    = document.getElementById('crSearchInput');
+    var statPending      = document.getElementById('statPending');
+    var statApproved       = document.getElementById('statApproved');
+    var statRejected       = document.getElementById('statRejected');
+    var notifBellBtn       = document.getElementById('notifBellBtn');
+    var notifCountEl       = document.getElementById('notifCount');
+    var navPendingBadge    = document.getElementById('navPendingBadge');
+    var modalBackdrop         = document.getElementById('crModalBackdrop');
+    var modalContent            = document.getElementById('crModalContent');
+    var toast                     = document.getElementById('crToast');
+    var csrfToken                    = document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '';
+
+    function updateNotifCount(count) {
+        if (notifCountEl) {
+            if (count > 0) {
+                notifCountEl.textContent = count;
+                notifCountEl.style.display = '';
+                if (notifBellBtn) notifBellBtn.setAttribute('title', count + ' pending applications awaiting review');
+            } else {
+                notifCountEl.textContent = '0';
+                notifCountEl.style.display = 'none';
+                if (notifBellBtn) notifBellBtn.setAttribute('title', 'No pending notifications');
+            }
+        }
+        if (navPendingBadge) {
+            if (count > 0) {
+                navPendingBadge.textContent = count;
+                navPendingBadge.style.display = '';
+            } else {
+                navPendingBadge.textContent = '0';
+                navPendingBadge.style.display = 'none';
+            }
+        }
+    }
+
+    if (notifBellBtn && statPending) {
+        notifBellBtn.addEventListener('click', function () {
+            statPending.click();
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Toast helper
+    // ---------------------------------------------------------------
+    function showToast(message, isError) {
+        toast.textContent = message;
+        toast.className = 'cr-toast show' + (isError ? ' error' : '');
+        setTimeout(function () { toast.className = 'cr-toast'; }, 3500);
+    }
+
+    // ---------------------------------------------------------------
+    // Filter panel & Search (client-side, over cards already rendered)
+    // ---------------------------------------------------------------
+    var filterBtn      = document.getElementById('crFilterBtn');
+    var filterPanel    = document.getElementById('crFilterPanel');
+    var filterStatus   = document.getElementById('crFilterStatus');
+    var filterDocs     = document.getElementById('crFilterDocs');
+    var addFilterBtn   = document.getElementById('crAddFilterBtn');
+    var clearFilterBtn = document.getElementById('crClearFilterBtn');
+
+    function filterCards() {
+        if (!grid) return;
+        var query  = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        var status = filterStatus ? filterStatus.value : '';
+        var docs   = filterDocs ? filterDocs.value : '';
+        var cards  = grid.querySelectorAll('.cr-card');
+        var visibleCount = 0;
+
+        cards.forEach(function (card) {
+            var textMatch   = !query  || card.dataset.name.indexOf(query) !== -1 || (card.dataset.proposer || '').toLowerCase().indexOf(query) !== -1;
+            var statusMatch = !status || card.dataset.status === status;
+            var docsMatch   = !docs   || card.dataset.docstatus === docs;
+            var isVisible   = (textMatch && statusMatch && docsMatch);
+            card.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // If cards exist but none match the search/filter criteria, show feedback message
+        var noMatchEl = grid.querySelector('#crNoFilterMatch');
+        if (cards.length > 0) {
+            if (visibleCount === 0) {
+                if (!noMatchEl) {
+                    var msg = document.createElement('div');
+                    msg.id = 'crNoFilterMatch';
+                    msg.className = 'cr-empty';
+                    msg.style.gridColumn = '1 / -1';
+                    msg.innerHTML =
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+                        '<p>No applications match your search/filters.</p>';
+                    grid.appendChild(msg);
+                }
+            } else if (noMatchEl) {
+                noMatchEl.remove();
+            }
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterCards);
+
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', function () {
+            var isOpen = filterPanel.classList.toggle('open');
+            filterBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+
+    if (addFilterBtn) {
+        addFilterBtn.addEventListener('click', filterCards);
+    }
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function () {
+            if (filterStatus) filterStatus.value = '';
+            if (filterDocs)   filterDocs.value   = '';
+            filterCards();
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Stat cards as filters / views
+    // ---------------------------------------------------------------
+    var pendingGridHtml = grid ? grid.innerHTML : null; // Cache initial pending cards HTML
+
+    function renderApprovedGrid(apps) {
+        if (!grid) return;
+        if (!apps || apps.length === 0) {
+            grid.innerHTML =
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><path d="M20 6 9 17l-5-5"/></svg>' +
+                    '<p>No approved applications found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        var html = '';
+        apps.forEach(function (app) {
+            var dateStr = app.reviewed_at ? formatDOB(app.reviewed_at) : (app.submitted_at ? formatDOB(app.submitted_at) : '—');
+            var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
+
+            html +=
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                    '<div class="cr-card-top">' +
+                        '<div class="cr-card-icon complete" title="Approved">' +
+                            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
+                        '</div>' +
+                        '<span class="cr-badge approved">Approved</span>' +
+                    '</div>' +
+                    '<div class="cr-card-date">' +
+                        'APPROVED ' + escapeHtml(dateStr) + reviewerText +
+                    '</div>' +
+                    '<div class="cr-card-name">' + escapeHtml(app.club_name) + '</div>' +
+                    '<div class="cr-card-proposer">' +
+                        'Proposer: ' + escapeHtml(app.proposer_name || '—') +
+                    '</div>' +
+                    '<div class="cr-card-footer">' +
+                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
+    }
+
+    function setActiveStat(button) {
+        [statPending, statApproved, statRejected].forEach(function (b) { if (b) b.classList.remove('is-active'); });
+        if (button) button.classList.add('is-active');
+    }
+
+    function renderRejectedGrid(apps) {
+        if (!grid) return;
+        if (!apps || apps.length === 0) {
+            grid.innerHTML =
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '<p>No rejected applications found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        var html = '';
+        apps.forEach(function (app) {
+            var dateStr = app.reviewed_at ? formatDOB(app.reviewed_at) : (app.submitted_at ? formatDOB(app.submitted_at) : '—');
+            var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
+
+            html +=
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                    '<div class="cr-card-top">' +
+                        '<div class="cr-card-icon incomplete" title="Rejected">' +
+                            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                        '</div>' +
+                        '<span class="cr-badge rejected">Rejected</span>' +
+                    '</div>' +
+                    '<div class="cr-card-date">' +
+                        'REJECTED ' + escapeHtml(dateStr) + reviewerText +
+                    '</div>' +
+                    '<div class="cr-card-name">' + escapeHtml(app.club_name) + '</div>' +
+                    '<div class="cr-card-proposer">' +
+                        'Proposer: ' + escapeHtml(app.proposer_name || '—') +
+                    '</div>' +
+                    '<div class="cr-card-footer">' +
+                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
+    }
+
+    // ---------------------------------------------------------------
+    // Sort toggle for Pending Applications (Oldest vs Newest first)
+    // ---------------------------------------------------------------
+    var sortToggleBtn = document.getElementById('crSortToggleBtn');
+    var currentSortOrder = 'asc'; // 'asc' = oldest first (default), 'desc' = newest first
+
+    function sortPendingCards(order) {
+        if (!grid) return;
+        var cards = [].slice.call(grid.querySelectorAll('.cr-card'));
+        if (cards.length === 0) return;
+
+        cards.sort(function (a, b) {
+            var timeA = parseInt(a.getAttribute('data-submitted') || '0', 10);
+            var timeB = parseInt(b.getAttribute('data-submitted') || '0', 10);
+            return order === 'asc' ? (timeA - timeB) : (timeB - timeA);
+        });
+
+        cards.forEach(function (card) {
+            grid.appendChild(card);
+        });
+
+        if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+            pendingGridHtml = grid.innerHTML;
+        }
+    }
+
+    if (sortToggleBtn) {
+        sortToggleBtn.addEventListener('click', function () {
+            if (currentSortOrder === 'asc') {
+                currentSortOrder = 'desc';
+                sortToggleBtn.textContent = 'Sort: Newest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'desc');
+            } else {
+                currentSortOrder = 'asc';
+                sortToggleBtn.textContent = 'Sort: Oldest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'asc');
+            }
+            sortPendingCards(currentSortOrder);
+        });
+    }
+
+    if (statPending) {
+        statPending.addEventListener('click', function () {
+            setActiveStat(statPending);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'inline-flex';
+            if (filterStatus) filterStatus.value = '';
+            if (pendingGridHtml !== null && grid) {
+                grid.innerHTML = pendingGridHtml;
+                filterCards();
+            }
+        });
+    }
+
+    if (statApproved) {
+        statApproved.addEventListener('click', function () {
+            setActiveStat(statApproved);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'none';
+            if (filterStatus) filterStatus.value = '';
+            // Cache current pending HTML if not yet cached
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved applications…</p>';
+            fetch(ROOT_URL + '/clubregistration/approved', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    renderApprovedGrid(data.applications || []);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved applications.</p>';
+                });
+        });
+    }
+
+    if (statRejected) {
+        statRejected.addEventListener('click', function () {
+            setActiveStat(statRejected);
+            if (sortToggleBtn) sortToggleBtn.style.display = 'none';
+            if (filterStatus) filterStatus.value = '';
+            // Cache current pending HTML if not yet cached
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected applications…</p>';
+            fetch(ROOT_URL + '/clubregistration/rejected', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    renderRejectedGrid(data.applications || []);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected applications.</p>';
+                });
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Review modal & Submodals (NIC Verification & Media Lightbox)
+    // ---------------------------------------------------------------
+    var nicModalBackdrop = document.getElementById('crNicModalBackdrop');
+    var nicModalContent  = document.getElementById('crNicModalContent');
+    var galleryModalBackdrop = document.getElementById('crGalleryModalBackdrop');
+    var galleryModalContent  = document.getElementById('crGalleryModalContent');
+    var currentGalleryItems = [];
+    var currentGalleryIndex = 0;
+
+    function closeModal() {
+        modalBackdrop.classList.remove('open');
+        modalContent.innerHTML = '';
+    }
+
+    function closeNicModal() {
+        if (nicModalBackdrop) nicModalBackdrop.classList.remove('open');
+        if (nicModalContent) nicModalContent.innerHTML = '';
+    }
+
+    function closeGalleryModal() {
+        if (galleryModalBackdrop) galleryModalBackdrop.classList.remove('open');
+        if (galleryModalContent) galleryModalContent.innerHTML = '';
+        currentGalleryItems = [];
+    }
+
+    if (nicModalBackdrop) {
+        nicModalBackdrop.addEventListener('click', function (e) {
+            if (e.target === nicModalBackdrop) closeNicModal();
+        });
+    }
+
+    if (galleryModalBackdrop) {
+        galleryModalBackdrop.addEventListener('click', function (e) {
+            if (e.target === galleryModalBackdrop) closeGalleryModal();
+        });
+    }
+
+    var mousedownTarget = null;
+    modalBackdrop.addEventListener('mousedown', function (e) {
+        mousedownTarget = e.target;
+    });
+
+    modalBackdrop.addEventListener('click', function (e) {
+        if (e.target === modalBackdrop && mousedownTarget === modalBackdrop) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (galleryModalBackdrop && galleryModalBackdrop.classList.contains('open')) {
+                closeGalleryModal();
+                return;
+            }
+            if (nicModalBackdrop && nicModalBackdrop.classList.contains('open')) {
+                closeNicModal();
+                return;
+            }
+            if (modalBackdrop && modalBackdrop.classList.contains('open')) {
+                closeModal();
+            }
+        }
+    });
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : String(str);
+        return div.innerHTML;
+    }
+
+    function maskAccountNumber(num) {
+        if (!num) return '—';
+        var clean = String(num).replace(/\s+/g, '');
+        if (clean.length <= 4) return clean;
+        var masked = '';
+        var len = clean.length;
+        for (var i = 0; i < len - 4; i++) {
+            masked += '•';
+            if ((i + 1) % 4 === 0) masked += ' ';
+        }
+        if (masked.charAt(masked.length - 1) !== ' ') masked += ' ';
+        masked += clean.slice(-4);
+        return masked;
+    }
+
+    function formatDOB(dobStr) {
+        if (!dobStr) return '—';
+        var clean = String(dobStr).trim();
+        var d = new Date(clean.replace(' ', 'T'));
+        if (isNaN(d.getTime())) d = new Date(clean.replace(/-/g, '/'));
+        if (isNaN(d.getTime())) d = new Date(clean);
+        if (isNaN(d.getTime())) return escapeHtml(clean);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // ---------------------------------------------------------------
+    // Safe Image Renderer with automatic SVG placeholder fallback
+    // ---------------------------------------------------------------
+    function getFallbackSvg(type) {
+        if (type === 'nic' || type === 'id') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>';
+        }
+        if (type === 'avatar' || type === 'profile') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        }
+        if (type === 'thumb') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        if (type === 'logo') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        if (type === 'stage') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="48" height="48"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+        }
+        // Default / photo
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+
+    function renderImg(src, alt, cssClass, fallbackType, extraStyle) {
+        var type = fallbackType || 'photo';
+        if (!src) {
+            return '<div class="cr-fallback-box ' + type + '">' + getFallbackSvg(type) + '</div>';
+        }
+        var fullSrc = (src.indexOf('://') === -1 && src.indexOf('data:') !== 0) ? (ROOT_URL + src) : src;
+        var clsAttr = cssClass ? (' class="' + escapeHtml(cssClass) + '"') : '';
+        var styleAttr = extraStyle ? (' style="' + escapeHtml(extraStyle) + '"') : '';
+        var svgEscaped = getFallbackSvg(type).replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+        return '<img src="' + escapeHtml(fullSrc) + '" alt="' + escapeHtml(alt || '') + '"' + clsAttr + styleAttr +
+            ' onerror="this.onerror=null;this.outerHTML=\'<div class=&quot;cr-fallback-box ' + type + '&quot;>' + svgEscaped + '</div>\';">';
+    }
+
+    // ---------- Dual-Sided NIC Modal ----------
+    function openNicModal(nominee, frontPath, backPath) {
+        if (!nicModalBackdrop || !nicModalContent) return;
+        var name = nominee ? (nominee.name || nominee.role_type || 'Executive Official') : 'Executive Official';
+        var role = nominee ? (nominee.role_type || 'Executive Nominee') : 'Executive Nominee';
+        var nic = nominee ? (nominee.NIC || '—') : '—';
+        var dob = nominee ? formatDOB(nominee.date_of_birth) : '—';
+
+        var front = frontPath || (nominee ? nominee.photo_path : null) || '/uploads/club_demo/nic_pres_front.svg';
+        var back  = backPath || (front ? front.replace('_front.', '_back.').replace('president.', 'nic_pres_back.').replace('secretary.', 'nic_sec_back.').replace('treasurer.', 'nic_tres_back.') : null) || '/uploads/club_demo/nic_pres_back.svg';
+
+        nicModalContent.innerHTML =
+            '<div class="cr-nic-modal-header">' +
+                '<div class="cr-nic-modal-title-group">' +
+                    '<h3>National Identity Card (NIC) Verification</h3>' +
+                    '<p>' + escapeHtml(name) + ' &bull; ' + escapeHtml(role) + '</p>' +
+                '</div>' +
+                '<button type="button" class="cr-nic-modal-close" id="crNicCloseBtn">&times;</button>' +
+            '</div>' +
+            '<div class="cr-nic-modal-body">' +
+                '<div class="cr-nic-meta-banner">' +
+                    '<div class="cr-nic-meta-item"><label>FULL NAME</label><span>' + escapeHtml(name) + '</span></div>' +
+                    '<div class="cr-nic-meta-item"><label>NIC NUMBER</label><span class="cr-nic-val-mono" style="color:#1e40af;font-size:14px;font-weight:700;">' + escapeHtml(nic) + '</span></div>' +
+                    '<div class="cr-nic-meta-item"><label>DATE OF BIRTH</label><span>' + escapeHtml(dob) + '</span></div>' +
+                '</div>' +
+                '<div class="cr-nic-dual-grid">' +
+                    '<div class="cr-nic-side-card">' +
+                        '<div class="cr-nic-side-header">' +
+                            '<span class="cr-nic-side-tag">FRONT SIDE</span>' +
+                        '</div>' +
+                        '<div class="cr-nic-img-container">' +
+                            renderImg(front, 'NIC Front', '', 'nic') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-nic-side-card">' +
+                        '<div class="cr-nic-side-header">' +
+                            '<span class="cr-nic-side-tag">BACK / REVERSE SIDE</span>' +
+                        '</div>' +
+                        '<div class="cr-nic-img-container">' +
+                            renderImg(back, 'NIC Back', '', 'nic') +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        nicModalBackdrop.classList.add('open');
+        var closeBtn = document.getElementById('crNicCloseBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeNicModal);
+    }
+
+    window._openNicModal = openNicModal;
+
+    // ---------- Lightbox Photo Gallery ----------
+    function renderGallerySlide(idx) {
+        if (!currentGalleryItems || currentGalleryItems.length === 0) return;
+        currentGalleryIndex = (idx + currentGalleryItems.length) % currentGalleryItems.length;
+        var item = currentGalleryItems[currentGalleryIndex];
+        var total = currentGalleryItems.length;
+
+        var thumbsHtml = '';
+        currentGalleryItems.forEach(function (it, tIdx) {
+            thumbsHtml += '<div class="cr-gallery-thumb ' + (tIdx === currentGalleryIndex ? 'active' : '') + '" onclick="window._switchGallerySlide(' + tIdx + ')">' +
+                renderImg(it.path, 'Thumbnail', '', 'thumb') +
+            '</div>';
+        });
+
+        galleryModalContent.innerHTML =
+            '<div class="cr-nic-modal-header">' +
+                '<div class="cr-nic-modal-title-group">' +
+                    '<h3>' + escapeHtml(item.galleryTitle || 'Photo Inspection') + '</h3>' +
+                    '<p>' + escapeHtml(item.title || '') + (item.meta ? ' &bull; ' + escapeHtml(item.meta) : '') + ' &bull; Item ' + (currentGalleryIndex + 1) + ' of ' + total + '</p>' +
+                '</div>' +
+                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn">&times;</button>' +
+            '</div>' +
+            '<div class="cr-nic-modal-body" style="padding: 16px;">' +
+                '<div class="cr-gallery-stage">' +
+                    renderImg(item.path, item.title || 'Image', '', 'stage') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">&#10094;</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">&#10095;</button>' : '') +
+                '</div>' +
+                (total > 1 ? '<div class="cr-gallery-thumbs">' + thumbsHtml + '</div>' : '') +
+            '</div>';
+
+        var closeBtn = document.getElementById('crGalleryCloseBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeGalleryModal);
+        var prevBtn = document.getElementById('crGalleryPrevBtn');
+        if (prevBtn) prevBtn.addEventListener('click', function () { renderGallerySlide(currentGalleryIndex - 1); });
+        var nextBtn = document.getElementById('crGalleryNextBtn');
+        if (nextBtn) nextBtn.addEventListener('click', function () { renderGallerySlide(currentGalleryIndex + 1); });
+    }
+
+    window._switchGallerySlide = function (idx) {
+        renderGallerySlide(idx);
+    };
+
+    function openAssetGallery(assets, initialIdx) {
+        if (!galleryModalBackdrop || !galleryModalContent) return;
+        currentGalleryItems = (assets || []).filter(function (a) { return !!a.photo_path; }).map(function (a) {
+            return {
+                path: a.photo_path,
+                title: a.asset_name,
+                meta: 'Quantity: ' + a.quantity + ' • Condition: ' + a.condition,
+                galleryTitle: 'Initial Club Assets Inspection'
+            };
+        });
+        if (currentGalleryItems.length === 0) return;
+        renderGallerySlide(initialIdx || 0);
+        galleryModalBackdrop.classList.add('open');
+    }
+
+    function openActivityGallery(photos, initialIdx) {
+        if (!galleryModalBackdrop || !galleryModalContent) return;
+        currentGalleryItems = (photos || []).filter(function (p) { return !!p.photo_path; }).map(function (p, i) {
+            var fileName = (p.photo_path || '').split('/').pop().replace(/\.[^/.]+$/, "").replace(/_/g, " ").toUpperCase();
+            return {
+                path: p.photo_path,
+                title: fileName || ('Activity Photo #' + (i + 1)),
+                meta: 'Uploaded with Application',
+                galleryTitle: 'Club Activity Photos Inspection'
+            };
+        });
+        if (currentGalleryItems.length === 0) return;
+        renderGallerySlide(initialIdx || 0);
+        galleryModalBackdrop.classList.add('open');
+    }
+
+    function renderDocumentCard(title, subtitle, tagText, tagClass, path) {
+        if (!path) {
+            return '<div class="cr-doc-big-card empty">' +
+                '<div class="cr-doc-card-header">' +
+                    '<h4>' + escapeHtml(title) + '</h4>' +
+                    '<span class="cr-doc-req-tag ' + tagClass + '">' + tagText + '</span>' +
+                '</div>' +
+                '<p class="cr-doc-card-desc">' + escapeHtml(subtitle) + '</p>' +
+                '<div class="cr-doc-dashed-box empty">' +
+                    '<span>No file uploaded</span>' +
+                '</div>' +
+            '</div>';
+        }
+        var fileName = path.split('/').pop();
+        var ext = fileName.split('.').pop().toUpperCase();
+        var iconSvg = ext === 'PDF'
+            ? '<svg class="cr-doc-type-icon pdf" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8m8 4H8m4-8H8"/></svg>'
+            : '<svg class="cr-doc-type-icon img" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+
+        return '<div class="cr-doc-big-card">' +
+            '<div class="cr-doc-card-header">' +
+                '<h4>' + escapeHtml(title) + '</h4>' +
+                '<span class="cr-doc-req-tag ' + tagClass + '">' + tagText + '</span>' +
+            '</div>' +
+            '<p class="cr-doc-card-desc">' + escapeHtml(subtitle) + '</p>' +
+            '<div class="cr-doc-dashed-box">' +
+                iconSvg +
+                '<span class="cr-doc-filename-large">' + escapeHtml(fileName) + '</span>' +
+                '<a href="' + escapeHtml(ROOT_URL + path) + '" target="_blank" class="cr-btn cr-btn-view-doc">VIEW DOCUMENT</a>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function renderNicCopyCard(roleLabel, path, nomineeData) {
+        var btnHtml = path
+            ? '<button type="button" class="cr-btn cr-btn-view-nic btn-open-nic" data-role="' + escapeHtml(roleLabel) + '" data-path="' + escapeHtml(path) + '">VIEW NIC</button>'
+            : '<button type="button" class="cr-btn cr-btn-view-nic disabled" disabled>VIEW NIC</button>';
+
+        return '<div class="cr-nic-copy-card">' +
+            '<div class="cr-nic-placeholder-box">' +
+                renderImg(path, 'NIC Preview', '', 'nic', 'width:100%;height:100%;object-fit:cover;border-radius:4px;') +
+            '</div>' +
+            '<div class="cr-nic-copy-footer">' +
+                '<span class="cr-nic-role-label">' + roleLabel + '</span>' +
+                btnHtml +
+            '</div>' +
+        '</div>';
+    }
+
+    function renderAvatar(n, size) {
+        if (n && n.photo_path) {
+            return '<div class="cr-avatar-circle size-' + size + '">' +
+                renderImg(n.photo_path, n.name || 'Nominee', '', 'avatar') +
+            '</div>';
+        }
+        return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + (n ? escapeHtml(n.name.charAt(0)) : '?') + '</div>';
+    }
+
+    function renderModal(data) {
+        var app = data.application;
+        var nominees = data.nominees || [];
+        var assets = data.assets || [];
+        var photos = data.photos || [];
+
+        var estDate = formatDOB(app.date_establishment);
+        var submittedDate = formatDOB(app.submitted_at);
+
+        var president = nominees.filter(function(n) { return n.role_type === 'President'; })[0];
+        var secretary = nominees.filter(function(n) { return n.role_type === 'Secretary'; })[0];
+        var treasurer = nominees.filter(function(n) { return n.role_type === 'Treasurer'; })[0];
+
+        // Global helpers for inline clicks in this modal session
+        window._openAssetGallery = function (idx) {
+            openAssetGallery(assets, idx);
+        };
+        window._openActivityGallery = function (idx) {
+            openActivityGallery(photos, idx);
+        };
+
+        modalContent.innerHTML =
+            '<div class="cr-modal-header">' +
+                '<div class="cr-header-left">' +
+                    '<div class="cr-header-title-row">' +
+                        '<span class="cr-header-phase-tag">REGISTRATION PHASE 1-7</span>' +
+                        '<h2>Review Full Club Application</h2>' +
+                    '</div>' +
+                    '<p>' + escapeHtml(app.club_name) + ' &bull; Application ID: ' + escapeHtml(app.application_ref || ('APP-' + app.application_id)) + ' &bull; Submitted ' + escapeHtml(submittedDate) + '</p>' +
+                '</div>' +
+                '<button type="button" class="cr-modal-close" id="crModalCloseBtn">&times;</button>' +
+            '</div>' +
+
+            // Section 1: Basic Information
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">1</span>' +
+                    '<h3 class="cr-section-title">BASIC INFORMATION</h3>' +
+                '</div>' +
+                '<div class="cr-basic-info-layout">' +
+                    '<div class="cr-logo-section">' +
+                        '<label class="cr-section-field-label">CLUB LOGO</label>' +
+                        '<div class="cr-dashed-logo-box">' +
+                            (app.club_logo_path 
+                                ? renderImg(app.club_logo_path, 'Club Logo', 'cr-logo-preview', 'logo') +
+                                  '<span class="cr-logo-filename">' + escapeHtml(app.club_logo_path.split('/').pop()) + '</span>'
+                                : '<svg class="cr-logo-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+                                  '<span class="cr-logo-filename">No logo uploaded</span>') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-basic-details-section">' +
+                        '<div class="cr-detail-row">' +
+                            '<div class="cr-field">' +
+                                '<label>CLUB NAME</label>' +
+                                '<span class="cr-club-name-title">' + escapeHtml(app.club_name) + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-detail-cols">' +
+                            '<div class="cr-field">' +
+                                '<label>REGISTRATION NUMBER</label>' +
+                                '<span class="cr-field-val-bold">' + escapeHtml(app.application_ref || 'Not assigned') + '</span>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>DATE OF ESTABLISHMENT</label>' +
+                                '<span class="cr-field-val-bold">' + escapeHtml(estDate) + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-detail-row" style="margin-top: 12px;">' +
+                            '<div class="cr-field">' +
+                                '<label>CLUB CATEGORY</label>' +
+                                '<div><span class="cr-category-tag">' + escapeHtml(app.category || 'Uncategorized') + '</span></div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                (app.description ? 
+                '<div class="cr-mission-section">' +
+                    '<label class="cr-section-field-label">CLUB MISSION STATEMENT</label>' +
+                    '<div class="cr-mission-box">' +
+                        '"' + escapeHtml(app.description) + '"' +
+                    '</div>' +
+                '</div>' : '') +
+            '</div>' +
+
+            // Section 2: Location Details
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">2</span>' +
+                    '<h3 class="cr-section-title">LOCATION DETAILS</h3>' +
+                '</div>' +
+                '<div class="cr-location-grid">' +
+                    '<div class="cr-field"><label>PROVINCE</label><span class="cr-field-val-bold">' + escapeHtml(app.state_province || '—') + '</span></div>' +
+                    '<div class="cr-field"><label>DISTRICT</label><span class="cr-field-val-bold">' + escapeHtml(app.district || '—') + '</span></div>' +
+                    '<div class="cr-field"><label>DIVISION</label><span class="cr-field-val-bold">' + escapeHtml(app.division_name || '—') + (app.zone_name ? ' — ' + escapeHtml(app.zone_name) : '') + '</span></div>' +
+                '</div>' +
+                '<div class="cr-venue-section">' +
+                    '<label class="cr-section-field-label">MEETING VENUE / OFFICIAL ADDRESS</label>' +
+                    '<div class="cr-venue-box">' +
+                        '<div class="cr-venue-address-row">' +
+                            '<svg class="cr-pin-icon" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+                            '<span class="cr-venue-address-text">' + escapeHtml(app.street_address || '—') + ', ' + escapeHtml(app.city || '—') + ', ' + escapeHtml(app.postal_code || '—') + '.</span>' +
+                        '</div>' +
+                        (app.venue_established ? 
+                        '<div class="cr-venue-info-tag">' +
+                            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+                            '<span>PERMANENT MEETING LOCATION ESTABLISHED</span>' +
+                        '</div>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Section 3: Executive Committee Details
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">3</span>' +
+                    '<h3 class="cr-section-title">EXECUTIVE COMMITTEE DETAILS</h3>' +
+                '</div>' +
+                '<div class="cr-nominees-container">' +
+                    (president ? 
+                    '<div class="cr-nominee-horizontal-card">' +
+                        '<div class="cr-nominee-horizontal-header">' +
+                            '<span class="cr-role-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
+                                'PRESIDENT / PRIMARY OFFICER' +
+                            '</span>' +
+                        '</div>' +
+                        '<div class="cr-nominee-horizontal-content">' +
+                            '<div class="cr-nominee-photo-block">' +
+                                renderAvatar(president, 'large') +
+                                '<label>PROFILE PHOTO</label>' +
+                            '</div>' +
+                            '<div class="cr-nominee-fields-block">' +
+                                '<div class="cr-nominee-field"><label>FULL NAME (AS PER NIC)</label><span class="cr-nominee-val-bold">' + escapeHtml(president.name) + '</span></div>' +
+                                '<div class="cr-nominee-field"><label>NIC NUMBER</label><span class="cr-nominee-val-bold">' + escapeHtml(president.NIC || '—') + '</span></div>' +
+                                '<div class="cr-nominee-field"><label>DATE OF BIRTH</label><span class="cr-nominee-val-bold">' + formatDOB(president.date_of_birth) + '</span></div>' +
+                                '<div class="cr-nominee-field"><label>PHONE NUMBER</label><span class="cr-nominee-val-bold">' + escapeHtml(president.phone_number || '—') + '</span></div>' +
+                                '<div class="cr-nominee-field-full"><label>EMAIL ADDRESS</label><span class="cr-nominee-val-bold">' + escapeHtml(president.email || '—') + '</span></div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' : '<p class="cr-empty-placeholder">No President nominee on file.</p>') +
+
+                    '<div class="cr-nominees-subgrid">' +
+                        // Secretary
+                        '<div class="cr-nominee-subcard">' +
+                            '<div class="cr-nominee-subcard-header">' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+                                    'SECRETARY' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="cr-nominee-subcard-content">' +
+                                '<div class="cr-nominee-photo-block">' +
+                                    renderAvatar(secretary, 'small') +
+                                    '<label>PROFILE PHOTO</label>' +
+                                '</div>' +
+                                '<div class="cr-nominee-subfields">' +
+                                    '<div class="cr-subfield"><label>NAME</label><span class="cr-subfield-val">' + (secretary ? escapeHtml(secretary.name) : '—') + '</span></div>' +
+                                    '<div class="cr-subfield"><label>NIC</label><span class="cr-subfield-val">' + (secretary ? escapeHtml(secretary.NIC || '—') : '—') + '</span></div>' +
+                                    '<div class="cr-subfield"><label>DOB</label><span class="cr-subfield-val">' + (secretary ? formatDOB(secretary.date_of_birth) : '—') + '</span></div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Treasurer
+                        '<div class="cr-nominee-subcard">' +
+                            '<div class="cr-nominee-subcard-header">' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
+                                    'TREASURER' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="cr-nominee-subcard-content">' +
+                                '<div class="cr-nominee-photo-block">' +
+                                    renderAvatar(treasurer, 'small') +
+                                    '<label>PROFILE PHOTO</label>' +
+                                '</div>' +
+                                '<div class="cr-nominee-subfields">' +
+                                    '<div class="cr-subfield"><label>NAME</label><span class="cr-subfield-val">' + (treasurer ? escapeHtml(treasurer.name) : '—') + '</span></div>' +
+                                    '<div class="cr-subfield"><label>NIC</label><span class="cr-subfield-val">' + (treasurer ? escapeHtml(treasurer.NIC || '—') : '—') + '</span></div>' +
+                                    '<div class="cr-subfield"><label>DOB</label><span class="cr-subfield-val">' + (treasurer ? formatDOB(treasurer.date_of_birth) : '—') + '</span></div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Section 4: Initial Club Assets
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">4</span>' +
+                    '<h3 class="cr-section-title">INITIAL CLUB ASSETS</h3>' +
+                '</div>' +
+                '<div class="cr-assets-two-columns">' +
+                    '<div class="cr-assets-inventory-col">' +
+                        '<label class="cr-section-field-label">ASSET INVENTORY</label>' +
+                        '<table class="cr-assets-table">' +
+                            '<thead>' +
+                                '<tr>' +
+                                    '<th>ASSET NAME</th>' +
+                                    '<th>QTY</th>' +
+                                    '<th>CONDITION</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>' +
+                                (assets.length > 0 ? assets.map(function(ast) {
+                                    var padQty = String(ast.quantity).padStart(2, '0');
+                                    return '<tr>' +
+                                        '<td class="cr-asset-table-name">' + escapeHtml(ast.asset_name) + '</td>' +
+                                        '<td class="cr-asset-table-qty">' + escapeHtml(padQty) + '</td>' +
+                                        '<td><span class="cr-asset-table-condition-pill ' + escapeHtml(ast.condition.toLowerCase()) + '">' + escapeHtml(ast.condition) + '</span></td>' +
+                                        '</tr>';
+                                }).join('') : '<tr><td colspan="3" class="cr-table-empty">No assets listed</td></tr>') +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div class="cr-assets-photos-col">' +
+                        '<label class="cr-section-field-label">ASSET PHOTOS (CLICK TO INSPECT)</label>' +
+                        (function () {
+                            var assetPhotos = assets.filter(function (a) { return !!a.photo_path; });
+                            var totalPhotos = assetPhotos.length;
+                            var html = '<div class="cr-assets-photos-grid">';
+                            for (var idx = 0; idx < 4; idx++) {
+                                var asset = assetPhotos[idx];
+                                if (idx === 3 && totalPhotos > 4) {
+                                    var remainingCount = totalPhotos - 3;
+                                    html += '<div class="cr-asset-photo-box overlay-more" onclick="window._openAssetGallery(' + idx + ')">' +
+                                                renderImg(asset.photo_path, 'Asset Photo', 'cr-asset-photo-img', 'photo') +
+                                                '<div class="cr-asset-more-overlay">' +
+                                                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+                                                    '<span style="font-size:15px;font-weight:900;">+' + remainingCount + '</span>' +
+                                                    '<span style="font-size:9.5px;letter-spacing:0.5px;">REMAINING</span>' +
+                                                '</div>' +
+                                            '</div>';
+                                } else if (asset) {
+                                    html += '<div class="cr-asset-photo-box" onclick="window._openAssetGallery(' + idx + ')">' +
+                                                renderImg(asset.photo_path, asset.asset_name || 'Asset Photo', 'cr-asset-photo-img', 'photo') +
+                                            '</div>';
+                                } else {
+                                    html += '<div class="cr-asset-photo-box empty">' +
+                                                '<svg class="cr-photo-icon" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+                                            '</div>';
+                                }
+                            }
+                            html += '</div>';
+                            return html;
+                        })() +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Section 5: Verification & Disbursements
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">5</span>' +
+                    '<h3 class="cr-section-title">VERIFICATION & DISBURSEMENTS</h3>' +
+                '</div>' +
+                '<div class="cr-verification-layout">' +
+                    '<div class="cr-bank-info-card">' +
+                        '<h4 class="cr-card-section-title">' +
+                            '<svg class="cr-card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="22" width="18" height="2"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 2 7 22 7 12 2"/></svg>' +
+                            'OFFICIAL BANK INFORMATION' +
+                        '</h4>' +
+                        '<div class="cr-bank-fields-grid">' +
+                            '<div class="cr-field"><label>BANK NAME</label><span class="cr-field-val-bold">' + escapeHtml(app.bank_name || '—') + '</span></div>' +
+                            '<div class="cr-field"><label>BRANCH</label><span class="cr-field-val-bold">' + escapeHtml(app.bank_branch || '—') + '</span></div>' +
+                            '<div class="cr-field-full"><label>ACCOUNT HOLDER NAME</label><span class="cr-field-val-bold">' + escapeHtml(app.account_holder || '—') + '</span></div>' +
+                            '<div class="cr-field-full"><label>ACCOUNT NUMBER</label><span class="cr-field-val-bold cr-account-number-display">' + escapeHtml(maskAccountNumber(app.account_number)) + '</span></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-processing-card">' +
+                        '<div class="cr-processing-lock-circle">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+                        '</div>' +
+                        '<div class="cr-processing-title">Secure Processing</div>' +
+                        '<div class="cr-processing-subtitle">Financial details are verified for disbursement purposes.</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Section 6: Supporting Documents
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">6</span>' +
+                    '<h3 class="cr-section-title">SUPPORTING DOCUMENTS</h3>' +
+                '</div>' +
+                '<div class="cr-docs-section-layout">' +
+                    '<div class="cr-docs-cards-grid">' +
+                        renderDocumentCard('Constitution / Club Charter', 'Scanned official governing document', 'REQUIRED', 'required-pdf', app.constitution_path) +
+                        renderDocumentCard('Proof of Meeting Venue', 'Utility bill, rental agreement or authorization', 'REQUIRED', 'required-pdf', app.venue_proof_path) +
+                    '</div>' +
+                    '<div class="cr-nic-copies-section">' +
+                        '<h4 class="cr-sub-section-title-grey">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:6px;"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>' +
+                            'NIC COPIES OF KEY OFFICIALS' +
+                        '</h4>' +
+                        '<div class="cr-nic-copies-grid">' +
+                            renderNicCopyCard('PRESIDENT', app.nic_president_path, president) +
+                            renderNicCopyCard('SECRETARY', app.nic_secretary_path, secretary) +
+                            renderNicCopyCard('TREASURER', app.nic_treasurer_path, treasurer) +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-photos-section-container">' +
+                        '<h4 class="cr-sub-section-title-grey">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:6px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+                            'CLUB ACTIVITY PHOTOS' +
+                        '</h4>' +
+                        '<div class="cr-photos-dashed-container">' +
+                            (function() {
+                                var photosCount = photos.length;
+                                var photosStackedHtml = '';
+                                if (photosCount > 0) {
+                                    photosStackedHtml = '<div class="cr-photos-stacked-container" onclick="window._openActivityGallery(0)" style="cursor:pointer;">';
+                                    var limit = Math.min(photosCount, 3);
+                                    for (var pIdx = 0; pIdx < limit; pIdx++) {
+                                        photosStackedHtml += '<div class="cr-photo-stacked-circle" style="z-index: ' + (10 - pIdx) + ';">' +
+                                            renderImg(photos[pIdx].photo_path, 'Activity Photo', '', 'avatar') +
+                                        '</div>';
+                                    }
+                                    if (photosCount > 3) {
+                                        photosStackedHtml += '<div class="cr-photo-stacked-circle count-more" style="z-index: 5;">+' + (photosCount - 3) + '</div>';
+                                    }
+                                    photosStackedHtml += '</div>';
+                                    photosStackedHtml += '<div class="cr-photos-count-label">' + photosCount + ' Photos Uploaded</div>';
+                                    photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos" id="btnViewAllActivityPhotos">VIEW ALL PHOTOS</button>';
+                                } else {
+                                    photosStackedHtml = '<div class="cr-photos-placeholder-text">No activity photos uploaded</div>';
+                                }
+                                return photosStackedHtml;
+                            })() +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Section 7: Final Declaration
+            '<div class="cr-modal-section">' +
+                '<div class="cr-section-header">' +
+                    '<span class="cr-section-number">7</span>' +
+                    '<h3 class="cr-section-title">FINAL DECLARATION</h3>' +
+                '</div>' +
+                '<div class="cr-declaration-layout">' +
+                    '<div class="cr-legal-ack-card">' +
+                        '<h4 class="cr-card-section-title">' +
+                            '<svg class="cr-card-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+                            'LEGAL ACKNOWLEDGEMENT' +
+                        '</h4>' +
+                        '<p class="cr-legal-subtitle">Submission of fraudulent data is a punishable offense under the Youth Development Act.</p>' +
+                        '<div class="cr-declaration-checks">' +
+                            '<div class="cr-decl-check-item">' +
+                                '<span class="cr-decl-checkbox ' + (app.info_accuracy ? 'checked' : '') + '">' +
+                                    (app.info_accuracy ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+                                '</span>' +
+                                '<span>I confirm all information provided is accurate to the best of my knowledge.</span>' +
+                            '</div>' +
+                            '<div class="cr-decl-check-item">' +
+                                '<span class="cr-decl-checkbox ' + (app.terms_accepted ? 'checked' : '') + '">' +
+                                    (app.terms_accepted ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+                                '</span>' +
+                                '<span>I agree to the NYSC terms and conditions regarding club governance.</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="cr-endorsement-card">' +
+                        '<svg class="cr-endorsement-stamp-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+                        '<div class="cr-endorsement-label">OFFICIAL ENDORSEMENT</div>' +
+                        '<div class="cr-signature-white-box">' +
+                            '<span class="cr-signature-cursive">' + escapeHtml(app.digital_signature || (president ? president.name : app.proposer_name)) + '</span>' +
+                            '<div class="cr-signature-subtext">DIGITAL SIGNATURE OF PRESIDENT</div>' +
+                        '</div>' +
+                        '<div class="cr-endorsement-date-row">' +
+                            '<span class="cr-endorsement-date-label">DATE:</span>' +
+                            '<span class="cr-endorsement-date-val">' + escapeHtml(formatDOB(app.submitted_at)) + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Final Review Decision / Status summary
+            (function () {
+                if (app.status === 'Pending') {
+                    return '<div class="cr-decision-panel">' +
+                        '<div class="cr-section-header">' +
+                            '<span class="cr-section-icon-decision">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#12141a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</span>' +
+                            '<h3 class="cr-section-title">FINAL REVIEW DECISION</h3>' +
+                        '</div>' +
+                        '<div class="cr-decision-fields-row">' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEW RESULT</label>' +
+                                '<select id="crReviewResultSelect">' +
+                                    '<option value="approve">Approve Registration</option>' +
+                                    '<option value="reject">Reject Registration</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED BY</label>' +
+                                '<input type="text" readonly value="' + escapeHtml(COORDINATOR_NAME) + ' — Divisional Coordinator" class="cr-readonly-input">' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-decision-remarks-section">' +
+                            '<label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>' +
+                            '<textarea id="crRemarks" placeholder="Provide detailed feedback for the club executives..."></textarea>' +
+                        '</div>' +
+                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert">' +
+                            '<div class="cr-impact-icon-circle approve">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF APPROVAL</strong>' +
+                                '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="cr-decision-footer-bar">' +
+                            '<div class="cr-decision-footer-actions">' +
+                                '<button type="button" class="cr-btn-cancel-link" id="crCancelReviewBtn">Cancel Review</button>' +
+                                '<button type="button" class="cr-btn cr-btn-submit-decision" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                } else {
+                    return '<div class="cr-decision-panel readonly">' +
+                        '<div class="cr-section-header">' +
+                            '<span class="cr-section-icon-decision">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#12141a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                            '</span>' +
+                            '<h3 class="cr-section-title">REVIEW DECISION &amp; STATUS</h3>' +
+                        '</div>' +
+                        '<div class="cr-readonly-summary-grid">' +
+                            '<div class="cr-field">' +
+                                '<label>FINAL STATUS</label>' +
+                                '<div><span class="cr-badge ' + escapeHtml((app.status || '').toLowerCase()) + '">' + escapeHtml(app.status || '—') + '</span></div>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED BY</label>' +
+                                '<span class="cr-field-val-bold">' + escapeHtml(app.reviewed_by_name || COORDINATOR_NAME) + '</span>' +
+                            '</div>' +
+                            '<div class="cr-field">' +
+                                '<label>REVIEWED AT</label>' +
+                                '<span class="cr-field-val-bold">' + (app.reviewed_at ? formatDOB(app.reviewed_at) : '—') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        (app.rejection_remarks ?
+                        '<div class="cr-decision-remarks-section" style="margin-top:14px;">' +
+                            '<label>REVIEW REMARKS</label>' +
+                            '<div class="cr-readonly-remarks-box">' + escapeHtml(app.rejection_remarks) + '</div>' +
+                        '</div>' : '') +
+                        '<div class="cr-decision-footer-bar">' +
+                            '<div class="cr-decision-footer-actions">' +
+                                '<button type="button" class="cr-btn cr-btn-primary" id="crCloseReadonlyBtn" style="padding: 10px 24px;">Close</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }
+            })() +
+            '</div>';
+
+        // Bind Section 6 NIC buttons
+        modalContent.querySelectorAll('.btn-open-nic').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var role = btn.dataset.role;
+                var p = btn.dataset.path;
+                var targetNominee = role === 'PRESIDENT' ? president : (role === 'SECRETARY' ? secretary : treasurer);
+                openNicModal(targetNominee, p, p ? p.replace('_front.', '_back.') : null);
+            });
+        });
+
+        // Bind Section 6 Activity Photos View All
+        var btnActivityAll = document.getElementById('btnViewAllActivityPhotos');
+        if (btnActivityAll) {
+            btnActivityAll.addEventListener('click', function () {
+                openActivityGallery(photos, 0);
+            });
+        }
+
+        if (app.status === 'Pending') {
+            var selectEl = document.getElementById('crReviewResultSelect');
+            var alertEl = document.getElementById('crDecisionImpactAlert');
+
+            if (selectEl && alertEl) {
+                selectEl.addEventListener('change', function () {
+                    if (selectEl.value === 'approve') {
+                        alertEl.className = 'cr-decision-impact-alert approve';
+                        alertEl.innerHTML = 
+                            '<div class="cr-impact-icon-circle approve">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF APPROVAL</strong>' +
+                                '<p>Approving this comprehensive application will officially register the <strong>' + escapeHtml(app.club_name) + '</strong>, generate their unique NYSC Index Number, and dispatch login credentials to the President, Secretary, and Treasurer. All initial assets will be logged into the divisional database.</p>' +
+                            '</div>';
+                    } else {
+                        alertEl.className = 'cr-decision-impact-alert reject';
+                        alertEl.innerHTML = 
+                            '<div class="cr-impact-icon-circle reject">' +
+                                '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                            '</div>' +
+                            '<div class="cr-impact-text-content">' +
+                                '<strong>IMPACT OF REJECTION</strong>' +
+                                '<p>Rejecting this application will notify the proposer and nominees with the provided remarks. They will need to correct and resubmit the application.</p>' +
+                            '</div>';
+                    }
+                });
+            }
+
+            var cancelBtn = document.getElementById('crCancelReviewBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+            var confirmBtn = document.getElementById('crConfirmSubmitBtn');
+            if (confirmBtn && selectEl) {
+                confirmBtn.addEventListener('click', function () {
+                    submitDecision(app.application_id, selectEl.value, app.club_name);
+                });
+            }
+        } else {
+            var closeReadonlyBtn = document.getElementById('crCloseReadonlyBtn');
+            if (closeReadonlyBtn) closeReadonlyBtn.addEventListener('click', closeModal);
+        }
+
+        var closeHeaderBtn = document.getElementById('crModalCloseBtn');
+        if (closeHeaderBtn) closeHeaderBtn.addEventListener('click', closeModal);
+    }
+
+    function renderSuccessModal(clubName, clubCode, applicationId) {
+        modalContent.innerHTML =
+            '<div class="cr-success-modal-content">' +
+                '<div class="cr-success-icon-wrapper">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" width="40" height="40"><polyline points="20 6 9 17l-5-5"/></svg>' +
+                '</div>' +
+                '<h2 class="cr-success-title">Club Created Successfully</h2>' +
+                '<p class="cr-success-subtitle"><strong>' + escapeHtml(clubName) + '</strong> has been approved. The club record was created automatically and login credentials were emailed to all 3 key/elect executives.</p>' +
+                
+                '<div class="cr-success-details-grid">' +
+                    '<div class="cr-success-field"><label>CLUB ID / CODE</label><span class="cr-success-val-bold">' + escapeHtml(clubCode) + '</span></div>' +
+                    '<div class="cr-success-field"><label>STATUS</label><span><span class="cr-success-status-badge">Active</span></span></div>' +
+                '</div>' +
+
+                '<div class="cr-success-actions">' +
+                    '<button type="button" class="cr-btn cr-btn-success-secondary" id="crViewRecordBtn">View Club Record</button>' +
+                    '<button type="button" class="cr-btn cr-btn-success-primary" id="crDoneSuccessBtn">Done</button>' +
+                '</div>' +
+            '</div>';
+
+        function handleDone() {
+            closeModal();
+            var cardEl = grid.querySelector('.cr-review-btn[data-id="' + applicationId + '"]');
+            if (cardEl) {
+                var card = cardEl.closest('.cr-card');
+                if (card) card.remove();
+            }
+            if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+                pendingGridHtml = grid.innerHTML;
+            }
+            var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
+            var valApproved = statApproved ? statApproved.querySelector('.cr-stat-value') : null;
+            if (valPending && parseInt(valPending.textContent, 10) > 0) {
+                var newCount = parseInt(valPending.textContent, 10) - 1;
+                valPending.textContent = newCount;
+                updateNotifCount(newCount);
+            }
+            if (valApproved) {
+                valApproved.textContent = parseInt(valApproved.textContent, 10) + 1;
+            }
+        }
+
+        document.getElementById('crViewRecordBtn').addEventListener('click', handleDone);
+        document.getElementById('crDoneSuccessBtn').addEventListener('click', handleDone);
+    }
+
+    function openReview(applicationId) {
+        modalBackdrop.classList.add('open');
+        modalContent.innerHTML = '<p style="padding:20px;font-size:13px;color:#6b7280;">Loading application…</p>';
+
+        fetch(ROOT_URL + '/clubregistration/review/' + applicationId, { credentials: 'same-origin' })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.error) {
+                    modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">' + escapeHtml(data.error) + '</p>';
+                    return;
+                }
+                renderModal(data);
+            })
+            .catch(function () {
+                modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">Something went wrong loading this application.</p>';
+            });
+    }
+
+    if (grid) {
+        grid.addEventListener('click', function (e) {
+            var btn = e.target.closest('.cr-review-btn');
+            if (!btn) return;
+            openReview(btn.dataset.id);
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Approve / Reject submission
+    // ---------------------------------------------------------------
+    function submitDecision(applicationId, action, clubName) {
+        var remarks = document.getElementById('crRemarks').value.trim();
+
+        if (action === 'reject' && !remarks) {
+            showToast('Please provide a reason for rejecting this application.', true);
+            return;
+        }
+
+        var confirmMsg = action === 'approve'
+            ? 'Approve ' + clubName + '? This will create login accounts for the executive committee and email their credentials. This cannot be undone.'
+            : 'Reject ' + clubName + '? The proposer will be notified by email with your remarks.';
+
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        var submitBtn = document.getElementById('crConfirmSubmitBtn');
+        if (submitBtn) submitBtn.disabled = true;
+
+        var body = new URLSearchParams();
+        body.set('csrf_token', csrfToken);
+        body.set('remarks', remarks);
+
+        fetch(ROOT_URL + '/clubregistration/' + action + '/' + applicationId, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.error) {
+                    showToast(data.error, true);
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
+                }
+                if (action === 'approve') {
+                    renderSuccessModal(clubName, data.club_code, applicationId);
+                } else {
+                    closeModal();
+                    var cardEl = grid.querySelector('.cr-review-btn[data-id="' + applicationId + '"]');
+                    if (cardEl) {
+                        var card = cardEl.closest('.cr-card');
+                        if (card) card.remove();
+                    }
+                    if (pendingGridHtml !== null && statPending && statPending.classList.contains('is-active')) {
+                        pendingGridHtml = grid.innerHTML;
+                    }
+                    var valPending = statPending ? statPending.querySelector('.cr-stat-value') : null;
+                    var valRejected = statRejected ? statRejected.querySelector('.cr-stat-value') : null;
+                    if (valPending && parseInt(valPending.textContent, 10) > 0) {
+                        var newPendingCount = parseInt(valPending.textContent, 10) - 1;
+                        valPending.textContent = newPendingCount;
+                        updateNotifCount(newPendingCount);
+                    }
+                    if (valRejected) {
+                        valRejected.textContent = parseInt(valRejected.textContent, 10) + 1;
+                    }
+                    showToast('Application rejected. The proposer has been notified.');
+                }
+            })
+            .catch(function () {
+                showToast('Something went wrong. Please try again.', true);
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    }
+
+})();

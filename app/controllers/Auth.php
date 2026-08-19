@@ -3,68 +3,67 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require_once '../app/core/phpmailer/Exception.php';
+require_once '../app/core/phpmailer/PHPMailer.php';
+require_once '../app/core/phpmailer/SMTP.php';
+
 class Auth extends Controller {
 
     // ---------------------------------------------------------------
     // SIGN IN
     // ---------------------------------------------------------------
+    // ---------------------------------------------------------------
+    // SIGN IN
+    // ---------------------------------------------------------------
     public function signin() {
-        // CSRF token generation
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
         $data = [
-            'title'      => 'Sign In — YouthNexus Pulse',
-            'error'      => '',
-            'success'    => '',
-            'email'      => '',
-            'csrf_token' => $_SESSION['csrf_token'],
+            'title'   => 'Sign In — YouthNexus Pulse',
+            'error'   => '',
+            'success' => (isset($_GET['registered']) && $_GET['registered'] == 1) ? 'Account created successfully! Please sign in with your credentials.' : '',
+            'email'   => '',
         ];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // CSRF check
-            if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-                $data['error'] = 'Invalid request. Please refresh the page.';
+            $email    = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if (empty($email) || empty($password)) {
+                $data['error'] = 'Please enter both your email and password.';
+                $data['email'] = htmlspecialchars($email, ENT_QUOTES);
             } else {
-                $email    = trim($_POST['email'] ?? '');
-                $password = $_POST['password'] ?? '';
+                $userModel = $this->model('UserModel');
+                $user      = $userModel->verifyLogin($email, $password);
 
-                if (empty($email) || empty($password)) {
-                    $data['error'] = 'Please enter both your email and password.';
-                    $data['email'] = htmlspecialchars($email, ENT_QUOTES);
-                } else {
-                    $userModel = $this->model('UserModel');
-                    $user      = $userModel->verifyLogin($email, $password);
+                if ($user) {
+                    // Generate 6-digit 2FA verification code
+                    $code = strval(rand(100000, 999999));
 
-                    if ($user) {
-                        // Fix #2: Use random_int() instead of rand()
-                        $code = strval(random_int(100000, 999999));
+                    // Store temporary login state in session
+                    $_SESSION['verification_code'] = $code;
+                    $_SESSION['temp_login'] = [
+                        'user_id'      => $user->user_id,
+                        'user_name'    => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                        'username'     => $user->username ?? '',
+                        'email'        => $user->email,
+                        'user_role'    => $user->role ?? 'UnassignedUser',
+                        'division_id'  => $user->division_id ?? null,
+                        'zonal_id'     => $user->zonal_id ?? null,
+                        'user_initials'=> strtoupper(
+                            substr($user->first_name ?? 'U', 0, 1) .
+                            substr($user->last_name  ?? 'U', 0, 1)
+                        ),
+                    ];
 
-                        // Store temporary login state in session
-                        $_SESSION['verification_code'] = $code;
-                        $_SESSION['temp_login'] = [
-                            'user_id'   => $user->user_id,
-                            'user_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
-                            'username'  => $user->username ?? '',
-                            'email'     => $user->email,
-                            'user_role' => $user->role ?? 'UnassignedUser',
-                        ];
-
-                        // Regenerate CSRF token after use
-                        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-
-                        // Send 2FA verification email
-                        if ($this->sendVerificationEmail($user->email, $_SESSION['temp_login']['user_name'], $code)) {
-                            $this->redirect('auth/verify');
-                        } else {
-                            $data['error'] = 'Failed to send 2FA verification email. Please try again.';
-                            $data['email'] = htmlspecialchars($email, ENT_QUOTES);
-                        }
+                    // Send 2FA verification email
+                    if ($this->sendVerificationEmail($user->email, $_SESSION['temp_login']['user_name'], $code)) {
+                        $this->redirect('auth/verify');
                     } else {
-                        $data['error'] = 'Invalid email or password, or account is suspended/disabled.';
+                        $data['error'] = 'Failed to send 2FA verification email. Please try again.';
                         $data['email'] = htmlspecialchars($email, ENT_QUOTES);
                     }
+                } else {
+                    $data['error'] = 'Invalid email or password, or account is suspended/disabled.';
+                    $data['email'] = htmlspecialchars($email, ENT_QUOTES);
                 }
             }
         }
@@ -76,67 +75,53 @@ class Auth extends Controller {
     // SIGN UP
     // ---------------------------------------------------------------
     public function signup() {
-        // CSRF token generation
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
         $data = [
-            'title'      => 'Sign Up — YouthNexus Pulse',
-            'message'    => '',
-            'fullname'   => '',
-            'email'      => '',
-            'csrf_token' => $_SESSION['csrf_token'],
+            'title'    => 'Sign Up — YouthNexus Pulse',
+            'message'  => '',
+            'fullname' => '',
+            'email'    => '',
         ];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // CSRF check
-            if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-                $data['message'] = ['type' => 'error', 'text' => 'Invalid request. Please refresh the page.'];
+            $fullname         = htmlspecialchars(trim($_POST['fullname'] ?? ''), ENT_QUOTES);
+            $email            = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+            $password         = $_POST['password'] ?? '';
+            $confirm_password = $_POST['confirm_password'] ?? '';
+            $agree            = isset($_POST['agree']);
+
+            $data['fullname'] = $fullname;
+            $data['email']    = htmlspecialchars($email, ENT_QUOTES);
+
+            if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
+                $data['message'] = ['type' => 'error', 'text' => 'Please fill in all fields.'];
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $data['message'] = ['type' => 'error', 'text' => 'Please enter a valid email address.'];
+            } elseif ($password !== $confirm_password) {
+                $data['message'] = ['type' => 'error', 'text' => 'Passwords do not match.'];
+            } elseif (!$agree) {
+                $data['message'] = ['type' => 'error', 'text' => 'You must agree to the Terms of Service and Privacy Policy.'];
             } else {
-                $fullname         = htmlspecialchars(trim($_POST['fullname'] ?? ''), ENT_QUOTES);
-                $email            = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-                $password         = $_POST['password'] ?? '';
-                $confirm_password = $_POST['confirm_password'] ?? '';
-                $agree            = isset($_POST['agree']);
-
-                $data['fullname'] = $fullname;
-                $data['email']    = htmlspecialchars($email, ENT_QUOTES);
-
-                if (empty($fullname) || empty($email) || empty($password) || empty($confirm_password)) {
-                    $data['message'] = ['type' => 'error', 'text' => 'Please fill in all fields.'];
-                } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $data['message'] = ['type' => 'error', 'text' => 'Please enter a valid email address.'];
-                } elseif ($password !== $confirm_password) {
-                    $data['message'] = ['type' => 'error', 'text' => 'Passwords do not match.'];
-                } elseif (!$agree) {
-                    $data['message'] = ['type' => 'error', 'text' => 'You must agree to the Terms of Service and Privacy Policy.'];
+                // Check if email already registered
+                $userModel = $this->model('UserModel');
+                if ($userModel->findByEmail($email)) {
+                    $data['message'] = ['type' => 'error', 'text' => 'This email is already registered. Please sign in.'];
                 } else {
-                    // Check if email already registered
-                    $userModel = $this->model('UserModel');
-                    if ($userModel->findByEmail($email)) {
-                        $data['message'] = ['type' => 'error', 'text' => 'This email is already registered. Please sign in.'];
+                    // Generate 6-digit verification code
+                    $code = strval(rand(100000, 999999));
+
+                    // Store temp signup data in session
+                    $_SESSION['verification_code'] = $code;
+                    $_SESSION['temp_signup'] = [
+                        'fullname' => $fullname,
+                        'email'    => $email,
+                        'password' => password_hash($password, PASSWORD_DEFAULT),
+                    ];
+
+                    // Send verification email
+                    if ($this->sendVerificationEmail($email, $fullname, $code)) {
+                        $this->redirect('auth/verify');
                     } else {
-                        // Fix #2: Use random_int() instead of rand()
-                        $code = strval(random_int(100000, 999999));
-
-                        // Store temp signup data in session
-                        $_SESSION['verification_code'] = $code;
-                        $_SESSION['temp_signup'] = [
-                            'fullname' => $fullname,
-                            'email'    => $email,
-                            'password' => password_hash($password, PASSWORD_DEFAULT),
-                        ];
-
-                        // Regenerate CSRF token after use
-                        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-
-                        // Send verification email
-                        if ($this->sendVerificationEmail($email, $fullname, $code)) {
-                            $this->redirect('auth/verify');
-                        } else {
-                            $data['message'] = ['type' => 'error', 'text' => 'Failed to send verification email. Please try again.'];
-                        }
+                        $data['message'] = ['type' => 'error', 'text' => 'Failed to send verification email. Please try again.'];
                     }
                 }
             }
@@ -149,21 +134,21 @@ class Auth extends Controller {
     // VERIFY EMAIL / 2FA CODE
     // ---------------------------------------------------------------
     public function verify() {
-        $targetEmail = $_SESSION['temp_login']['email']
-                    ?? $_SESSION['temp_signup']['email']
+        $targetEmail = $_SESSION['temp_login']['email'] 
+                    ?? $_SESSION['temp_signup']['email'] 
                     ?? '';
-        $targetName  = $_SESSION['temp_login']['user_name']
-                    ?? $_SESSION['temp_signup']['fullname']
+        $targetName  = $_SESSION['temp_login']['user_name'] 
+                    ?? $_SESSION['temp_signup']['fullname'] 
                     ?? 'User';
 
         if (empty($targetEmail)) {
             $this->redirect('auth/signin');
         }
 
-        // Handle resend request — Fix #2: use random_int()
+        // Handle resend request
         $resent = false;
         if (isset($_GET['resend']) && $_GET['resend'] == 1) {
-            $code = strval(random_int(100000, 999999));
+            $code = strval(rand(100000, 999999));
             $_SESSION['verification_code'] = $code;
             $this->sendVerificationEmail($targetEmail, $targetName, $code);
             $resent = true;
@@ -193,19 +178,29 @@ class Auth extends Controller {
                     $s = $_SESSION['temp_login'];
                     $userModel->updateLastLogin($s['user_id']);
 
-                    $_SESSION['user_id']   = $s['user_id'];
-                    $_SESSION['user_name'] = $s['user_name'];
-                    $_SESSION['username']  = $s['username'];
-                    $_SESSION['user_email']= $s['email'];
-                    $_SESSION['user_role'] = $s['user_role'];
-
-                    // Fix #4: Regenerate session ID after login to prevent session fixation
-                    session_regenerate_id(true);
+                    $_SESSION['user_id']      = $s['user_id'];
+                    $_SESSION['user_name']     = $s['user_name'];
+                    $_SESSION['username']      = $s['username'];
+                    $_SESSION['user_email']    = $s['email'];
+                    $_SESSION['user_role']     = $s['user_role'];
+                    $_SESSION['division_id']   = $s['division_id'];
+                    $_SESSION['zonal_id']      = $s['zonal_id'];
+                    $_SESSION['user_initials'] = $s['user_initials'];
 
                     unset($_SESSION['verification_code']);
                     unset($_SESSION['temp_login']);
 
-                    $this->redirect('home');
+                    // Role-based redirect after successful login
+                    switch ($s['user_role']) {
+                        case 'DivisionalCoordinator':
+                            $this->redirect('clubregistration/index');
+                            break;
+                        case 'DivisionalSecretary':
+                            $this->redirect('manageevents');
+                            break;
+                        default:
+                            $this->redirect('home');
+                    }
                 } elseif (isset($_SESSION['temp_signup'])) {
                     // 2FA for Sign Up: Create user account
                     $s = $_SESSION['temp_signup'];
@@ -214,7 +209,7 @@ class Auth extends Controller {
                     unset($_SESSION['verification_code']);
                     unset($_SESSION['temp_signup']);
 
-                    $data['success'] = true;
+                    $this->redirect('auth/signin?registered=1');
                 }
             } else {
                 $data['error'] = true;
@@ -370,31 +365,23 @@ class Auth extends Controller {
     // ---------------------------------------------------------------
     // PRIVATE HELPERS
     // ---------------------------------------------------------------
-
-    /**
-     * Fix #6: Shared SMTP configuration to eliminate duplicated mailer setup.
-     * Returns a fully configured PHPMailer instance ready to send.
-     */
-    private function configureMailer($recipientEmail) {
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host       = MAIL_HOST;
-        $mail->SMTPAuth   = true;
-        $mail->Username   = MAIL_USER;
-        $mail->Password   = MAIL_PASS;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
-        $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
-        $mail->addAddress($recipientEmail);
-        $mail->isHTML(true);
-        return $mail;
-    }
-
     private function sendVerificationEmail($email, $fullname, $code) {
+        $mail = new PHPMailer(true);
         try {
-            $mail          = $this->configureMailer($email);
+            $mail->isSMTP();
+            $mail->Host       = MAIL_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = MAIL_USER;
+            $mail->Password   = MAIL_PASS;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
+
+            $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+            $mail->addAddress($email);
+
+            $mail->isHTML(true);
             $mail->Subject = 'Verify Your Email — YouthNexus Pulse';
-            $mail->Body    = '
+            $mail->Body = '
             <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#f4f7fb;padding:20px;">
               <div style="background:#fff;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);text-align:center;">
                 <h2 style="color:#002d72;margin-top:0;">YouthNexus Pulse</h2>
@@ -415,10 +402,22 @@ class Auth extends Controller {
     }
 
     private function sendResetEmail($email, $resetLink) {
+        $mail = new PHPMailer(true);
         try {
-            $mail          = $this->configureMailer($email);
+            $mail->isSMTP();
+            $mail->Host       = MAIL_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = MAIL_USER;
+            $mail->Password   = MAIL_PASS;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
+
+            $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+            $mail->addAddress($email);
+
+            $mail->isHTML(true);
             $mail->Subject = 'Password Reset — YouthNexus Pulse';
-            $mail->Body    = '
+            $mail->Body = '
             <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#f4f7fb;padding:20px;">
               <div style="background:#fff;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);">
                 <h2 style="color:#002d72;margin-top:0;">YouthNexus Pulse</h2>

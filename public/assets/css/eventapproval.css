@@ -1,37 +1,44 @@
+/* Sizing matches .cr-stats/.cr-stat-card/.cr-stat-icon in
+   clubregistrationapproval.css EXACTLY — flex row capped at 620px,
+   32x32 icons, not a full-width 3-col grid with 40x40/48x48 icons. */
 .ea-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
     gap: 16px;
+    max-width: 620px;
     margin-bottom: 24px;
 }
 .ea-stat-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
+    flex: 1;
     background: #fff;
-    border: 1px solid var(--db-border, #e5e7eb);
+    border: 1px solid var(--db-border, #e7e9f0);
     border-radius: 12px;
+    padding: 20px 24px;
     cursor: pointer;
     text-align: left;
-    transition: box-shadow .15s ease, border-color .15s ease;
+    font: inherit;
+    box-shadow: 0px 4px 12px rgba(18, 20, 26, 0.03);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-.ea-stat-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.ea-stat-card.is-active { border-color: var(--db-primary, #2563eb); }
+.ea-stat-card:hover { transform: translateY(-1px); border-color: #b9bfcb; }
+.ea-stat-card.is-active {
+    border-color: var(--db-sidebar-bg, #1e40af);
+    border-width: 2px;
+    padding: 19px 23px; /* visual balancing for 2px border, matches cr- */
+}
 .ea-stat-icon {
-    width: 48px; height: 48px;
-    border-radius: 10px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
 }
-.ea-stat-icon svg {
-    width: 28px; height: 28px;
-}
-.ea-stat-icon.pending  { background: #fef3c7; color: #b45309; }
-.ea-stat-icon.approved { background: #d1fae5; color: #047857; }
-.ea-stat-icon.rejected { background: #fee2e2; color: #b91c1c; }
-.ea-stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
-.ea-stat-label { font-size: 13px; color: var(--db-text-grey, #6b7280); margin-top: 2px; }
+.ea-stat-icon.pending  { background: #fef3c7; }
+.ea-stat-icon.approved { background: #d1fae5; }
+.ea-stat-icon.rejected { background: #fee2e2; }
+.ea-stat-value { font-size: 28px; font-weight: 800; color: var(--db-text-dark, #12141a); margin: 4px 0 0; }
+.ea-stat-label { font-size: 13px; color: var(--db-text-grey, #6b7280); }
+
 
 .ea-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .ea-card {

@@ -87,7 +87,7 @@
       <button type="submit" class="btn">Verify &amp; Continue &rarr;</button>
     </form>
 
-    <div class="help">Having trouble? <a href="#">Contact Support</a></div>
+    <div class="help">Having trouble? <a href="https://mail.google.com/mail/?view=cm&fs=1&to=governance@youthnexus.gov.lk" target="_blank">Contact Support</a></div>
   </div>
 
   <script>
