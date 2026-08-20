@@ -4,7 +4,7 @@ $displayName = trim((string) $userName) !== '' ? trim((string) $userName) : 'You
 $initials = function_exists('mb_substr')
     ? strtoupper(mb_substr($displayName, 0, 1))
     : strtoupper(substr($displayName, 0, 1));
-$roleLabel = ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
+$roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
 ?>
 <header class="db-topbar dashboard-header">
   <div class="db-topbar-title">
