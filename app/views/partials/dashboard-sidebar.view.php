@@ -37,7 +37,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'member' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'grid'],
         ['label' => 'My Profile', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'user'],
         ['label' => 'My Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
