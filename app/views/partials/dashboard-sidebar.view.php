@@ -38,11 +38,11 @@ $navigation = [
     ],
     'member' => [
         ['label' => 'Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'grid'],
-        ['label' => 'My Profile', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'user'],
-        ['label' => 'My Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+        ['label' => 'Social CV', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'certificate'],
+        ['label' => 'Volunteer Hours', 'route' => 'volunteer-hours', 'href' => $dashboardRoot . '/volunteer-hours', 'icon' => 'hours'],
+        ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
     ],
     'zonalcoordinator' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
@@ -139,6 +139,10 @@ $roleAliases = [
     'nysc' => 'nyscadmin',
 ];
 $normalisedRoleKey = $roleAliases[$normalisedRoleKey] ?? $normalisedRoleKey;
+if ($normalisedRoleKey === 'member') {
+    $sidebarRoleLabel = 'Member';
+}
+$sidebarBrandLabel = $normalisedRoleKey === 'member' ? 'Pulse' : $sidebarRoleLabel;
 $roleItems = $navigation[$normalisedRoleKey] ?? [
     ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
     ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
@@ -159,6 +163,9 @@ $icons = [
     'clipboard' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/></svg>',
     'shield' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 7 3v5c0 4.5-2.5 7.7-7 10-4.5-2.3-7-5.5-7-10V6l7-3Z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     'check' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'certificate' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h3" stroke-linecap="round"/><path d="m15 17 1.5 3 1.5-1 1.5 1 1.5-3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'hours' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2M5.5 5.5l-1.5-1.5M18.5 5.5 20 4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'logout' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 16l4-4-4-4M18 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 ];
 ?>
 <aside class="db-sidebar dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
@@ -168,7 +175,7 @@ $icons = [
     </span>
     <span class="db-brand-text">
       <b>YouthNexus</b>
-      <span><?= htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8') ?></span>
+      <span><?= htmlspecialchars($sidebarBrandLabel, ENT_QUOTES, 'UTF-8') ?></span>
     </span>
   </div>
 
@@ -206,4 +213,11 @@ $icons = [
       <span><?= htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8') ?></span>
     </span>
   </div>
+
+  <?php if ($normalisedRoleKey === 'member'): ?>
+    <a class="dashboard-sidebar__logout" href="<?= $dashboardRoot ?>/auth/logout">
+      <span class="db-nav-icon dashboard-nav__icon" aria-hidden="true"><?= $icons['logout'] ?></span>
+      <span>Logout</span>
+    </a>
+  <?php endif; ?>
 </aside>
