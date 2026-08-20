@@ -56,9 +56,9 @@ body.dashboard {
 
 /* Sidebar */
 .db-sidebar, .dashboard-sidebar {
-  width: var(--db-sidebar-width); flex: 0 0 var(--db-sidebar-width); min-height: 100vh;
+  width: var(--db-sidebar-width); height: 100vh; max-height: 100vh; flex: 0 0 var(--db-sidebar-width); min-height: 0;
   padding: 20px 12px; position: sticky; top: 0; z-index: 30; display: flex;
-  flex-direction: column; color: #fff; background: var(--db-sidebar-bg);
+  flex-direction: column; overflow: hidden; color: #fff; background: var(--db-sidebar-bg);
   border-right: 2px solid rgba(255,255,255,.15);
 }
 .db-brand { display: flex; align-items: center; gap: 12px; padding: 6px 4px 20px; }
@@ -73,7 +73,12 @@ body.dashboard {
 .dashboard-sidebar__top { display: flex; align-items: center; justify-content: space-between; min-height: 28px; margin-bottom: 4px; }
 .dashboard-sidebar__role { display: none; align-items: center; gap: 7px; color: rgba(255,255,255,.62); font-size: 11px; }
 .dashboard-sidebar__role-dot { width: 6px; height: 6px; border-radius: 50%; background: #fb923c; }
-.db-nav, .dashboard-nav { display: flex; flex: 1; flex-direction: column; min-height: 0; padding-top: 8px; }
+.db-nav, .dashboard-nav {
+  display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; padding-top: 8px;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent;
+}
+.db-nav::-webkit-scrollbar, .dashboard-nav::-webkit-scrollbar { width: 5px; }
+.db-nav::-webkit-scrollbar-thumb, .dashboard-nav::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,255,255,.28); }
 .dashboard-nav__label { margin: 0 10px 7px; color: rgba(255,255,255,.48); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .db-nav ul, .dashboard-nav ul { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .db-nav-link, .dashboard-nav__link {
@@ -90,7 +95,8 @@ body.dashboard {
 .db-nav-icon, .dashboard-nav__icon { width: 18px; height: 18px; flex: 0 0 18px; display: inline-flex; align-items: center; justify-content: center; }
 .db-nav-icon svg, .dashboard-nav__icon svg { width: 18px; height: 18px; display: block; }
 .db-sidebar-footer, .dashboard-sidebar__support {
-  display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.08);
+  display: flex; flex: 0 0 auto; align-items: center; gap: 12px; margin-top: 10px; padding: 12px;
+  border-radius: 12px; background: rgba(255,255,255,.08);
 }
 .db-avatar { width: 40px; height: 40px; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; background: var(--db-accent-orange); color: #fff; font-size: 12px; font-weight: 700; }
 .db-who { min-width: 0; }
@@ -98,7 +104,7 @@ body.dashboard {
 .db-who b { color: #fff; font-size: 13px; font-weight: 600; }
 .db-who span { margin-top: 2px; color: rgba(255,255,255,.6); font-size: 11px; }
 .dashboard-sidebar__logout {
-  display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px;
+  display: flex; flex: 0 0 auto; align-items: center; gap: 12px; margin-top: 8px; padding: 10px 12px;
   border-radius: 10px; color: rgba(255,255,255,.8); font-size: 13px; font-weight: 600;
   text-decoration: none; transition: background-color .15s ease, color .15s ease;
 }
@@ -152,7 +158,7 @@ body.dashboard {
 .dashboard-sidebar-scrim { display: none; position: fixed; inset: 0; z-index: 25; background: rgba(15,23,42,.42); }
 
 @media (max-width: 900px) {
-  .db-sidebar, .dashboard-sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 10px 0 30px rgba(15,23,42,.18); }
+  .db-sidebar, .dashboard-sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: 100dvh; max-height: 100dvh; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 10px 0 30px rgba(15,23,42,.18); }
   .dashboard-sidebar-open .db-sidebar, .dashboard-sidebar-open .dashboard-sidebar { transform: translateX(0); }
   .dashboard-sidebar-open .dashboard-sidebar-scrim { display: block; }
   .dashboard-menu-button { display: inline-flex; }
