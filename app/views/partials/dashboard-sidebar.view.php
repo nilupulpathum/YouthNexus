@@ -39,10 +39,11 @@ $navigation = [
     'member' => [
         ['label' => 'Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'grid'],
         ['label' => 'Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
-        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Social CV', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'certificate'],
         ['label' => 'Volunteer Hours', 'route' => 'volunteer-hours', 'href' => $dashboardRoot . '/volunteer-hours', 'icon' => 'hours'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
+        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'zonalcoordinator' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
@@ -200,6 +201,9 @@ $icons = [
           <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
             <span class="db-nav-icon dashboard-nav__icon" aria-hidden="true"><?= $icons[$item['icon']] ?? $icons['grid'] ?></span>
             <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+            <?php if (!empty($item['badge'])): ?>
+              <span class="dashboard-nav__badge" aria-label="<?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?> unread"><?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endif; ?>
           </a>
         </li>
       <?php endforeach; ?>

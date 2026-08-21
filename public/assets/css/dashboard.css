@@ -94,6 +94,23 @@ body.dashboard {
 .db-nav-link.active:hover, .dashboard-nav__link.active:hover, .dashboard-nav__link.is-active:hover { background: #fff; color: var(--db-sidebar-bg); }
 .db-nav-icon, .dashboard-nav__icon { width: 18px; height: 18px; flex: 0 0 18px; display: inline-flex; align-items: center; justify-content: center; }
 .db-nav-icon svg, .dashboard-nav__icon svg { width: 18px; height: 18px; display: block; }
+.dashboard-nav__badge {
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--db-accent-orange);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.dashboard-nav__link.active .dashboard-nav__badge,
+.dashboard-nav__link.is-active .dashboard-nav__badge { border: 1px solid rgba(255,255,255,.72); }
 .db-sidebar-footer, .dashboard-sidebar__support {
   display: flex; flex: 0 0 auto; align-items: center; gap: 12px; margin-top: 10px; padding: 12px;
   border-radius: 12px; background: rgba(255,255,255,.08);

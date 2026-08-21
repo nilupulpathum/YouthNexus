@@ -137,7 +137,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <p class="member-eyebrow">Your timeline</p>
                     <h2 id="member-activity-heading">Recent Activity</h2>
                 </div>
-                <a class="member-panel-link" href="<?= ROOT ?>/profile">My profile <span aria-hidden="true">›</span></a>
+                <a class="member-panel-link" href="<?= htmlspecialchars($profileUrl, ENT_QUOTES, 'UTF-8') ?>">My profile <span aria-hidden="true">›</span></a>
             </div>
             <div class="member-activity-list">
                 <?php foreach ($activity as $item): ?>
@@ -162,7 +162,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <p class="member-cv-kicker">Your contribution record</p>
                     <h2 id="member-cv-heading">My Social CV</h2>
                 </div>
-                <a href="<?= ROOT ?>/profile" class="member-cv-link">Full view <span aria-hidden="true">→</span></a>
+                <a href="<?= htmlspecialchars($profileUrl, ENT_QUOTES, 'UTF-8') ?>" class="member-cv-link">Full view <span aria-hidden="true">→</span></a>
             </div>
             <div class="member-cv-summary">
                 <div><strong><?= $escape($tiles['upcoming_events'] ?? 0) ?></strong><span>Upcoming events</span></div>
