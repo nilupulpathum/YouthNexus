@@ -249,3 +249,20 @@ textarea:focus {
 .popup-btn:hover, .error-btn:hover {
   background: var(--blue-panel);
 }
+
+/* Shared Dashboard Layouts */
+.dashboard-stats-row {
+  display: flex;
+  gap: 16px;
+  max-width: 620px;
+}
+
+.dashboard-stat-card {
+  flex: 1;
+}
+
+.dashboard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
