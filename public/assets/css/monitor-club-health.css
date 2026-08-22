@@ -26,19 +26,14 @@
 
 /* ---------- Stat Cards Grid (Top 3 Summary Cards) ---------- */
 .mch-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    display: flex;
+    gap: 16px;
+    max-width: 620px;
     margin-bottom: 24px;
 }
 
-@media (max-width: 900px) {
-    .mch-stats {
-        grid-template-columns: 1fr;
-    }
-}
-
 .mch-stat-card {
+    flex: 1;
     background: #fff;
     border: 1px solid var(--db-border);
     border-radius: 12px;
@@ -343,26 +338,8 @@
 
 .mch-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
-}
-
-@media (max-width: 1320px) {
-    .mch-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 990px) {
-    .mch-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 620px) {
-    .mch-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .mch-card {

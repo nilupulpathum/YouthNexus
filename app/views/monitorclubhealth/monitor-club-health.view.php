@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'Monitor Club Health — YouthNexus Pulse') ?></title>
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css?v=<?= time() ?>">
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/monitor-club-health.css?v=<?= time() ?>">
 </head>
 <body class="dashboard">
