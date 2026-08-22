@@ -144,19 +144,16 @@ class AttendanceModel extends Model {
                      LEFT JOIN Club c ON e.organizer_club_id = c.club_id
                      WHERE e.status = 'Approved'
                        AND YEAR(e.start_datetime) = YEAR(CURDATE())
-                       AND (e.organizer_division_id = :div OR c.division_id = :div)
+                       AND (e.organizer_division_id = ? OR c.division_id = ?)
                     ) AS events_this_year,
                     (SELECT COUNT(*)
                      FROM Attendance a
                      JOIN Event e ON a.event_id = e.event_id
                      LEFT JOIN Club c ON e.organizer_club_id = c.club_id
                      WHERE YEAR(a.recorded_at) = YEAR(CURDATE())
-                       AND (e.organizer_division_id = :div OR c.division_id = :div)
+                       AND (e.organizer_division_id = ? OR c.division_id = ?)
                     ) AS attendance_this_year";
-        $stmt = Database::getInstance()->getConnection()->prepare($sql);
-        $stmt->bindValue(':div', $divisionId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch();
+        return $this->single($sql, [$divisionId, $divisionId, $divisionId, $divisionId]);
     }
 
     /**
