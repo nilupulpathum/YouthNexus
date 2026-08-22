@@ -103,12 +103,11 @@ class AttendanceModel extends Model {
                     a.remark,
                     a.recorded_at
                 FROM User u
-                JOIN ClubMembership cm ON cm.user_id = u.user_id
-                JOIN Club           cu ON cu.club_id  = cm.club_id
+                JOIN Club           cu ON cu.club_id  = u.club_id
                 LEFT JOIN Attendance a ON a.event_id = ? AND a.member_id = u.user_id
                 WHERE cu.division_id = ?
                   AND u.status = 'Active'
-                  AND cm.status = 'Active'
+                  AND u.membership_status = 'Active'
                 GROUP BY u.user_id
                 ORDER BY cu.club_name, u.last_name, u.first_name";
         return $this->resultSet($sql, [$eventId, $divisionId]);
@@ -233,11 +232,11 @@ class AttendanceModel extends Model {
      */
     public function memberIsInScope($memberId, $divisionId) {
         $sql = "SELECT 1
-                FROM ClubMembership cm
-                JOIN Club c ON cm.club_id = c.club_id
-                WHERE cm.user_id    = ?
+                FROM User u
+                JOIN Club c ON u.club_id = c.club_id
+                WHERE u.user_id    = ?
                   AND c.division_id = ?
-                  AND cm.status     = 'Active'
+                  AND u.membership_status = 'Active'
                 LIMIT 1";
         return (bool)$this->single($sql, [(int)$memberId, (int)$divisionId]);
     }
