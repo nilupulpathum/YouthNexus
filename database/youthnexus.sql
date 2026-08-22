@@ -251,6 +251,32 @@ CREATE TABLE EventTarget (
     FOREIGN KEY (target_zonal_id) REFERENCES Zone(zonal_id)
 );
 
+CREATE TABLE Attendance (
+    attendance_id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id      INT NOT NULL,
+    member_id     INT NOT NULL,
+    status        ENUM('Present','Absent') NOT NULL,
+    check_in_time  DATETIME NULL,
+    check_out_time DATETIME NULL,
+    remark        VARCHAR(255),
+    recorded_by   INT NOT NULL,
+    recorded_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_event_member (event_id, member_id),
+    FOREIGN KEY (event_id)    REFERENCES Event(event_id),
+    FOREIGN KEY (member_id)   REFERENCES User(user_id),
+    FOREIGN KEY (recorded_by) REFERENCES User(user_id)
+);
+
+CREATE TABLE EventPhoto (
+    photo_id    INT AUTO_INCREMENT PRIMARY KEY,
+    event_id    INT NOT NULL,
+    photo_url   VARCHAR(255) NOT NULL,
+    uploaded_by INT NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id)    REFERENCES Event(event_id),
+    FOREIGN KEY (uploaded_by) REFERENCES User(user_id)
+);
+
 
 INSERT INTO Zone (zonal_id, zonal_name) VALUES
 (1, 'Western Zone'),
