@@ -45,12 +45,26 @@
                             <!-- 1. Circular Avatar & 2. Flagged Badge -->
                             <div class="mch-card-avatar-wrap">
                                 <div class="mch-card-avatar <?= $statusKey ?>">
-                                    <?= htmlspecialchars($clubInitials) ?>
+                                    <?php if (!empty($club->club_photo)): ?>
+                                        <img src="<?= ROOT . htmlspecialchars($club->club_photo) ?>" alt="<?= htmlspecialchars($club->club_name) ?> profile image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($clubInitials) ?>
+                                    <?php endif; ?>
                                 </div>
-                                <?php if ($isFlagged === '1'): ?>
-                                    <div class="mch-card-flag-badge" title="Flagged Club">
-                                        <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+                                <?php if ($isFlagged === '1' || $healthStatus === 'Red'): ?>
+                                    <div class="mch-card-flag-badge" title="Flagged / Low Health Club requiring intervention">
+                                        <svg viewBox="0 0 24 24"><path fill="#fff" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
                                     </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Intervention Wrapper (Ensures consistent height across all cards) -->
+                            <div class="mch-card-intervention-wrap">
+                                <?php if ($isFlagged === '1' || $healthStatus === 'Red'): ?>
+                                    <span class="mch-intervention-badge">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right: 4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        INTERVENTION REQUIRED
+                                    </span>
                                 <?php endif; ?>
                             </div>
 

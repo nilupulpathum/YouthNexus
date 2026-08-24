@@ -338,7 +338,7 @@
 
 .mch-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 20px;
 }
 
@@ -367,6 +367,11 @@
 
 .mch-card.red {
     border-color: var(--mch-red-border);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.04);
+}
+.mch-card.red:hover {
+    border-color: #f87171;
+    box-shadow: 0 12px 24px -6px rgba(220, 38, 38, 0.12);
 }
 
 .mch-card:hover {
@@ -378,59 +383,87 @@
 .mch-card-avatar-wrap {
     position: relative;
     margin-bottom: 12px;
+    width: 84px;
+    height: 84px;
 }
 
 .mch-card-avatar {
-    width: 58px;
-    height: 58px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 28px;
     font-weight: 800;
     letter-spacing: -0.5px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
 }
 
 .mch-card-avatar.green {
     background: var(--mch-green-bg);
     color: var(--mch-green-text);
-    border: 2px solid var(--mch-green-badge-bg);
+    border: 2px solid var(--mch-green-border);
 }
 
 .mch-card-avatar.yellow {
     background: var(--mch-yellow-bg);
     color: var(--mch-yellow-text);
-    border: 2px solid var(--mch-yellow-badge-bg);
+    border: 2px solid var(--mch-yellow-border);
 }
 
 .mch-card-avatar.red {
     background: var(--mch-red-bg);
     color: var(--mch-red-text);
-    border: 2px solid var(--mch-red-badge-bg);
+    border: 2px solid var(--mch-red-border);
 }
 
 /* 2. Flagged indicator overlay on avatar */
 .mch-card-flag-badge {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 20px;
-    height: 20px;
+    bottom: 2px;
+    right: 2px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: #ef4444;
     border: 2px solid #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    z-index: 2;
 }
 
 .mch-card-flag-badge svg {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     fill: #fff;
+}
+
+/* Intervention indicator alignment */
+.mch-card-intervention-wrap {
+    height: 22px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-intervention-badge {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
 }
 
 /* 3. Score Row (Large score + /100) */
