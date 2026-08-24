@@ -22,30 +22,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="me-stat-icon awaiting">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div class="me-stat-info">
-                        <div class="me-stat-value"><?= (int)$stats['awaiting_approval'] ?></div>
-                        <div class="me-stat-label">Awaiting Approval</div>
-                    </div>
+                    <div class="me-stat-value"><?= (int)$stats['awaiting_approval'] ?></div>
+                    <div class="me-stat-label">Awaiting Approval</div>
                 </div>
 
                 <div class="me-stat-card">
                     <div class="me-stat-icon approved">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
-                    <div class="me-stat-info">
-                        <div class="me-stat-value"><?= (int)$stats['approved_upcoming'] ?></div>
-                        <div class="me-stat-label">Approved / Upcoming</div>
-                    </div>
+                    <div class="me-stat-value"><?= (int)$stats['approved_upcoming'] ?></div>
+                    <div class="me-stat-label">Approved / Upcoming</div>
                 </div>
 
                 <div class="me-stat-card">
                     <div class="me-stat-icon hosted">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
-                    <div class="me-stat-info">
-                        <div class="me-stat-value"><?= (int)$stats['hosted_this_year'] ?></div>
-                        <div class="me-stat-label">Hosted This Year</div>
-                    </div>
+                    <div class="me-stat-value"><?= (int)$stats['hosted_this_year'] ?></div>
+                    <div class="me-stat-label">Hosted This Year</div>
                 </div>
             </div>
 
@@ -60,13 +54,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 if (!empty($filters['date_from']) || !empty($filters['date_to'])) $activeFilters++;
                 ?>
                 <div class="me-toolbar">
-                    <div class="me-search-group">
-                        <div class="me-search-input-wrapper">
-                            <span class="me-search-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            </span>
-                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
-                        </div>
+                    <div class="me-search-input-wrapper">
+                        <span class="me-search-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </span>
+                        <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                     </div>
                     <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
