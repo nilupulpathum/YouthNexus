@@ -39,18 +39,28 @@
 .am-stat-label { font-size: 13px; color: var(--db-text-grey, #6b7280); }
 
 /* ------------------------------------------------------------------
+   ACTION ROW (Step 2)
+   ------------------------------------------------------------------ */
+.am-action-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+/* ------------------------------------------------------------------
    TOOLBAR + FILTER PANEL (mirrors .cr-toolbar / .cr-filter-panel)
    ------------------------------------------------------------------ */
 .am-toolbar {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 4px;
+    margin-bottom: 20px; /* Step 4: spacing fixed */
 }
 .am-search-input-wrapper {
     position: relative;
     flex: 1;
     max-width: 360px;
+    height: 40px; /* Step 3: height fixed */
 }
 .am-search-icon {
     position: absolute;
@@ -61,9 +71,10 @@
 }
 .am-search-input-wrapper input {
     width: 100%;
-    padding: 9px 12px 9px 34px;
+    height: 100%; /* Step 3: height fixed */
+    padding: 0 12px 0 34px; /* Step 3: padding fixed */
     border: 1px solid var(--db-border, #e7e9f0);
-    border-radius: 9px;
+    border-radius: 8px; /* Step 3: border-radius fixed */
     font-size: 13.5px;
     background: #fff;
     outline: none;
@@ -72,14 +83,35 @@
 .am-search-input-wrapper input:focus { border-color: var(--db-primary, #2563eb); }
 .am-filter-btn {
     display: flex; align-items: center; gap: 6px;
-    padding: 9px 14px;
+    height: 40px; /* Step 3: height fixed */
+    padding: 10px 16px; /* Step 3: padding fixed */
     border: 1px solid var(--db-border, #e7e9f0);
-    border-radius: 9px;
+    border-radius: 8px; /* Step 3: border-radius fixed */
     background: #fff;
     font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: border-color 0.15s;
+    box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04); /* Step 3: box-shadow fixed */
+    transition: border-color 0.15s, background-color 0.15s;
 }
-.am-filter-btn:hover { border-color: #b9bfcb; }
+.am-filter-btn:hover,
+.am-filter-btn[aria-expanded="true"] {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.am-filter-count {
+    background: var(--db-sidebar-bg, #1e40af);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 9999px;
+    padding: 1px 5px;
+    line-height: 1.5;
+    min-width: 16px;
+    text-align: center;
+    margin-left: 4px;
+}
+.am-filter-count.hidden {
+    display: none !important;
+}
 .am-filter-panel {
     display: none;
     gap: 16px;
