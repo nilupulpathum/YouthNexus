@@ -68,8 +68,28 @@
     }
 
     document.getElementById('amSearchInput')?.addEventListener('input', filterCards);
+
+    function updateFilterBadge() {
+        const typeVal  = document.getElementById('amFilterType')?.value || '';
+        const scopeVal = document.getElementById('amFilterScope')?.value || '';
+        let count = 0;
+        if (typeVal !== '') count++;
+        if (scopeVal !== '') count++;
+
+        const badge = document.getElementById('amFilterCount');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+
     document.getElementById('amApplyFilterBtn')?.addEventListener('click', () => {
         filterCards();
+        updateFilterBadge();
         filterPanel?.classList.remove('open');
         filterBtn?.setAttribute('aria-expanded', 'false');
     });
@@ -81,9 +101,13 @@
         if (scopeEl) scopeEl.value = '';
         if (search)  search.value  = '';
         filterCards();
+        updateFilterBadge();
         filterPanel?.classList.remove('open');
         filterBtn?.setAttribute('aria-expanded', 'false');
     });
+
+    // Initialize badge count on load
+    updateFilterBadge();
 
     // --- Log Attendance Modal -----------------------------------------
     const modal       = document.getElementById('amModal');
