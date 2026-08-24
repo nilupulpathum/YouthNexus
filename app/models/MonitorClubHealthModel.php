@@ -23,7 +23,8 @@ class MonitorClubHealthModel extends Model {
                 c.health_status,
                 c.flagged,
                 d.division_name,
-                COALESCE(u.active_members, 0) AS live_members
+                COALESCE(u.active_members, 0) AS live_members,
+                cp.photo_path AS club_photo
             FROM Club c
             JOIN Division d ON c.division_id = d.division_id
             LEFT JOIN (
@@ -32,6 +33,11 @@ class MonitorClubHealthModel extends Model {
                 WHERE club_id IS NOT NULL
                 GROUP BY club_id
             ) u ON c.club_id = u.club_id
+            LEFT JOIN (
+                SELECT application_id, MIN(photo_path) AS photo_path
+                FROM clubapplicationphoto
+                GROUP BY application_id
+            ) cp ON c.source_application_id = cp.application_id
             WHERE c.division_id = ?
             ORDER BY c.overall_health_score DESC, c.club_name ASC
         ";
