@@ -40,15 +40,22 @@
 .ea-stat-label { font-size: 13px; color: var(--db-text-grey, #6b7280); }
 
 
-.ea-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.ea-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
 .ea-card {
     background: #fff;
     border: 1px solid var(--db-border, #e5e7eb);
     border-radius: 12px;
-    padding: 18px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    box-shadow: 0 2px 8px rgba(18, 20, 26, 0.03);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ea-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 16px rgba(18, 20, 26, 0.06);
 }
 .ea-card-top { display: flex; gap: 8px; }
 .ea-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }

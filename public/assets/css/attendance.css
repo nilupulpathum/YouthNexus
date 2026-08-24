@@ -59,7 +59,7 @@
 .am-search-input-wrapper {
     position: relative;
     flex: 1;
-    max-width: 360px;
+    min-width: 320px;
     height: 40px; /* Step 3: height fixed */
 }
 .am-search-icon {
@@ -163,21 +163,25 @@
    ------------------------------------------------------------------ */
 .am-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
 }
 .am-card {
     background: #fff;
     border: 1px solid var(--db-border, #e7e9f0);
     border-radius: 12px;
-    padding: 18px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    box-shadow: 0px 2px 8px rgba(18,20,26,0.04);
-    transition: box-shadow 0.15s, transform 0.15s;
+    box-shadow: 0 2px 8px rgba(18, 20, 26, 0.03);
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.am-card:hover { box-shadow: 0 4px 16px rgba(18,20,26,0.08); transform: translateY(-1px); }
+.am-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 16px rgba(18, 20, 26, 0.06);
+}
 .am-card-top { display: flex; gap: 8px; flex-wrap: wrap; }
 .am-badge {
     font-size: 11px; font-weight: 600;
