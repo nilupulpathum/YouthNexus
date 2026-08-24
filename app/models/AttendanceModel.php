@@ -104,7 +104,7 @@ class AttendanceModel extends Model {
                     a.recorded_at
                 FROM User u
                 JOIN Club           cu ON cu.club_id  = u.club_id
-                LEFT JOIN Attendance a ON a.event_id = ? AND a.member_id = u.user_id
+                LEFT JOIN Attendance a ON a.event_id = ? AND a.user_id = u.user_id
                 WHERE cu.division_id = ?
                   AND u.status = 'Active'
                   AND u.membership_status = 'Active'
@@ -164,7 +164,7 @@ class AttendanceModel extends Model {
     public function getAttendanceForEvent($eventId) {
         $sql = "SELECT
                     a.attendance_id,
-                    a.member_id,
+                    a.user_id AS member_id,
                     CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                     a.status,
                     a.check_in_time,
@@ -173,7 +173,7 @@ class AttendanceModel extends Model {
                     CONCAT(r.first_name, ' ', r.last_name) AS recorded_by_name,
                     a.recorded_at
                 FROM Attendance a
-                JOIN User u ON a.member_id   = u.user_id
+                JOIN User u ON a.user_id     = u.user_id
                 JOIN User r ON a.recorded_by = r.user_id
                 WHERE a.event_id = ?
                 ORDER BY u.last_name, u.first_name";
@@ -200,7 +200,7 @@ class AttendanceModel extends Model {
      */
     public function saveAttendance($eventId, $memberId, $status, $checkInTime, $checkOutTime, $remark, $recordedBy) {
         $sql = "INSERT INTO Attendance
-                    (event_id, member_id, status, check_in_time, check_out_time, remark, recorded_by)
+                    (event_id, user_id, status, check_in_time, check_out_time, remark, recorded_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     status         = VALUES(status),
