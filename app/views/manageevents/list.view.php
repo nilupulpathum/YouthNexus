@@ -7,7 +7,6 @@ $unreadNotificationCount = !empty($stats['awaiting_approval']) ? (int)$stats['aw
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
 
             <!-- Action Row -->
             <div class="me-header-row" style="justify-content: flex-end;">
@@ -350,5 +349,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
