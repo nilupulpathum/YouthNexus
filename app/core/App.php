@@ -17,11 +17,19 @@ class App {
         $URL = $this->splitURL();
 
         // Segment 1 → Controller filename  (e.g. 'auth' → Auth.php)
-        $controllerName = ucfirst(strtolower($URL[0]));
-        $filename = "../app/controllers/" . $controllerName . ".php";
+        $requested = strtolower($URL[0]);
+        $controllerName = null;
 
-        if (file_exists($filename)) {
-            require $filename;
+        foreach (glob("../app/controllers/*.php") as $file) {
+            $base = basename($file, '.php');
+            if (strtolower($base) === $requested) {
+                $controllerName = $base;
+                break;
+            }
+        }
+
+        if ($controllerName) {
+            require "../app/controllers/{$controllerName}.php";
             $this->controller = $controllerName;
         } else {
             require "../app/controllers/_404.php";
