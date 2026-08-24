@@ -13,6 +13,13 @@ $unreadNotificationCount = 0;
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
+            <!-- Action Row -->
+            <div class="am-action-row">
+                <button type="button" class="am-btn am-btn-primary" id="amAddBtn">
+                    + Log Attendance
+                </button>
+            </div>
+
             <!-- ============================================================
                  Stat Cards (2 cards — events this year / attendance this year)
                  ============================================================ -->
@@ -46,9 +53,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="am-filter-btn" id="amFilterBtn" aria-expanded="false">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
                     Filters
-                </button>
-                <button type="button" class="am-btn am-btn-primary" id="amAddBtn" style="margin-left:auto;">
-                    + Log Attendance
+                    <span class="am-filter-count hidden" id="amFilterCount">0</span>
                 </button>
             </div>
 
