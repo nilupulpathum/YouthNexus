@@ -7,7 +7,6 @@ $unreadNotificationCount = 0;
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
             <div class="me-status-page">
 
                 <!-- Back button (styled as me-btn-secondary) -->
@@ -341,5 +340,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div>
 <?php endif; ?>
 
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
