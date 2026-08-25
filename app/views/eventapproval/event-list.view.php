@@ -94,6 +94,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
             </div>
 
+            <div class="ea-section-header-row" id="eaSectionHeaderRow">
+                <h3 class="ea-section-heading">Events</h3>
+                <button type="button" class="ea-sort-toggle-btn" id="eaSortToggleBtn" data-sort="asc">Sort: Oldest First ▾</button>
+            </div>
+
             <!-- ============================================================
                  Pending Events List
                  ============================================================ -->

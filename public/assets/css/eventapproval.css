@@ -323,4 +323,42 @@
     font-weight: 600;
 }
 
+/* Section Header Row & Sort Toggle */
+.ea-section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    margin-bottom: 12px;
+}
+
+.ea-section-heading {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--db-text-dark);
+}
+
+.ea-sort-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--db-text-grey);
+    cursor: pointer;
+    border-radius: var(--db-radius);
+    transition: color 0.15s ease, background 0.15s ease;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ea-sort-toggle-btn:hover {
+    color: var(--db-text-dark);
+    background: #e2e8f0;
+}
+
+
 
