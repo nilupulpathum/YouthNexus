@@ -35,15 +35,19 @@
 
     function renderTargetSummary(targetScope, targets) {
         if (targetScope === 'AllInScope') {
-            return '<p><strong>Target Audience:</strong> All clubs in the division</p>';
+            return '<span style="display:inline-flex; align-items:center; gap:4px; font-weight:600; color:var(--db-sidebar-bg);">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+                'All Clubs in Division</span>';
         }
-        if (!targets || !targets.length) return '<p><strong>Target Audience:</strong> —</p>';
+        if (!targets || !targets.length) return '<em style="color:#9ca3af;">No clubs targeted</em>';
         const rows = targets.map(t =>
-            '<li>' + escapeHtml(t.target_club_name) +
-            (t.max_attendance ? ' (max ' + t.max_attendance + ')' : '') +
+            '<li style="margin-bottom:4px; font-size:12.5px;">' +
+            '<span>' + escapeHtml(t.target_club_name) + '</span>' +
+            ' <small style="color:#9ca3af; font-family: monospace;">' + escapeHtml(t.target_club_code) + '</small>' +
+            (t.max_attendance ? ' <span style="background:#f1f5f9; padding: 1px 6px; border-radius: 4px; font-size:11px; margin-left: 6px; font-weight:500; font-family:monospace;">Max: ' + t.max_attendance + '</span>' : '') +
             '</li>'
         ).join('');
-        return '<p><strong>Target Audience:</strong></p><ul>' + rows + '</ul>';
+        return '<ul style="margin: 0; padding-left: 16px;">' + rows + '</ul>';
     }
 
     function openReview(eventId) {
@@ -63,35 +67,132 @@
                 const targets = data.targets;
                 
                 modalTitle.textContent = ev.title;
-                modalBody.innerHTML =
-                    '<p><strong>Club:</strong> ' + escapeHtml(ev.organizer_club_name) + ' (' + escapeHtml(ev.organizer_club_code) + ')</p>' +
-                    '<p><strong>Event Type:</strong> ' + escapeHtml(ev.event_type) + '</p>' +
-                    '<p><strong>When:</strong> ' + escapeHtml(ev.start_datetime) + ' – ' + escapeHtml(ev.end_datetime) + '</p>' +
-                    '<p><strong>Location:</strong> ' + escapeHtml(ev.location) + '</p>' +
-                    '<p><strong>Max Attendees:</strong> ' + escapeHtml(String(ev.max_attendance ?? '—')) + '</p>' +
-                    renderTargetSummary(ev.target_scope, targets) +
-                    '<p><strong>Description:</strong><br>' + escapeHtml(ev.description) + '</p>' +
-                    '<p><strong>Submitted by:</strong> ' + escapeHtml(ev.creator_name) + ' (' + escapeHtml(ev.creator_role) + ')</p>';
+                let bodyHtml =
+                    '<div class="ea-info-groups">' +
+                        
+                        // Group 1: Schedule & Location
+                        '<div class="ea-info-group">' +
+                            '<h4 class="ea-info-group-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--db-sidebar-bg);"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+                                ' Schedule & Location' +
+                            '</h4>' +
+                            '<div class="ea-fields-grid">' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' +
+                                        ' When' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(ev.start_datetime) + ' – ' + escapeHtml(ev.end_datetime) + '</span>' +
+                                '</div>' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+                                        ' Location / Venue' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(ev.location) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Group 2: Audience & Capacity
+                        '<div class="ea-info-group">' +
+                            '<h4 class="ea-info-group-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--db-sidebar-bg);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
+                                ' Audience & Capacity' +
+                            '</h4>' +
+                            '<div class="ea-fields-grid">' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+                                        ' Target Audience' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + renderTargetSummary(ev.target_scope, targets) + '</span>' +
+                                '</div>' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.9 19.1 14.2-14.2"/><path d="m14.2 19.1 4.9-4.9"/></svg>' +
+                                        ' Max Attendees' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(String(ev.max_attendance ?? 'Unlimited')) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Group 3: Submitting Club & Creator
+                        '<div class="ea-info-group">' +
+                            '<h4 class="ea-info-group-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--db-sidebar-bg);"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/></svg>' +
+                                ' Organizers & Submitter' +
+                            '</h4>' +
+                            '<div class="ea-fields-grid">' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/></svg>' +
+                                        ' Club' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(ev.organizer_club_name) + ' (<small style="color:#9ca3af; font-family: monospace;">' + escapeHtml(ev.organizer_club_code) + '</small>)</span>' +
+                                '</div>' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' +
+                                        ' Event Type' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(ev.event_type || 'General') + '</span>' +
+                                '</div>' +
+                                '<div class="ea-field-item">' +
+                                    '<span class="ea-field-label">' +
+                                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+                                        ' Submitted by' +
+                                    '</span>' +
+                                    '<span class="ea-field-value">' + escapeHtml(ev.creator_name) + ' (<small style="color:#6b7280;">' + escapeHtml(ev.creator_role) + '</small>)</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Group 4: Description
+                        '<div class="ea-info-group">' +
+                            '<h4 class="ea-info-group-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--db-sidebar-bg);"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>' +
+                                ' Description & Objectives' +
+                            '</h4>' +
+                            '<div style="background:#fff; border:1px solid var(--db-border, #e7e9f0); border-radius:8px; padding:12px; font-size:13px; line-height:1.5; color:#334155;">' +
+                                escapeHtml(ev.description).replace(/\n/g, '<br>') +
+                            '</div>' +
+                        '</div>' +
+
+                    '</div>';
 
                 // Hide decision panel if already Approved or Rejected
                 const decisionPanel = document.querySelector('.ea-decision-panel');
                 if (ev.status === 'Approved' || ev.status === 'Rejected') {
                     if (decisionPanel) decisionPanel.style.display = 'none';
-                    modalBody.innerHTML += '<p><strong>Status:</strong> ' + escapeHtml(ev.status) + '</p>';
-                    if (ev.status === 'Approved' && ev.approver_name) {
-                        modalBody.innerHTML += '<p><strong>Approved by:</strong> ' + escapeHtml(ev.approver_name) + '</p>';
+                    
+                    let statusHtml = '';
+                    if (ev.status === 'Approved') {
+                        statusHtml =
+                            '<div class="ea-decision-impact-alert approve" style="margin-top: 16px; display: flex; align-items: flex-start; gap: 10px;">' +
+                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                                '<div>' +
+                                    '<strong style="display:block; font-size:13px; margin-bottom:4px;">EVENT APPROVED</strong>' +
+                                    '<span style="font-size:12.5px;">Approved by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
+                                '</div>' +
+                            '</div>';
+                    } else if (ev.status === 'Rejected') {
+                        statusHtml =
+                            '<div class="ea-decision-impact-alert reject" style="margin-top: 16px; display: flex; align-items: flex-start; gap: 10px;">' +
+                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+                                '<div>' +
+                                    '<strong style="display:block; font-size:13px; margin-bottom:4px;">EVENT REJECTED</strong>' +
+                                    '<span style="font-size:12.5px; display:block; margin-bottom:4px;">Rejected by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
+                                    (ev.rejection_remarks ? '<div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(153,27,27,0.2); font-size:12px;"><strong>Remarks:</strong> ' + escapeHtml(ev.rejection_remarks) + '</div>' : '') +
+                                '</div>' +
+                            '</div>';
                     }
-                    if (ev.status === 'Rejected') {
-                        if (ev.approver_name) {
-                            modalBody.innerHTML += '<p><strong>Rejected by:</strong> ' + escapeHtml(ev.approver_name) + '</p>';
-                        }
-                        if (ev.rejection_remarks) {
-                            modalBody.innerHTML += '<p><strong>Rejection Remarks:</strong><br>' + escapeHtml(ev.rejection_remarks) + '</p>';
-                        }
-                    }
+                    bodyHtml += statusHtml;
                 } else {
                     if (decisionPanel) decisionPanel.style.display = 'block';
                 }
+                modalBody.innerHTML = bodyHtml;
 
                 resultSelect.value = 'approve';
                 remarksField.value = '';
@@ -319,7 +420,7 @@
                     '</div>' +
                     '<div class="ea-card-footer">' +
                         '<span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name ?? '—') + ' (' + escapeHtml(ev.creator_role ?? '—') + ')</span>' +
-                        '<button type="button" class="ea-btn ea-btn-primary ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details</button>' +
+                        '<button type="button" class="ea-btn-view ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>' +
                     '</div>' +
                 '</div>';
         });
@@ -362,7 +463,7 @@
                     '</div>' +
                     '<div class="ea-card-footer">' +
                         '<span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name ?? '—') + ' (' + escapeHtml(ev.creator_role ?? '—') + ')</span>' +
-                        '<button type="button" class="ea-btn ea-btn-primary ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details</button>' +
+                        '<button type="button" class="ea-btn-view ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>' +
                     '</div>' +
                 '</div>';
         });
