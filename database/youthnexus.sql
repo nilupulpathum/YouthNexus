@@ -254,16 +254,16 @@ CREATE TABLE EventTarget (
 CREATE TABLE Attendance (
     attendance_id INT AUTO_INCREMENT PRIMARY KEY,
     event_id      INT NOT NULL,
-    member_id     INT NOT NULL,
+    user_id       INT NOT NULL,
     status        ENUM('Present','Absent') NOT NULL,
     check_in_time  DATETIME NULL,
     check_out_time DATETIME NULL,
     remark        VARCHAR(255),
     recorded_by   INT NOT NULL,
     recorded_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_event_member (event_id, member_id),
+    UNIQUE KEY uq_event_member (event_id, user_id),
     FOREIGN KEY (event_id)    REFERENCES Event(event_id),
-    FOREIGN KEY (member_id)   REFERENCES User(user_id),
+    FOREIGN KEY (user_id)     REFERENCES User(user_id),
     FOREIGN KEY (recorded_by) REFERENCES User(user_id)
 );
 
