@@ -122,7 +122,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         </div>
                         <div class="ea-card-footer">
                             <span class="ea-card-submitter">Submitted by <?= htmlspecialchars($event->creator_name ?? '—') ?> (<?= htmlspecialchars($event->creator_role ?? '—') ?>)</span>
-                            <button type="button" class="ea-btn ea-btn-primary ea-btn-review" data-event-id="<?= (int)$event->event_id ?>">Review</button>
+                            <button type="button" class="ea-btn-review" data-event-id="<?= (int)$event->event_id ?>">
+                                Review
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; endif; ?>
