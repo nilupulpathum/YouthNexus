@@ -49,9 +49,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                  Toolbar & Filters (client-side matching cr- / mch- patterns)
                  ============================================================ -->
             <div class="ea-toolbar">
-                <div class="ea-toolbar-left">
-                    <div class="ea-search-box">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <div class="ea-search-group">
+                    <div class="ea-search-input-wrapper">
+                        <span class="ea-search-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </span>
                         <input type="text" id="eaSearchInput" placeholder="Search events by title or club name...">
                     </div>
                 </div>
