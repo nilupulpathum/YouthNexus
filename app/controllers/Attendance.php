@@ -71,7 +71,7 @@ class Attendance extends Controller {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $xReq   = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
         if (strpos($accept, 'application/json') !== false || strtolower($xReq) === 'xmlhttprequest') {
-            $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId);
+            $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
             header('Content-Type: application/json');
             echo json_encode(['members' => $roster, 'event' => $event]);
             exit();
@@ -82,7 +82,7 @@ class Attendance extends Controller {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId);
+        $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
         $aStats = $attendanceModel->getEventAttendanceStats($eventId);
 
         $present   = (int)($aStats->present_count ?? 0);
@@ -149,7 +149,7 @@ class Attendance extends Controller {
                 $this->jsonError('Missing or invalid member or status.');
             }
 
-            if (!$attendanceModel->memberIsInScope($memberId, $divisionId)) {
+            if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
                 $this->jsonError('Member is not in scope for this division.', 403);
             }
 
@@ -204,7 +204,7 @@ class Attendance extends Controller {
                     continue;
                 }
 
-                if (!$attendanceModel->memberIsInScope($memberId, $divisionId)) {
+                if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
                     $skipped[] = ['row' => $rowNum, 'member_id' => $memberId, 'reason' => 'Member not in scope for this division/event'];
                     continue;
                 }
@@ -260,7 +260,7 @@ class Attendance extends Controller {
             $this->jsonError('Event not found or not in scope.', 403);
         }
 
-        if (!$attendanceModel->memberIsInScope($memberId, $divisionId)) {
+        if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
             $this->jsonError('Member is not in scope for this division.', 403);
         }
 

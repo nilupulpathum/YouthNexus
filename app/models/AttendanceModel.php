@@ -85,32 +85,76 @@ class AttendanceModel extends Model {
      * @param  int $divisionId
      * @return array
      */
-    public function getMemberRosterForEvent($eventId, $divisionId) {
-        // Determine scope from EventTarget or organizer fields
-        $sql = "SELECT
-                    u.user_id,
-                    u.first_name,
-                    u.last_name,
-                    CONCAT(u.first_name, ' ', u.last_name) AS member_name,
-                    u.email,
-                    u.role,
-                    cu.club_name,
-                    cu.club_code,
-                    a.attendance_id,
-                    a.status        AS att_status,
-                    a.check_in_time,
-                    a.check_out_time,
-                    a.remark,
-                    a.recorded_at
-                FROM User u
-                JOIN Club           cu ON cu.club_id  = u.club_id
-                LEFT JOIN Attendance a ON a.event_id = ? AND a.user_id = u.user_id
-                WHERE cu.division_id = ?
-                  AND u.status = 'Active'
-                  AND u.membership_status = 'Active'
-                GROUP BY u.user_id
-                ORDER BY cu.club_name, u.last_name, u.first_name";
-        return $this->resultSet($sql, [$eventId, $divisionId]);
+    public function getMemberRosterForEvent($eventId, $divisionId, $targetScope = null) {
+        if ($targetScope === null) {
+            $event = $this->single("SELECT target_scope FROM Event WHERE event_id = ? LIMIT 1", [$eventId]);
+            $targetScope = $event ? $event->target_scope : 'AllInScope';
+        }
+
+        if ($targetScope === 'SelectedClubs') {
+            require_once __DIR__ . '/EventTargetModel.php';
+            $eventTargetModel = new EventTargetModel();
+            $targets = $eventTargetModel->findByEventId($eventId);
+            $clubIds = [];
+            foreach ($targets as $t) {
+                if (!empty($t->target_club_id)) {
+                    $clubIds[] = (int)$t->target_club_id;
+                }
+            }
+            if (empty($clubIds)) {
+                return [];
+            }
+            $placeholders = implode(',', array_fill(0, count($clubIds), '?'));
+            $sql = "SELECT
+                        u.user_id,
+                        u.first_name,
+                        u.last_name,
+                        CONCAT(u.first_name, ' ', u.last_name) AS member_name,
+                        u.email,
+                        u.role,
+                        cu.club_name,
+                        cu.club_code,
+                        a.attendance_id,
+                        a.status        AS att_status,
+                        a.check_in_time,
+                        a.check_out_time,
+                        a.remark,
+                        a.recorded_at
+                    FROM User u
+                    JOIN Club           cu ON cu.club_id  = u.club_id
+                    LEFT JOIN Attendance a ON a.event_id = ? AND a.user_id = u.user_id
+                    WHERE cu.club_id IN ($placeholders)
+                      AND u.status = 'Active'
+                      AND u.membership_status = 'Active'
+                    GROUP BY u.user_id
+                    ORDER BY cu.club_name, u.last_name, u.first_name";
+            return $this->resultSet($sql, array_merge([$eventId], $clubIds));
+        } else {
+            $sql = "SELECT
+                        u.user_id,
+                        u.first_name,
+                        u.last_name,
+                        CONCAT(u.first_name, ' ', u.last_name) AS member_name,
+                        u.email,
+                        u.role,
+                        cu.club_name,
+                        cu.club_code,
+                        a.attendance_id,
+                        a.status        AS att_status,
+                        a.check_in_time,
+                        a.check_out_time,
+                        a.remark,
+                        a.recorded_at
+                    FROM User u
+                    JOIN Club           cu ON cu.club_id  = u.club_id
+                    LEFT JOIN Attendance a ON a.event_id = ? AND a.user_id = u.user_id
+                    WHERE cu.division_id = ?
+                      AND u.status = 'Active'
+                      AND u.membership_status = 'Active'
+                    GROUP BY u.user_id
+                    ORDER BY cu.club_name, u.last_name, u.first_name";
+            return $this->resultSet($sql, [$eventId, $divisionId]);
+        }
     }
 
     /**
@@ -121,10 +165,8 @@ class AttendanceModel extends Model {
      */
     public function getEventAttendanceStats($eventId) {
         $sql = "SELECT
-                    COUNT(*)                                          AS total_roster,
                     SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-                    SUM(CASE WHEN status = 'Absent'  THEN 1 ELSE 0 END) AS absent_count,
-                    COUNT(*) - SUM(CASE WHEN status IS NULL THEN 0 ELSE 1 END) AS unrecorded_count
+                    SUM(CASE WHEN status = 'Absent'  THEN 1 ELSE 0 END) AS absent_count
                 FROM Attendance
                 WHERE event_id = ?";
         return $this->single($sql, [$eventId]);
@@ -230,14 +272,43 @@ class AttendanceModel extends Model {
      * @param  int $divisionId
      * @return bool
      */
-    public function memberIsInScope($memberId, $divisionId) {
-        $sql = "SELECT 1
-                FROM User u
-                JOIN Club c ON u.club_id = c.club_id
-                WHERE u.user_id    = ?
-                  AND c.division_id = ?
-                  AND u.membership_status = 'Active'
-                LIMIT 1";
-        return (bool)$this->single($sql, [(int)$memberId, (int)$divisionId]);
+    public function memberIsInScope($memberId, $eventId, $divisionId, $targetScope = null) {
+        if ($targetScope === null) {
+            $event = $this->single("SELECT target_scope FROM Event WHERE event_id = ? LIMIT 1", [$eventId]);
+            $targetScope = $event ? $event->target_scope : 'AllInScope';
+        }
+
+        if ($targetScope === 'SelectedClubs') {
+            require_once __DIR__ . '/EventTargetModel.php';
+            $eventTargetModel = new EventTargetModel();
+            $targets = $eventTargetModel->findByEventId($eventId);
+            $clubIds = [];
+            foreach ($targets as $t) {
+                if (!empty($t->target_club_id)) {
+                    $clubIds[] = (int)$t->target_club_id;
+                }
+            }
+            if (empty($clubIds)) {
+                return false;
+            }
+            $placeholders = implode(',', array_fill(0, count($clubIds), '?'));
+            $sql = "SELECT 1
+                    FROM User u
+                    JOIN Club c ON u.club_id = c.club_id
+                    WHERE u.user_id    = ?
+                      AND c.club_id IN ($placeholders)
+                      AND u.membership_status = 'Active'
+                    LIMIT 1";
+            return (bool)$this->single($sql, array_merge([(int)$memberId], $clubIds));
+        } else {
+            $sql = "SELECT 1
+                    FROM User u
+                    JOIN Club c ON u.club_id = c.club_id
+                    WHERE u.user_id    = ?
+                      AND c.division_id = ?
+                      AND u.membership_status = 'Active'
+                    LIMIT 1";
+            return (bool)$this->single($sql, [(int)$memberId, (int)$divisionId]);
+        }
     }
 }
