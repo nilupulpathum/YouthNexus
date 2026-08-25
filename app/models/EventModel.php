@@ -300,6 +300,53 @@ class EventModel extends Model {
     }
 
     /**
+     * Find approved club events for a division.
+     *
+     * @param  int $divisionId
+     * @return array
+     */
+    public function findApprovedClubEventsByDivision($divisionId) {
+        $sql = "SELECT e.*, c.club_name, c.club_code, u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                       CONCAT(appr.first_name, ' ', appr.last_name) AS approver_name
+                FROM Event e
+                JOIN Club c ON e.organizer_club_id = c.club_id
+                JOIN User u ON e.created_by = u.user_id
+                LEFT JOIN User appr ON e.approved_by = appr.user_id
+                WHERE c.division_id = ?
+                  AND e.organizer_club_id IS NOT NULL
+                  AND e.organizer_division_id IS NULL
+                  AND e.status = 'Approved'
+                ORDER BY e.start_datetime DESC";
+
+        return $this->resultSet($sql, [$divisionId]);
+    }
+
+    /**
+     * Find rejected club events for a division.
+     * Includes rejection_remarks and the approver's name.
+     *
+     * @param  int $divisionId
+     * @return array
+     */
+    public function findRejectedClubEventsByDivision($divisionId) {
+        $sql = "SELECT e.*, c.club_name, c.club_code, u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                       CONCAT(appr.first_name, ' ', appr.last_name) AS approver_name
+                FROM Event e
+                JOIN Club c ON e.organizer_club_id = c.club_id
+                JOIN User u ON e.created_by = u.user_id
+                LEFT JOIN User appr ON e.approved_by = appr.user_id
+                WHERE c.division_id = ?
+                  AND e.organizer_club_id IS NOT NULL
+                  AND e.organizer_division_id IS NULL
+                  AND e.status = 'Rejected'
+                ORDER BY e.start_datetime DESC";
+
+        return $this->resultSet($sql, [$divisionId]);
+    }
+
+    /**
      * Count club events by division and status.
      *
      * @param  int    $divisionId
