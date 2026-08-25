@@ -24,7 +24,7 @@
     --mch-red-badge-text: #991b1b;
 }
 
-/* ---------- Stat Cards Grid (Top 3 Summary Cards) ---------- */
+/* ---------- Stat Cards Row (matches Club Registration sizing exactly) ---------- */
 .mch-stats {
     display: flex;
     gap: 16px;
@@ -37,64 +37,87 @@
     background: #fff;
     border: 1px solid var(--db-border);
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 20px 24px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    box-shadow: 0px 4px 12px rgba(18, 20, 26, 0.03);
+    transition: transform 0.15s ease, border-color 0.15s ease;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    gap: 0;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
 }
 
+/* 3px top accent bar per color */
 .mch-stat-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3px;
     border-radius: 12px 12px 0 0;
 }
 
 .mch-stat-card.green::before { background: #10b981; }
 .mch-stat-card.yellow::before { background: #f59e0b; }
-.mch-stat-card.red::before { background: #ef4444; }
+.mch-stat-card.red::before    { background: #ef4444; }
 
 .mch-stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    border-color: #b9bfcb;
 }
 
 .mch-stat-card.is-active {
-    border-color: #1e40af;
-    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
-    background: #fafcff;
+    border-color: var(--db-sidebar-bg);
+    border-width: 2px;
+    padding: 19px 23px;
 }
+
+/* Colored icon box (matches cr-stat-icon pattern) */
+.mch-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    margin-top: 4px;
+}
+
+.mch-stat-icon.green  { background: #d1fae5; }
+.mch-stat-icon.yellow { background: #fef3c7; }
+.mch-stat-icon.red    { background: #fee2e2; }
 
 .mch-stat-val {
     font-size: 28px;
     font-weight: 800;
     color: var(--db-text-dark);
+    margin: 4px 0 0;
     line-height: 1.1;
     letter-spacing: -0.5px;
-    margin-bottom: 2px;
 }
 
 .mch-stat-label-line {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--db-text-dark);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--db-text-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    margin-top: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
 .mch-stat-subtext {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--db-text-grey);
     font-weight: 500;
+    margin-top: 2px;
 }
 
 /* ==========================================================================
@@ -104,11 +127,11 @@
 
 .mch-toolbar {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
-    padding-top: 4px;
+    padding-top: 8px;
     flex-wrap: wrap;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
 }
 
 .mch-search-group {
@@ -119,7 +142,7 @@
     border-radius: 8px;
     height: 40px;
     flex: 1;
-    min-width: 280px;
+    min-width: 320px;
     box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
 }
 
@@ -233,7 +256,7 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    min-width: 220px;
+    min-width: 180px;
 }
 
 .mch-filter-field label {
