@@ -56,7 +56,8 @@ $navigation = [
         ['label' => 'Overview',             'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
         ['label' => 'Approve Registration', 'route' => 'clubregistration',  'href' => $dashboardRoot . '/clubregistration/index', 'icon' => 'clipboard'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
-        ['label' => 'Approve Events',        'route' => 'eventapproval',      'href' => $dashboardRoot . '/eventapproval',      'icon' => 'calendar'],
+        ['label' => 'Approve Events',        'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
+        ['label' => 'Monitor Club Health',  'route' => 'monitorclubhealth', 'href' => $dashboardRoot . '/monitorclubhealth', 'icon' => 'activity'],
         ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
@@ -159,6 +160,7 @@ $icons = [
     'clipboard' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/></svg>',
     'shield' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 7 3v5c0 4.5-2.5 7.7-7 10-4.5-2.3-7-5.5-7-10V6l7-3Z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     'check' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'activity' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 ];
 ?>
 <aside class="db-sidebar dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
