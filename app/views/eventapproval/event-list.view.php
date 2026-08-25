@@ -142,41 +142,43 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </button>
         </div>
 
-        <div class="ea-modal-body" id="eaModalBody">
-            <!-- Populated by JS (eventapproval.js) from /eventapproval/review/:id -->
-        </div>
+        <div class="ea-modal-scrollable">
+            <div class="ea-modal-body" id="eaModalBody">
+                <!-- Populated by JS (eventapproval.js) from /eventapproval/review/:id -->
+            </div>
 
-        <!-- Decision panel — mirrors cr-decision-panel exactly -->
-        <div class="ea-decision-panel">
-            <div class="ea-section-header">
-                <h4 class="ea-section-title">FINAL REVIEW DECISION</h4>
-            </div>
-            <div class="ea-decision-fields-row">
-                <div class="ea-field">
-                    <label>REVIEW RESULT</label>
-                    <select id="eaReviewResultSelect">
-                        <option value="approve">Approve Event</option>
-                        <option value="reject">Reject Event</option>
-                    </select>
+            <!-- Decision panel — mirrors cr-decision-panel exactly -->
+            <div class="ea-decision-panel">
+                <div class="ea-section-header">
+                    <h4 class="ea-section-title">FINAL REVIEW DECISION</h4>
                 </div>
-                <div class="ea-field">
-                    <label>REVIEWED BY</label>
-                    <input type="text" readonly value="<?= htmlspecialchars($coordinatorName) ?> — Divisional Coordinator" class="ea-readonly-input">
+                <div class="ea-decision-fields-row">
+                    <div class="ea-field">
+                        <label>REVIEW RESULT</label>
+                        <select id="eaReviewResultSelect">
+                            <option value="approve">Approve Event</option>
+                            <option value="reject">Reject Event</option>
+                        </select>
+                    </div>
+                    <div class="ea-field">
+                        <label>REVIEWED BY</label>
+                        <input type="text" readonly value="<?= htmlspecialchars($coordinatorName) ?> — Divisional Coordinator" class="ea-readonly-input">
+                    </div>
                 </div>
-            </div>
-            <div class="ea-decision-remarks-section">
-                <label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>
-                <textarea id="eaRemarks" placeholder="Provide the reason for this decision..."></textarea>
-            </div>
-            <div class="ea-decision-impact-alert approve" id="eaImpactAlert">
-                <div class="ea-impact-text-content">
-                    <strong>IMPACT OF APPROVAL</strong>
-                    <p>Approving this event will publish it to the division's event calendar and notify the submitting club. This event will then be visible to the Divisional Secretary and eligible for attendance tracking once it occurs.</p>
+                <div class="ea-decision-remarks-section">
+                    <label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>
+                    <textarea id="eaRemarks" placeholder="Provide the reason for this decision..."></textarea>
                 </div>
-            </div>
-            <div class="ea-decision-footer-bar">
-                <button type="button" class="ea-btn-cancel-link" id="eaCancelReviewBtn">Cancel</button>
-                <button type="button" class="ea-btn ea-btn-submit-decision" id="eaConfirmSubmitBtn">Confirm &amp; Submit Decision</button>
+                <div class="ea-decision-impact-alert approve" id="eaImpactAlert">
+                    <div class="ea-impact-text-content">
+                        <strong>IMPACT OF APPROVAL</strong>
+                        <p>Approving this event will publish it to the division's event calendar and notify the submitting club. This event will then be visible to the Divisional Secretary and eligible for attendance tracking once it occurs.</p>
+                    </div>
+                </div>
+                <div class="ea-decision-footer-bar">
+                    <button type="button" class="ea-btn-cancel-link" id="eaCancelReviewBtn">Cancel</button>
+                    <button type="button" class="ea-btn ea-btn-submit-decision" id="eaConfirmSubmitBtn">Confirm &amp; Submit Decision</button>
+                </div>
             </div>
         </div>
     </div>

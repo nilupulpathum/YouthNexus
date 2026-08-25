@@ -35,16 +35,16 @@
 
     function renderTargetSummary(targetScope, targets) {
         if (targetScope === 'AllInScope') {
-            return '<span style="display:inline-flex; align-items:center; gap:4px; font-weight:600; color:var(--db-sidebar-bg);">' +
+            return '<span style="display:inline-flex; align-items:center; gap:4px; font-weight:600; color:var(--db-sidebar-bg); font-size:14.5px;">' +
                 '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' +
                 'All Clubs in Division</span>';
         }
-        if (!targets || !targets.length) return '<em style="color:#9ca3af;">No clubs targeted</em>';
+        if (!targets || !targets.length) return '<em style="color:#9ca3af; font-size:14px;">No clubs targeted</em>';
         const rows = targets.map(t =>
-            '<li style="margin-bottom:4px; font-size:12.5px;">' +
+            '<li style="margin-bottom:4px; font-size:14px;">' +
             '<span>' + escapeHtml(t.target_club_name) + '</span>' +
             ' <small style="color:#9ca3af; font-family: monospace;">' + escapeHtml(t.target_club_code) + '</small>' +
-            (t.max_attendance ? ' <span style="background:#f1f5f9; padding: 1px 6px; border-radius: 4px; font-size:11px; margin-left: 6px; font-weight:500; font-family:monospace;">Max: ' + t.max_attendance + '</span>' : '') +
+            (t.max_attendance ? ' <span style="background:#f1f5f9; padding: 1px 6px; border-radius: 4px; font-size:12px; margin-left: 6px; font-weight:500; font-family:monospace;">Max: ' + t.max_attendance + '</span>' : '') +
             '</li>'
         ).join('');
         return '<ul style="margin: 0; padding-left: 16px;">' + rows + '</ul>';
@@ -155,7 +155,7 @@
                                 '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--db-sidebar-bg);"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>' +
                                 ' Description & Objectives' +
                             '</h4>' +
-                            '<div style="background:#fff; border:1px solid var(--db-border, #e7e9f0); border-radius:8px; padding:12px; font-size:13px; line-height:1.5; color:#334155;">' +
+                            '<div style="background:#fff; border:1px solid var(--db-border, #e7e9f0); border-radius:8px; padding:12px; font-size:14px; line-height:1.5; color:#334155;">' +
                                 escapeHtml(ev.description).replace(/\n/g, '<br>') +
                             '</div>' +
                         '</div>' +
@@ -173,8 +173,8 @@
                             '<div class="ea-decision-impact-alert approve" style="margin-top: 16px; display: flex; align-items: flex-start; gap: 10px;">' +
                                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
                                 '<div>' +
-                                    '<strong style="display:block; font-size:13px; margin-bottom:4px;">EVENT APPROVED</strong>' +
-                                    '<span style="font-size:12.5px;">Approved by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
+                                    '<strong style="display:block; font-size:14px; margin-bottom:4px;">EVENT APPROVED</strong>' +
+                                    '<span style="font-size:13.5px;">Approved by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
                                 '</div>' +
                             '</div>';
                     } else if (ev.status === 'Rejected') {
@@ -182,9 +182,9 @@
                             '<div class="ea-decision-impact-alert reject" style="margin-top: 16px; display: flex; align-items: flex-start; gap: 10px;">' +
                                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
                                 '<div>' +
-                                    '<strong style="display:block; font-size:13px; margin-bottom:4px;">EVENT REJECTED</strong>' +
-                                    '<span style="font-size:12.5px; display:block; margin-bottom:4px;">Rejected by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
-                                    (ev.rejection_remarks ? '<div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(153,27,27,0.2); font-size:12px;"><strong>Remarks:</strong> ' + escapeHtml(ev.rejection_remarks) + '</div>' : '') +
+                                    '<strong style="display:block; font-size:14px; margin-bottom:4px;">EVENT REJECTED</strong>' +
+                                    '<span style="font-size:13.5px; display:block; margin-bottom:4px;">Rejected by <strong>' + escapeHtml(ev.approver_name || 'Zonal Coordinator') + '</strong></span>' +
+                                    (ev.rejection_remarks ? '<div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(153,27,27,0.2); font-size:13px;"><strong>Remarks:</strong> ' + escapeHtml(ev.rejection_remarks) + '</div>' : '') +
                                 '</div>' +
                             '</div>';
                     }

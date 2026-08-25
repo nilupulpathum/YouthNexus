@@ -124,7 +124,7 @@
 }
 .ea-modal-backdrop.open { display: flex; }
 .ea-modal {
-    background: #fff; border-radius: 14px; width: 640px; max-width: 92vw;
+    background: #fff; border-radius: 14px; width: 900px; max-width: 92vw;
     max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
 }
 .ea-modal-header {
@@ -132,7 +132,8 @@
     padding: 18px 22px; border-bottom: 1px solid #f1f2f4;
 }
 .ea-modal-close { background: none; border: none; cursor: pointer; color: #6b7280; }
-.ea-modal-body { padding: 18px 22px; overflow-y: auto; }
+.ea-modal-body { padding: 18px 22px 10px 22px; }
+.ea-modal-scrollable { overflow-y: auto; flex: 1; display: flex; flex-direction: column; }
 
 .ea-decision-panel { padding: 18px 22px; border-top: 1px solid #f1f2f4; background: #fafafa; }
 .ea-section-title { font-size: 12px; letter-spacing: .04em; color: #6b7280; font-weight: 700; margin-bottom: 12px; }
@@ -290,7 +291,7 @@
     padding: 14px 16px;
 }
 .ea-info-group-title {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -313,7 +314,7 @@
     gap: 3px;
 }
 .ea-field-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--db-text-grey, #6b7280);
     text-transform: uppercase;
@@ -326,7 +327,7 @@
     color: #9ca3af;
 }
 .ea-field-value {
-    font-size: 13px;
+    font-size: 14.5px;
     color: var(--db-text-dark, #12141a);
     font-weight: 600;
 }
