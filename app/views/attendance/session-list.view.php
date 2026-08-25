@@ -135,8 +135,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         </div>
                         <span class="am-card-attendance-chip<?= $chipClass ?>"><?= $chipLabel ?></span>
                         <div class="am-card-footer">
-                            <a href="<?= ROOT ?>/attendance/detail/<?= (int)$evt->event_id ?>" class="am-btn am-btn-primary" style="font-size:13px;">
+                            <a href="<?= ROOT ?>/attendance/detail/<?= (int)$evt->event_id ?>" class="am-btn-view">
                                 View Attendance
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                             </a>
                         </div>
                     </div>
