@@ -1,0 +1,1164 @@
+/* ==========================================================================
+   monitorclubhealth.css — page-specific styles for Monitor Club Health
+   Matches Figma design specifications, Club Registration & Approval toolbar
+   patterns, centered circular-avatar cards, and honest pending/empty states.
+   ========================================================================== */
+
+:root {
+    --mch-green-border: #86efac;
+    --mch-green-bg: #ecfdf5;
+    --mch-green-text: #059669;
+    --mch-green-badge-bg: #d1fae5;
+    --mch-green-badge-text: #065f46;
+
+    --mch-yellow-border: #fde68a;
+    --mch-yellow-bg: #fffbeb;
+    --mch-yellow-text: #d97706;
+    --mch-yellow-badge-bg: #fef3c7;
+    --mch-yellow-badge-text: #92400e;
+
+    --mch-red-border: #fca5a5;
+    --mch-red-bg: #fef2f2;
+    --mch-red-text: #dc2626;
+    --mch-red-badge-bg: #fee2e2;
+    --mch-red-badge-text: #991b1b;
+}
+
+/* ---------- Stat Cards Grid (Top 3 Summary Cards) ---------- */
+.mch-stats {
+    display: flex;
+    gap: 16px;
+    max-width: 620px;
+    margin-bottom: 24px;
+}
+
+.mch-stat-card {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mch-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 12px 12px 0 0;
+}
+
+.mch-stat-card.green::before { background: #10b981; }
+.mch-stat-card.yellow::before { background: #f59e0b; }
+.mch-stat-card.red::before { background: #ef4444; }
+
+.mch-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.mch-stat-card.is-active {
+    border-color: #1e40af;
+    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
+    background: #fafcff;
+}
+
+.mch-stat-val {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    margin-bottom: 2px;
+}
+
+.mch-stat-label-line {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--db-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mch-stat-subtext {
+    font-size: 11.5px;
+    color: var(--db-text-grey);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   PART 2 — TOOLBAR, FILTER PANEL & SORT TOGGLE
+   Matches Club Registration & Approval's exact structure and visual styling
+   ========================================================================== */
+
+.mch-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-top: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.mch-search-group {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 8px;
+    height: 40px;
+    flex: 1;
+    min-width: 280px;
+    box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
+}
+
+.mch-search-input-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    padding-left: 12px;
+    position: relative;
+}
+
+.mch-search-icon {
+    display: flex;
+    align-items: center;
+    color: var(--db-text-grey);
+    margin-right: 8px;
+}
+
+.mch-search-input-wrapper input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 13px;
+    padding: 10px 0;
+    font-family: inherit;
+    color: var(--db-text-dark);
+}
+
+.mch-search-clear {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 10px;
+    display: none;
+}
+
+.mch-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    height: 40px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--db-text-dark);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
+}
+
+.mch-filter-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.mch-filter-btn[aria-expanded="true"] {
+    background: #eff6ff;
+    border-color: #1e40af;
+    color: #1e40af;
+}
+
+.mch-btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    height: 40px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 8px;
+    color: var(--db-text-dark);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0px 1px 2px rgba(18, 20, 26, 0.04);
+}
+
+.mch-btn-export:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* Filter Panel (Collapsible Dropdown) */
+.mch-filter-panel {
+    display: none;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius-lg);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.mch-filter-panel.open {
+    display: flex;
+}
+
+.mch-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 220px;
+}
+
+.mch-filter-field label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--db-text-grey);
+}
+
+.mch-filter-field select {
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius);
+    padding: 9px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--db-text-dark);
+    outline: none;
+}
+
+.mch-filter-field select:focus {
+    border-color: #1e40af;
+}
+
+.mch-filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.mch-btn {
+    padding: 9px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: var(--db-radius);
+    border: 1px solid var(--db-border);
+    background: #fff;
+    color: var(--db-text-dark);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.mch-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.mch-btn-primary {
+    background: #1e40af;
+    border-color: #1e40af;
+    color: #fff;
+}
+
+.mch-btn-primary:hover {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+}
+
+/* Section Header Row & Sort Toggle */
+.mch-section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    margin-bottom: 12px;
+}
+
+.mch-section-heading {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin: 0;
+}
+
+.mch-sort-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--db-text-grey);
+    cursor: pointer;
+    border-radius: var(--db-radius);
+    transition: color 0.15s ease, background 0.15s ease;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mch-sort-toggle-btn:hover {
+    color: var(--db-text-dark);
+    background: #e2e8f0;
+}
+
+/* ==========================================================================
+   PART 1 — CENTERED CIRCULAR-AVATAR CLUB CARDS
+   Centered vertical stack with status colors, score, badge, name, subline, arrow
+   ========================================================================== */
+
+.mch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+}
+
+.mch-card {
+    background: #fff;
+    border: 2px solid var(--db-border);
+    border-radius: 14px;
+    padding: 22px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+}
+
+.mch-card.green {
+    border-color: var(--mch-green-border);
+}
+
+.mch-card.yellow {
+    border-color: var(--mch-yellow-border);
+}
+
+.mch-card.red {
+    border-color: var(--mch-red-border);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.04);
+}
+.mch-card.red:hover {
+    border-color: #f87171;
+    box-shadow: 0 12px 24px -6px rgba(220, 38, 38, 0.12);
+}
+
+.mch-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* 1. Circular Avatar (Centered on top) */
+.mch-card-avatar-wrap {
+    position: relative;
+    margin-bottom: 12px;
+    width: 84px;
+    height: 84px;
+}
+
+.mch-card-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.mch-card-avatar.green {
+    background: var(--mch-green-bg);
+    color: var(--mch-green-text);
+    border: 2px solid var(--mch-green-border);
+}
+
+.mch-card-avatar.yellow {
+    background: var(--mch-yellow-bg);
+    color: var(--mch-yellow-text);
+    border: 2px solid var(--mch-yellow-border);
+}
+
+.mch-card-avatar.red {
+    background: var(--mch-red-bg);
+    color: var(--mch-red-text);
+    border: 2px solid var(--mch-red-border);
+}
+
+/* 2. Flagged indicator overlay on avatar */
+.mch-card-flag-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    z-index: 2;
+}
+
+.mch-card-flag-badge svg {
+    width: 12px;
+    height: 12px;
+    fill: #fff;
+}
+
+/* Intervention indicator alignment */
+.mch-card-intervention-wrap {
+    height: 22px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-intervention-badge {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
+/* 3. Score Row (Large score + /100) */
+.mch-card-score-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.mch-card-score-num {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.mch-card-score-num.green { color: var(--mch-green-text); }
+.mch-card-score-num.yellow { color: var(--mch-yellow-text); }
+.mch-card-score-num.red { color: var(--mch-red-text); }
+
+.mch-card-score-denom {
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+/* 4. Status Badge (Under the score) */
+.mch-card-badge-wrap {
+    margin-bottom: 12px;
+}
+
+.mch-card-badge {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.mch-card-badge.green {
+    background: var(--mch-green-badge-bg);
+    color: var(--mch-green-badge-text);
+}
+
+.mch-card-badge.yellow {
+    background: var(--mch-yellow-badge-bg);
+    color: var(--mch-yellow-badge-text);
+}
+
+.mch-card-badge.red {
+    background: var(--mch-red-badge-bg);
+    color: var(--mch-red-badge-text);
+}
+
+/* 5. Club Name */
+.mch-card-club-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin: 0 0 6px;
+    line-height: 1.3;
+    max-width: 100%;
+}
+
+/* 6. Location & Member Count Subline */
+.mch-card-subline {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 16px;
+    line-height: 1.4;
+}
+
+/* 7. Bottom View Details Button */
+.mch-card-bottom {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.mch-card-arrow-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mch-card:hover .mch-card-arrow-btn {
+    background: #2563eb;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.mch-card-arrow-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ==========================================================================
+   MODALS (Details Modal & Flag Modal)
+   ========================================================================== */
+
+.mch-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.mch-modal-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mch-modal-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.96);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.mch-modal-backdrop.is-open .mch-modal-card {
+    transform: scale(1);
+}
+
+.mch-detail-modal {
+    max-width: 860px;
+}
+
+.mch-flag-modal {
+    max-width: 480px;
+}
+
+.mch-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--db-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 5;
+    border-radius: 16px 16px 0 0;
+}
+
+.mch-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mch-modal-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-modal-avatar svg {
+    width: 22px;
+    height: 22px;
+}
+
+.mch-modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin: 0 0 4px;
+}
+
+.mch-modal-sub-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mch-modal-code-tag {
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.mch-modal-status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.mch-modal-status-pill.green { background: #dcfce7; color: #15803d; }
+.mch-modal-status-pill.yellow { background: #fef3c7; color: #b45309; }
+.mch-modal-status-pill.red { background: #fee2e2; color: #b91c1c; }
+
+.mch-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #94a3b8;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.mch-modal-close-btn:hover {
+    background: #f1f5f9;
+    color: var(--db-text-dark);
+}
+
+.mch-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.mch-detail-columns {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 760px) {
+    .mch-detail-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mch-section-heading-sm {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+}
+
+.mch-about-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+    margin: 0 0 14px;
+}
+
+.mch-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.mch-meta-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+}
+
+.mch-meta-field svg {
+    width: 15px;
+    height: 15px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+/* Executive Committee dynamic list */
+.mch-exec-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.mch-exec-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mch-exec-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-exec-info b {
+    display: block;
+    font-size: 13px;
+    color: var(--db-text-dark);
+}
+
+.mch-exec-info span {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.mch-empty-subtext {
+    font-size: 12.5px;
+    color: #94a3b8;
+    font-style: italic;
+    margin: 4px 0;
+}
+
+/* Performance Overview */
+.mch-perf-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.mch-perf-card {
+    background: #f8fafc;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mch-perf-card-info span {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.mch-perf-card-info b {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    line-height: 1;
+}
+
+.mch-perf-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-perf-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Pending Placeholder Container */
+.mch-pending-box {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #64748b;
+}
+
+.mch-pending-box svg {
+    width: 20px;
+    height: 20px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.mch-pending-box p {
+    font-size: 12.5px;
+    margin: 0;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Health Breakdown */
+.mch-health-breakdown {
+    background: #f8fafc;
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.mch-overall-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin-bottom: 14px;
+}
+
+.mch-overall-row b {
+    font-size: 20px;
+    color: #1e40af;
+}
+
+.mch-callout-warning {
+    background: #fff7ed;
+    border: 1px solid #ffedd5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #9a3412;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.mch-callout-warning svg {
+    width: 16px;
+    height: 16px;
+    color: #ea580c;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.mch-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--db-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 0 0 16px 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mch-modal-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mch-btn-modal-flag {
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+    border-radius: var(--db-radius);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mch-btn-modal-flag:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.mch-btn-modal-secondary {
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    color: var(--db-text-dark);
+    border-radius: var(--db-radius);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mch-btn-modal-secondary:hover {
+    background: #f1f5f9;
+}
+
+.mch-btn-modal-primary {
+    padding: 8px 18px;
+    background: #1e40af;
+    border: 1px solid #1e40af;
+    color: #fff;
+    border-radius: var(--db-radius);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mch-btn-modal-primary:hover {
+    background: #1e3a8a;
+}
+
+.mch-flag-info-box {
+    background: #f8fafc;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12.5px;
+}
+
+.mch-flag-info-row {
+    display: flex;
+    justify-content: space-between;
+    color: #475569;
+}
+
+.mch-flag-info-row b {
+    color: var(--db-text-dark);
+}
+
+.mch-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mch-form-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.mch-form-select,
+.mch-form-textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius);
+    font-size: 13px;
+    color: var(--db-text-dark);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.mch-form-select:focus,
+.mch-form-textarea:focus {
+    border-color: #1e40af;
+    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
+}
+
+.mch-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.mch-flag-notice {
+    background: #fefce8;
+    border: 1px solid #fef08a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11.5px;
+    color: #854d0e;
+    line-height: 1.4;
+    display: flex;
+    gap: 8px;
+}
+
+.mch-flag-notice svg {
+    width: 16px;
+    height: 16px;
+    color: #ca8a04;
+    flex-shrink: 0;
+}
+
+/* Empty States */
+.mch-empty-state {
+    grid-column: 1 / -1;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 14px;
+    padding: 50px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.mch-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mch-empty-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mch-empty-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin: 0;
+}
+
+.mch-empty-text {
+    font-size: 12.5px;
+    color: var(--db-text-grey);
+    max-width: 380px;
+    margin: 0;
+}
+
+.mch-btn-reset-filter {
+    margin-top: 6px;
+    padding: 7px 16px;
+    background: #1e40af;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mch-btn-reset-filter:hover {
+    background: #1e3a8a;
+}
+
+/* Toast Message */
+.mch-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1100;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.mch-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
