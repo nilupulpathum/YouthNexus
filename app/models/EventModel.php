@@ -130,7 +130,7 @@ class EventModel extends Model {
                 FROM Event e
                 LEFT JOIN EventTarget et ON e.event_id = et.event_id
                 JOIN Club c ON c.club_id = :cid3
-                WHERE e.status IN ('Approved', 'Completed')
+                WHERE e.status = 'Completed'
                   AND (
                       e.organizer_club_id = :cid4
                       OR (e.target_scope = 'SelectedClubs' AND et.target_club_id = :cid5)

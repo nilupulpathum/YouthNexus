@@ -249,3 +249,40 @@ textarea:focus {
 .popup-btn:hover, .error-btn:hover {
   background: var(--blue-panel);
 }
+
+/* ---------- Shared Dashboard Layout & Sizing Components ---------- */
+.dashboard-stats-row {
+  display: flex;
+  gap: 16px;
+  max-width: 620px;
+}
+
+.dashboard-stat-card {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid var(--db-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px 24px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  box-shadow: 0px 4px 12px rgba(18, 20, 26, 0.03);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-1px);
+  border-color: #b9bfcb;
+}
+
+.dashboard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+

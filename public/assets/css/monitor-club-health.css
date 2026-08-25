@@ -24,32 +24,12 @@
     --mch-red-badge-text: #991b1b;
 }
 
-/* ---------- Stat Cards Row (matches Club Registration sizing exactly) ---------- */
+/* ---------- Stat Cards Row (composes .dashboard-stats-row) ---------- */
 .mch-stats {
-    display: flex;
-    gap: 16px;
-    max-width: 620px;
     margin-bottom: 24px;
 }
 
-.mch-stat-card {
-    flex: 1;
-    background: #fff;
-    border: 1px solid var(--db-border);
-    border-radius: 12px;
-    padding: 20px 24px;
-    cursor: pointer;
-    text-align: left;
-    font: inherit;
-    box-shadow: 0px 4px 12px rgba(18, 20, 26, 0.03);
-    transition: transform 0.15s ease, border-color 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-    overflow: hidden;
-}
-
+/* ---------- Stat Card Base (composes .dashboard-stat-card) ---------- */
 /* 3px top accent bar per color */
 .mch-stat-card::before {
     content: '';
@@ -65,16 +45,12 @@
 .mch-stat-card.yellow::before { background: #f59e0b; }
 .mch-stat-card.red::before    { background: #ef4444; }
 
-.mch-stat-card:hover {
-    transform: translateY(-1px);
-    border-color: #b9bfcb;
-}
-
 .mch-stat-card.is-active {
     border-color: var(--db-sidebar-bg);
     border-width: 2px;
     padding: 19px 23px;
 }
+
 
 /* Colored icon box (matches cr-stat-icon pattern) */
 .mch-stat-icon {
@@ -359,11 +335,10 @@
    Centered vertical stack with status colors, score, badge, name, subline, arrow
    ========================================================================== */
 
+/* ---------- Grid (composes .dashboard-card-grid) ---------- */
 .mch-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 20px;
 }
+
 
 .mch-card {
     background: #fff;

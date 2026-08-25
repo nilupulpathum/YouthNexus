@@ -15,8 +15,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/monitor-club-health.css?v=<?= time() ?>">
 
     <!-- 3 Stat Cards (Green / Yellow / Red) -->
-    <div class="mch-stats">
-        <div class="mch-stat-card green" data-filter="Healthy" id="mchStatHealthy" role="button" tabindex="0">
+    <div class="dashboard-stats-row mch-stats">
+        <div class="dashboard-stat-card mch-stat-card green" data-filter="Healthy" id="mchStatHealthy" role="button" tabindex="0">
             <div class="mch-stat-icon green">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
             </div>
@@ -24,7 +24,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="mch-stat-label-line"><span>Healthy</span></div>
             <div class="mch-stat-subtext">Score: 85–100</div>
         </div>
-        <div class="mch-stat-card yellow" data-filter="At Risk" id="mchStatAtRisk" role="button" tabindex="0">
+        <div class="dashboard-stat-card mch-stat-card yellow" data-filter="At Risk" id="mchStatAtRisk" role="button" tabindex="0">
             <div class="mch-stat-icon yellow">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
@@ -32,7 +32,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="mch-stat-label-line"><span>At Risk</span></div>
             <div class="mch-stat-subtext">Score: 50–69</div>
         </div>
-        <div class="mch-stat-card red" data-filter="Dormant" id="mchStatDormant" role="button" tabindex="0">
+        <div class="dashboard-stat-card mch-stat-card red" data-filter="Dormant" id="mchStatDormant" role="button" tabindex="0">
             <div class="mch-stat-icon red">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </div>
@@ -86,7 +86,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 
     <!-- Club Cards Grid -->
-    <div class="mch-grid" id="mchClubGrid">
+    <div class="dashboard-card-grid mch-grid" id="mchClubGrid">
         <?php if (empty($clubs)): ?>
             <div class="mch-empty-state" id="mchEmptyDivision">
                 <div class="mch-empty-icon">
