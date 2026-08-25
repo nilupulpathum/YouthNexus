@@ -49,82 +49,138 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <?php endif; ?>
                         </div>
 
-                        <div class="me-fields-table">
-                            <div class="me-field-item">
-                                <span class="me-field-label">Event Type</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->event_type ?: 'General') ?></span>
-                            </div>
+                        <div class="me-info-groups">
 
-                            <div class="me-field-item">
-                                <span class="me-field-label">Target Audience</span>
-                                <span class="me-field-value">
-                                    <?php if ($event->target_scope === 'AllInScope'): ?>
-                                        <span class="me-target-all">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                            All Clubs in Division
+                            <!-- Group 1: Schedule & Location -->
+                            <div class="me-info-group">
+                                <h3 class="me-info-group-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--db-sidebar-bg);"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    Schedule & Location
+                                </h3>
+                                <div class="me-fields-table">
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                            Start Date &amp; Time
                                         </span>
-                                    <?php elseif (!empty($targets)): ?>
-                                        <ul class="me-target-list">
-                                            <?php foreach ($targets as $t): ?>
-                                                <?php if (!empty($t->target_club_id)): ?>
-                                                    <li class="me-target-list-item">
-                                                        <span><?= htmlspecialchars($t->target_club_name ?? 'Club') ?></span>
-                                                        <small class="me-club-code"><?= htmlspecialchars($t->target_club_code ?? '') ?></small>
-                                                        <?php if (!empty($t->max_attendance)): ?>
-                                                            <small class="me-target-max">Max: <?= (int)$t->max_attendance ?></small>
+                                        <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->start_datetime)) ?></span>
+                                    </div>
+
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                            End Date &amp; Time
+                                        </span>
+                                        <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->end_datetime)) ?></span>
+                                    </div>
+
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            Location / Venue
+                                        </span>
+                                        <span class="me-field-value"><?= htmlspecialchars($event->location ?: 'Not Specified') ?></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Group 2: Audience & Capacity -->
+                            <div class="me-info-group">
+                                <h3 class="me-info-group-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--db-sidebar-bg);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    Audience & Capacity
+                                </h3>
+                                <div class="me-fields-table">
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                            Target Audience
+                                        </span>
+                                        <span class="me-field-value">
+                                            <?php if ($event->target_scope === 'AllInScope'): ?>
+                                                <span class="me-target-all">
+                                                    All Clubs in Division
+                                                </span>
+                                            <?php elseif (!empty($targets)): ?>
+                                                <ul class="me-target-list">
+                                                    <?php foreach ($targets as $t): ?>
+                                                        <?php if (!empty($t->target_club_id)): ?>
+                                                            <li class="me-target-list-item">
+                                                                <span><?= htmlspecialchars($t->target_club_name ?? 'Club') ?></span>
+                                                                <small class="me-club-code"><?= htmlspecialchars($t->target_club_code ?? '') ?></small>
+                                                                <?php if (!empty($t->max_attendance)): ?>
+                                                                    <small class="me-target-max">Max: <?= (int)$t->max_attendance ?></small>
+                                                                <?php endif; ?>
+                                                            </li>
                                                         <?php endif; ?>
-                                                    </li>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    <?php else: ?>
-                                        <em style="color: var(--db-text-grey);">No clubs targeted</em>
-                                    <?php endif; ?>
-                                </span>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <em style="color: var(--db-text-grey);">No clubs targeted</em>
+                                            <?php endif; ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.9 19.1 14.2-14.2"/><path d="m14.2 19.1 4.9-4.9"/></svg>
+                                            Max Attendees
+                                        </span>
+                                        <span class="me-field-value"><?= !empty($event->max_attendance) ? (int)$event->max_attendance . ' attendees (event-wide)' : 'Unlimited / Not specified' ?></span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="me-field-item">
-                                <span class="me-field-label">Start Date &amp; Time</span>
-                                <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->start_datetime)) ?></span>
+                            <!-- Group 3: Organization Details -->
+                            <div class="me-info-group">
+                                <h3 class="me-info-group-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--db-sidebar-bg);"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/></svg>
+                                    Organization & Creator Details
+                                </h3>
+                                <div class="me-fields-table">
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                            Event Type
+                                        </span>
+                                        <span class="me-field-value"><?= htmlspecialchars($event->event_type ?: 'General') ?></span>
+                                    </div>
+
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/></svg>
+                                            Organized By
+                                        </span>
+                                        <span class="me-field-value">
+                                            <?php if (!empty($event->organizer_division_id)): ?>
+                                                <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?>
+                                            <?php else: ?>
+                                                <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="me-field-item">
+                                        <span class="me-field-label">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                            Created By
+                                        </span>
+                                        <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? 'Secretary') ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="me-field-item">
-                                <span class="me-field-label">End Date &amp; Time</span>
-                                <span class="me-field-value"><?= date('F j, Y • g:i A', strtotime($event->end_datetime)) ?></span>
-                            </div>
-
-                            <div class="me-field-item">
-                                <span class="me-field-label">Location / Venue</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->location ?: 'Not Specified') ?></span>
-                            </div>
-
-                            <div class="me-field-item">
-                                <span class="me-field-label">Max Attendees</span>
-                                <span class="me-field-value"><?= !empty($event->max_attendance) ? (int)$event->max_attendance . ' attendees (event-wide)' : 'Unlimited / Not specified' ?></span>
-                            </div>
-
-                            <div class="me-field-item">
-                                <span class="me-field-label">Organized By</span>
-                                <span class="me-field-value">
-                                    <?php if (!empty($event->organizer_division_id)): ?>
-                                        <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?>
-                                    <?php else: ?>
-                                        <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?>
-                                    <?php endif; ?>
-                                </span>
-                            </div>
-
-                            <div class="me-field-item">
-                                <span class="me-field-label">Created By</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? 'Secretary') ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
-                            </div>
-
-                            <div class="me-field-item full">
-                                <span class="me-field-label">Description &amp; Objectives</span>
+                            <!-- Group 4: Description -->
+                            <div class="me-info-group">
+                                <h3 class="me-info-group-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--db-sidebar-bg);"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                                    Description &amp; Objectives
+                                </h3>
                                 <div class="me-field-value desc">
                                     <?= !empty($event->description) ? nl2br(htmlspecialchars($event->description)) : '<em>No detailed description provided.</em>' ?>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
