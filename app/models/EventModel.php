@@ -109,6 +109,47 @@ class EventModel extends Model {
     }
 
     /**
+     * Find Approved/Completed events relevant to a specific club.
+     * Includes events this club organized, was specifically targeted for (SelectedClubs),
+     * or was covered by an AllInScope divisional event.
+     * Attendance counts are scoped to this club's own members only.
+     *
+     * @param  int $clubId
+     * @return array
+     */
+    public function findEventsForClub($clubId) {
+        $clubId = (int)$clubId;
+        $sql = "SELECT DISTINCT e.event_id, e.title, e.start_datetime, e.end_datetime,
+                    e.location, e.event_type, e.status,
+                    (SELECT COUNT(*) FROM Attendance a
+                     JOIN User u ON a.user_id = u.user_id
+                     WHERE a.event_id = e.event_id AND u.club_id = :cid1) AS attendance_recorded_count,
+                    (SELECT COUNT(*) FROM Attendance a
+                     JOIN User u ON a.user_id = u.user_id
+                     WHERE a.event_id = e.event_id AND u.club_id = :cid2 AND a.status = 'Present') AS present_count
+                FROM Event e
+                LEFT JOIN EventTarget et ON e.event_id = et.event_id
+                JOIN Club c ON c.club_id = :cid3
+                WHERE e.status IN ('Approved', 'Completed')
+                  AND (
+                      e.organizer_club_id = :cid4
+                      OR (e.target_scope = 'SelectedClubs' AND et.target_club_id = :cid5)
+                      OR (e.target_scope = 'AllInScope' AND e.organizer_division_id = c.division_id)
+                  )
+                ORDER BY e.start_datetime DESC";
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':cid1', $clubId, PDO::PARAM_INT);
+        $stmt->bindValue(':cid2', $clubId, PDO::PARAM_INT);
+        $stmt->bindValue(':cid3', $clubId, PDO::PARAM_INT);
+        $stmt->bindValue(':cid4', $clubId, PDO::PARAM_INT);
+        $stmt->bindValue(':cid5', $clubId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Retrieve all events within a division (both divisional events and club events),
      * with optional search and filtering. Uses GROUP BY to avoid duplicates from multi-target events.
      *

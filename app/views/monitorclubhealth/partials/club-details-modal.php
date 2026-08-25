@@ -67,11 +67,14 @@
 
                     <!-- Issue #6 Fixed: Recent Events placeholder container (no fake rows) -->
                     <div class="mch-events-header">
-                        <div class="mch-section-heading-sm" style="margin-bottom: 0;">Recent Events</div>
+                        <div class="mch-section-heading-sm" style="margin-bottom: 0;">Events & Attendance</div>
                     </div>
-                    <div class="mch-pending-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <p>Event tracking will be available once the Events module is implemented.</p>
+                    <div class="mch-pending-box" id="mchEventsPendingBox">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <p>Loading events...</p>
+                    </div>
+                    <div class="mch-exec-list" id="mchModalEventList" style="display: none; margin-top: 14px;">
+                        <!-- Populated dynamically via JS -->
                     </div>
                 </div>
             </div>

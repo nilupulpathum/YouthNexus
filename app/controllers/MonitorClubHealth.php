@@ -58,15 +58,32 @@ class MonitorClubHealth extends Controller {
             'divisionName' => $divisionName,
             'committees'   => $committees,
             'csrf_token'   => $_SESSION['csrf_token'],
+            'userName'     => $_SESSION['user_name'] ?? 'Coordinator',
+            'userRole'     => $_SESSION['user_role'] ?? 'DivisionalCoordinator',
         ]);
     }
 
-    /**
-     * Detail route placeholder.
-     * Note: Full health score breakdown modal / detail page is deferred to Phase 2.
-     */
     public function details($id = null) {
         $this->requireCoordinator();
-        $this->redirect('monitorclubhealth');
+        $clubId = (int)$id;
+        // scope-check: this club must belong to the coordinator's division
+        $clubModel = $this->model('ClubModel');
+        $club = $clubModel->findById($clubId);
+        if (!$club || $club->division_id != ($_SESSION['division_id'] ?? 0)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'Club not found or not in scope.']);
+            exit();
+        }
+
+        $eventModel = $this->model('EventModel');
+        $attendanceModel = $this->model('AttendanceModel');
+
+        // events this club organized, or was targeted by
+        $events = $eventModel->findEventsForClub($clubId);
+
+        header('Content-Type: application/json');
+        echo json_encode(['club' => $club, 'events' => $events]);
+        exit();
     }
 }
