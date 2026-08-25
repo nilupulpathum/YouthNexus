@@ -155,6 +155,26 @@ class EventApproval extends Controller {
         exit();
     }
 
+    public function approved() {
+        $this->requireCoordinator();
+        $eventModel = $this->model('EventModel');
+        $divisionId = (int)($_SESSION['division_id'] ?? 0);
+        $events = $eventModel->findApprovedClubEventsByDivision($divisionId);
+        header('Content-Type: application/json');
+        echo json_encode(['events' => $events]);
+        exit();
+    }
+
+    public function rejected() {
+        $this->requireCoordinator();
+        $eventModel = $this->model('EventModel');
+        $divisionId = (int)($_SESSION['division_id'] ?? 0);
+        $events = $eventModel->findRejectedClubEventsByDivision($divisionId);
+        header('Content-Type: application/json');
+        echo json_encode(['events' => $events]);
+        exit();
+    }
+
 
     private function jsonError($message) {
         header('Content-Type: application/json');

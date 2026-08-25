@@ -46,6 +46,53 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <!-- ============================================================
+                 Toolbar & Filters (client-side matching cr- / mch- patterns)
+                 ============================================================ -->
+            <div class="ea-toolbar">
+                <div class="ea-toolbar-left">
+                    <div class="ea-search-box">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="eaSearchInput" placeholder="Search events by title or club name...">
+                    </div>
+                </div>
+                <button type="button" class="ea-filter-btn" id="eaFilterBtn" aria-expanded="false">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    Filters
+                    <span class="ea-filter-count" id="eaFilterCount" hidden>0</span>
+                </button>
+            </div>
+
+            <!-- Filter panel: hidden until "Filters" is clicked -->
+            <div class="ea-filter-panel" id="eaFilterPanel">
+                <div class="ea-filter-field">
+                    <label for="eaFilterType">Event Type</label>
+                    <select id="eaFilterType">
+                        <option value="">All Types</option>
+                        <option value="Practice">Practice</option>
+                        <option value="Match">Match</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Seminar">Seminar</option>
+                        <option value="Tournament">Tournament</option>
+                        <option value="Social">Social</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="ea-filter-field">
+                    <label for="eaFilterDateFrom">Date From</label>
+                    <input type="date" id="eaFilterDateFrom">
+                </div>
+                <div class="ea-filter-field">
+                    <label for="eaFilterDateTo">Date To</label>
+                    <input type="date" id="eaFilterDateTo">
+                </div>
+                <div class="ea-filter-actions">
+                    <button type="button" class="ea-btn" id="eaClearFilterBtn">Clear Filter</button>
+                    <button type="button" class="ea-btn ea-btn-primary" id="eaAddFilterBtn">Add Filter</button>
+                </div>
+            </div>
+
+            <!-- ============================================================
                  Pending Events List
                  ============================================================ -->
             <div class="ea-list" id="eaPendingList">
@@ -54,7 +101,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <p>No club events are currently awaiting your approval.</p>
                     </div>
                 <?php else: foreach ($pendingEvents as $event): ?>
-                    <div class="ea-card" data-event-id="<?= (int)$event->event_id ?>">
+                    <div class="ea-card" 
+                         data-event-id="<?= (int)$event->event_id ?>"
+                         data-title="<?= htmlspecialchars(strtolower($event->title), ENT_QUOTES, 'UTF-8') ?>"
+                         data-club="<?= htmlspecialchars(strtolower($event->organizer_club_name ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                         data-type="<?= htmlspecialchars($event->event_type ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                         data-start="<?= htmlspecialchars($event->start_datetime, ENT_QUOTES, 'UTF-8') ?>">
                         <div class="ea-card-top">
                             <span class="ea-badge club">Club Event</span>
                             <span class="ea-badge pending">Pending Approval</span>

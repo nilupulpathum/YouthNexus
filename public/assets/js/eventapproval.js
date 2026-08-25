@@ -9,7 +9,23 @@
     const impactAlert              = document.getElementById('eaImpactAlert');
     const confirmBtn                  = document.getElementById('eaConfirmSubmitBtn');
 
+    const grid = document.getElementById('eaPendingList');
+    let pendingGridHtml = grid ? grid.innerHTML : null;
+
     let activeEventId = null;
+    let approvedEventsCache = null;
+    let rejectedEventsCache = null;
+
+    // Filters elements
+    const searchInput      = document.getElementById('eaSearchInput');
+    const filterBtn        = document.getElementById('eaFilterBtn');
+    const filterPanel      = document.getElementById('eaFilterPanel');
+    const filterType       = document.getElementById('eaFilterType');
+    const filterDateFrom   = document.getElementById('eaFilterDateFrom');
+    const filterDateTo     = document.getElementById('eaFilterDateTo');
+    const clearFilterBtn   = document.getElementById('eaClearFilterBtn');
+    const addFilterBtn     = document.getElementById('eaAddFilterBtn');
+    const filterCountEl    = document.getElementById('eaFilterCount');
 
     function escapeHtml(s) {
         return (s ?? '').toString()
@@ -57,6 +73,26 @@
                     '<p><strong>Description:</strong><br>' + escapeHtml(ev.description) + '</p>' +
                     '<p><strong>Submitted by:</strong> ' + escapeHtml(ev.creator_name) + ' (' + escapeHtml(ev.creator_role) + ')</p>';
 
+                // Hide decision panel if already Approved or Rejected
+                const decisionPanel = document.querySelector('.ea-decision-panel');
+                if (ev.status === 'Approved' || ev.status === 'Rejected') {
+                    if (decisionPanel) decisionPanel.style.display = 'none';
+                    modalBody.innerHTML += '<p><strong>Status:</strong> ' + escapeHtml(ev.status) + '</p>';
+                    if (ev.status === 'Approved' && ev.approver_name) {
+                        modalBody.innerHTML += '<p><strong>Approved by:</strong> ' + escapeHtml(ev.approver_name) + '</p>';
+                    }
+                    if (ev.status === 'Rejected') {
+                        if (ev.approver_name) {
+                            modalBody.innerHTML += '<p><strong>Rejected by:</strong> ' + escapeHtml(ev.approver_name) + '</p>';
+                        }
+                        if (ev.rejection_remarks) {
+                            modalBody.innerHTML += '<p><strong>Rejection Remarks:</strong><br>' + escapeHtml(ev.rejection_remarks) + '</p>';
+                        }
+                    }
+                } else {
+                    if (decisionPanel) decisionPanel.style.display = 'block';
+                }
+
                 resultSelect.value = 'approve';
                 remarksField.value = '';
                 updateImpactAlert();
@@ -82,9 +118,15 @@
 
     resultSelect.addEventListener('change', updateImpactAlert);
 
-    document.querySelectorAll('.ea-btn-review').forEach(btn => {
-        btn.addEventListener('click', () => openReview(btn.dataset.eventId));
-    });
+    // Initial binding for review buttons
+    function bindReviewButtons() {
+        if (!grid) return;
+        grid.querySelectorAll('.ea-btn-review').forEach(btn => {
+            btn.addEventListener('click', () => openReview(btn.dataset.eventId));
+        });
+    }
+    bindReviewButtons();
+
     closeBtn.addEventListener('click', closeReview);
     cancelBtn.addEventListener('click', closeReview);
 
@@ -147,4 +189,252 @@
             alert('Error: ' + err.message);
         });
     });
+
+    // ---------------------------------------------------------------
+    // Client-side filtering logic
+    // ---------------------------------------------------------------
+    function filterCards() {
+        if (!grid) return;
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const type  = filterType ? filterType.value : '';
+        const dateFrom = filterDateFrom ? filterDateFrom.value : '';
+        const dateTo   = filterDateTo ? filterDateTo.value : '';
+
+        const cards = grid.querySelectorAll('.ea-card');
+        let visibleCount = 0;
+        let activeFilters = 0;
+
+        if (query) activeFilters++;
+        if (type) activeFilters++;
+        if (dateFrom) activeFilters++;
+        if (dateTo) activeFilters++;
+
+        if (filterCountEl) {
+            if (activeFilters > 0) {
+                filterCountEl.textContent = activeFilters;
+                filterCountEl.style.display = 'inline-flex';
+            } else {
+                filterCountEl.style.display = 'none';
+            }
+        }
+
+        cards.forEach(function (card) {
+            const textMatch = !query || 
+                            (card.dataset.title || '').indexOf(query) !== -1 || 
+                            (card.dataset.club || '').indexOf(query) !== -1;
+            const typeMatch = !type || (card.dataset.type || '') === type;
+            
+            const eventDate = card.dataset.start ? card.dataset.start.substring(0, 10) : '';
+            const dateFromMatch = !dateFrom || eventDate >= dateFrom;
+            const dateToMatch = !dateTo || eventDate <= dateTo;
+
+            const isVisible = textMatch && typeMatch && dateFromMatch && dateToMatch;
+            card.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // Feedback message if no cards match
+        const noMatchEl = grid.querySelector('#eaNoFilterMatch');
+        if (cards.length > 0) {
+            if (visibleCount === 0) {
+                if (!noMatchEl) {
+                    const msg = document.createElement('div');
+                    msg.id = 'eaNoFilterMatch';
+                    msg.className = 'ea-empty-state ea-empty';
+                    msg.style.gridColumn = '1 / -1';
+                    msg.innerHTML =
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+                        '<p>No events match your search/filters.</p>';
+                    grid.appendChild(msg);
+                }
+            } else if (noMatchEl) {
+                noMatchEl.remove();
+            }
+        }
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterCards);
+
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', function () {
+            const isOpen = filterPanel.classList.toggle('open');
+            filterBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+
+    if (addFilterBtn) {
+        addFilterBtn.addEventListener('click', filterCards);
+    }
+
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', function () {
+            if (searchInput) searchInput.value = '';
+            if (filterType) filterType.value = '';
+            if (filterDateFrom) filterDateFrom.value = '';
+            if (filterDateTo) filterDateTo.value = '';
+            filterCards();
+        });
+    }
+
+    // ---------------------------------------------------------------
+    // Tab switching and cache management
+    // ---------------------------------------------------------------
+    const statApproved = document.getElementById('statApproved');
+    const statRejected = document.getElementById('statRejected');
+
+    function setActiveStat(button) {
+        [statPending, statApproved, statRejected].forEach(function (b) { if (b) b.classList.remove('is-active'); });
+        if (button) button.classList.add('is-active');
+    }
+
+    function renderApprovedGrid(events) {
+        if (!grid) return;
+        if (!events || events.length === 0) {
+            grid.innerHTML =
+                '<div class="ea-empty-state" style="grid-column: 1 / -1;">' +
+                    '<p>No approved club events found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        let html = '';
+        events.forEach(function (ev) {
+            html +=
+                '<div class="ea-card" data-event-id="' + ev.event_id + '" data-title="' + escapeHtml((ev.title || '').toLowerCase()) + '" data-club="' + escapeHtml((ev.club_name || '').toLowerCase()) + '" data-type="' + escapeHtml(ev.event_type || '') + '" data-start="' + escapeHtml(ev.start_datetime || '') + '">' +
+                    '<div class="ea-card-top">' +
+                        '<span class="ea-badge club">Club Event</span>' +
+                        '<span class="ea-badge approved" style="background:#d1fae5; color:#065f46;">Approved</span>' +
+                    '</div>' +
+                    '<h3 class="ea-card-title">' + escapeHtml(ev.title) + '</h3>' +
+                    '<p class="ea-card-club">' +
+                        escapeHtml(ev.club_name ?? '') +
+                        ' <small class="ea-club-code">' + escapeHtml(ev.club_code ?? '') + '</small>' +
+                    '</p>' +
+                    '<div class="ea-card-meta">' +
+                        '<span>' + escapeHtml(new Date(ev.start_datetime).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })) + '</span>' +
+                        '<span>' + escapeHtml(ev.location ?? '—') + '</span>' +
+                    '</div>' +
+                    '<div class="ea-card-date" style="font-size: 11px; color: #16a34a; font-weight: 600; margin-top: 4px;">' +
+                        'APPROVED' + (ev.approver_name ? ' BY ' + escapeHtml(ev.approver_name.toUpperCase()) : '') +
+                    '</div>' +
+                    '<div class="ea-card-footer">' +
+                        '<span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name ?? '—') + ' (' + escapeHtml(ev.creator_role ?? '—') + ')</span>' +
+                        '<button type="button" class="ea-btn ea-btn-primary ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
+        
+        grid.querySelectorAll('.ea-btn-view-details').forEach(btn => {
+            btn.addEventListener('click', () => openReview(btn.dataset.eventId));
+        });
+    }
+
+    function renderRejectedGrid(events) {
+        if (!grid) return;
+        if (!events || events.length === 0) {
+            grid.innerHTML =
+                '<div class="ea-empty-state" style="grid-column: 1 / -1;">' +
+                    '<p>No rejected club events found in this division.</p>' +
+                '</div>';
+            return;
+        }
+
+        let html = '';
+        events.forEach(function (ev) {
+            html +=
+                '<div class="ea-card" data-event-id="' + ev.event_id + '" data-title="' + escapeHtml((ev.title || '').toLowerCase()) + '" data-club="' + escapeHtml((ev.club_name || '').toLowerCase()) + '" data-type="' + escapeHtml(ev.event_type || '') + '" data-start="' + escapeHtml(ev.start_datetime || '') + '">' +
+                    '<div class="ea-card-top">' +
+                        '<span class="ea-badge club">Club Event</span>' +
+                        '<span class="ea-badge rejected" style="background:#fee2e2; color:#b91c1c;">Rejected</span>' +
+                    '</div>' +
+                    '<h3 class="ea-card-title">' + escapeHtml(ev.title) + '</h3>' +
+                    '<p class="ea-card-club">' +
+                        escapeHtml(ev.club_name ?? '') +
+                        ' <small class="ea-club-code">' + escapeHtml(ev.club_code ?? '') + '</small>' +
+                    '</p>' +
+                    '<div class="ea-card-meta">' +
+                        '<span>' + escapeHtml(new Date(ev.start_datetime).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })) + '</span>' +
+                        '<span>' + escapeHtml(ev.location ?? '—') + '</span>' +
+                    '</div>' +
+                    '<div class="ea-card-date" style="font-size: 11px; color: #dc2626; font-weight: 600; margin-top: 4px;">' +
+                        'REJECTED' + (ev.approver_name ? ' BY ' + escapeHtml(ev.approver_name.toUpperCase()) : '') + (ev.rejection_remarks ? ' — ' + escapeHtml(ev.rejection_remarks) : '') +
+                    '</div>' +
+                    '<div class="ea-card-footer">' +
+                        '<span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name ?? '—') + ' (' + escapeHtml(ev.creator_role ?? '—') + ')</span>' +
+                        '<button type="button" class="ea-btn ea-btn-primary ea-btn-view-details" data-event-id="' + ev.event_id + '">View Details</button>' +
+                    '</div>' +
+                '</div>';
+        });
+        grid.innerHTML = html;
+
+        grid.querySelectorAll('.ea-btn-view-details').forEach(btn => {
+            btn.addEventListener('click', () => openReview(btn.dataset.eventId));
+        });
+    }
+
+    if (statPending) {
+        statPending.addEventListener('click', function () {
+            setActiveStat(statPending);
+            if (pendingGridHtml !== null && grid) {
+                grid.innerHTML = pendingGridHtml;
+                bindReviewButtons();
+                filterCards();
+            }
+        });
+    }
+
+    if (statApproved) {
+        statApproved.addEventListener('click', function () {
+            setActiveStat(statApproved);
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+
+            if (approvedEventsCache !== null) {
+                renderApprovedGrid(approvedEventsCache);
+                filterCards();
+                return;
+            }
+
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved events…</p>';
+            fetch((window.ROOT || '') + '/eventapproval/approved', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    approvedEventsCache = data.events || [];
+                    renderApprovedGrid(approvedEventsCache);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved events.</p>';
+                });
+        });
+    }
+
+    if (statRejected) {
+        statRejected.addEventListener('click', function () {
+            setActiveStat(statRejected);
+            if (pendingGridHtml === null && grid) {
+                pendingGridHtml = grid.innerHTML;
+            }
+
+            if (rejectedEventsCache !== null) {
+                renderRejectedGrid(rejectedEventsCache);
+                filterCards();
+                return;
+            }
+
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected events…</p>';
+            fetch((window.ROOT || '') + '/eventapproval/rejected', { credentials: 'same-origin' })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    rejectedEventsCache = data.events || [];
+                    renderRejectedGrid(rejectedEventsCache);
+                    filterCards();
+                })
+                .catch(function () {
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected events.</p>';
+                });
+        });
+    }
 })();
