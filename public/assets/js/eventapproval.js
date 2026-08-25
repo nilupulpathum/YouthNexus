@@ -26,6 +26,7 @@
     const clearFilterBtn   = document.getElementById('eaClearFilterBtn');
     const addFilterBtn     = document.getElementById('eaAddFilterBtn');
     const filterCountEl    = document.getElementById('eaFilterCount');
+    const sortToggleBtn    = document.getElementById('eaSortToggleBtn');
 
     function escapeHtml(s) {
         return (s ?? '').toString()
@@ -310,6 +311,9 @@
         if (dateFrom) activeFilters++;
         if (dateTo) activeFilters++;
 
+        // Keep cards sorted after filtering
+        sortEvents(currentSortOrder);
+
         if (filterCountEl) {
             if (activeFilters > 0) {
                 filterCountEl.textContent = activeFilters;
@@ -429,6 +433,7 @@
         grid.querySelectorAll('.ea-btn-view-details').forEach(btn => {
             btn.addEventListener('click', () => openReview(btn.dataset.eventId));
         });
+        sortEvents(currentSortOrder);
     }
 
     function renderRejectedGrid(events) {
@@ -472,6 +477,7 @@
         grid.querySelectorAll('.ea-btn-view-details').forEach(btn => {
             btn.addEventListener('click', () => openReview(btn.dataset.eventId));
         });
+        sortEvents(currentSortOrder);
     }
 
     if (statPending) {
@@ -481,6 +487,7 @@
                 grid.innerHTML = pendingGridHtml;
                 bindReviewButtons();
                 filterCards();
+                sortEvents(currentSortOrder);
             }
         });
     }
@@ -538,4 +545,40 @@
                 });
         });
     }
+
+    // --- Sorting Mechanism ---
+    let currentSortOrder = 'asc'; // 'asc' = Oldest First (default), 'desc' = Newest First
+
+    function sortEvents(order) {
+        currentSortOrder = order;
+        if (!grid) return;
+        const cards = Array.from(grid.querySelectorAll('.ea-card'));
+        if (cards.length === 0) return;
+        cards.sort((a, b) => {
+            const dateA = new Date(a.dataset.start || '');
+            const dateB = new Date(b.dataset.start || '');
+            return order === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+        cards.forEach(card => {
+            grid.appendChild(card);
+        });
+    }
+
+    if (sortToggleBtn) {
+        sortToggleBtn.addEventListener('click', function () {
+            if (currentSortOrder === 'asc') {
+                currentSortOrder = 'desc';
+                sortToggleBtn.textContent = 'Sort: Newest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'desc');
+            } else {
+                currentSortOrder = 'asc';
+                sortToggleBtn.textContent = 'Sort: Oldest First ▾';
+                sortToggleBtn.setAttribute('data-sort', 'asc');
+            }
+            sortEvents(currentSortOrder);
+        });
+    }
+
+    // Initial Sort
+    sortEvents('asc');
 })();
