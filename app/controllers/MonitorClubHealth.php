@@ -77,7 +77,6 @@ class MonitorClubHealth extends Controller {
         }
 
         $eventModel = $this->model('EventModel');
-        $attendanceModel = $this->model('AttendanceModel');
 
         // events this club organized, or was targeted by
         $events = $eventModel->findEventsForClub($clubId);
