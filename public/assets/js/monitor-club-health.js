@@ -323,6 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const pendingBox = document.getElementById('mchEventsPendingBox');
         const eventList = document.getElementById('mchModalEventList');
+        const summaryStrip = document.getElementById('mchModalEventSummaryStrip');
+        const viewAllBtn = document.getElementById('mchViewAllEventsBtn');
+
         if (pendingBox) {
             pendingBox.style.display = 'flex';
             pendingBox.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><p>Loading events...</p>';
@@ -330,6 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (eventList) {
             eventList.style.display = 'none';
             eventList.innerHTML = '';
+        }
+        if (summaryStrip) {
+            summaryStrip.style.display = 'none';
+        }
+        if (viewAllBtn) {
+            viewAllBtn.style.display = 'none';
         }
 
         if (id) {
@@ -344,30 +353,86 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.error) throw new Error(data.error);
                     
                     if (pendingBox) pendingBox.style.display = 'none';
+
+                    // Issue A: Populate summary strip
+                    if (summaryStrip) {
+                        const summary = data.summary || {};
+                        const conductedCount = summary.conducted_count || 0;
+                        const avgRate = summary.avg_attendance_rate;
+
+                        const summaryConductedEl = document.getElementById('mchModalSummaryEventsConducted');
+                        const summaryAvgEl = document.getElementById('mchModalSummaryAvgAttendance');
+
+                        if (data.events && data.events.length > 0) {
+                            summaryStrip.style.display = 'flex';
+                            if (summaryConductedEl) {
+                                summaryConductedEl.textContent = conductedCount;
+                            }
+                            if (summaryAvgEl) {
+                                summaryAvgEl.textContent = (avgRate !== null && avgRate !== undefined) ? `${avgRate}%` : 'No events in this period';
+                            }
+                        } else {
+                            summaryStrip.style.display = 'none';
+                        }
+                    }
+
                     if (eventList) {
-                        eventList.style.display = 'block';
+                        eventList.style.display = 'flex';
                         if (data.events && data.events.length > 0) {
                             let html = '';
-                            data.events.forEach(ev => {
+                            data.events.forEach((ev, index) => {
                                 const title = escapeHtml(ev.title || 'Event');
-                                const date = ev.start_datetime ? new Date(ev.start_datetime).toLocaleDateString() : '';
+                                const date = ev.start_datetime ? new Date(ev.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                                const type = ev.event_type ? escapeHtml(ev.event_type) : 'Event';
                                 const attendanceCount = parseInt(ev.attendance_recorded_count || 0);
                                 const presentCount = parseInt(ev.present_count || 0);
                                 const rate = attendanceCount > 0 ? Math.round((presentCount / attendanceCount) * 100) : 0;
                                 
+                                let badgeClass = 'red';
+                                if (rate >= 75) {
+                                    badgeClass = 'green';
+                                } else if (rate >= 50) {
+                                    badgeClass = 'yellow';
+                                }
+                                
+                                // Issue C: Hide rows after the first 5 by default
+                                const hiddenClass = index >= 5 ? 'mch-event-card mch-event-hidden' : 'mch-event-card';
+                                const hiddenStyle = index >= 5 ? 'style="display: none;"' : '';
+                                
                                 html += `
-                                    <div class="mch-exec-member">
-                                        <div class="mch-exec-avatar" style="background:#f1f5f9; color:#475569;">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    <div class="${hiddenClass}" ${hiddenStyle}>
+                                        <div class="mch-event-info">
+                                            <h4 class="mch-event-title">${title}</h4>
+                                            <div class="mch-event-meta">
+                                                <span class="mch-event-type-badge">${type}</span>
+                                                <span>${date}</span>
+                                            </div>
                                         </div>
-                                        <div class="mch-exec-info">
-                                            <b>${title}</b>
-                                            <span>${date} &bull; Attendance: ${presentCount}/${attendanceCount} (${rate}%)</span>
-                                        </div>
+                                        <span class="mch-event-attendance-badge ${badgeClass}">
+                                            ${presentCount}/${attendanceCount} (${rate}%)
+                                        </span>
                                     </div>
                                 `;
                             });
                             eventList.innerHTML = html;
+
+                            // Issue C: Setup view all button if more than 5 events exist
+                            if (data.events.length > 5 && viewAllBtn) {
+                                viewAllBtn.style.display = 'block';
+                                viewAllBtn.textContent = `View all ${data.events.length} events`;
+                                
+                                // Re-clone button to strip any old listeners cleanly
+                                const newBtn = viewAllBtn.cloneNode(true);
+                                viewAllBtn.parentNode.replaceChild(newBtn, viewAllBtn);
+                                
+                                newBtn.addEventListener('click', () => {
+                                    const hiddenCards = eventList.querySelectorAll('.mch-event-hidden');
+                                    hiddenCards.forEach(c => {
+                                        c.style.display = 'flex';
+                                    });
+                                    newBtn.style.display = 'none';
+                                });
+                            }
                         } else {
                             if (pendingBox) {
                                 pendingBox.style.display = 'flex';
