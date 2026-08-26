@@ -359,6 +359,10 @@
     border-color: var(--mch-green-border);
 }
 
+.mch-card.not-scored {
+    border-color: var(--db-border);
+}
+
 .mch-card.yellow {
     border-color: var(--mch-yellow-border);
 }
@@ -403,6 +407,12 @@
     background: var(--mch-green-bg);
     color: var(--mch-green-text);
     border: 2px solid var(--mch-green-border);
+}
+
+.mch-card-avatar.not-scored {
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #cbd5e1;
 }
 
 .mch-card-avatar.yellow {
@@ -481,6 +491,7 @@
 }
 
 .mch-card-score-num.green { color: var(--mch-green-text); }
+.mch-card-score-num.not-scored { color: #64748b; }
 .mch-card-score-num.yellow { color: var(--mch-yellow-text); }
 .mch-card-score-num.red { color: var(--mch-red-text); }
 
@@ -508,6 +519,12 @@
 .mch-card-badge.green {
     background: var(--mch-green-badge-bg);
     color: var(--mch-green-badge-text);
+}
+
+.mch-card-badge.not-scored {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
 }
 
 .mch-card-badge.yellow {
@@ -686,6 +703,7 @@
 }
 
 .mch-modal-status-pill.green { background: #dcfce7; color: #15803d; }
+.mch-modal-status-pill.not-scored { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 .mch-modal-status-pill.yellow { background: #fef3c7; color: #b45309; }
 .mch-modal-status-pill.red { background: #fee2e2; color: #b91c1c; }
 

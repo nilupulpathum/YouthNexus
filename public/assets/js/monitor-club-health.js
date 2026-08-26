@@ -283,11 +283,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Health Status Pill
         if (modalStatusPill) {
-            modalStatusPill.className = 'mch-modal-status-pill ' + status.toLowerCase();
-            let label = '• Healthy (Green)';
-            if (status === 'Yellow') label = '• At Risk (Yellow)';
-            if (status === 'Red') label = '• Dormant (Red)';
-            modalStatusPill.textContent = label;
+            const isNeverScored = (parseFloat(score) === 0 && status === 'Green') || status === 'NotScored';
+            if (isNeverScored) {
+                modalStatusPill.className = 'mch-modal-status-pill not-scored';
+                modalStatusPill.textContent = '• Not Yet Scored';
+            } else {
+                modalStatusPill.className = 'mch-modal-status-pill ' + status.toLowerCase();
+                let label = '• Healthy (Green)';
+                if (status === 'Yellow') label = '• At Risk (Yellow)';
+                if (status === 'Red') label = '• Dormant (Red)';
+                modalStatusPill.textContent = label;
+            }
         }
 
         // Issue #5 Fixed: Render real Executive Committee dynamically
