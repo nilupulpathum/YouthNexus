@@ -406,13 +406,13 @@ class EventModel extends Model {
                     (
                         SELECT COUNT(a.attendance_id)
                         FROM Attendance a
-                        JOIN User u ON a.member_id = u.user_id
+                        JOIN User u ON a.user_id = u.user_id
                         WHERE a.event_id = e.event_id AND u.club_id = ?
                     ) AS attendance_recorded_count,
                     (
                         SELECT COUNT(a.attendance_id)
                         FROM Attendance a
-                        JOIN User u ON a.member_id = u.user_id
+                        JOIN User u ON a.user_id = u.user_id
                         WHERE a.event_id = e.event_id AND u.club_id = ? AND a.status = 'Present'
                     ) AS present_count
                 FROM Event e
