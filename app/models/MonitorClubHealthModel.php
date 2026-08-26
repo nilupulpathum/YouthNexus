@@ -54,7 +54,7 @@ class MonitorClubHealthModel extends Model {
     public function getHealthStatusCounts($divisionId) {
         $sql = "
             SELECT 
-                COALESCE(SUM(CASE WHEN health_status = 'Green' THEN 1 ELSE 0 END), 0) AS Green,
+                COALESCE(SUM(CASE WHEN health_status = 'Green' AND overall_health_score > 0 THEN 1 ELSE 0 END), 0) AS Green,
                 COALESCE(SUM(CASE WHEN health_status = 'Yellow' THEN 1 ELSE 0 END), 0) AS Yellow,
                 COALESCE(SUM(CASE WHEN health_status = 'Red' THEN 1 ELSE 0 END), 0) AS Red,
                 COUNT(*) AS Total

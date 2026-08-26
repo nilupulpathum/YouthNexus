@@ -1,14 +1,20 @@
                         <?php
                             $healthStatus = $club->health_status ?? 'Green';
-                            $statusKey = strtolower($healthStatus); // 'green', 'yellow', 'red'
                             $score = (float)($club->overall_health_score ?? 0);
+                            $isNeverScored = ($healthStatus === 'Green' && $score == 0.0);
+
+                            $statusKey = $isNeverScored ? 'not-scored' : strtolower($healthStatus); // 'green', 'yellow', 'red', 'not-scored'
                             $formattedScore = number_format($score, 0);
+                            
                             $statusLabel = 'HEALTHY';
-                            if ($healthStatus === 'Yellow') {
+                            if ($isNeverScored) {
+                                $statusLabel = 'NOT YET SCORED';
+                            } elseif ($healthStatus === 'Yellow') {
                                 $statusLabel = 'AT RISK';
                             } elseif ($healthStatus === 'Red') {
                                 $statusLabel = 'DORMANT';
                             }
+
                             $isFlagged = !empty($club->flagged) ? '1' : '0';
                             $membersCount = (int)($club->live_members ?? 0);
                             $membersText = $membersCount > 0 ? ($membersCount . ' active members') : 'No activity recorded';
@@ -34,7 +40,7 @@
                              data-name="<?= htmlspecialchars($club->club_name, ENT_QUOTES) ?>"
                              data-code="<?= htmlspecialchars($club->club_code ?? '', ENT_QUOTES) ?>"
                              data-score="<?= $score ?>"
-                             data-status="<?= htmlspecialchars($healthStatus, ENT_QUOTES) ?>"
+                             data-status="<?= $isNeverScored ? 'NotScored' : htmlspecialchars($healthStatus, ENT_QUOTES) ?>"
                              data-flagged="<?= $isFlagged ?>"
                              data-members="<?= $membersCount ?>"
                              data-desc="<?= htmlspecialchars($descText, ENT_QUOTES) ?>"
