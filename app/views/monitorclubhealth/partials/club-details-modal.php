@@ -73,19 +73,37 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                         <p>Loading events...</p>
                     </div>
-                    <div class="mch-exec-list" id="mchModalEventList" style="display: none; margin-top: 14px;">
+                    <!-- Issue A: Summary Strip -->
+                    <div class="mch-summary-strip" id="mchModalEventSummaryStrip" style="display: none;">
+                        <div class="mch-summary-item">
+                            <span class="mch-summary-label">Events Conducted (Last 3 Months)</span>
+                            <span class="mch-summary-val" id="mchModalSummaryEventsConducted">—</span>
+                        </div>
+                        <div class="mch-summary-item">
+                            <span class="mch-summary-label">Avg. Attendance Rate (Last 3 Months)</span>
+                            <span class="mch-summary-val" id="mchModalSummaryAvgAttendance">—</span>
+                        </div>
+                    </div>
+                    <div class="mch-event-list" id="mchModalEventList" style="display: none; margin-top: 14px;">
                         <!-- Populated dynamically via JS -->
                     </div>
+                    <!-- Issue C: View All button -->
+                    <button type="button" class="mch-view-all-events-btn" id="mchViewAllEventsBtn" style="display: none;">
+                        View all events
+                    </button>
                 </div>
             </div>
 
-            <!-- Issue #7 Fixed: Health Detail Breakdown (pending state, real overall score) -->
+            <!-- Issue D: Corrected Health Detail Breakdown (pending state, real overall score) -->
             <div class="mch-health-breakdown">
                 <div class="mch-section-heading-sm">Health Detail</div>
                 
                 <div class="mch-pending-box" style="margin-bottom: 14px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-                    <p>Not yet calculated — pending Event/Finance/Attendance modules</p>
+                    <p style="text-align: left; margin: 0; line-height: 1.5;">
+                        Event and Attendance data available above.<br>
+                        Overall score calculation is pending: Finance module and the finalized scoring algorithm are not yet implemented.
+                    </p>
                 </div>
 
                 <div class="mch-overall-row">

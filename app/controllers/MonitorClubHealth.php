@@ -81,8 +81,44 @@ class MonitorClubHealth extends Controller {
         // events this club organized, or was targeted by
         $events = $eventModel->findEventsForClub($clubId);
 
+        // Calculate Issue A: 3-month summary stats
+        $threeMonthsAgo = strtotime('-3 months');
+        $conductedCount = 0;
+        $sumRate = 0;
+        $eventsWithAttendance = 0;
+
+        foreach ($events as $event) {
+            $eventStart = is_object($event) ? $event->start_datetime : $event['start_datetime'];
+            $eventTs = strtotime($eventStart);
+            if ($eventTs >= $threeMonthsAgo) {
+                $conductedCount++;
+                $recorded = (int)(is_object($event) ? $event->attendance_recorded_count : $event['attendance_recorded_count']);
+                $present = (int)(is_object($event) ? $event->present_count : $event['present_count']);
+                if ($recorded > 0) {
+                    $sumRate += ($present / $recorded);
+                    $eventsWithAttendance++;
+                }
+            }
+        }
+
+        $avgAttendanceRate = null;
+        if ($conductedCount > 0) {
+            if ($eventsWithAttendance > 0) {
+                $avgAttendanceRate = round(($sumRate / $eventsWithAttendance) * 100, 0);
+            } else {
+                $avgAttendanceRate = 0;
+            }
+        }
+
         header('Content-Type: application/json');
-        echo json_encode(['club' => $club, 'events' => $events]);
+        echo json_encode([
+            'club' => $club, 
+            'events' => $events,
+            'summary' => [
+                'conducted_count' => $conductedCount,
+                'avg_attendance_rate' => $avgAttendanceRate
+            ]
+        ]);
         exit();
     }
 }
