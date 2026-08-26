@@ -111,11 +111,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
     </div>
 
+    <?php require __DIR__ . '/partials/club-details-modal.php'; ?>
+    <?php require __DIR__ . '/partials/flag-club-modal.php'; ?>
+
+    <div class="mch-toast" id="mchToast"></div>
+    <script>const ROOT = '<?= ROOT ?>';</script>
+    <script src="<?= ROOT ?>/assets/js/monitor-club-health.js?v=<?= time() ?>"></script>
+
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
-
-<?php require __DIR__ . '/partials/club-details-modal.php'; ?>
-<?php require __DIR__ . '/partials/flag-club-modal.php'; ?>
-
-<div class="mch-toast" id="mchToast"></div>
-<script>const ROOT = '<?= ROOT ?>';</script>
-<script src="<?= ROOT ?>/assets/js/monitor-club-health.js?v=<?= time() ?>"></script>
