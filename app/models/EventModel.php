@@ -386,7 +386,53 @@ class EventModel extends Model {
 
         $sql .= " WHERE event_id = ?";
         $params[] = $eventId;
-
         $this->query($sql, $params);
+    }
+
+    /**
+     * Retrieve all approved and completed events organized by, targeted to,
+     * or divisionally relevant to a specific club, including attendance stats
+     * filtered specifically to this club's members.
+     *
+     * @param  int $clubId
+     * @return array Array of event objects
+     */
+    public function findEventsForClub($clubId) {
+        $sql = "SELECT
+                    e.event_id,
+                    e.title,
+                    e.event_type,
+                    e.start_datetime,
+                    (
+                        SELECT COUNT(a.attendance_id)
+                        FROM Attendance a
+                        JOIN User u ON a.member_id = u.user_id
+                        WHERE a.event_id = e.event_id AND u.club_id = ?
+                    ) AS attendance_recorded_count,
+                    (
+                        SELECT COUNT(a.attendance_id)
+                        FROM Attendance a
+                        JOIN User u ON a.member_id = u.user_id
+                        WHERE a.event_id = e.event_id AND u.club_id = ? AND a.status = 'Present'
+                    ) AS present_count
+                FROM Event e
+                LEFT JOIN EventTarget et ON e.event_id = et.event_id
+                JOIN Club target_c ON target_c.club_id = ?
+                WHERE e.status IN ('Approved', 'Completed')
+                  AND (
+                      e.organizer_club_id = ?
+                      OR (e.target_scope = 'SelectedClubs' AND et.target_club_id = ?)
+                      OR (e.target_scope = 'AllInScope' AND e.organizer_division_id = target_c.division_id)
+                  )
+                GROUP BY e.event_id
+                ORDER BY e.start_datetime DESC";
+
+        return $this->resultSet($sql, [
+            (int)$clubId,
+            (int)$clubId,
+            (int)$clubId,
+            (int)$clubId,
+            (int)$clubId
+        ]);
     }
 }
