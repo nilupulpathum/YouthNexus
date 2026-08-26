@@ -325,6 +325,16 @@ document.addEventListener('DOMContentLoaded', () => {
             modalOverallScore.textContent = `${Math.round(score)} / 100`;
         }
 
+        // Keep administrative actions (Flagging / Editing Details) exclusive to DivisionalCoordinator role
+        const userRole = document.body.dataset.userRole;
+        if (userRole !== 'DivisionalCoordinator') {
+            if (openFlagModalBtn) openFlagModalBtn.style.display = 'none';
+            if (editDetailsBtn) editDetailsBtn.style.display = 'none';
+        } else {
+            if (openFlagModalBtn) openFlagModalBtn.style.display = '';
+            if (editDetailsBtn) editDetailsBtn.style.display = '';
+        }
+
         detailModal.classList.add('is-open');
 
         const pendingBox = document.getElementById('mchEventsPendingBox');

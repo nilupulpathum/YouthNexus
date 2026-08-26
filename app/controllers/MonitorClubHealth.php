@@ -3,10 +3,12 @@
 class MonitorClubHealth extends Controller {
 
     /**
-     * Server-side role protection. Only logged-in users with allowed roles
+     * Server-side role protection. Only logged-in users with roles
+     * DivisionalCoordinator, DivisionalSecretary, or DivisionalTreasurer
      * may access the Monitor Club Health dashboard.
      */
-    private function requireDivisionalAccess(array $allowedRoles) {
+    private function requireDivisionalActor() {
+        $allowedRoles = ['DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer'];
         if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('auth/signin');
         }
@@ -37,7 +39,7 @@ class MonitorClubHealth extends Controller {
      * Main dashboard action: list/grid view of club health within the coordinator's division.
      */
     public function index() {
-        $this->requireDivisionalAccess(['DivisionalCoordinator', 'DivisionalSecretary']);
+        $this->requireDivisionalActor();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -64,7 +66,7 @@ class MonitorClubHealth extends Controller {
     }
 
     public function details($id = null) {
-        $this->requireDivisionalAccess(['DivisionalCoordinator', 'DivisionalSecretary']);
+        $this->requireDivisionalActor();
         $clubId = (int)$id;
         // scope-check: this club must belong to the coordinator's division
         $clubModel = $this->model('ClubModel');
