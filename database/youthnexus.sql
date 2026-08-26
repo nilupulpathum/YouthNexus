@@ -316,6 +316,19 @@ VALUES (
   1
 );
 
+INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, role, status, division_id)
+VALUES (
+  'treasurer_colombo',
+  'treasurer.colombo@youthnexus.com',
+  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEaRGRo6Jd9a4l9bU0Y3fF1R3K6O',
+  'Theresa',
+  'Perera',
+  '0771122334',
+  'DivisionalTreasurer',
+  'Active',
+  1
+);
+
 -- Verify
 SELECT user_id, username, email, role, status FROM User;
 SELECT * FROM Zone;

@@ -53,13 +53,10 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionalcoordinator' => [
-        ['label' => 'Overview',             'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
+        ['label' => 'Dashboard',            'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
         ['label' => 'Approve Registration', 'route' => 'clubregistration',  'href' => $dashboardRoot . '/clubregistration/index', 'icon' => 'clipboard'],
-        ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
         ['label' => 'Approve Events',        'route' => 'eventapproval',      'href' => $dashboardRoot . '/eventapproval',      'icon' => 'calendar'],
-        ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
-        ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
-        ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
+        ['label' => 'Monitor Club Health',   'route' => 'monitorclubhealth', 'href' => $dashboardRoot . '/monitorclubhealth', 'icon' => 'activity'],
     ],
     'divisionalsecretary' => [
         ['label' => 'Dashboard',          'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
@@ -68,12 +65,8 @@ $navigation = [
         ['label' => 'Monitor Club Health','route' => 'monitorclubhealth', 'href' => $dashboardRoot . '/monitorclubhealth', 'icon' => 'activity'],
     ],
     'divisionaltreasurer' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
-        ['label' => 'Assets', 'route' => 'assets', 'href' => $dashboardRoot . '/assets', 'icon' => 'briefcase'],
-        ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+        ['label' => 'Dashboard',          'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
+        ['label' => 'Monitor Club Health','route' => 'monitorclubhealth', 'href' => $dashboardRoot . '/monitorclubhealth', 'icon' => 'activity'],
     ],
     'coordinator' => [
         ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
