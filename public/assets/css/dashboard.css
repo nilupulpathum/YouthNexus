@@ -163,3 +163,34 @@ body.dashboard {
   .dashboard-footer__inner { align-items: flex-start; flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+/* Shared Dashboard Components */
+.dashboard-stats-row {
+    display: flex;
+    gap: 16px;
+    max-width: 620px;
+}
+
+.dashboard-stat-card {
+    flex: 1;
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0px 4px 12px rgba(18, 20, 26, 0.03);
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.dashboard-stat-card:hover {
+    transform: translateY(-1px);
+    border-color: #b9bfcb;
+}
+
+.dashboard-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+}
+
