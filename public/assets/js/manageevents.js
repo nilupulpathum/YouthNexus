@@ -49,6 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Auto-open edit modal if ?edit=1 query parameter is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('edit') === '1' && document.getElementById('editEventModal')) {
+        openModal('editEventModal');
+    }
+
     // Modal Close Buttons & Backdrop Clicks
     document.querySelectorAll('.me-modal-backdrop').forEach(backdrop => {
         backdrop.addEventListener('click', (e) => {
@@ -347,5 +353,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         audienceScopeFilter.addEventListener('change', syncClubPicker);
         syncClubPicker(); // initial state
+    }
+
+    // Client-side Level Filter helper for cards
+    const levelFilterSelect = document.getElementById('meFilterLevel');
+    if (levelFilterSelect) {
+        levelFilterSelect.addEventListener('change', () => {
+            const val = levelFilterSelect.value.toLowerCase();
+            const cards = document.querySelectorAll('.me-event-card');
+            cards.forEach(card => {
+                const cardLevel = (card.dataset.level || '').toLowerCase();
+                if (!val || cardLevel === val) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
     }
 });

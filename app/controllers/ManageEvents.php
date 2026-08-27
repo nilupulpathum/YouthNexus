@@ -34,10 +34,11 @@ class ManageEvents extends Controller {
         $divisionId = (int)($_SESSION['division_id'] ?? 0);
         $eventModel = $this->model('EventModel');
 
-        // Extract query filters — now includes event_type and target_scope
+        // Extract query filters — now includes level, event_type and target_scope
         $filters = [
             'search'         => trim($_GET['search'] ?? ''),
             'status'         => trim($_GET['status'] ?? 'All'),
+            'level'          => trim($_GET['level'] ?? ''),
             'event_type'     => trim($_GET['event_type'] ?? ''),
             'target_scope'   => trim($_GET['target_scope'] ?? ''),
             'target_club_id' => !empty($_GET['target_club_id']) ? (int)$_GET['target_club_id'] : null,
@@ -287,9 +288,8 @@ class ManageEvents extends Controller {
             }
         }
 
-        // Check if editable: Only if status is PendingApproval AND created by the logged-in user
-        // Both $event->created_by and $userId come from the same source (Event.created_by joined to User.user_id)
-        $canEdit = ($event->status === 'PendingApproval' && (int)$event->created_by === $userId);
+        // Check if editable: PendingApproval, Approved, or Rejected AND created by logged-in user
+        $canEdit = (in_array($event->status, ['PendingApproval', 'Approved', 'Rejected'], true) && (int)$event->created_by === $userId);
 
         $this->view('manageevents/status', [
             'title'         => htmlspecialchars($event->title) . ' — Event Status — YouthNexus',
@@ -306,7 +306,7 @@ class ManageEvents extends Controller {
     }
 
     // ---------------------------------------------------------------
-    // EDIT: Update a pending event created by the current Secretary
+    // EDIT: Update an event created by the current Secretary
     // ---------------------------------------------------------------
     public function edit($id = null) {
         $this->requireSecretary();
@@ -323,11 +323,11 @@ class ManageEvents extends Controller {
 
         $event = $eventModel->findById($eventId);
 
-        // Ownership and status check
+        // Ownership and status check (PendingApproval, Approved, Rejected)
         if (!$event 
             || (int)$event->organizer_division_id !== $divisionId 
             || (int)$event->created_by !== $userId 
-            || $event->status !== 'PendingApproval') {
+            || !in_array($event->status, ['PendingApproval', 'Approved', 'Rejected'], true)) {
             if ($isJson) {
                 header('Content-Type: application/json');
                 http_response_code(403);

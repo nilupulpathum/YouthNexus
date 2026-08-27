@@ -109,6 +109,7 @@ $organiser = $isDiv
                     <tbody>
                         <?php foreach ($roster as $row): ?>
                         <tr class="am-roster-row"
+                            data-member-id="<?= (int)$row->user_id ?>"
                             data-name="<?= htmlspecialchars(strtolower($row->member_name ?? '')) ?>"
                             data-status="<?= htmlspecialchars($row->att_status ?? 'unmarked') ?>">
                             <td>
@@ -145,37 +146,48 @@ $organiser = $isDiv
             </div>
 
             <!-- ============================================================
-                 Quick Update Panel
+                 Quick Update Modal
                  ============================================================ -->
-            <div class="am-quick-update-panel" id="amQuickPanel" style="display:none;">
-                <h4>QUICK UPDATE</h4>
-                <p style="font-size:13px;color:#374151;margin-bottom:12px;">
-                    Updating: <strong id="amQuickMemberName">—</strong>
-                </p>
-                <div class="am-quick-fields-row">
-                    <div class="am-field">
-                        <label>STATUS</label>
-                        <select id="amQuickStatus">
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                        </select>
+            <div class="am-modal-backdrop" id="amQuickPanel">
+                <div class="am-modal" style="max-width: 500px;">
+                    <div class="am-modal-header">
+                        <h3>Quick Update Attendance</h3>
+                        <button type="button" class="am-modal-close" id="amQuickCloseBtn" aria-label="Close">&times;</button>
                     </div>
-                    <div class="am-field">
-                        <label>CHECK-IN TIME (optional)</label>
-                        <input type="datetime-local" id="amQuickCheckIn">
+                    <div class="am-modal-body">
+                        <div class="am-member-info-card">
+                            <span class="am-member-info-label">Updating Member</span>
+                            <div class="am-member-info-name" id="amQuickMemberName">—</div>
+                        </div>
+
+                        <div class="am-field">
+                            <label for="amQuickStatus">ATTENDANCE STATUS *</label>
+                            <select id="amQuickStatus" class="am-status-select">
+                                <option value="Present">Present</option>
+                                <option value="Absent">Absent</option>
+                            </select>
+                        </div>
+
+                        <div class="am-fields-row">
+                            <div class="am-field">
+                                <label for="amQuickCheckIn">CHECK-IN TIME (optional)</label>
+                                <input type="datetime-local" id="amQuickCheckIn">
+                            </div>
+                            <div class="am-field">
+                                <label for="amQuickCheckOut">CHECK-OUT TIME (optional)</label>
+                                <input type="datetime-local" id="amQuickCheckOut">
+                            </div>
+                        </div>
+
+                        <div class="am-quick-remarks am-field">
+                            <label for="amQuickRemark">REMARK (optional)</label>
+                            <textarea id="amQuickRemark" placeholder="Add an optional note…"></textarea>
+                        </div>
                     </div>
-                    <div class="am-field">
-                        <label>CHECK-OUT TIME (optional)</label>
-                        <input type="datetime-local" id="amQuickCheckOut">
+                    <div class="am-modal-footer">
+                        <button type="button" class="am-btn-cancel" id="amQuickCancelBtn">Cancel</button>
+                        <button type="button" class="am-btn am-btn-primary" id="amQuickSaveBtn">Save Update</button>
                     </div>
-                </div>
-                <div class="am-quick-remarks am-field">
-                    <label>REMARK (optional)</label>
-                    <textarea id="amQuickRemark" placeholder="Optional note…"></textarea>
-                </div>
-                <div class="am-quick-footer">
-                    <button type="button" class="am-btn-cancel" id="amQuickCancelBtn">Cancel</button>
-                    <button type="button" class="am-btn am-btn-primary" id="amQuickSaveBtn">Save Update</button>
                 </div>
             </div>
 

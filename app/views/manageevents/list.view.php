@@ -81,6 +81,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <input type="date" id="meFilterDateTo" name="date_to" value="<?= htmlspecialchars($filters['date_to'] ?? '') ?>">
                     </div>
 
+                    <!-- Organizer Type -->
+                    <div class="me-filter-field">
+                        <label for="meFilterLevel">Organizer Type</label>
+                        <select id="meFilterLevel" name="level">
+                            <option value="">All</option>
+                            <option value="divisional" <?= ($filters['level'] ?? '') === 'divisional' ? 'selected' : '' ?>>Division Events</option>
+                            <option value="club" <?= ($filters['level'] ?? '') === 'club' ? 'selected' : '' ?>>Club Events</option>
+                        </select>
+                    </div>
+
                     <!-- Event Type -->
                     <div class="me-filter-field">
                         <label for="meFilterType">Event Type</label>
@@ -148,12 +158,18 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
             <?php else: ?>
                 <div class="me-events-grid">
-                    <?php foreach ($events as $event): ?>
-                        <div class="me-event-card">
+                    <?php 
+                        $currentUserId = (int)($_SESSION['user_id'] ?? 0);
+                        foreach ($events as $event): 
+                            $isDivisional = !empty($event->organizer_division_id);
+                            $cardLevel = $isDivisional ? 'divisional' : 'club';
+                            $canEditCard = ((int)$event->created_by === $currentUserId && in_array($event->status, ['PendingApproval', 'Approved', 'Rejected'], true));
+                    ?>
+                        <div class="me-event-card" data-level="<?= $cardLevel ?>">
                             <div>
                                 <div class="me-card-header">
                                     <div class="me-badges-group">
-                                        <?php if (!empty($event->organizer_division_id)): ?>
+                                        <?php if ($isDivisional): ?>
                                             <span class="me-badge me-badge-divisional">Divisional Event</span>
                                         <?php else: ?>
                                             <span class="me-badge me-badge-club">Club Event: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
@@ -212,10 +228,18 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                             <div class="me-card-footer">
                                 <span class="me-card-author">By <?= htmlspecialchars($event->creator_name ?? 'Secretary') ?></span>
-                                <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>" class="me-btn-view">
-                                    View Details
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                </a>
+                                <div style="display:flex;gap:6px;">
+                                    <?php if ($canEditCard): ?>
+                                        <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>?edit=1" class="me-btn-view" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;">
+                                            Edit
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>" class="me-btn-view">
+                                        View Details
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>

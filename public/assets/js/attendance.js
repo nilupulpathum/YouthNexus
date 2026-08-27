@@ -9,6 +9,16 @@
     const ROOT       = window.ROOT || '';
     const CSRF_TOKEN = document.getElementById('csrfToken')?.value || '';
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     /* -----------------------------------------------------------------
        TOAST
        ----------------------------------------------------------------- */
@@ -258,8 +268,9 @@
     document.getElementById('amTableSearch')?.addEventListener('input', filterTable);
     document.getElementById('amTableStatusFilter')?.addEventListener('change', filterTable);
 
-    // --- Quick Update Panel -------------------------------------------
+    // --- Quick Update Modal -------------------------------------------
     const quickPanel    = document.getElementById('amQuickPanel');
+    const quickClose    = document.getElementById('amQuickCloseBtn');
     const quickName     = document.getElementById('amQuickMemberName');
     const quickStatus   = document.getElementById('amQuickStatus');
     const quickCheckIn  = document.getElementById('amQuickCheckIn');
@@ -270,6 +281,21 @@
     const eventIdInput  = document.getElementById('amEventId');
     let   activeMemberId = null;
 
+    function openQuickModal() {
+        if (!quickPanel) return;
+        quickPanel.classList.add('open');
+        quickPanel.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeQuickModal() {
+        if (!quickPanel) return;
+        quickPanel.classList.remove('open');
+        quickPanel.style.display = 'none';
+        document.body.style.overflow = '';
+        activeMemberId = null;
+    }
+
     document.querySelectorAll('.am-btn-quick-update').forEach(btn => {
         btn.addEventListener('click', () => {
             activeMemberId = btn.dataset.memberId;
@@ -278,38 +304,84 @@
             if (quickCheckIn)  quickCheckIn.value  = '';
             if (quickCheckOut) quickCheckOut.value = '';
             if (quickRemark)   quickRemark.value   = '';
-            quickPanel.style.display = '';
-            quickPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            openQuickModal();
         });
     });
 
-    quickCancel?.addEventListener('click', () => {
-        quickPanel.style.display = 'none';
-        activeMemberId = null;
+    quickCancel?.addEventListener('click', closeQuickModal);
+    quickClose?.addEventListener('click', closeQuickModal);
+
+    quickPanel?.addEventListener('click', (e) => {
+        if (e.target === quickPanel) closeQuickModal();
     });
 
     quickSave?.addEventListener('click', () => {
         if (!activeMemberId) return;
+        const newStatus = quickStatus?.value || 'Present';
+        const checkInVal = quickCheckIn?.value || '';
+        const checkOutVal = quickCheckOut?.value || '';
+        const remarkVal = quickRemark?.value || '';
+
         const fd = new FormData();
         fd.append('csrf_token',      CSRF_TOKEN);
         fd.append('event_id',        eventIdInput?.value || '');
         fd.append('member_id',       activeMemberId);
-        fd.append('status',          quickStatus?.value  || 'Present');
-        fd.append('check_in_time',   quickCheckIn?.value  || '');
-        fd.append('check_out_time',  quickCheckOut?.value || '');
-        fd.append('remark',          quickRemark?.value   || '');
+        fd.append('status',          newStatus);
+        fd.append('check_in_time',   checkInVal);
+        fd.append('check_out_time',  checkOutVal);
+        fd.append('remark',          remarkVal);
 
         fetch(ROOT + '/attendance/updatestatus', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    quickPanel.style.display = 'none';
-                    showToast('Status updated. Reload to see changes.', 'success');
+                    // Update DOM row in-place
+                    const row = document.querySelector(`#amRosterTable .am-roster-row[data-member-id="${activeMemberId}"]`);
+                    if (row) {
+                        row.dataset.status = newStatus.toLowerCase();
+
+                        // 1. Update status badge
+                        const statusCell = row.cells[2];
+                        if (statusCell) {
+                            let badgeClass = newStatus.toLowerCase() === 'present' ? 'present' : (newStatus.toLowerCase() === 'absent' ? 'absent' : 'unmarked');
+                            statusCell.innerHTML = `<span class="am-status-badge ${badgeClass}">${escapeHtml(newStatus)}</span>`;
+                        }
+
+                        // 2. Update Check-in time cell
+                        const checkInCell = row.cells[3];
+                        if (checkInCell) {
+                            if (checkInVal) {
+                                const timeStr = checkInVal.includes('T') ? checkInVal.split('T')[1].substring(0, 5) : checkInVal.substring(0, 5);
+                                checkInCell.textContent = timeStr;
+                            } else if (!checkInCell.textContent.trim() || checkInCell.textContent.trim() === '—') {
+                                checkInCell.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                            }
+                        }
+
+                        // 3. Update Remark cell
+                        const remarkCell = row.cells[4];
+                        if (remarkCell) {
+                            remarkCell.textContent = remarkVal.trim() || '—';
+                        }
+
+                        // 4. Update row button's current status dataset
+                        const btn = row.querySelector('.am-btn-quick-update');
+                        if (btn) {
+                            btn.dataset.currentStatus = newStatus;
+                        }
+                    }
+
+                    closeQuickModal();
+                    if (typeof filterTable === 'function') filterTable();
+                    showToast('Status updated successfully.', 'success');
                 } else {
                     showToast(data.error || 'Update failed.', 'error');
                 }
             })
-            .catch(() => showToast('Network error.', 'error'));
+            .catch(err => {
+                console.error('Attendance update error:', err);
+                showToast(err.message || 'Update failed.', 'error');
+            });
     });
 
     // --- Download CSV (client-side generation) ------------------------
