@@ -55,8 +55,8 @@ $navigation = [
     'divisionalcoordinator' => [
         ['label' => 'Overview',             'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
         ['label' => 'Approve Registration', 'route' => 'clubregistration',  'href' => $dashboardRoot . '/clubregistration/index', 'icon' => 'clipboard'],
+        ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
-        ['label' => 'Manage Events',        'route' => 'events',            'href' => $dashboardRoot . '/events',            'icon' => 'calendar'],
         ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],

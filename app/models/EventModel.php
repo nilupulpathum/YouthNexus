@@ -277,4 +277,95 @@ class EventModel extends Model {
             [$divisionId]
         );
     }
+
+    /**
+     * Find pending events for a division awaiting coordinator approval.
+     * Includes both Divisional events and Club events in this division.
+     *
+     * @param  int $divisionId
+     * @return array
+     */
+    public function findPendingClubEventsByDivision($divisionId) {
+        $sql = "SELECT e.*, c.club_name, c.club_code,
+                       d.division_name AS organizer_division_name,
+                       u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name
+                FROM Event e
+                LEFT JOIN Club c ON e.organizer_club_id = c.club_id
+                LEFT JOIN Division d ON e.organizer_division_id = d.division_id
+                JOIN User u ON e.created_by = u.user_id
+                WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+                  AND e.status = 'PendingApproval'
+                ORDER BY e.created_at ASC";
+
+        return $this->resultSet($sql, [$divisionId, $divisionId]);
+    }
+
+    /**
+     * Find events for a division filtered by status.
+     *
+     * @param  int    $divisionId
+     * @param  string $status  PendingApproval | Approved | Rejected
+     * @return array
+     */
+    public function findClubEventsByDivisionAndStatus($divisionId, $status) {
+        $sql = "SELECT e.*, c.club_name, c.club_code,
+                       d.division_name AS organizer_division_name,
+                       u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                       appr.first_name AS approver_first_name, appr.last_name AS approver_last_name,
+                       CONCAT(appr.first_name, ' ', appr.last_name) AS approver_name
+                FROM Event e
+                LEFT JOIN Club c ON e.organizer_club_id = c.club_id
+                LEFT JOIN Division d ON e.organizer_division_id = d.division_id
+                JOIN User u ON e.created_by = u.user_id
+                LEFT JOIN User appr ON e.approved_by = appr.user_id
+                WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+                  AND e.status = ?
+                ORDER BY e.start_datetime DESC";
+
+        return $this->resultSet($sql, [(int)$divisionId, (int)$divisionId, $status]);
+    }
+
+    /**
+     * Count events in a division by status.
+     *
+     * @param  int    $divisionId
+     * @param  string $status
+     * @return int
+     */
+    public function countClubEventsByDivisionAndStatus($divisionId, $status) {
+        $sql = "SELECT COUNT(*) AS total
+                FROM Event e
+                LEFT JOIN Club c ON e.organizer_club_id = c.club_id
+                WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+                  AND e.status = ?";
+
+        $res = $this->single($sql, [$divisionId, $divisionId, $status]);
+        return (int)($res->total ?? 0);
+    }
+
+    /**
+     * Update the status and approval details of an event.
+     *
+     * @param  int         $eventId
+     * @param  string      $status
+     * @param  int         $userId
+     * @param  string|null $remarks
+     * @return void
+     */
+    public function updateEventStatus($eventId, $status, $userId, $remarks = null) {
+        $sql    = "UPDATE Event SET status = ?, approved_by = ?";
+        $params = [$status, $userId];
+
+        if ($remarks !== null) {
+            $sql    .= ", rejection_remarks = ?";
+            $params[] = $remarks;
+        }
+
+        $sql    .= " WHERE event_id = ?";
+        $params[] = $eventId;
+
+        $this->query($sql, $params);
+    }
 }
