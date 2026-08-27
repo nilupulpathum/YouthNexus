@@ -300,6 +300,31 @@ class EventModel extends Model {
     }
 
     /**
+     * Find club events for a division by status (PendingApproval, Approved, Rejected).
+     *
+     * @param  int    $divisionId
+     * @param  string $status
+     * @return array
+     */
+    public function findClubEventsByDivisionAndStatus($divisionId, $status) {
+        $sql = "SELECT e.*, c.club_name, c.club_code, u.first_name, u.last_name, u.role AS creator_role,
+                       CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                       appr.first_name AS approver_first_name, appr.last_name AS approver_last_name,
+                       CONCAT(appr.first_name, ' ', appr.last_name) AS approver_name
+                FROM Event e
+                JOIN Club c ON e.organizer_club_id = c.club_id
+                JOIN User u ON e.created_by = u.user_id
+                LEFT JOIN User appr ON e.approved_by = appr.user_id
+                WHERE c.division_id = ?
+                  AND e.organizer_club_id IS NOT NULL
+                  AND e.organizer_division_id IS NULL
+                  AND e.status = ?
+                ORDER BY e.start_datetime DESC";
+
+        return $this->resultSet($sql, [(int)$divisionId, $status]);
+    }
+
+    /**
      * Count club events by division and status.
      *
      * @param  int    $divisionId

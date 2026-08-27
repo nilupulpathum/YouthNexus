@@ -93,6 +93,114 @@
     const notifDropdown = document.getElementById('notifDropdown');
     const notifDropdownLink = document.getElementById('notifDropdownLink');
     const statPending = document.getElementById('statPending');
+    const statApproved = document.getElementById('statApproved');
+    const statRejected = document.getElementById('statRejected');
+    const eaList = document.getElementById('eaPendingList');
+    let pendingListHtml = null;
+
+    function setActiveStat(targetCard) {
+        [statPending, statApproved, statRejected].forEach(card => {
+            if (card) card.classList.remove('is-active');
+        });
+        if (targetCard) targetCard.classList.add('is-active');
+    }
+
+    function formatDateStr(dateStr) {
+        if (!dateStr) return '—';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' +
+                   d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    function renderEventGrid(events, type) {
+        if (!eaList) return;
+        if (!events || !events.length) {
+            eaList.innerHTML = '<div class="ea-empty-state"><p>No ' + type.toLowerCase() + ' events found in this division.</p></div>';
+            return;
+        }
+
+        const isApproved = type.toLowerCase() === 'approved';
+        const badgeClass = isApproved ? 'approved' : 'rejected';
+        const badgeLabel = isApproved ? 'Approved' : 'Rejected';
+
+        eaList.innerHTML = events.map(ev => {
+            const dateDisplay = formatDateStr(ev.start_datetime);
+            const extraNote   = isApproved 
+                ? (ev.approver_name ? 'Approved by ' + escapeHtml(ev.approver_name) : 'Approved') 
+                : (ev.rejection_remarks ? 'Reason: ' + escapeHtml(ev.rejection_remarks) : 'Rejected');
+
+            return '<div class="ea-card" data-event-id="' + ev.event_id + '">' +
+                   '  <div class="ea-card-top">' +
+                   '    <span class="ea-badge club">Club Event</span>' +
+                   '    <span class="ea-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+                   '  </div>' +
+                   '  <h3 class="ea-card-title">' + escapeHtml(ev.title) + '</h3>' +
+                   '  <p class="ea-card-club">' + escapeHtml(ev.club_name || '') +
+                   '    <small class="ea-club-code">' + escapeHtml(ev.club_code || '') + '</small>' +
+                   '  </p>' +
+                   '  <div class="ea-card-meta">' +
+                   '    <span>' + dateDisplay + '</span>' +
+                   '    <span>' + escapeHtml(ev.location || '—') + '</span>' +
+                   '  </div>' +
+                   '  <div class="ea-card-footer">' +
+                   '    <span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name || '—') + ' • <strong style="color:#4b5563;">' + extraNote + '</strong></span>' +
+                   '  </div>' +
+                   '</div>';
+        }).join('');
+    }
+
+    if (statPending) {
+        statPending.addEventListener('click', function () {
+            setActiveStat(statPending);
+            if (pendingListHtml !== null && eaList) {
+                eaList.innerHTML = pendingListHtml;
+                document.querySelectorAll('.ea-btn-review').forEach(btn => {
+                    btn.addEventListener('click', () => openReview(btn.dataset.eventId));
+                });
+            }
+        });
+    }
+
+    if (statApproved) {
+        statApproved.addEventListener('click', function () {
+            setActiveStat(statApproved);
+            if (pendingListHtml === null && eaList) {
+                pendingListHtml = eaList.innerHTML;
+            }
+            if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading approved events...</p></div>';
+            fetch((window.ROOT || '') + '/eventapproval/approved')
+                .then(r => r.json())
+                .then(data => {
+                    renderEventGrid(data.events || [], 'Approved');
+                })
+                .catch(err => {
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:red;"><p>Failed to load approved events.</p></div>';
+                });
+        });
+    }
+
+    if (statRejected) {
+        statRejected.addEventListener('click', function () {
+            setActiveStat(statRejected);
+            if (pendingListHtml === null && eaList) {
+                pendingListHtml = eaList.innerHTML;
+            }
+            if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading rejected events...</p></div>';
+            fetch((window.ROOT || '') + '/eventapproval/rejected')
+                .then(r => r.json())
+                .then(data => {
+                    renderEventGrid(data.events || [], 'Rejected');
+                })
+                .catch(err => {
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:red;"><p>Failed to load rejected events.</p></div>';
+                });
+        });
+    }
 
     if (notifBellBtn && notifDropdown) {
         notifBellBtn.addEventListener('click', function (e) {
