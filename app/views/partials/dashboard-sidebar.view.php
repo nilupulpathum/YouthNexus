@@ -63,7 +63,7 @@ $navigation = [
     ],
     'divisionalsecretary' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Manage Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
+        ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
