@@ -1,64 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title) ?></title>
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
-</head>
-<body class="dashboard">
-<div class="db-app">
+<?php
+/**
+ * Manage Events — Event Detail & Submission Status (Divisional Secretary)
+ *
+ * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
+ * Matches the pattern established by app/views/manageevents/list.view.php.
+ */
+$title                   = $title ?? 'Event Details — YouthNexus';
+$pageTitle               = 'Event Details & Submission Status';
+$pageDescription         = 'Track review progress and specifications for this event';
+$currentRoute            = 'events';
+$unreadNotificationCount = 0;
 
-    <!-- ============ Sidebar ============ -->
-    <aside class="db-sidebar">
-        <div class="db-brand">
-            <div class="db-brand-mark">
-                <svg viewBox="0 0 24 24" fill="var(--db-sidebar-bg)" stroke="none"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-            </div>
-            <div class="db-brand-text">
-                <b>YouthNexus</b>
-                <span>Div. Secretary</span>
-            </div>
-        </div>
-
-        <nav class="db-nav">
-            <a href="<?= ROOT ?>/dashboard" class="db-nav-link">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                Dashboard
-            </a>
-            <a href="<?= ROOT ?>/manageevents" class="db-nav-link active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Manage Events
-            </a>
-            <a href="<?= ROOT ?>/auth/logout" class="db-nav-link">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-                Logout
-            </a>
-        </nav>
-
-        <div class="db-sidebar-footer">
-            <div class="db-avatar"><?= htmlspecialchars($user_initials ?? 'NF') ?></div>
-            <div class="db-who">
-                <b><?= htmlspecialchars($user_name ?? 'N. Fernando') ?></b>
-                <span>Div. Secretary</span>
-            </div>
-        </div>
-    </aside>
-
-    <!-- ============ Main Content ============ -->
-    <div class="db-main">
-        <header class="db-topbar">
-            <div>
-                <h1>Event Details &amp; Submission Status</h1>
-                <p>Track review progress and specifications for this event</p>
-            </div>
-            <div class="db-topbar-right">
-                <div class="db-topbar-avatar"><?= htmlspecialchars($user_initials ?? 'NF') ?></div>
-            </div>
-        </header>
-
-        <main class="db-content">
+require __DIR__ . '/../layouts/dashboard-start.view.php';
+?>
             <div class="me-status-page">
 
                 <!-- Back button (styled as me-btn-secondary) -->
@@ -261,9 +215,6 @@
                 </div>
 
             </div>
-        </main>
-    </div>
-</div>
 
 <?php if ($can_edit): ?>
 <!-- ============ Edit Event Modal ============ -->
@@ -394,6 +345,7 @@
 </div>
 <?php endif; ?>
 
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
-</body>
-</html>
+
+<?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
