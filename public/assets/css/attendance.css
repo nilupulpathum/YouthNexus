@@ -373,19 +373,37 @@ table.am-table {
 .am-status-badge.absent   { background: #fee2e2; color: #991b1b; }
 .am-status-badge.unmarked { background: #f3f4f6; color: #9ca3af; }
 
-/* Quick Update Panel */
-.am-quick-update-panel {
-    margin-top: 20px;
-    background: #fff;
-    border: 1px solid var(--db-border, #e7e9f0);
-    border-radius: 12px;
-    padding: 18px 22px;
+/* Quick Update Modal styling extensions */
+.am-member-info-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
 }
-.am-quick-update-panel h4 { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #6b7280; margin-bottom: 14px; }
-.am-quick-fields-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.am-quick-remarks { margin-bottom: 12px; }
-.am-quick-remarks textarea { width: 100%; min-height: 60px; resize: vertical; }
-.am-quick-footer { display: flex; justify-content: flex-end; gap: 10px; }
+.am-member-info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.am-member-info-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-top: 2px;
+}
+.am-status-select {
+    font-weight: 600;
+    color: #0f172a;
+    background-color: #fff;
+    cursor: pointer;
+}
+.am-quick-remarks textarea {
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+}
 
 /* Toast notification */
 .am-toast {

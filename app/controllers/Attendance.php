@@ -264,18 +264,38 @@ class Attendance extends Controller {
             $this->jsonError('Member is not in scope for this division.', 403);
         }
 
-        $checkIn  = trim($_POST['check_in_time']  ?? '') ?: null;
-        $checkOut = trim($_POST['check_out_time'] ?? '') ?: null;
+        $checkIn  = trim($_POST['check_in_time']  ?? '');
+        $checkOut = trim($_POST['check_out_time'] ?? '');
         $remark   = trim($_POST['remark']          ?? '') ?: null;
 
-        $attendanceModel->saveAttendance(
-            $eventId, $memberId, $status,
-            $checkIn, $checkOut, $remark,
-            $recordedBy
-        );
+        $checkInVal = null;
+        if (!empty($checkIn)) {
+            $ts = strtotime($checkIn);
+            if ($ts !== false) {
+                $checkInVal = date('Y-m-d H:i:s', $ts);
+            }
+        }
 
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
-        exit();
+        $checkOutVal = null;
+        if (!empty($checkOut)) {
+            $ts = strtotime($checkOut);
+            if ($ts !== false) {
+                $checkOutVal = date('Y-m-d H:i:s', $ts);
+            }
+        }
+
+        try {
+            $attendanceModel->saveAttendance(
+                $eventId, $memberId, $status,
+                $checkInVal, $checkOutVal, $remark,
+                $recordedBy
+            );
+
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+            exit();
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to save attendance: ' . $e->getMessage(), 500);
+        }
     }
 }

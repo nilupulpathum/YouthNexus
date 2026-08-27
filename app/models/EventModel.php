@@ -55,11 +55,14 @@ class EventModel extends Model {
                     start_datetime = ?,
                     end_datetime = ?,
                     location = ?,
-                    target_scope = ?
+                    target_scope = ?,
+                    status = 'PendingApproval',
+                    approved_by = NULL,
+                    rejection_remarks = NULL
                 WHERE event_id = ?
-                  AND organizer_division_id = ?
+                  AND (organizer_division_id = ? OR organizer_club_id IN (SELECT club_id FROM Club WHERE division_id = ?))
                   AND created_by = ?
-                  AND status = 'PendingApproval'";
+                  AND status IN ('PendingApproval', 'Approved', 'Rejected')";
 
         $params = [
             $data['title'],
@@ -71,6 +74,7 @@ class EventModel extends Model {
             $data['location'] ?? null,
             $data['target_scope'] ?? 'AllInScope',
             $eventId,
+            $divisionId,
             $divisionId,
             $userId,
         ];
@@ -142,6 +146,15 @@ class EventModel extends Model {
         if (!empty($filters['status']) && $filters['status'] !== 'All') {
             $sql .= " AND e.status = :status";
             $params['status'] = $filters['status'];
+        }
+
+        // Filter: Level (Divisional vs Club)
+        if (!empty($filters['level'])) {
+            if ($filters['level'] === 'divisional') {
+                $sql .= " AND e.organizer_division_id IS NOT NULL";
+            } elseif ($filters['level'] === 'club') {
+                $sql .= " AND e.organizer_club_id IS NOT NULL";
+            }
         }
 
         // Filter: Event Type
