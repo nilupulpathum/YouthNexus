@@ -625,6 +625,76 @@
     flex-direction: column;
 }
 
+/* ADDITIVE CSS FOR MONITOR CLUB HEALTH */
+.mch-flag-signals-box {
+    background: #f8fafc;
+    border: 1px solid var(--db-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+.mch-flag-signals-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+.mch-flag-signal-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--db-border, #e2e8f0);
+    font-size: 0.9rem;
+}
+.mch-flag-signal-row:last-of-type { border-bottom: none; }
+.mch-flag-signal-row span { color: #334155; }
+.mch-flag-signal-row b { color: #0f172a; }
+.mch-flag-signal-unavailable { color: #64748b !important; font-style: italic; }
+
+.mch-flag-signals-note {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.mch-flag-prior-flags {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--db-border, #e2e8f0);
+}
+.mch-flag-prior-flags-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+}
+.mch-flag-prior-flag-item {
+    font-size: 0.85rem;
+    color: #334155;
+    padding: 0.5rem;
+    background: #fff;
+    border-radius: 6px;
+    margin-bottom: 0.25rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+.mch-flag-prior-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.mch-flag-prior-badge.critical { background: #fef2f2; color: #dc2626; border: 1px solid #f87171; }
+.mch-flag-prior-badge.high { background: #fffbeb; color: #d97706; border: 1px solid #fbbf24; }
+.mch-flag-prior-badge.medium { background: #eff6ff; color: #2563eb; border: 1px solid #93c5fd; }
+.mch-flag-prior-badge.low { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+
 .mch-modal-backdrop.is-open .mch-modal-card {
     transform: scale(1);
 }

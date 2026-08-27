@@ -71,7 +71,8 @@ class MonitorClubHealth extends Controller {
         // scope-check: this club must belong to the coordinator's division
         $clubModel = $this->model('ClubModel');
         $club = $clubModel->findById($clubId);
-        if (!$club || $club->division_id != ($_SESSION['division_id'] ?? 0)) {
+        $sessionDivisionId = $_SESSION['division_id'] ?? null;
+        if (!$club || ($sessionDivisionId && $club->division_id != $sessionDivisionId)) {
             header('Content-Type: application/json');
             http_response_code(403);
             echo json_encode(['error' => 'Club not found or not in scope.']);
@@ -112,6 +113,17 @@ class MonitorClubHealth extends Controller {
             }
         }
 
+        $priorFlags = [];
+        if (($_SESSION['user_role'] ?? '') === 'DivisionalCoordinator') {
+            try {
+                $clubFlagModel = $this->model('ClubFlagModel');
+                $fetchedFlags = $clubFlagModel->findByClub($clubId);
+                $priorFlags = is_array($fetchedFlags) ? $fetchedFlags : [];
+            } catch (Throwable $e) {
+                $priorFlags = [];
+            }
+        }
+
         header('Content-Type: application/json');
         echo json_encode([
             'club' => $club, 
@@ -119,8 +131,72 @@ class MonitorClubHealth extends Controller {
             'summary' => [
                 'conducted_count' => $conductedCount,
                 'avg_attendance_rate' => $avgAttendanceRate
-            ]
+            ],
+            'priorFlags' => $priorFlags
         ]);
+        exit();
+    }
+
+    public function flag($id = null) {
+        $allowedRoles = ['DivisionalCoordinator', 'DivisionalSecretary'];
+        if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized role.']);
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Content-Type: application/json');
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed.']);
+            exit();
+        }
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'Invalid CSRF token.']);
+            exit();
+        }
+
+        $clubId = (int)$id;
+        $clubModel = $this->model('ClubModel');
+        $club = $clubModel->findById($clubId);
+        if (!$club || $club->division_id != ($_SESSION['division_id'] ?? 0)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'Club not found or not in scope.']);
+            exit();
+        }
+
+        $comment = trim($_POST['comment'] ?? '');
+        $severity = trim($_POST['severity'] ?? '');
+        $validSeverities = ['Low', 'Medium', 'High', 'Critical'];
+
+        if (empty($comment)) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(['error' => 'Comment is required.']);
+            exit();
+        }
+
+        if (!in_array($severity, $validSeverities, true)) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid severity value.']);
+            exit();
+        }
+
+        $clubFlagModel = $this->model('ClubFlagModel');
+        $clubFlagModel->create($clubId, $_SESSION['user_id'], $_SESSION['user_role'], $severity, $comment);
+
+        $auditLogModel = $this->model('AuditLogModel');
+        $auditLogModel->logAction($_SESSION['user_id'], 'FLAG_CLUB', 'Club', $clubId, "Flagged with severity: $severity");
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
         exit();
     }
 }
