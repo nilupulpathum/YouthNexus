@@ -273,23 +273,47 @@ VALUES (
   'Rajithuru',
   '0771234567',
   '200012345678',
-  'DivisionalSecretary',
+  'DivisionalCoordinator',
   'Active',
-  1
+  2
 );
 
 INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, role, status, division_id)
 VALUES (
-  'coord_colombo',
-  'coord.colombo@youthnexus.com',
+  'sec_gampaha',
+  'damikarajithuru2@gmail.com',
   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEaRGRo6Jd9a4l9bU0Y3fF1R3K6O',
-  'Sarah',
-  'Perera',
-  '0779876543',
-  'DivisionalCoordinator',
+  'Damik',
+  'Rajithuru',
+  '0771122334',
+  'DivisionalSecretary',
   'Active',
-  1
+  2
 );
+
+INSERT INTO Club (club_id, club_name, description, division_id, registration_date, status, no_of_members, club_code)
+VALUES (1, 'Gampaha Youth Development Club', 'Active youth empowerment and sports club in Gampaha.', 2, '2026-01-15', 'Active', 45, 'CLB-GAM-2026-001')
+ON DUPLICATE KEY UPDATE division_id = 2, status = 'Active';
+
+INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, role, status, club_id, division_id)
+VALUES (
+  'clubpresident_gampaha',
+  'club.gampaha@youthnexus.com',
+  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEaRGRo6Jd9a4l9bU0Y3fF1R3K6O',
+  'Nuwan',
+  'Bandara',
+  '0775566778',
+  'ClubPresident',
+  'Active',
+  1,
+  2
+);
+
+INSERT INTO Event (event_id, title, description, event_type, max_attendance, start_datetime, end_datetime, location, organizer_club_id, organizer_division_id, target_scope, status, created_by, created_at)
+VALUES 
+(1, 'Gampaha Youth Leadership Workshop 2026', 'Annual leadership development and skills workshop for youth club members in Gampaha.', 'Workshop', 120, '2026-09-15 09:00:00', '2026-09-15 16:00:00', 'Gampaha Town Hall', 1, NULL, 'AllInScope', 'PendingApproval', 4, NOW()),
+(2, 'Gampaha Youth Sports & Cultural Championship', 'Division-wide sports and cultural meet organized by Divisional Secretariat Gampaha.', 'Sports', 500, '2026-09-22 08:30:00', '2026-09-23 18:00:00', 'Gampaha District Stadium', NULL, 2, 'AllInScope', 'PendingApproval', 3, NOW()),
+(3, 'Community Green Environment Cleanup', 'Voluntary environmental cleanup along the canal and central park in Gampaha.', 'Community Service', 60, '2026-09-28 07:30:00', '2026-09-28 12:00:00', 'Gampaha Central Park', 1, NULL, 'AllInScope', 'PendingApproval', 4, NOW());
 
 -- Verify
 SELECT user_id, username, email, role, status FROM User;

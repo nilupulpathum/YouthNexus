@@ -39,4 +39,15 @@ class ClubModel extends Model {
     );
     return (int)Database::getInstance()->getConnection()->lastInsertId();
     }
+
+    /**
+     * Retrieve a club record by its primary key.
+     *
+     * @param  int $id
+     * @return object|false
+     */
+    public function findById($id) {
+        return $this->single("SELECT * FROM Club WHERE club_id = ? LIMIT 1", [(int)$id]);
+    }
 }
+
