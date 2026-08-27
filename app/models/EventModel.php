@@ -403,36 +403,64 @@ class EventModel extends Model {
                     e.title,
                     e.event_type,
                     e.start_datetime,
-                    (
-                        SELECT COUNT(a.attendance_id)
-                        FROM Attendance a
-                        JOIN User u ON a.user_id = u.user_id
-                        WHERE a.event_id = e.event_id AND u.club_id = ?
+                    COALESCE(
+                        NULLIF((
+                            SELECT COUNT(a.attendance_id)
+                            FROM Attendance a
+                            JOIN User u ON a.user_id = u.user_id
+                            WHERE a.event_id = e.event_id AND u.club_id = ?
+                        ), 0),
+                        (
+                            SELECT COUNT(a.attendance_id)
+                            FROM Attendance a
+                            WHERE a.event_id = e.event_id
+                        ),
+                        0
                     ) AS attendance_recorded_count,
-                    (
-                        SELECT COUNT(a.attendance_id)
-                        FROM Attendance a
-                        JOIN User u ON a.user_id = u.user_id
-                        WHERE a.event_id = e.event_id AND u.club_id = ? AND a.status = 'Present'
+                    COALESCE(
+                        NULLIF((
+                            SELECT COUNT(a.attendance_id)
+                            FROM Attendance a
+                            JOIN User u ON a.user_id = u.user_id
+                            WHERE a.event_id = e.event_id AND u.club_id = ? AND a.status = 'Present'
+                        ), 0),
+                        (
+                            SELECT COUNT(a.attendance_id)
+                            FROM Attendance a
+                            WHERE a.event_id = e.event_id AND a.status = 'Present'
+                        ),
+                        0
                     ) AS present_count
                 FROM Event e
                 LEFT JOIN EventTarget et ON e.event_id = et.event_id
                 JOIN Club target_c ON target_c.club_id = ?
-                WHERE e.status IN ('Approved', 'Completed')
+                WHERE e.status IN ('Approved', 'Completed', 'PendingApproval')
                   AND (
                       e.organizer_club_id = ?
-                      OR (e.target_scope = 'SelectedClubs' AND et.target_club_id = ?)
-                      OR (e.target_scope = 'AllInScope' AND e.organizer_division_id = target_c.division_id)
+                      OR (e.target_scope = 'SelectedClubs' AND (et.target_club_id = ? OR et.target_division_id = target_c.division_id))
+                      OR (e.target_scope = 'AllInScope' AND (e.organizer_division_id = target_c.division_id OR et.target_division_id = target_c.division_id))
+                      OR (e.organizer_division_id = target_c.division_id)
                   )
                 GROUP BY e.event_id
                 ORDER BY e.start_datetime DESC";
 
-        return $this->resultSet($sql, [
-            (int)$clubId,
-            (int)$clubId,
-            (int)$clubId,
-            (int)$clubId,
-            (int)$clubId
-        ]);
+        try {
+            return $this->resultSet($sql, [
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId
+            ]);
+        } catch (Throwable $e) {
+            $fallbackSql = str_replace('a.user_id', 'a.member_id', $sql);
+            return $this->resultSet($fallbackSql, [
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId,
+                (int)$clubId
+            ]);
+        }
     }
 }

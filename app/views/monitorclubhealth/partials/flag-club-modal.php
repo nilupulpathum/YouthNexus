@@ -17,10 +17,43 @@
                     <span>Overall Health Score</span>
                     <b id="mchFlagScore">15 / 100</b>
                 </div>
-                <div class="mch-flag-info-row">
-                    <span>Trigger</span>
-                    <span>Score &lt; 30 for 3 consecutive months</span>
-                </div>
+            </div>
+
+            <div class="mch-flag-signals-box">
+                <div class="mch-flag-signals-title">Relevant Signals for Your Review</div>
+
+                <?php if (($_SESSION['user_role'] ?? '') === 'DivisionalSecretary'): ?>
+                    <div class="mch-flag-signal-row">
+                        <span>Events Conducted (Last 3 Months)</span>
+                        <b id="mchFlagEventsConducted">0</b>
+                    </div>
+                    <div class="mch-flag-signal-row">
+                        <span>Average Attendance Rate</span>
+                        <b id="mchFlagAvgRate">—</b>
+                    </div>
+                    <p class="mch-flag-signals-note">These are informational only — you decide the severity, the system does not.</p>
+
+                <?php elseif (($_SESSION['user_role'] ?? '') === 'DivisionalCoordinator'): ?>
+                    <div class="mch-flag-signal-row">
+                        <span>Events Conducted (Last 3 Months)</span>
+                        <b id="mchFlagEventsConducted">0</b>
+                    </div>
+                    <div class="mch-flag-signal-row">
+                        <span>Average Attendance Rate</span>
+                        <b id="mchFlagAvgRate">—</b>
+                    </div>
+                    <div class="mch-flag-signal-row">
+                        <span>Financial Standing</span>
+                        <b class="mch-flag-signal-unavailable">Not available — Finance module not yet built</b>
+                    </div>
+
+                    <div id="mchFlagPriorFlagsContainer" style="display: none;">
+                        <div class="mch-flag-prior-flags">
+                            <div class="mch-flag-prior-flags-title">Prior Flags Raised on This Club</div>
+                            <div id="mchFlagPriorFlagsList"></div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <div class="mch-form-group">

@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             committee = [];
         }
 
-        currentClubData = { name, code, status, score, members, division, estDate, committee };
+        currentClubData = { club_id: id, name, code, status, score, members, division, estDate, committee };
 
         if (modalTitle) modalTitle.textContent = name;
         if (modalCode) modalCode.textContent = code;
@@ -325,14 +325,18 @@ document.addEventListener('DOMContentLoaded', () => {
             modalOverallScore.textContent = `${Math.round(score)} / 100`;
         }
 
-        // Keep administrative actions (Flagging / Editing Details) exclusive to DivisionalCoordinator role
+        // Keep administrative actions (Flagging / Editing Details) exclusive to allowed roles
         const userRole = document.body.dataset.userRole;
-        if (userRole !== 'DivisionalCoordinator') {
-            if (openFlagModalBtn) openFlagModalBtn.style.display = 'none';
-            if (editDetailsBtn) editDetailsBtn.style.display = 'none';
-        } else {
+        if (userRole === 'DivisionalCoordinator' || userRole === 'DivisionalSecretary') {
             if (openFlagModalBtn) openFlagModalBtn.style.display = '';
+        } else {
+            if (openFlagModalBtn) openFlagModalBtn.style.display = 'none';
+        }
+        
+        if (userRole === 'DivisionalCoordinator') {
             if (editDetailsBtn) editDetailsBtn.style.display = '';
+        } else {
+            if (editDetailsBtn) editDetailsBtn.style.display = 'none';
         }
 
         detailModal.classList.add('is-open');
@@ -368,6 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     if (data.error) throw new Error(data.error);
                     
+                    if (currentClubData) {
+                        currentClubData.apiDetails = data;
+                    }
+
                     if (pendingBox) pendingBox.style.display = 'none';
 
                     // Issue A: Populate summary strip
@@ -480,6 +488,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (flagScore) flagScore.textContent = `${Math.round(currentClubData.score)} / 100`;
         if (flagComment) flagComment.value = '';
 
+        if (currentClubData.apiDetails) {
+            const summary = currentClubData.apiDetails.summary || {};
+            const eventsConducted = summary.conducted_count || 0;
+            const avgRate = summary.avg_attendance_rate;
+
+            const elEvents = document.getElementById('mchFlagEventsConducted');
+            if (elEvents) elEvents.textContent = eventsConducted;
+            
+            const elRate = document.getElementById('mchFlagAvgRate');
+            if (elRate) elRate.textContent = (avgRate !== null && avgRate !== undefined) ? `${avgRate}%` : '—';
+            
+            const elPriorFlags = document.getElementById('mchFlagPriorFlagsList');
+            const elPriorFlagsContainer = document.getElementById('mchFlagPriorFlagsContainer');
+            if (elPriorFlags && elPriorFlagsContainer) {
+                elPriorFlags.innerHTML = '';
+                const priorFlags = currentClubData.apiDetails.priorFlags || [];
+                if (priorFlags.length > 0) {
+                    elPriorFlagsContainer.style.display = 'block';
+                    priorFlags.forEach(pf => {
+                        const sevClass = pf.severity.toLowerCase();
+                        elPriorFlags.innerHTML += `
+                            <div class="mch-flag-prior-flag-item">
+                                <span class="mch-flag-prior-badge ${sevClass}">${escapeHtml(pf.severity)}</span>
+                                <span>${escapeHtml(pf.flagged_by_role)} (${escapeHtml(pf.flagged_by_name)}) &mdash; ${escapeHtml(pf.comment)}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    elPriorFlagsContainer.style.display = 'none';
+                }
+            }
+        }
+
         flagModal.classList.add('is-open');
     }
 
@@ -522,13 +563,37 @@ document.addEventListener('DOMContentLoaded', () => {
     if (flagSubmitBtn) {
         flagSubmitBtn.addEventListener('click', () => {
             const comment = (flagComment ? flagComment.value : '').trim();
+            const severity = document.getElementById('mchFlagSeverity') ? document.getElementById('mchFlagSeverity').value : 'Medium';
+
             if (!comment) {
                 alert('Please provide a reason / comment for the NYSC Admin.');
                 if (flagComment) flagComment.focus();
                 return;
             }
-            closeFlagModal();
-            showToast('This flag was not saved. The review workflow will be enabled once the Club Health Flag system is built.');
+
+            const rootUrl = (typeof ROOT !== 'undefined') ? ROOT : '/YouthNexus/YouthNexus/public';
+            const csrfToken = (typeof CSRF_TOKEN !== 'undefined') ? CSRF_TOKEN : '';
+
+            fetch(rootUrl + '/monitorclubhealth/flag/' + currentClubData.club_id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    csrf_token: csrfToken,
+                    severity: severity,
+                    comment: comment,
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closeFlagModal();
+                    showToast('Flag submitted to NYSC Admin.');
+                    // Optionally, trigger a refresh here if needed
+                } else {
+                    alert(data.error || 'Could not submit flag. Please try again.');
+                }
+            })
+            .catch(() => alert('Could not submit flag. Please try again.'));
         });
     }
 
