@@ -52,8 +52,23 @@
 }
 .ea-card-top { display: flex; gap: 8px; }
 .ea-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
-.ea-badge.club    { background: #dbeafe; color: #1d4ed8; }
-.ea-badge.pending { background: #fef3c7; color: #b45309; }
+.ea-badge.club     { background: #dbeafe; color: #1d4ed8; }
+.ea-badge.pending  { background: #fef3c7; color: #b45309; }
+.ea-badge.approved { background: #d1fae5; color: #065f46; }
+.ea-badge.rejected { background: #fee2e2; color: #991b1b; }
+.ea-stat-card {
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ea-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+.ea-stat-card.is-active {
+    border-color: var(--db-primary, #2563eb) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    background: #f8fafc;
+}
 .ea-card-title { font-size: 16px; font-weight: 700; margin: 2px 0; }
 .ea-card-club { font-size: 13px; color: var(--db-text-grey, #6b7280); }
 .ea-club-code { color: #9ca3af; margin-left: 6px; }
