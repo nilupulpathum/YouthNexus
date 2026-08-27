@@ -100,8 +100,15 @@ class MonitorClubHealthModel extends Model {
 
         $rows = $this->resultSet($sql, [(int)$divisionId]);
         $committees = [];
+        $seenRoles  = [];
 
         foreach ($rows as $row) {
+            $dedupKey = $row->club_id . '_' . $row->role;
+            if (isset($seenRoles[$dedupKey])) {
+                continue; // Ensure only 1 President/Secretary/Treasurer per club
+            }
+            $seenRoles[$dedupKey] = true;
+
             $roleLabel = 'Member';
             if ($row->role === 'ClubPresident') {
                 $roleLabel = 'President';
@@ -144,6 +151,18 @@ class MonitorClubHealthModel extends Model {
             ORDER BY FIELD(role, 'ClubPresident', 'ClubSecretary', 'ClubTreasurer'), user_id ASC
         ";
 
-        return $this->resultSet($sql, [(int)$clubId]);
+        $rows = $this->resultSet($sql, [(int)$clubId]);
+        $result = [];
+        $seenRoles = [];
+
+        foreach ($rows as $r) {
+            if (isset($seenRoles[$r->role])) {
+                continue;
+            }
+            $seenRoles[$r->role] = true;
+            $result[] = $r;
+        }
+
+        return $result;
     }
 }
