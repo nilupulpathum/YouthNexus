@@ -213,6 +213,45 @@ CREATE TABLE AuditLog (
     INDEX idx_target (target_entity, target_id)
 );
 
+CREATE TABLE Event (
+    event_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description VARCHAR(1000),
+    event_type VARCHAR(50),
+    max_attendance INT,
+    start_datetime DATETIME NOT NULL,
+    end_datetime DATETIME NOT NULL,
+    location VARCHAR(255),
+    organizer_club_id INT NULL,
+    organizer_division_id INT NULL,
+    organizer_zonal_id INT NULL,
+    target_scope ENUM('AllInScope','SelectedClubs') NOT NULL,
+    status ENUM('Draft','PendingApproval','Approved','Rejected','Completed') NOT NULL DEFAULT 'PendingApproval',
+    created_by INT NOT NULL,
+    approved_by INT NULL,
+    rejection_remarks VARCHAR(500) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizer_club_id) REFERENCES Club(club_id),
+    FOREIGN KEY (organizer_division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (organizer_zonal_id) REFERENCES Zone(zonal_id),
+    FOREIGN KEY (created_by) REFERENCES User(user_id),
+    FOREIGN KEY (approved_by) REFERENCES User(user_id)
+);
+
+CREATE TABLE EventTarget (
+    target_id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    target_club_id INT NULL,
+    max_attendance INT NULL,
+    target_division_id INT NULL,
+    target_zonal_id INT NULL,
+    FOREIGN KEY (event_id) REFERENCES Event(event_id),
+    FOREIGN KEY (target_club_id) REFERENCES Club(club_id),
+    FOREIGN KEY (target_division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (target_zonal_id) REFERENCES Zone(zonal_id)
+);
+
+
 INSERT INTO Zone (zonal_id, zonal_name) VALUES
 (1, 'Western Zone'),
 (2, 'Central Zone'),
@@ -225,17 +264,18 @@ INSERT INTO Division (division_id, division_name, zonal_id) VALUES
 (4, 'Kandy Division', 2),
 (5, 'Galle Division', 3);
 
-INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, NIC, role, status)
+INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, NIC, role, status, division_id)
 VALUES (
   'damikrajithuru',
-  'damikarajithuru2@gmail.com',
+  'damikarajithuru@gmail.com',
   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEaRGRo6Jd9a4l9bU0Y3fF1R3K6O',
   'Damik',
   'Rajithuru',
   '0771234567',
   '200012345678',
-  'UnassignedUser',
-  'Active'
+  'DivisionalSecretary',
+  'Active',
+  1
 );
 
 INSERT INTO User (username, email, password_hash, first_name, last_name, phone_number, role, status, division_id)
