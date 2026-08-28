@@ -1,0 +1,165 @@
+/**
+ * Help Styles
+ */
+
+.help-container {
+    display: flex;
+    gap: 32px;
+}
+
+.help-main-content {
+    flex-grow: 1;
+}
+
+.help-sidebar {
+    width: 350px;
+    flex-shrink: 0;
+}
+
+.help-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px solid var(--db-border);
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 24px;
+    color: var(--db-text-dark);
+}
+
+/* FAQ */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.faq-item {
+    border: 1.5px solid var(--db-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.faq-item summary {
+    padding: 16px 20px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.faq-item summary:hover {
+    background: #f8fafc;
+}
+
+.faq-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 20px;
+    color: var(--db-text-grey);
+}
+
+.faq-item[open] summary::after {
+    content: '-';
+}
+
+.faq-answer {
+    padding: 0 20px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--db-text-grey);
+}
+
+/* Video */
+.video-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #f1f5f9;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.video-overlay {
+    text-align: center;
+}
+
+.play-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--db-sidebar-bg);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 12px;
+    transition: transform 0.2s ease;
+}
+
+.video-placeholder:hover .play-icon {
+    transform: scale(1.1);
+}
+
+/* Contact Form */
+.contact-desc {
+    font-size: 14px;
+    color: var(--db-text-grey);
+    margin-bottom: 24px;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-group input, .form-group textarea {
+    padding: 12px;
+    border: 1.5px solid var(--db-border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.btn-submit-contact {
+    background: var(--db-sidebar-bg);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+@media (max-width: 1000px) {
+    .help-container {
+        flex-direction: column;
+    }
+    .help-sidebar {
+        width: 100%;
+    }
+}

@@ -1,0 +1,233 @@
+/**
+ * Volunteer Hours Styles — A.09
+ */
+
+.volunteer-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Stats Overview */
+.volunteer-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.v-stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--db-border);
+    border-bottom: 4px solid #e2e8f0;
+}
+
+.v-stat-card.approved { border-bottom-color: #10b981; }
+.v-stat-card.pending { border-bottom-color: #f97316; }
+.v-stat-card.rejected { border-bottom-color: #ef4444; }
+
+.v-stat-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--db-text-grey);
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.v-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+}
+
+/* Content Grid */
+.volunteer-content-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+.volunteer-form-section, .volunteer-history-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid var(--db-border);
+}
+
+.section-header {
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--db-text-dark);
+    margin-bottom: 8px;
+}
+
+.section-header p {
+    font-size: 14px;
+    color: var(--db-text-grey);
+}
+
+/* Form */
+.volunteer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--db-text-dark);
+}
+
+.form-group input {
+    padding: 12px;
+    border: 1.5px solid var(--db-border);
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.file-upload-zone {
+    border: 2px dashed var(--db-border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-zone:hover {
+    border-color: var(--db-sidebar-bg);
+    background: #f8fafc;
+}
+
+.file-upload-zone .icon {
+    font-size: 32px;
+    color: var(--db-text-grey);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.file-upload-zone p {
+    font-size: 13px;
+    color: var(--db-text-grey);
+}
+
+.file-upload-zone span {
+    color: var(--db-sidebar-bg);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.btn-submit-hours {
+    background: var(--db-sidebar-bg);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+/* History Table */
+.header-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.btn-filter, .btn-export {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--db-border);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.v-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.v-history-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--db-text-grey);
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.v-history-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.event-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reason-tooltip {
+    color: #ef4444;
+    cursor: help;
+}
+
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-pill.verified { background: #ecfdf5; color: #10b981; }
+.status-pill.pending { background: #fff7ed; color: #f97316; }
+.status-pill.rejected { background: #fef2f2; color: #ef4444; }
+
+.btn-view-evidence {
+    background: none;
+    border: none;
+    color: var(--db-sidebar-bg);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+    .volunteer-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .volunteer-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
