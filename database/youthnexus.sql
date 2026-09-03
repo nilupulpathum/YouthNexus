@@ -344,4 +344,49 @@ SELECT
 FROM ExecutiveNominee n
 ORDER BY n.nominee_id DESC LIMIT 3;
 
+-- Announcement Tables
+CREATE TABLE Announcement (
+    announcement_id   INT AUTO_INCREMENT PRIMARY KEY,
+    title             VARCHAR(150) NOT NULL,
+    body              TEXT NOT NULL,
+    level             ENUM('Club','Divisional','Zonal','NYSC')
+                          NOT NULL DEFAULT 'Divisional',
+    organizer_division_id INT NULL,
+    target_audience   ENUM('AllDivisionalClubs','ClubPresidentsSecretaries',
+                            'AllMembers') NULL,   -- NULL while status=Draft
+    category          VARCHAR(100) NULL,          -- see ASSUMPTION 3
+    priority          ENUM('Normal','Urgent') NOT NULL DEFAULT 'Normal',
+    status            ENUM('Draft','Published') NOT NULL DEFAULT 'Draft',
+    view_count        INT NOT NULL DEFAULT 0,
+    created_by        INT NOT NULL,
+    published_at      DATETIME NULL,
+    content_edited_at DATETIME NULL DEFAULT NULL, -- Only actual content/attachment edits
+    last_edited_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          ON UPDATE CURRENT_TIMESTAMP,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organizer_division_id) REFERENCES Division(division_id),
+    FOREIGN KEY (created_by) REFERENCES User(user_id)
+);
+
+CREATE TABLE AnnouncementAttachment (
+    attachment_id     INT AUTO_INCREMENT PRIMARY KEY,
+    announcement_id   INT NOT NULL,
+    file_name         VARCHAR(255) NOT NULL,
+    file_path         VARCHAR(255) NOT NULL,
+    file_size         INT NOT NULL,   -- bytes
+    uploaded_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (announcement_id) REFERENCES Announcement(announcement_id)
+);
+
+CREATE TABLE AnnouncementRead (
+    read_id           INT AUTO_INCREMENT PRIMARY KEY,
+    announcement_id   INT NOT NULL,
+    user_id           INT NOT NULL,
+    read_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (announcement_id, user_id),
+    FOREIGN KEY (announcement_id) REFERENCES Announcement(announcement_id),
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
+);
+
+
 
