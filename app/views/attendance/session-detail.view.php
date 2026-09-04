@@ -187,6 +187,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <input type="hidden" id="csrfToken"   value="<?= htmlspecialchars($csrf_token ?? '') ?>">
 <input type="hidden" id="amEventId"   value="<?= (int)($event->event_id ?? 0) ?>">
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-components.css?v=<?= time() ?>">
 <script>window.ROOT = "<?= ROOT ?>";</script>
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 

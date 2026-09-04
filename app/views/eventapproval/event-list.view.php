@@ -137,6 +137,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/eventapproval.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-components.css?v=<?= time() ?>">
 <script>
     window.ROOT       = "<?= ROOT ?>";
     window.CSRF_TOKEN = <?= json_encode($csrf_token ?? '') ?>;

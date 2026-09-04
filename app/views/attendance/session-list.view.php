@@ -224,6 +224,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
 <script>window.ROOT = "<?= ROOT ?>";</script>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-components.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

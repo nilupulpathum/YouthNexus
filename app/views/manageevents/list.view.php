@@ -358,5 +358,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-components.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

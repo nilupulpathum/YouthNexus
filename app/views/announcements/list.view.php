@@ -205,6 +205,7 @@ require __DIR__ . '/helpers.php';
      data-csrf="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/announcements.css">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-components.css?v=<?= time() ?>">
 <script src="<?= ROOT ?>/assets/js/announcements.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
