@@ -1,0 +1,329 @@
+/* ========================================================================
+   Divisional dashboard component alignment
+
+   Approve Club Registration is the visual reference. Existing feature class
+   names remain unchanged so feature JavaScript keeps its current behavior.
+   ======================================================================== */
+
+/* ---------- Summary / metric cards ---------- */
+.ann-stats,
+.me-stats-grid,
+.am-stats,
+.ea-stats {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
+    max-width: 620px;
+    margin: 0 0 24px;
+}
+
+.dashboard .ann-stat-card,
+.me-stat-card,
+.am-stat-card,
+.ea-stat-card {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 20px 24px;
+    background: #fff;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(18, 20, 26, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    text-align: left;
+}
+
+.dashboard .ann-stat-card:hover,
+.me-stat-card:hover,
+.am-stat-card:hover,
+.ea-stat-card:hover {
+    transform: translateY(-1px);
+    border-color: #b9bfcb;
+}
+
+.dashboard .ann-stat-card.is-active,
+.ea-stat-card.is-active {
+    padding: 19px 23px;
+    border: 2px solid var(--db-sidebar-bg, #1e40af);
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(18, 20, 26, 0.03);
+}
+
+.ann-stat-icon,
+.me-stat-icon,
+.am-stat-icon,
+.ea-stat-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 8px;
+}
+
+.ann-stat-card > span:last-child,
+.me-stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ann-stat-number,
+.me-stat-value,
+.am-stat-value,
+.ea-stat-value {
+    margin: 4px 0 0;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--db-text-dark, #12141a);
+}
+
+.ann-stat-label,
+.me-stat-label,
+.am-stat-label,
+.ea-stat-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    color: var(--db-text-grey, #6b7280);
+}
+
+/* ---------- Search and filter toolbar ---------- */
+.ann-toolbar,
+.me-toolbar,
+.am-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+    padding-top: 8px;
+    margin-bottom: 20px;
+}
+
+.ann-search-wrap,
+.me-search-group,
+.am-search-input-wrapper {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    height: 40px;
+    background: #fff;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+}
+
+.ann-search-wrap:focus-within,
+.me-search-group:focus-within,
+.am-search-input-wrapper:focus-within {
+    border-color: var(--db-sidebar-bg, #1e40af);
+    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+}
+
+.dashboard .ann-search-wrap input,
+.me-search-input,
+.am-search-input-wrapper input {
+    box-sizing: border-box;
+    height: 38px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: 13px var(--db-font-family, Arial, sans-serif);
+    color: var(--db-text-dark, #12141a);
+}
+
+.am-search-input-wrapper input:focus {
+    border-color: transparent;
+}
+
+.ann-filter-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+}
+
+.ann-tab-select {
+    box-sizing: border-box;
+    width: 220px;
+    height: 40px;
+    padding: 0 12px;
+}
+
+.dashboard .ann-filter-actions .ann-btn,
+.me-filter-btn,
+.am-filter-btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+    color: var(--db-text-dark, #12141a);
+    font: 600 12.5px var(--db-font-family, Arial, sans-serif);
+    white-space: nowrap;
+}
+
+/* ---------- Expandable filter panel and dropdowns ---------- */
+.ann-filter-panel,
+.me-filter-panel,
+.am-filter-panel {
+    display: none;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 18px;
+    margin: 0 0 20px;
+    background: #fff;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: var(--db-radius-lg, 12px);
+}
+
+.ann-filter-panel.open,
+.me-filter-panel.open,
+.am-filter-panel.open {
+    display: flex;
+}
+
+.ann-filter-field,
+.me-filter-field,
+.am-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 180px;
+}
+
+.ann-filter-field label,
+.me-filter-field label,
+.am-filter-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--db-text-grey, #6b7280);
+}
+
+.ann-filter-field select,
+.me-filter-field select,
+.me-filter-field input,
+.am-filter-field select {
+    box-sizing: border-box;
+    min-height: 38px;
+    padding: 9px 10px;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: var(--db-radius, 8px);
+    outline: 0;
+    background: #fff;
+    color: var(--db-text-dark, #12141a);
+    font: 13px var(--db-font-family, Arial, sans-serif);
+}
+
+.ann-filter-field select:focus,
+.me-filter-field select:focus,
+.me-filter-field input:focus,
+.am-filter-field select:focus {
+    border-color: var(--db-sidebar-bg, #1e40af);
+}
+
+.ann-filter-panel > .ann-btn:last-child,
+.me-filter-actions,
+.am-filter-actions {
+    margin-left: auto;
+}
+
+/* ---------- List card grids ---------- */
+.ann-grid,
+.me-events-grid,
+.am-list,
+.ea-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+}
+
+.ann-card,
+.me-event-card,
+.am-card,
+.ea-card {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--db-border, #e7e9f0);
+    border-radius: var(--db-radius-lg, 12px);
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(18, 20, 26, 0.04),
+                0 6px 10px rgba(18, 20, 26, 0.05);
+}
+
+.ann-card:hover,
+.me-event-card:hover,
+.am-card:hover,
+.ea-card:hover {
+    transform: translateY(-1px);
+    border-color: #b9bfcb;
+    box-shadow: 0 6px 16px rgba(18, 20, 26, 0.07);
+}
+
+@media (max-width: 720px) {
+    .ann-stats,
+    .me-stats-grid,
+    .am-stats,
+    .ea-stats {
+        display: grid;
+        grid-template-columns: 1fr;
+        max-width: none;
+        gap: 10px;
+    }
+
+    .ann-toolbar,
+    .me-toolbar,
+    .am-toolbar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ann-search-wrap,
+    .me-search-group,
+    .am-search-input-wrapper {
+        flex-basis: 100%;
+    }
+
+    .ann-filter-actions {
+        width: 100%;
+    }
+
+    .ann-tab-select {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+
+    .ann-filter-field,
+    .me-filter-field,
+    .am-filter-field {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .ann-grid,
+    .me-events-grid,
+    .am-list,
+    .ea-list {
+        grid-template-columns: 1fr;
+    }
+}
