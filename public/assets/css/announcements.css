@@ -1,0 +1,123 @@
+/* Native components follow Manage Events and Attendance spacing and typography.
+   Shared colors, radii and fonts come from dashboard.css; never redefine them here. */
+.ann-header-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+.ann-section-title { margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:-.3px; }
+.ann-section-subtitle { margin:0; color:var(--db-text-grey); font-size:13px; line-height:1.6; }
+.dashboard .ann-btn, .dashboard .ann-card-edit-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--db-border); border-radius:var(--db-radius); padding:9px 16px; font:600 13.5px var(--db-font-family); cursor:pointer; text-decoration:none; background:#fff; color:var(--db-text-dark); transition:background .15s, box-shadow .15s; }
+.dashboard .ann-btn-primary { padding:10px 18px; background:var(--db-sidebar-bg); border-color:var(--db-sidebar-bg); color:#fff; box-shadow:0 2px 4px rgba(30,64,175,.15); }
+.dashboard .ann-btn-primary:hover { background:#1d3698; }
+.dashboard .ann-btn-secondary:hover, .dashboard .ann-card-edit-btn:hover { background:#f5f6fa; }
+.dashboard .ann-btn:disabled { opacity:.6; cursor:default; }
+.ann-btn svg, .ann-card-link svg, .ann-edited-note svg { flex-shrink:0; }
+.ann-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+.dashboard .ann-stat-card { font:inherit; text-align:left; cursor:pointer; display:flex; align-items:center; gap:16px; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); padding:20px 22px; }
+.dashboard .ann-stat-card:hover { border-color:#93c5fd; }
+.dashboard .ann-stat-card.is-active { border-color:var(--db-sidebar-bg); box-shadow:0 0 0 1px var(--db-sidebar-bg); background:#f8faff; }
+.ann-stat-icon { display:flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:12px; background:#eff6ff; color:var(--db-sidebar-bg); }
+.ann-stat-icon.published { background:#dcfce7; color:#166534; }
+.ann-stat-icon.draft { background:#fff7ed; color:#9a3412; }
+.ann-stat-number { display:block; font-size:24px; font-weight:800; line-height:1.2; }
+.ann-stat-label { display:block; margin-top:4px; font-size:13px; color:var(--db-text-grey); }
+/* Search occupies its own row; the compact status dropdown and Filters share the next. */
+.ann-toolbar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-bottom:20px; }
+.ann-filter-actions { display:flex; align-items:center; gap:12px; min-width:0; }
+#annFilterBtn { margin-left:auto; flex:0 0 auto; white-space:nowrap; }
+/* common.css gives all selects width:100%; only this status control should be compact. */
+.ann-filter-actions .ann-tab-select { width:220px; flex:0 1 220px; min-width:0; }
+.ann-search-wrap { display:flex; align-items:center; gap:8px; width:100%; min-width:0; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius); padding:10px 12px; color:var(--db-text-grey); }
+.dashboard .ann-search-wrap input { width:100%; min-width:0; border:0; background:transparent; font-size:13.5px; color:var(--db-text-dark); }
+.ann-tab-select, .ann-filter-field select { border:1px solid var(--db-border); border-radius:var(--db-radius); padding:10px 12px; font:13.5px var(--db-font-family); color:var(--db-text-dark); background:#fff; max-width:100%; }
+.ann-filter-panel { display:none; gap:16px; flex-wrap:wrap; align-items:flex-end; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); padding:16px 18px; margin-bottom:20px; }
+.ann-filter-panel.open { display:flex; }
+.ann-filter-field { display:flex; flex-direction:column; gap:5px; min-width:180px; }
+.ann-filter-field label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--db-text-grey); }
+.ann-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr)); gap:20px; }
+.ann-card { display:flex; flex-direction:column; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); padding:20px; box-shadow:0 2px 8px rgba(18,20,26,.03); transition:border-color .15s, box-shadow .15s; min-width:0; }
+.ann-card:hover { border-color:#cbd5e1; box-shadow:0 6px 16px rgba(18,20,26,.06); }
+.ann-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.ann-badges-group, .ann-detail-badges { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ann-badge, .ann-badge-divisional, .ann-badge-new { display:inline-flex; font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; line-height:1.2; border:1px solid transparent; }
+.ann-badge-divisional, .ann-badge-normal { background:#eff6ff; color:#1e40af; border-color:#bfdbfe; }
+.ann-badge-published, .ann-badge-new { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+.ann-badge-draft { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+.ann-badge-urgent { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+.ann-card-title { margin:0 0 8px; font-size:16px; font-weight:700; line-height:1.4; }
+.ann-card-preview { color:var(--db-text-grey); font-size:13px; line-height:1.6; margin:0 0 14px; }
+.ann-card-target { font-size:13px; margin-bottom:10px; }
+.ann-card-meta { color:var(--db-text-grey); font-size:12px; line-height:1.6; margin-bottom:4px; }
+.ann-edited-note { display:flex; align-items:center; gap:6px; color:var(--db-sidebar-bg); font-size:12px; line-height:1.6; margin:6px 0; }
+.ann-edited-note svg { width:14px; height:14px; }
+.ann-card-bottom { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:auto; padding-top:16px; border-top:1px solid var(--db-border); font-size:12px; color:var(--db-text-grey); }
+.ann-card-bottom > span { flex:1 1 100%; margin-top:10px; }
+.dashboard .ann-card-edit-btn { padding:7px 10px; font-size:12px; }
+.dashboard .ann-card-link { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--db-sidebar-bg); text-decoration:none; }
+.ann-card-bottom .ann-card-link { margin-left:auto; }
+.ann-empty { padding:40px 20px; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); text-align:center; color:var(--db-text-grey); }
+.ann-empty .ann-btn { margin-top:16px; }
+.ann-modal-open { overflow:hidden; }
+.ann-modal-backdrop { display:none; position:fixed; inset:0; z-index:100; background:rgba(15,23,42,.5); padding:24px 16px; align-items:center; justify-content:center; }
+.ann-modal-backdrop.open { display:flex; }
+.ann-modal-card { display:flex; flex-direction:column; width:100%; max-width:640px; max-height:calc(100dvh - 48px); background:#fff; border-radius:var(--db-radius-lg); box-shadow:0 20px 50px rgba(15,23,42,.2); overflow:hidden; }
+.ann-modal-header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:20px 24px; border-bottom:1px solid var(--db-border); }
+.ann-modal-header h2 { font-size:18px; font-weight:700; margin:0; }
+.dashboard .ann-modal-close { display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex-shrink:0; padding:0; border:0; background:transparent; color:var(--db-text-grey); border-radius:6px; cursor:pointer; }
+.ann-modal-close:hover { background:#f1f5f9; }
+#annCreateForm { display:flex; flex-direction:column; min-height:0; }
+.ann-modal-body { padding:24px; overflow-y:auto; }
+.ann-field { margin-bottom:18px; }
+.ann-field label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; }
+.dashboard .ann-field input[type=text], .ann-field textarea, .ann-field select { width:100%; padding:10px 12px; border:1px solid var(--db-border); border-radius:var(--db-radius); font:13.5px var(--db-font-family); color:var(--db-text-dark); background:#fff; }
+.ann-field textarea { min-height:120px; resize:vertical; }
+.ann-field input:focus, .ann-field textarea:focus, .ann-field select:focus { outline:none; border-color:var(--db-sidebar-bg); box-shadow:0 0 0 3px rgba(30,64,175,.1); }
+.ann-field-help { display:block; margin:8px 0 0; font-size:12px; font-weight:400; color:var(--db-text-grey); line-height:1.5; }
+.dashboard .ann-dropzone { display:flex; width:100%; align-items:center; justify-content:center; gap:8px; padding:24px 12px; background:#f8fafc; border:2px dashed var(--db-border); border-radius:var(--db-radius); font-size:13px; color:var(--db-text-grey); cursor:pointer; }
+.ann-dropzone.dragover { border-color:var(--db-sidebar-bg); background:#eff6ff; }
+.ann-attach-list { list-style:none; padding:0; margin:8px 0; font-size:13px; overflow-wrap:anywhere; }
+.ann-attach-list:empty { display:none; }
+.ann-attach-list li { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--db-border); }
+.ann-attachment-info { flex:1; min-width:0; overflow-wrap:anywhere; }
+.ann-removal-note { display:block; margin-top:4px; font-size:12px; color:#991b1b; }
+.ann-pending-removal .ann-attachment-info a { text-decoration:line-through; color:var(--db-text-grey); }
+.dashboard .ann-attachment-remove { flex-shrink:0; border:1px solid var(--db-border); background:#fff; color:#991b1b; border-radius:var(--db-radius); padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer; }
+.dashboard .ann-attachment-remove:hover { background:#fef2f2; }
+.dashboard .ann-attachment-remove:disabled { opacity:.6; cursor:default; }
+.ann-priority-toggle { display:flex; border:1px solid var(--db-border); border-radius:var(--db-radius); overflow:hidden; }
+.dashboard .ann-priority-toggle button { flex:1; padding:10px; border:0; background:#fff; font-size:13px; font-weight:600; cursor:pointer; }
+.ann-priority-toggle button.active[data-p="Normal"] { color:#1e40af; background:#eff6ff; }
+.ann-priority-toggle button.active[data-p="Urgent"] { color:#991b1b; background:#fee2e2; }
+.ann-warning-note { padding:12px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:var(--db-radius); color:#1e40af; font-size:12px; line-height:1.6; }
+.ann-modal-footer { display:flex; justify-content:flex-end; gap:12px; flex-wrap:wrap; padding:16px 24px; border-top:1px solid var(--db-border); background:#f8fafc; }
+.ann-back-link { margin-bottom:20px; }
+.ann-detail-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
+.ann-detail-main, .ann-side-card { background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); padding:24px; min-width:0; }
+.ann-detail-badges { margin-bottom:16px; }
+.ann-detail-title { font-size:24px; font-weight:800; margin:0 0 12px; line-height:1.4; }
+.ann-detail-meta { color:var(--db-text-grey); font-size:13px; line-height:1.8; padding-bottom:20px; margin-bottom:20px; border-bottom:1px solid var(--db-border); }
+.ann-detail-body { font-size:14px; line-height:1.8; }
+.ann-attachments-box { padding-top:20px; margin-top:24px; border-top:1px solid var(--db-border); font-size:14px; }
+.ann-attachment-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:12px; padding:12px; border:1px solid var(--db-border); border-radius:var(--db-radius); font-size:13px; }
+.ann-attachment-row > span, .ann-attachment-row a { display:flex; align-items:center; gap:8px; min-width:0; }
+.ann-attachment-row svg { flex-shrink:0; }
+.ann-attachment-row a { color:var(--db-sidebar-bg); text-decoration:none; }
+.ann-side-card { padding:20px; margin-bottom:20px; }
+.ann-side-card .ann-btn { width:100%; margin-bottom:10px; }
+.ann-side-card .ann-btn:last-child { margin-bottom:0; }
+.ann-side-heading { font-size:15px; margin:0; }
+.ann-side-details { margin-top:18px; }
+.ann-detail-row { margin-bottom:16px; }
+.ann-detail-row:last-child { margin-bottom:0; }
+.ann-detail-row .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.3px; color:var(--db-text-grey); margin-bottom:5px; }
+.ann-detail-row .val { font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.ann-toast { display:none; position:fixed; bottom:24px; right:24px; z-index:200; padding:12px 18px; max-width:min(420px,calc(100vw - 32px)); border-radius:var(--db-radius); background:var(--db-text-dark); color:#fff; font-size:13px; line-height:1.5; }
+.ann-toast.show { display:block; }
+.ann-card-title, .ann-card-preview, .ann-detail-title, .ann-detail-body, .ann-attachment-row { overflow-wrap:anywhere; }
+@media (max-width:900px) { .ann-detail-grid { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:600px) {
+  .dashboard .ann-stat-card { padding:16px; }
+  .ann-stats { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .ann-modal-header, .ann-modal-body, .ann-modal-footer, .ann-detail-main { padding:16px; }
+  .ann-modal-footer { gap:8px; }
+  .ann-modal-footer .ann-btn { flex:1; }
+  .ann-modal-card { max-height:calc(100dvh - 32px); }
+  .ann-modal-backdrop { padding:16px; }
+}
