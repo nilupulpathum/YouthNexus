@@ -9,7 +9,7 @@
 .dashboard .ann-btn-secondary:hover, .dashboard .ann-card-edit-btn:hover { background:#f5f6fa; }
 .dashboard .ann-btn:disabled { opacity:.6; cursor:default; }
 .ann-btn svg, .ann-card-link svg, .ann-edited-note svg { flex-shrink:0; }
-.ann-stats { display:flex; gap:16px; width:100%; max-width:620px; margin-bottom:24px; }
+.dashboard .ann-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; width:100%; max-width:620px; margin-bottom:24px; }
 .dashboard .ann-stat-card { box-sizing:border-box; flex:1 1 0; min-width:0; font:inherit; text-align:left; cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; gap:8px; background:#fff; border:1px solid var(--db-border); border-radius:12px; padding:20px 24px; box-shadow:0 4px 12px rgba(18,20,26,.03); transition:transform .15s ease,border-color .15s ease; }
 .dashboard .ann-stat-card:hover { transform:translateY(-1px); border-color:#b9bfcb; }
 .dashboard .ann-stat-card.is-active { border:2px solid var(--db-sidebar-bg); padding:19px 23px; box-shadow:0 4px 12px rgba(18,20,26,.03); background:#fff; }
@@ -113,9 +113,11 @@
 .ann-toast.show { display:block; }
 .ann-card-title, .ann-card-preview, .ann-detail-title, .ann-detail-body, .ann-attachment-row { overflow-wrap:anywhere; }
 @media (max-width:900px) { .ann-detail-grid { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:720px) {
+  .dashboard .ann-stats { grid-template-columns:minmax(0,1fr); gap:10px; max-width:none; }
+}
 @media (max-width:600px) {
   .dashboard .ann-stat-card { padding:16px; }
-  .ann-stats { grid-template-columns:minmax(0,1fr); gap:10px; }
   .ann-modal-header, .ann-modal-body, .ann-modal-footer, .ann-detail-main { padding:16px; }
   .ann-modal-footer { gap:8px; }
   .ann-modal-footer .ann-btn { flex:1; }
