@@ -18,17 +18,20 @@ class EventApproval extends Controller {
         $eventModel = $this->model('EventModel');
         $divisionId = (int)($_SESSION['division_id'] ?? 0);
 
-        $pendingEvents = $eventModel->findPendingClubEventsByDivision($divisionId);
-        
+        // Approved events are the coordinator's default landing view. Pending
+        // events remain available through the interactive status cards.
+        $events = $eventModel->findClubEventsByDivisionAndStatus($divisionId, 'Approved');
+
         $counts = [
-            'Pending'  => count($pendingEvents),
+            'Pending'  => $eventModel->countClubEventsByDivisionAndStatus($divisionId, 'PendingApproval'),
             'Approved' => $eventModel->countClubEventsByDivisionAndStatus($divisionId, 'Approved'),
             'Rejected' => $eventModel->countClubEventsByDivisionAndStatus($divisionId, 'Rejected'),
         ];
 
         $this->view('eventapproval/event-list', [
             'title'         => 'Approve Events — YouthNexus',
-            'pendingEvents' => $pendingEvents,
+            'events'        => $events,
+            'initialStatus' => 'Approved',
             'counts'        => $counts,
             'csrf_token'    => $_SESSION['csrf_token'],
             'userName'      => $_SESSION['user_name'] ?? 'R. Perera',
@@ -76,6 +79,51 @@ class EventApproval extends Controller {
             'targets' => $targets
         ]);
         exit();
+    }
+
+    /**
+     * Display the existing event detail screen in read-only mode for a
+     * Divisional Coordinator. Access is restricted to club events that belong
+     * to the coordinator's own division.
+     */
+    public function detail($id = null) {
+        $this->requireCoordinator();
+
+        $eventId = (int)$id;
+        if ($eventId <= 0) {
+            $this->redirect('eventapproval');
+        }
+
+        $divisionId = (int)($_SESSION['division_id'] ?? 0);
+        $eventModel = $this->model('EventModel');
+        $event = $eventModel->findById($eventId);
+
+        if (!$this->isClubEventInCoordinatorDivision($event, $divisionId)) {
+            http_response_code(404);
+            $this->redirect('eventapproval');
+        }
+
+        $targetModel = $this->model('EventTargetModel');
+        $targets = $targetModel->findByEventId($eventId);
+
+        $this->view('manageevents/status', [
+            'title'                   => $event->title . ' — Event Details — YouthNexus',
+            'pageTitle'               => 'Event Details',
+            'pageDescription'         => 'Review the complete event submission and its current decision status',
+            'currentRoute'            => 'eventapproval',
+            'unreadNotificationCount' => 0,
+            'event'                   => $event,
+            'clubs'                   => [],
+            'targets'                 => $targets,
+            'target_map'              => [],
+            'can_edit'                => false,
+            'csrf_token'              => $_SESSION['csrf_token'] ?? '',
+            'user_name'               => $_SESSION['user_name'] ?? 'Divisional Coordinator',
+            'user_role'               => 'DivisionalCoordinator',
+            'back_url'                => ROOT . '/eventapproval',
+            'back_label'              => 'Back to Event Approval',
+            'detail_context'          => 'approval',
+        ]);
     }
 
     public function approve($id = null) {
@@ -174,6 +222,22 @@ class EventApproval extends Controller {
     }
 
     // ---------------------------------------------------------------
+    // PENDING — list of pending club events as JSON (AJAX)
+    // ---------------------------------------------------------------
+    public function pending() {
+        $this->requireCoordinator();
+
+        $eventModel = $this->model('EventModel');
+        $divisionId = (int)($_SESSION['division_id'] ?? 0);
+
+        $events = $eventModel->findClubEventsByDivisionAndStatus($divisionId, 'PendingApproval');
+
+        header('Content-Type: application/json');
+        echo json_encode(['events' => $events]);
+        exit();
+    }
+
+    // ---------------------------------------------------------------
     // REJECTED — list of rejected club events as JSON (AJAX)
     // ---------------------------------------------------------------
     public function rejected() {
@@ -197,5 +261,20 @@ class EventApproval extends Controller {
         http_response_code(400);
         echo json_encode(['error' => $message]);
         exit();
+    }
+
+    /**
+     * Confirm that a retrieved event is a club-level event inside the current
+     * coordinator's division. This prevents ID-based cross-division access.
+     */
+    private function isClubEventInCoordinatorDivision($event, $divisionId) {
+        if (!$event || empty($event->organizer_club_id) || !empty($event->organizer_division_id)) {
+            return false;
+        }
+
+        $clubModel = $this->model('ClubModel');
+        $club = $clubModel->findById((int)$event->organizer_club_id);
+
+        return $club && (int)$club->division_id === (int)$divisionId;
     }
 }

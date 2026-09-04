@@ -81,28 +81,28 @@
     }
 
     resultSelect.addEventListener('change', updateImpactAlert);
-
-    document.querySelectorAll('.ea-btn-review').forEach(btn => {
-        btn.addEventListener('click', () => openReview(btn.dataset.eventId));
-    });
     closeBtn.addEventListener('click', closeReview);
     cancelBtn.addEventListener('click', closeReview);
 
-    // Notification Dropdown Interaction
-    const notifBellBtn = document.getElementById('notifBellBtn');
-    const notifDropdown = document.getElementById('notifDropdown');
-    const notifDropdownLink = document.getElementById('notifDropdownLink');
-    const statPending = document.getElementById('statPending');
-    const statApproved = document.getElementById('statApproved');
-    const statRejected = document.getElementById('statRejected');
-    const eaList = document.getElementById('eaPendingList');
-    let pendingListHtml = null;
+    const statPending       = document.getElementById('statPending');
+    const statApproved      = document.getElementById('statApproved');
+    const statRejected      = document.getElementById('statRejected');
+    const eaList            = document.getElementById('eaEventList');
+    const searchInput       = document.getElementById('eaSearchInput');
+    const filterBtn         = document.getElementById('eaFilterBtn');
+    const filterPanel       = document.getElementById('eaFilterPanel');
+    const filterType        = document.getElementById('eaFilterType');
+    const filterSchedule    = document.getElementById('eaFilterSchedule');
+    const filterCount       = document.getElementById('eaFilterCount');
+    const clearFiltersBtn   = document.getElementById('eaClearFiltersBtn');
 
     function setActiveStat(targetCard) {
         [statPending, statApproved, statRejected].forEach(card => {
-            if (card) card.classList.remove('is-active');
+            if (!card) return;
+            const isActive = card === targetCard;
+            card.classList.toggle('is-active', isActive);
+            card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
-        if (targetCard) targetCard.classList.add('is-active');
     }
 
     function formatDateStr(dateStr) {
@@ -117,31 +117,60 @@
         }
     }
 
+    function statusConfig(type) {
+        if (type === 'Pending') {
+            return { apiStatus: 'PendingApproval', badgeClass: 'pending', badgeLabel: 'Pending Approval' };
+        }
+        if (type === 'Rejected') {
+            return { apiStatus: 'Rejected', badgeClass: 'rejected', badgeLabel: 'Rejected' };
+        }
+        return { apiStatus: 'Approved', badgeClass: 'approved', badgeLabel: 'Approved' };
+    }
+
     function renderEventGrid(events, type) {
         if (!eaList) return;
+        const config = statusConfig(type);
+
         if (!events || !events.length) {
-            eaList.innerHTML = '<div class="ea-empty-state"><p>No ' + type.toLowerCase() + ' events found in this division.</p></div>';
+            eaList.innerHTML = '<div class="ea-empty-state"><p>No ' + type.toLowerCase() + ' club events found in this division.</p></div>';
+            populateEventTypes([]);
             return;
         }
 
-        const isApproved = type.toLowerCase() === 'approved';
-        const badgeClass = isApproved ? 'approved' : 'rejected';
-        const badgeLabel = isApproved ? 'Approved' : 'Rejected';
-
         eaList.innerHTML = events.map(ev => {
             const dateDisplay = formatDateStr(ev.start_datetime);
-            const extraNote   = isApproved 
-                ? (ev.approver_name ? 'Approved by ' + escapeHtml(ev.approver_name) : 'Approved') 
-                : (ev.rejection_remarks ? 'Reason: ' + escapeHtml(ev.rejection_remarks) : 'Rejected');
+            const eventId = Number.parseInt(ev.event_id, 10);
+            const detailUrl = (window.ROOT || '') + '/eventapproval/detail/' + eventId;
+            const clubName = ev.club_name || ev.organizer_club_name || '';
+            const clubCode = ev.club_code || ev.organizer_club_code || '';
+            let extraNote = '';
 
-            return '<div class="ea-card" data-event-id="' + ev.event_id + '">' +
+            if (type === 'Approved') {
+                extraNote = ev.approver_name ? 'Approved by ' + escapeHtml(ev.approver_name) : 'Approved';
+            } else if (type === 'Rejected') {
+                extraNote = ev.rejection_remarks ? 'Reason: ' + escapeHtml(ev.rejection_remarks) : 'Rejected';
+            } else {
+                extraNote = 'Awaiting your review';
+            }
+
+            const reviewButton = type === 'Pending'
+                ? '<button type="button" class="ea-btn ea-btn-primary ea-btn-review" data-event-id="' + eventId + '">Review</button>'
+                : '';
+
+            return '<div class="ea-card" data-event-id="' + eventId + '"' +
+                   ' data-detail-url="' + escapeHtml(detailUrl) + '"' +
+                   ' data-title="' + escapeHtml((ev.title || '').toLowerCase()) + '"' +
+                   ' data-club="' + escapeHtml(clubName.toLowerCase()) + '"' +
+                   ' data-location="' + escapeHtml((ev.location || '').toLowerCase()) + '"' +
+                   ' data-type="' + escapeHtml((ev.event_type || '').toLowerCase()) + '"' +
+                   ' data-start="' + escapeHtml(ev.start_datetime || '') + '" role="link" tabindex="0">' +
                    '  <div class="ea-card-top">' +
                    '    <span class="ea-badge club">Club Event</span>' +
-                   '    <span class="ea-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+                   '    <span class="ea-badge ' + config.badgeClass + '">' + config.badgeLabel + '</span>' +
                    '  </div>' +
                    '  <h3 class="ea-card-title">' + escapeHtml(ev.title) + '</h3>' +
-                   '  <p class="ea-card-club">' + escapeHtml(ev.club_name || '') +
-                   '    <small class="ea-club-code">' + escapeHtml(ev.club_code || '') + '</small>' +
+                   '  <p class="ea-card-club">' + escapeHtml(clubName) +
+                   '    <small class="ea-club-code">' + escapeHtml(clubCode) + '</small>' +
                    '  </p>' +
                    '  <div class="ea-card-meta">' +
                    '    <span>' + dateDisplay + '</span>' +
@@ -149,58 +178,156 @@
                    '  </div>' +
                    '  <div class="ea-card-footer">' +
                    '    <span class="ea-card-submitter">Submitted by ' + escapeHtml(ev.creator_name || '—') + ' • <strong style="color:#4b5563;">' + extraNote + '</strong></span>' +
+                   '    <div class="ea-card-actions">' +
+                   '      <a href="' + escapeHtml(detailUrl) + '" class="ea-btn ea-btn-secondary">View Details</a>' +
+                          reviewButton +
+                   '    </div>' +
                    '  </div>' +
                    '</div>';
-        }).join('');
+        }).join('') + '<div class="ea-empty-state" id="eaNoMatches" hidden><p>No events match your current search and filters.</p></div>';
+
+        eaList.dataset.status = type;
+        populateEventTypes(events);
+        applyClientFilters();
     }
 
-    if (statPending) {
-        statPending.addEventListener('click', function () {
-            setActiveStat(statPending);
-            if (pendingListHtml !== null && eaList) {
-                eaList.innerHTML = pendingListHtml;
-                document.querySelectorAll('.ea-btn-review').forEach(btn => {
-                    btn.addEventListener('click', () => openReview(btn.dataset.eventId));
-                });
-            }
+    function populateEventTypes(events) {
+        if (!filterType) return;
+
+        const previousValue = filterType.value;
+        const types = [...new Set(events
+            .map(event => (event.event_type || '').trim())
+            .filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b));
+
+        filterType.innerHTML = '<option value="">All Types</option>' + types.map(type =>
+            '<option value="' + escapeHtml(type.toLowerCase()) + '">' + escapeHtml(type) + '</option>'
+        ).join('');
+
+        filterType.value = types.some(type => type.toLowerCase() === previousValue) ? previousValue : '';
+        updateFilterCount();
+    }
+
+    function populateEventTypesFromCards() {
+        if (!eaList) return;
+        const types = [...eaList.querySelectorAll('.ea-card')].map(card => ({
+            event_type: card.dataset.type || ''
+        }));
+        populateEventTypes(types);
+    }
+
+    function updateFilterCount() {
+        if (!filterCount) return;
+        const count = Number(Boolean(filterType && filterType.value)) +
+                      Number(Boolean(filterSchedule && filterSchedule.value));
+        filterCount.textContent = String(count);
+        filterCount.hidden = count === 0;
+    }
+
+    function applyClientFilters() {
+        if (!eaList) return;
+
+        const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        const type = filterType ? filterType.value : '';
+        const schedule = filterSchedule ? filterSchedule.value : '';
+        const now = Date.now();
+        const cards = [...eaList.querySelectorAll('.ea-card')];
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const haystack = [card.dataset.title, card.dataset.club, card.dataset.location, card.dataset.type].join(' ');
+            const startTime = Date.parse(card.dataset.start || '');
+            const matchesQuery = !query || haystack.includes(query);
+            const matchesType = !type || card.dataset.type === type;
+            const matchesSchedule = !schedule ||
+                (schedule === 'upcoming' && !Number.isNaN(startTime) && startTime >= now) ||
+                (schedule === 'past' && !Number.isNaN(startTime) && startTime < now);
+            const visible = matchesQuery && matchesType && matchesSchedule;
+
+            card.hidden = !visible;
+            if (visible) visibleCount += 1;
+        });
+
+        const noMatches = document.getElementById('eaNoMatches');
+        if (noMatches) noMatches.hidden = cards.length === 0 || visibleCount > 0;
+        updateFilterCount();
+    }
+
+    function loadStatus(type, targetCard) {
+        if (!eaList) return;
+        const endpoints = {
+            Pending: '/eventapproval/pending',
+            Approved: '/eventapproval/approved',
+            Rejected: '/eventapproval/rejected'
+        };
+
+        setActiveStat(targetCard);
+        eaList.innerHTML = '<div class="ea-empty-state"><p>Loading ' + type.toLowerCase() + ' events...</p></div>';
+
+        fetch((window.ROOT || '') + endpoints[type])
+            .then(response => {
+                if (!response.ok) throw new Error('Unable to load events.');
+                return response.json();
+            })
+            .then(data => renderEventGrid(data.events || [], type))
+            .catch(() => {
+                eaList.innerHTML = '<div class="ea-empty-state" style="color:#b91c1c;"><p>Failed to load ' + type.toLowerCase() + ' events.</p></div>';
+            });
+    }
+
+    if (statPending) statPending.addEventListener('click', () => loadStatus('Pending', statPending));
+    if (statApproved) statApproved.addEventListener('click', () => loadStatus('Approved', statApproved));
+    if (statRejected) statRejected.addEventListener('click', () => loadStatus('Rejected', statRejected));
+
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', () => {
+            const isOpen = filterPanel.classList.toggle('open');
+            filterBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
     }
 
-    if (statApproved) {
-        statApproved.addEventListener('click', function () {
-            setActiveStat(statApproved);
-            if (pendingListHtml === null && eaList) {
-                pendingListHtml = eaList.innerHTML;
-            }
-            if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading approved events...</p></div>';
-            fetch((window.ROOT || '') + '/eventapproval/approved')
-                .then(r => r.json())
-                .then(data => {
-                    renderEventGrid(data.events || [], 'Approved');
-                })
-                .catch(err => {
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:red;"><p>Failed to load approved events.</p></div>';
-                });
+    if (searchInput) searchInput.addEventListener('input', applyClientFilters);
+    if (filterType) filterType.addEventListener('change', applyClientFilters);
+    if (filterSchedule) filterSchedule.addEventListener('change', applyClientFilters);
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (filterType) filterType.value = '';
+            if (filterSchedule) filterSchedule.value = '';
+            applyClientFilters();
         });
     }
 
-    if (statRejected) {
-        statRejected.addEventListener('click', function () {
-            setActiveStat(statRejected);
-            if (pendingListHtml === null && eaList) {
-                pendingListHtml = eaList.innerHTML;
+    if (eaList) {
+        eaList.addEventListener('click', event => {
+            const reviewButton = event.target.closest('.ea-btn-review');
+            if (reviewButton) {
+                openReview(reviewButton.dataset.eventId);
+                return;
             }
-            if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading rejected events...</p></div>';
-            fetch((window.ROOT || '') + '/eventapproval/rejected')
-                .then(r => r.json())
-                .then(data => {
-                    renderEventGrid(data.events || [], 'Rejected');
-                })
-                .catch(err => {
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:red;"><p>Failed to load rejected events.</p></div>';
-                });
+
+            if (event.target.closest('a, button, input, select, textarea')) return;
+            const card = event.target.closest('.ea-card');
+            if (card && card.dataset.detailUrl) window.location.href = card.dataset.detailUrl;
+        });
+
+        eaList.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            if (event.target.closest('a, button, input, select, textarea')) return;
+            const card = event.target.closest('.ea-card');
+            if (!card || !card.dataset.detailUrl) return;
+            event.preventDefault();
+            window.location.href = card.dataset.detailUrl;
         });
     }
+
+    if (!filterType || filterType.options.length <= 1) populateEventTypesFromCards();
+    applyClientFilters();
+
+    // Existing notification dropdown behavior is left unchanged.
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    const notifDropdown = document.getElementById('notifDropdown');
+    const notifDropdownLink = document.getElementById('notifDropdownLink');
 
     if (notifBellBtn && notifDropdown) {
         notifBellBtn.addEventListener('click', function (e) {
