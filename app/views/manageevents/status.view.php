@@ -6,19 +6,22 @@
  * Matches the pattern established by app/views/manageevents/list.view.php.
  */
 $title                   = $title ?? 'Event Details — YouthNexus';
-$pageTitle               = 'Event Details & Submission Status';
-$pageDescription         = 'Track review progress and specifications for this event';
-$currentRoute            = 'events';
-$unreadNotificationCount = 0;
+$pageTitle               = $pageTitle ?? 'Event Details & Submission Status';
+$pageDescription         = $pageDescription ?? 'Track review progress and specifications for this event';
+$currentRoute            = $currentRoute ?? 'events';
+$unreadNotificationCount = (int)($unreadNotificationCount ?? 0);
+$backUrl                 = $back_url ?? ROOT . '/manageevents';
+$backLabel               = $back_label ?? 'Back to Manage Events';
+$detailContext           = $detail_context ?? 'management';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
             <div class="me-status-page">
 
                 <!-- Back button (styled as me-btn-secondary) -->
-                <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary me-back-btn">
+                <a href="<?= htmlspecialchars($backUrl) ?>" class="me-btn-secondary me-back-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                    Back to Manage Events
+                    <?= htmlspecialchars($backLabel) ?>
                 </a>
 
                 <div class="me-status-grid">
@@ -200,7 +203,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                         <div class="me-status-notice">
                             <strong style="display: block; margin-bottom: 4px; color: var(--db-text-dark);">Governance Notice</strong>
-                            <?php if ($event->status === 'PendingApproval'): ?>
+                            <?php if ($event->status === 'PendingApproval' && $detailContext === 'approval'): ?>
+                                This club event is awaiting a decision from the Divisional Coordinator. Return to Event Approval when you are ready to review it.
+                            <?php elseif ($event->status === 'PendingApproval'): ?>
                                 Events submitted at the divisional level remain pending until reviewed and approved by the Zonal Coordinator. Divisional Secretaries do not possess approval privileges.
                             <?php elseif ($event->status === 'Approved'): ?>
                                 This event has been approved by the Zonal Coordinator and is officially scheduled.
