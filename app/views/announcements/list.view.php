@@ -13,12 +13,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';
 ?>
 
-<div class="ann-header-row">
-  <div><h2 class="ann-section-title">Announcements</h2><p class="ann-section-subtitle">Manage divisional updates and keep your clubs informed.</p></div>
-  <?php if (!empty($canCreate)): ?>
+<?php if (!empty($canCreate)): ?>
+  <div class="ann-header-row">
     <button type="button" class="ann-btn ann-btn-primary" id="annOpenCreateBtn"><?= $annIcon('plus') ?> New Announcement</button>
-  <?php endif; ?>
-</div>
+  </div>
+<?php endif; ?>
 <div class="ann-stats">
   <?php foreach (['All' => 'Total Announcements', 'Published' => 'Published', 'Draft' => 'Your Drafts'] as $key => $label):
     if ($key === 'Draft' && empty($canCreate)) continue; ?>
