@@ -1,6 +1,6 @@
 /* Native components follow Manage Events and Attendance spacing and typography.
    Shared colors, radii and fonts come from dashboard.css; never redefine them here. */
-.ann-header-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+.ann-header-row { display:flex; align-items:center; justify-content:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
 .ann-section-title { margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:-.3px; }
 .ann-section-subtitle { margin:0; color:var(--db-text-grey); font-size:13px; line-height:1.6; }
 .dashboard .ann-btn, .dashboard .ann-card-edit-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--db-border); border-radius:var(--db-radius); padding:9px 16px; font:600 13.5px var(--db-font-family); cursor:pointer; text-decoration:none; background:#fff; color:var(--db-text-dark); transition:background .15s, box-shadow .15s; }
@@ -9,15 +9,16 @@
 .dashboard .ann-btn-secondary:hover, .dashboard .ann-card-edit-btn:hover { background:#f5f6fa; }
 .dashboard .ann-btn:disabled { opacity:.6; cursor:default; }
 .ann-btn svg, .ann-card-link svg, .ann-edited-note svg { flex-shrink:0; }
-.ann-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
-.dashboard .ann-stat-card { font:inherit; text-align:left; cursor:pointer; display:flex; align-items:center; gap:16px; background:#fff; border:1px solid var(--db-border); border-radius:var(--db-radius-lg); padding:20px 22px; }
-.dashboard .ann-stat-card:hover { border-color:#93c5fd; }
-.dashboard .ann-stat-card.is-active { border-color:var(--db-sidebar-bg); box-shadow:0 0 0 1px var(--db-sidebar-bg); background:#f8faff; }
-.ann-stat-icon { display:flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:12px; background:#eff6ff; color:var(--db-sidebar-bg); }
+.ann-stats { display:flex; gap:16px; width:100%; max-width:620px; margin-bottom:24px; }
+.dashboard .ann-stat-card { box-sizing:border-box; flex:1 1 0; min-width:0; font:inherit; text-align:left; cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; gap:8px; background:#fff; border:1px solid var(--db-border); border-radius:12px; padding:20px 24px; box-shadow:0 4px 12px rgba(18,20,26,.03); transition:transform .15s ease,border-color .15s ease; }
+.dashboard .ann-stat-card:hover { transform:translateY(-1px); border-color:#b9bfcb; }
+.dashboard .ann-stat-card.is-active { border:2px solid var(--db-sidebar-bg); padding:19px 23px; box-shadow:0 4px 12px rgba(18,20,26,.03); background:#fff; }
+.ann-stat-icon { display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex:0 0 32px; border-radius:8px; background:#eff6ff; color:var(--db-sidebar-bg); }
 .ann-stat-icon.published { background:#dcfce7; color:#166534; }
 .ann-stat-icon.draft { background:#fff7ed; color:#9a3412; }
-.ann-stat-number { display:block; font-size:24px; font-weight:800; line-height:1.2; }
-.ann-stat-label { display:block; margin-top:4px; font-size:13px; color:var(--db-text-grey); }
+.ann-stat-card > span:last-child { display:flex; flex-direction:column; gap:8px; }
+.ann-stat-number { display:block; margin:4px 0 0; font-size:28px; font-weight:800; line-height:1; }
+.ann-stat-label { display:block; margin:0; font-size:11px; font-weight:600; line-height:1.35; letter-spacing:.2px; text-transform:uppercase; color:var(--db-text-grey); }
 /* Search occupies its own row; the compact status dropdown and Filters share the next. */
 .ann-toolbar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-bottom:20px; }
 .ann-filter-actions { display:flex; align-items:center; gap:12px; min-width:0; }
