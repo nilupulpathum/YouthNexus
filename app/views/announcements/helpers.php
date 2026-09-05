@@ -21,3 +21,13 @@ $annDate = static function ($value) {
     if (empty($value)) return '';
     return '<time datetime="' . htmlspecialchars(date('Y-m-d\TH:i:s', strtotime($value)), ENT_QUOTES) . '">' . date('M j, Y · g:i:s A', strtotime($value)) . '</time>';
 };
+
+$annFormatFileSize = static function ($bytes) {
+    if ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 1) . ' MB';
+    } elseif ($bytes >= 1024) {
+        return number_format($bytes / 1024, 0) . ' KB';
+    }
+    return $bytes . ' B';
+};
+
