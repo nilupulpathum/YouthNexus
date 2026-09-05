@@ -18,15 +18,6 @@ $targetLabels = [
     'AllMembers'                => 'All Members',
 ];
 $targetLabel = $targetLabels[$announcement->target_audience ?? ''] ?? 'Pending';
-
-function formatFileSize($bytes) {
-    if ($bytes >= 1048576) {
-        return number_format($bytes / 1048576, 1) . ' MB';
-    } elseif ($bytes >= 1024) {
-        return number_format($bytes / 1024, 0) . ' KB';
-    }
-    return $bytes . ' B';
-}
 ?>
 
 <a href="<?= ROOT ?>/announcements" class="ann-card-link ann-back-link">&larr; Back to Broadcast</a>
@@ -68,7 +59,7 @@ function formatFileSize($bytes) {
       <b>Attachments (<?= count($attachments) ?>)</b>
       <?php foreach ($attachments as $att): ?>
         <div class="ann-attachment-row">
-          <span><?= $annIcon('file') ?> <?= htmlspecialchars($att->file_name) ?> &middot; <?= formatFileSize($att->file_size) ?></span>
+          <span><?= $annIcon('file') ?> <?= htmlspecialchars($att->file_name) ?> &middot; <?= $annFormatFileSize($att->file_size) ?></span>
           <a href="<?= ROOT ?>/announcements/download/<?= (int)$att->attachment_id ?>" download aria-label="Download <?= htmlspecialchars($att->file_name, ENT_QUOTES) ?>"><?= $annIcon('download') ?> Download</a>
         </div>
       <?php endforeach; ?>
