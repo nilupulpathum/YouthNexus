@@ -1,3 +1,4 @@
+-- REMINDER: MUST BE RUN AGAINST ANY EXISTING LOCAL DATABASE BEFORE TESTING! (Easy to miss)
 -- Run ONCE against your existing YouthNexus database before using the updated app.
 -- New installations already include this column in database/youthnexus.sql.
 -- Do not backfill from last_edited_at: that field also changed on page views.
