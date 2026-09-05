@@ -124,3 +124,20 @@
   .ann-modal-card { max-height:calc(100dvh - 32px); }
   .ann-modal-backdrop { padding:16px; }
 }
+
+/* Viewport height rules for sidebar navigation on short screens (gated for announcement views) */
+@media (max-height: 700px) {
+  .dashboard .db-sidebar, .dashboard .dashboard-sidebar { padding-top: 12px; padding-bottom: 12px; }
+  .dashboard .db-brand { padding-bottom: 10px; }
+  .dashboard .db-nav-link, .dashboard .dashboard-nav__link { min-height: 32px; padding-top: 6px; padding-bottom: 6px; line-height: 1.2; }
+}
+@media (max-height: 480px) {
+  .dashboard .db-sidebar, .dashboard .dashboard-sidebar { padding-top: 8px; padding-bottom: 8px; }
+  .dashboard .db-brand { padding-top: 0; padding-bottom: 4px; }
+  .dashboard .dashboard-nav__label { display: none; }
+  .dashboard .db-nav ul, .dashboard .dashboard-nav ul { gap: 0; }
+  .dashboard .db-sidebar .db-nav-link, .dashboard .dashboard-sidebar .dashboard-nav__link { min-height: 24px; padding-top: 3px; padding-bottom: 3px; font-size: 12px; }
+  .dashboard .db-sidebar-footer, .dashboard .dashboard-sidebar__support { padding: 6px 10px; }
+  .dashboard .db-sidebar-footer .db-avatar { width: 28px; height: 28px; flex-basis: 28px; }
+}
+
