@@ -3,16 +3,16 @@
 class Member extends Controller {
 
     /**
-     * Restrict this dashboard to authenticated Club Member accounts.
-     * The Member alias is retained for local/demo compatibility with the
-     * existing shared sidebar role vocabulary.
+     * Restrict this dashboard to authenticated club-level accounts.
+     * President / Secretary / Treasurer are subclasses of Club Member
+     * (subclass rule, C14) so they share the member dashboard.
      */
     private function requireMember() {
         if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
         }
 
-        $allowedRoles = ['ClubMember', 'Member'];
+        $allowedRoles = ['ClubMember', 'Member', 'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'president', 'secretary', 'treasurer'];
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
