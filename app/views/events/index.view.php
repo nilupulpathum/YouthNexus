@@ -6,6 +6,7 @@ $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 
+require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -101,7 +102,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <button type="button" class="clear-filters-btn">
-            <span class="icon">×</span> Clear all filters
+            <span class="icon"><?= yn_icon('close') ?></span> Clear all filters
         </button>
     </aside>
 
@@ -124,7 +125,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
         <div class="events-grid">
             <?php foreach ($events as $item): ?>
-                <?= renderEventCard($item, $escape) ?>
+                <?php require __DIR__ . '/../partials/event-card.view.php'; ?>
             <?php endforeach; ?>
         </div>
     </main>
@@ -133,7 +134,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <!-- Event Detail Popup -->
 <div id="event-popup" class="popup-overlay" hidden>
     <div class="popup-content event-popup-content">
-        <button type="button" class="popup-close" aria-label="Close">&times;</button>
+        <button type="button" class="popup-close" aria-label="Close"><?= yn_icon('close') ?></button>
         <div class="popup-header">
             <div class="popup-countdown" id="popup-remaining"></div>
             <h2 id="popup-title"></h2>
@@ -143,11 +144,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="popup-info-grid">
                 <div class="info-item">
-                    <span class="icon">📅</span>
+                    <span class="icon"><?= yn_icon('calendar') ?></span>
                     <span id="popup-date"></span>
                 </div>
                 <div class="info-item">
-                    <span class="icon">📍</span>
+                    <span class="icon"><?= yn_icon('pin') ?></span>
                     <span id="popup-location"></span>
                 </div>
             </div>
@@ -158,57 +159,17 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <div class="popup-footer">
             <button type="button" class="btn-participate">
-                <span class="icon">✓</span> Participate
+                <span class="icon"><?= yn_icon('check') ?></span> Participate
             </button>
             <button type="button" class="btn-not-participate">
-                <span class="icon">×</span> Not participate
+                <span class="icon"><?= yn_icon('close') ?></span> Not participate
             </button>
         </div>
     </div>
 </div>
 
-<?php
-function renderEventCard($item, $escape) {
-    ob_start();
-    ?>
-    <article class="event-card" data-id="<?= $item['id'] ?>">
-        <div class="card-header">
-            <div class="header-left">
-                <span class="scope-badge <?= strtolower(str_replace(' ', '-', $item['scope'])) ?>"><?= $escape($item['scope']) ?></span>
-                <span class="status-badge <?= strtolower($item['status']) ?>"><?= $escape($item['status']) ?></span>
-            </div>
-            <div class="event-meta">
-                <div class="meta-item">
-                    <span class="icon">📅</span> <?= $escape($item['date']) ?>
-                </div>
-                <div class="meta-item">
-                    <span class="icon">📍</span> <?= $escape($item['location']) ?>
-                </div>
-            </div>
-        </div>
-        <h3 class="card-title"><?= $escape($item['title']) ?></h3>
-        <p class="card-summary"><?= $escape(substr($item['description'], 0, 80)) ?>...</p>
-        
-        <div class="card-remaining"><?= $escape($item['remaining']) ?></div>
-
-        <div class="card-footer">
-            <button type="button" class="btn-view-details" onclick='openEvent(<?= json_encode($item) ?>)'>
-                <span class="icon">⦿</span> View Details
-            </button>
-            <button type="button" class="btn-participate <?= $item['rsvp_status'] === 'attending' ? 'is-active' : '' ?>">
-                <span class="icon">✓</span> Participate
-            </button>
-            <button type="button" class="btn-not-participate <?= $item['rsvp_status'] === 'declined' ? 'is-active' : '' ?>">
-                <span class="icon">×</span> Not participating
-            </button>
-        </div>
-    </article>
-    <?php
-    return ob_get_clean();
-}
-?>
-
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/events.css">
+
 <script src="<?= ROOT ?>/assets/js/events.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

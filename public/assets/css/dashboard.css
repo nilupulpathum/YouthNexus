@@ -162,6 +162,23 @@ body.dashboard {
 .dashboard-profile__menu-divider { height: 1px; margin: 6px 0; background: var(--db-border); }
 .dashboard-profile__logout { color: #b91c1c !important; }
 
+/* Notification dropdown (mirrors profile menu) */
+.dashboard-notifications { position: relative; }
+.dashboard-notif__menu { width: 300px; position: absolute; top: calc(100% + 10px); right: 0; z-index: 40; padding: 8px; border: 1px solid var(--db-border); border-radius: 10px; background: #fff; box-shadow: 0 16px 32px rgba(15,23,42,.16); }
+.dashboard-notif__menu-heading { padding: 9px 10px 10px; }
+.dashboard-notif__menu-heading strong, .dashboard-notif__menu-heading span { display: block; }
+.dashboard-notif__menu-heading strong { color: var(--db-text-dark); font-size: 13px; }
+.dashboard-notif__menu-heading span { margin-top: 3px; color: var(--db-text-grey); font-size: 11px; }
+.dashboard-notif__menu a { display: block; padding: 9px 10px; border-radius: 7px; color: #374151; font-size: 13px; text-decoration: none; }
+.dashboard-notif__menu a:hover { background: var(--db-bg-page); }
+.dashboard-notif__menu a strong { display: block; color: var(--db-text-dark); font-size: 13px; }
+.dashboard-notif__menu a span { display: block; margin-top: 3px; color: var(--db-text-grey); font-size: 11px; }
+.dashboard-notif__view-all { text-align: center; font-weight: 700; color: var(--db-sidebar-bg) !important; }
+
+/* Header controls must beat `.dashboard button { color: inherit; }` above */
+.dashboard .db-topbar-avatar { color: #fff; }
+.dashboard .dashboard-notification { color: var(--db-text-grey); }
+
 /* Feature content and footer */
 .db-content, .dashboard-content { flex: 1; min-width: 0; padding: 22px 26px 40px; overflow-y: auto; }
 .dashboard-main__inner { width: 100%; max-width: 1440px; margin: 0 auto; }

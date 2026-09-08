@@ -6,6 +6,7 @@ $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 
+require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -31,7 +32,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <h2 class="section-title">Platform Walkthrough</h2>
             <div class="video-placeholder">
                 <div class="video-overlay">
-                    <span class="play-icon">▶</span>
+                    <span class="play-icon icon"><?= yn_icon('play') ?></span>
                     <p>Watch Explainer Video</p>
                 </div>
             </div>
@@ -46,11 +47,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <form class="contact-form">
                 <div class="form-group">
                     <label for="contact-name">Full Name</label>
-                    <input type="text" id="contact-name" placeholder="Jamie Dela Cruz" required>
+                    <input type="text" id="contact-name" placeholder="Nuwan Bandara" required>
                 </div>
                 <div class="form-group">
                     <label for="contact-email">Email Address</label>
-                    <input type="email" id="contact-email" placeholder="jamie@example.test" required>
+                    <input type="email" id="contact-email" placeholder="nuwan@example.test" required>
                 </div>
                 <div class="form-group">
                     <label for="contact-message">Message</label>

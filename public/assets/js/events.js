@@ -1,5 +1,8 @@
 /**
  * Events Interaction — W.10
+ *
+ * Detail data travels via the card's data-event attribute (server-escaped
+ * JSON), never through inline handlers.
  */
 
 function openEvent(data) {
@@ -12,17 +15,17 @@ function openEvent(data) {
     const description = document.getElementById('popup-description');
     const remaining = document.getElementById('popup-remaining');
 
-    title.textContent = data.title;
-    scope.textContent = data.scope;
-    scope.className = 'scope-badge ' + data.scope.toLowerCase().replace(' ', '-');
-    
-    status.textContent = data.status;
-    status.className = 'status-badge ' + data.status.toLowerCase();
+    title.textContent = data.title || '';
+    scope.textContent = data.scope || '';
+    scope.className = 'scope-badge ' + String(data.scope || '').toLowerCase().replace(' ', '-');
 
-    date.textContent = data.date;
-    location.textContent = data.location;
-    description.textContent = data.description;
-    remaining.textContent = data.remaining;
+    status.textContent = data.status || '';
+    status.className = 'status-badge ' + String(data.status || '').toLowerCase();
+
+    date.textContent = data.date || '';
+    location.textContent = data.location || '';
+    description.textContent = data.description || '';
+    remaining.textContent = data.remaining || '';
 
     popup.hidden = false;
     document.body.style.overflow = 'hidden';
@@ -51,6 +54,18 @@ document.addEventListener('DOMContentLoaded', () => {
             popup.hidden = true;
             document.body.style.overflow = '';
         }
+    });
+
+    // "View Details" reads the card payload — no inline handlers.
+    document.querySelectorAll('.event-card [data-action="view"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.event-card');
+            try {
+                openEvent(JSON.parse(card.getAttribute('data-event') || '{}'));
+            } catch (err) {
+                /* malformed payload — leave popup closed */
+            }
+        });
     });
 
     // Sidebar filter interaction
