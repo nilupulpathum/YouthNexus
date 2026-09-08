@@ -83,6 +83,9 @@ class Club extends Controller {
         $data['stats'] = ['total' => 45, 'executives' => 3, 'members' => 41, 'pending' => 1];
         $data['roster'] = $roster;
         $data['can_manage'] = ($this->roleKey() === 'president');
+        $data['can_register'] = ($this->roleKey() === 'secretary');
+        // Mock NIC registry for the duplicate check (C3 demo; backend validates in C13).
+        $data['existing_nics'] = ['200112345678', '199912345678', '200012345678'];
 
         $this->view('club/members', $data);
     }
