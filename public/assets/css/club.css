@@ -226,6 +226,187 @@
     flex: none;
 }
 
+/* Detail modal (same shape as events/announcements popups) */
+.popup-content {
+    background: #fff;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    position: relative;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.popup-content h2 {
+    margin: 4px 0 8px;
+    color: #18263c;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    padding-right: 40px;
+}
+
+.popup-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--db-text-grey);
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.popup-close:hover {
+    background: #f1f5f9;
+    color: var(--db-text-dark);
+}
+
+.popup-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Forms, buttons, notices */
+.club-divider {
+    height: 1px;
+    margin: 4px 25px 0;
+    background: #edf0f5;
+}
+
+.club-panel-sub { padding: 24px 25px 25px; }
+
+.club-panel-sub h2 {
+    margin: 4px 0 0;
+    color: #18263c;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.club-sub-note {
+    margin: 8px 0 0;
+    color: #7b8492;
+    font-size: 13px;
+}
+
+.club-form { margin-top: 18px; }
+
+.club-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.club-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.club-field--full { grid-column: 1 / -1; }
+
+.club-field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.club-field input,
+.club-field select {
+    padding: 10px 12px;
+    border: 1.5px solid var(--db-border);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--db-text-dark);
+    background: #fff;
+}
+
+.club-form-error {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.club-warn {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    color: #9a3412;
+    font-size: 13px;
+}
+
+.club-form-footer,
+.club-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.club-btn-primary,
+.club-btn-secondary,
+.club-btn-small {
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.club-btn-primary {
+    padding: 11px 18px;
+    font-size: 13px;
+    background: var(--db-sidebar-bg);
+    border: 0;
+}
+
+.club-btn-secondary {
+    padding: 11px 18px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+}
+
+.club-btn-small {
+    padding: 7px 12px;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid var(--db-border);
+}
+
+.dashboard .club-btn-primary { color: #fff; }
+.dashboard .club-btn-secondary { color: var(--db-text-dark); }
+.dashboard .club-btn-small { color: var(--db-sidebar-bg); }
+
+.club-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    max-width: min(560px, 92vw);
+    padding: 12px 18px;
+    background: #18263c;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.3);
+}
+
 @media (max-width: 1100px) {
     .club-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
