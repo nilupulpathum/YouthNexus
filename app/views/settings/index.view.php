@@ -6,20 +6,25 @@ $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 
+require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
+
+$settingsInitials = strtoupper(
+    mb_substr($user['first_name'] ?? 'Y', 0, 1) . mb_substr($user['last_name'] ?? 'N', 0, 1)
+);
 ?>
 
 <div class="settings-container">
     <!-- Tabs Navigation -->
     <nav class="settings-tabs">
         <button type="button" class="tab-btn is-active" data-target="profile-settings">
-            <span class="icon">👤</span> Edit Profile
+            <span class="icon"><?= yn_icon('user') ?></span> Edit Profile
         </button>
         <button type="button" class="tab-btn" data-target="security-settings">
-            <span class="icon">🔒</span> Security
+            <span class="icon"><?= yn_icon('lock') ?></span> Security
         </button>
         <button type="button" class="tab-btn" data-target="notification-settings">
-            <span class="icon">🔔</span> Notifications
+            <span class="icon"><?= yn_icon('bell') ?></span> Notifications
         </button>
     </nav>
 
@@ -34,7 +39,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <form class="settings-form">
                 <div class="avatar-edit-section">
                     <div class="profile-avatar-preview">
-                        <img src="<?= ROOT ?>/assets/images/avatar-placeholder.png" alt="Avatar">
+                        <span class="profile-initials" aria-hidden="true"><?= $escape($settingsInitials) ?></span>
                     </div>
                     <div class="avatar-actions">
                         <button type="button" class="btn-upload">Upload new picture</button>

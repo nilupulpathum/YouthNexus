@@ -276,3 +276,38 @@ input:checked + .slider:before {
         grid-column: span 1;
     }
 }
+
+/* Shared member-pack icon sizing (stroke SVGs, see views/partials/icons.view.php) */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -3px;
+}
+
+.icon svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+/* Initials avatar (replaces missing placeholder image) */
+.profile-avatar-preview .profile-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--db-sidebar-bg);
+    background: #e8eefb;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .tab-btn { color: var(--db-text-dark); }
+.dashboard .tab-btn.is-active { color: #fff; }
+.dashboard .btn-save { color: #fff; }
+.dashboard .btn-cancel, .dashboard .btn-verify-code { color: var(--db-text-dark); }
+.dashboard .btn-upload { color: #fff; }
+.dashboard .btn-delete { color: #ef4444; }

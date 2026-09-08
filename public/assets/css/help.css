@@ -163,3 +163,12 @@
         width: 100%;
     }
 }
+
+/* Shared member-pack icon sizing (stroke SVGs, see views/partials/icons.view.php) */
+.play-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .btn-submit-contact { color: #fff; }

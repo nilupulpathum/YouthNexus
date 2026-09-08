@@ -492,3 +492,13 @@
     .member-cv-footer { margin-top: 34px; }
     .member-cv-button { margin-top: 8px; margin-left: 0; }
 }
+
+/* Activity timeline icons (stroke SVGs, see views/partials/icons.view.php) */
+.member-activity-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .member-cv-button { color: #2347a8; }
+.dashboard .member-cv-button--ghost { color: #fff; }

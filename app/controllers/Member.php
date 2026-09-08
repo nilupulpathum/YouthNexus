@@ -28,7 +28,7 @@ class Member extends Controller {
     public function index() {
         $this->requireMember();
 
-        $memberName = trim((string) ($_SESSION['user_name'] ?? 'Jamie Dela Cruz')) ?: 'Jamie Dela Cruz';
+        $memberName = trim((string) ($_SESSION['user_name'] ?? 'Nuwan Bandara')) ?: 'Nuwan Bandara';
         $memberInitials = strtoupper(
             substr($memberName, 0, 1) . substr(strrchr(' ' . $memberName, ' '), 1, 1)
         );
@@ -37,13 +37,13 @@ class Member extends Controller {
             'member' => [
                 'name'      => $memberName,
                 'role'      => 'Member',
-                'club_name' => $_SESSION['club_name'] ?? 'Kaduwela Youth Club',
+                'club_name' => $_SESSION['club_name'] ?? 'Gampaha Youth Development Club',
                 'initials'   => $memberInitials ?: 'JD',
             ],
             'tiles' => [
                 'volunteer_hours'      => 136,
                 'upcoming_events'      => 5,
-                'unread_announcements'=> 3,
+                'unread_announcements'=> 2,
                 'latest_certificate'  => 'Youth Leadership — Verified',
             ],
             'announcements' => [
@@ -64,35 +64,35 @@ class Member extends Controller {
             ],
             'upcoming_events_list' => [
                 [
-                    'title'    => 'National Youth Conference',
-                    'date'     => 'Jun 15, 2025',
-                    'location' => 'Manila',
-                    'scope'    => 'National',
+                    'title'    => 'Gampaha Youth Leadership Workshop 2026',
+                    'date'     => 'Sep 15, 2026',
+                    'location' => 'Gampaha Town Hall',
+                    'scope'    => 'Divisional',
                     'status'   => 'Attending',
                     'status_key'=> 'attending',
                 ],
                 [
-                    'title'    => 'Divisional Skills Workshop',
-                    'date'     => 'Jun 22, 2025',
-                    'location' => 'Quezon City',
+                    'title'    => 'Divisional Skills Development Seminar',
+                    'date'     => 'Sep 22, 2026',
+                    'location' => 'Gampaha',
                     'scope'    => 'Divisional',
                     'status'   => 'Pending',
                     'status_key'=> 'pending',
                 ],
                 [
                     'title'    => 'Club Planning Session',
-                    'date'     => 'Jun 28, 2025',
-                    'location' => 'Club HQ',
+                    'date'     => 'Sep 28, 2026',
+                    'location' => 'Club Centre',
                     'scope'    => 'Club',
                     'status'   => 'Attending',
                     'status_key'=> 'attending',
                 ],
             ],
             'recent_activity' => [
-                ['label' => 'Marked attendance at Zonal Youth Summit', 'meta' => 'Yesterday, 3:45 PM', 'icon' => 'check'],
-                ['label' => 'Volunteer hours submitted for Community Clean-up Drive', 'meta' => 'Jun 9, 10:12 AM', 'icon' => 'hours'],
-                ['label' => 'RSVP’d to National Youth Conference', 'meta' => 'Jun 8, 2:00 PM', 'icon' => 'event'],
-                ['label' => 'Read announcement: New Volunteer Hour Policy', 'meta' => 'Jun 7, 9:20 AM', 'icon' => 'read'],
+                ['label' => 'Marked attendance at Divisional Youth Summit', 'meta' => 'Yesterday, 3:45 PM', 'icon' => 'check'],
+                ['label' => 'Volunteer hours submitted for Community Clean-up Drive', 'meta' => 'Sep 9, 10:12 AM', 'icon' => 'hours'],
+                ['label' => 'RSVP’d to Gampaha Youth Leadership Workshop', 'meta' => 'Sep 8, 2:00 PM', 'icon' => 'event'],
+                ['label' => 'Read announcement: New Volunteer Hour Policy', 'meta' => 'Sep 7, 9:20 AM', 'icon' => 'read'],
             ],
         ];
 
@@ -105,7 +105,7 @@ class Member extends Controller {
             'userName'                => $memberName,
             'userEmail'               => $_SESSION['user_email'] ?? '',
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
-            'unreadNotificationCount' => $memberDashboard['tiles']['unread_announcements'],
+            'unreadNotificationCount' => 2,
             'memberDashboard'         => $memberDashboard,
         ]);
     }

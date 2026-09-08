@@ -438,3 +438,89 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Shared member-pack icon sizing (stroke SVGs, see views/partials/icons.view.php) */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -3px;
+}
+
+.icon svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+/* Initials avatar (replaces missing placeholder image) */
+.profile-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--db-sidebar-bg);
+    background: #e8eefb;
+    font-size: 44px;
+    font-weight: 800;
+}
+
+/* Quick-stat and skill icons (stroke SVGs, see views/partials/icons.view.php) */
+.stat-icon {
+    color: var(--db-sidebar-bg);
+}
+
+.stat-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.skill-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    color: var(--db-sidebar-bg);
+    background: #eef3fd;
+    border-radius: 12px;
+}
+
+.skill-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.end-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    color: #fff;
+    background: var(--db-accent-orange);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .btn-share { color: var(--db-text-dark); }
+.dashboard .btn-download-pdf { color: #fff; }
+.dashboard .btn-copy { color: var(--db-sidebar-bg); }
+.dashboard .btn-download-pdf-large { color: #fff; }
+
+.verified-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.verified-badge svg,
+.timeline-marker svg {
+    width: 12px;
+    height: 12px;
+}

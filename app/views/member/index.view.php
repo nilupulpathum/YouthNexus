@@ -6,7 +6,7 @@
  * is provided by dashboard-start and dashboard-end.
  */
 $title           = $title ?? 'Member Dashboard — YouthNexus Pulse';
-$pageTitle       = $pageTitle ?? 'Welcome back, Jamie';
+$pageTitle       = $pageTitle ?? 'Welcome back';
 $pageDescription = $pageDescription ?? 'Here’s what’s happening with your activities.';
 $currentRoute    = $currentRoute ?? 'member';
 $memberDashboard = $memberDashboard ?? [];
@@ -21,6 +21,14 @@ $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 
+$activityIcons = [
+    'check' => 'check',
+    'hours' => 'clock',
+    'event' => 'calendar',
+    'read'  => 'eye',
+];
+
+require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -142,9 +150,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="member-activity-list">
                 <?php foreach ($activity as $item): ?>
                     <article class="member-activity-item">
-                        <span class="member-activity-icon member-activity-icon--<?= $escape($item['icon'] ?? 'read') ?>" aria-hidden="true">
-                            <?php if (($item['icon'] ?? '') === 'check'): ?>✓<?php elseif (($item['icon'] ?? '') === 'hours'): ?>◌<?php elseif (($item['icon'] ?? '') === 'event'): ?>↗<?php else: ?>○<?php endif; ?>
-                        </span>
+                        <span class="member-activity-icon member-activity-icon--<?= $escape($item['icon'] ?? 'read') ?>" aria-hidden="true"><?= yn_icon($activityIcons[$item['icon'] ?? 'read'] ?? 'eye') ?></span>
                         <div>
                             <h3><?= $escape($item['label'] ?? '') ?></h3>
                             <p><?= $escape($item['meta'] ?? '') ?></p>

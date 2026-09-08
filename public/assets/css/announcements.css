@@ -87,7 +87,7 @@
 }
 
 .mark-all-read-btn:hover {
-    background: var(--dashboard-blue-soft);
+    background: #eff6ff;
 }
 
 /* Main Content */
@@ -297,6 +297,21 @@
     font-size: 24px;
     cursor: pointer;
     color: var(--db-text-grey);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.popup-close:hover {
+    background: #f1f5f9;
+    color: var(--db-text-dark);
+}
+
+.popup-close svg {
+    width: 18px;
+    height: 18px;
 }
 
 .popup-meta {
@@ -401,3 +416,24 @@
         position: static;
     }
 }
+
+/* Shared member-pack icon sizing (stroke SVGs, see views/partials/icons.view.php) */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -3px;
+}
+
+.icon svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .card-footer button { color: var(--db-sidebar-bg); }
+.dashboard .card-footer .btn-mark-as-read { color: var(--db-text-grey); }
+.dashboard .btn-download { color: #fff; }
+.dashboard .btn-mark-read { color: var(--db-text-dark); }
+.dashboard .mark-all-read-btn { color: var(--db-sidebar-bg); }

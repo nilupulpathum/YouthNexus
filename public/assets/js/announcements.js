@@ -1,5 +1,8 @@
 /**
  * Announcements Interaction — W.14
+ *
+ * Detail data travels via the card's data-announcement attribute
+ * (server-escaped JSON), never through inline handlers.
  */
 
 function openAnnouncement(data) {
@@ -14,24 +17,24 @@ function openAnnouncement(data) {
     const attachmentName = document.getElementById('popup-attachment-name');
     const attachmentSize = document.getElementById('popup-attachment-size');
 
-    title.textContent = data.title;
-    scope.textContent = data.scope;
-    scope.className = 'scope-badge ' + data.scope.toLowerCase().replace(' ', '-');
-    
+    title.textContent = data.title || '';
+    scope.textContent = data.scope || '';
+    scope.className = 'scope-badge ' + String(data.scope || '').toLowerCase().replace(' ', '-');
+
     if (data.is_new) {
         newBadge.hidden = false;
     } else {
         newBadge.hidden = true;
     }
 
-    date.textContent = data.date;
-    age.textContent = data.age;
-    summary.textContent = data.summary;
+    date.textContent = data.date || '';
+    age.textContent = data.age || '';
+    summary.textContent = data.summary || '';
 
     if (data.attachment) {
         attachmentBox.hidden = false;
         attachmentName.textContent = data.attachment;
-        attachmentSize.textContent = data.attachment_size;
+        attachmentSize.textContent = data.attachment_size || '';
     } else {
         attachmentBox.hidden = true;
     }
@@ -65,5 +68,17 @@ document.addEventListener('DOMContentLoaded', () => {
             popup.hidden = true;
             document.body.style.overflow = '';
         }
+    });
+
+    // "Read More" reads the card payload — no inline handlers.
+    document.querySelectorAll('.announcement-card [data-action="view"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.announcement-card');
+            try {
+                openAnnouncement(JSON.parse(card.getAttribute('data-announcement') || '{}'));
+            } catch (err) {
+                /* malformed payload — leave popup closed */
+            }
+        });
     });
 });

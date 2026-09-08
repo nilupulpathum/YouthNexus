@@ -9,8 +9,8 @@ class Help extends Controller {
 
         $faqs = [
             [
-                'question' => 'How do I submit my volunteer hours?',
-                'answer' => 'Navigate to the "Volunteer Hours" section, fill in the activity details, upload evidence, and click "Send for Verification".'
+                'question' => 'Where can I see my volunteer hours?',
+                'answer' => 'Your verified volunteer hours are shown on your Social CV, alongside your events, skills, and certificates.'
             ],
             [
                 'question' => 'What is the Social CV?',
@@ -27,6 +27,11 @@ class Help extends Controller {
             'pageTitle' => 'Help Center',
             'pageDescription' => 'Get support and find answers to common questions.',
             'currentRoute' => 'help',
+            'userRole' => $_SESSION['user_role'] ?? 'ClubMember',
+            'userName' => trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User',
+            'userEmail' => $_SESSION['user_email'] ?? '',
+            'userInitials' => $_SESSION['user_initials'] ?? '',
+            'unreadNotificationCount' => 2,
             'faqs' => $faqs
         ];
 

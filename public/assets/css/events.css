@@ -268,8 +268,78 @@
 }
 
 /* Popup */
+.popup-content {
+    background: #fff;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    position: relative;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
 .event-popup-content {
     max-width: 650px;
+}
+
+.popup-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--db-text-grey);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.popup-close:hover {
+    background: #f1f5f9;
+    color: var(--db-text-dark);
+}
+
+.popup-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.popup-header h2 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--db-text-dark);
+    padding-right: 40px;
+}
+
+.popup-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.popup-body {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--db-text-dark);
+    margin-bottom: 32px;
+}
+
+.popup-footer {
+    display: flex;
+    gap: 12px;
+}
+
+.popup-footer .btn-participate,
+.popup-footer .btn-not-participate {
+    flex: 1;
+    justify-content: center;
+    padding: 12px;
 }
 
 .popup-countdown {
@@ -316,3 +386,22 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Shared member-pack icon sizing (stroke SVGs, see views/partials/icons.view.php) */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -3px;
+}
+
+.icon svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+/* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
+.dashboard .btn-view-details { color: #fff; }
+.dashboard .btn-participate.is-active { color: #10b981; }
+.dashboard .btn-not-participate.is-active { color: #ef4444; }
