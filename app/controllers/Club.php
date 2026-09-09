@@ -91,16 +91,18 @@ class Club extends Controller {
     }
 
     /**
-     * Club events. Approval + creation flows land in C4.
+     * Club events. C4: president approve/request-changes modal +
+     * secretary create-event form (title, date/time, location, type,
+     * budget + future-date validation). Presentation-only, no DB writes.
      */
     public function events() {
         $this->requireRoles(['president', 'secretary']);
 
         $clubEvents = [
-            ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026', 'location' => 'Gampaha Town Hall',   'status' => 'Pending Approval', 'status_key' => 'pending'],
-            ['id' => 2, 'title' => 'Community Green Environment Cleanup',    'date' => 'Sep 28, 2026', 'location' => 'Gampaha Central Park', 'status' => 'Approved',         'status_key' => 'approved'],
-            ['id' => 3, 'title' => 'Club Monthly Planning Session',          'date' => 'Oct 5, 2026',  'location' => 'Club Centre, Gampaha', 'status' => 'Approved',         'status_key' => 'approved'],
-            ['id' => 4, 'title' => 'Avurudu Celebration & Fundraiser',       'date' => 'Apr 12, 2026', 'location' => 'Club Centre, Gampaha', 'status' => 'Completed',        'status_key' => 'completed'],
+            ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026 · 9:00 AM', 'datetime' => '2026-09-15T09:00', 'location' => 'Gampaha Town Hall', 'type' => 'Workshop', 'budget' => 'Rs. 45,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Pending Approval', 'status_key' => 'pending'],
+            ['id' => 2, 'title' => 'Community Green Environment Cleanup',    'date' => 'Sep 28, 2026 · 8:00 AM', 'datetime' => '2026-09-28T08:00', 'location' => 'Gampaha Central Park', 'type' => 'Community Service', 'budget' => 'Rs. 12,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Approved',         'status_key' => 'approved'],
+            ['id' => 3, 'title' => 'Club Monthly Planning Session',          'date' => 'Oct 5, 2026 · 5:00 PM',  'datetime' => '2026-10-05T17:00', 'location' => 'Club Centre, Gampaha', 'type' => 'Meeting', 'budget' => 'Rs. 5,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Approved',         'status_key' => 'approved'],
+            ['id' => 4, 'title' => 'Avurudu Celebration & Fundraiser',       'date' => 'Apr 12, 2026 · 10:00 AM', 'datetime' => '2026-04-12T10:00', 'location' => 'Club Centre, Gampaha', 'type' => 'Fundraiser', 'budget' => 'Rs. 30,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Completed',        'status_key' => 'completed'],
         ];
 
         $data = $this->shell(
@@ -112,6 +114,7 @@ class Club extends Controller {
         $data['stats'] = ['pending' => 1, 'approved' => 2, 'completed' => 1];
         $data['clubEvents'] = $clubEvents;
         $data['can_approve'] = ($this->roleKey() === 'president');
+        $data['can_create'] = ($this->roleKey() === 'secretary');
 
         $this->view('club/events', $data);
     }
