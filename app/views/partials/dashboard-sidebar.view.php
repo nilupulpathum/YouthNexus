@@ -10,7 +10,7 @@ $roleKey = strtolower(trim((string) $userRole));
 
 $navigation = [
     'president' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Overview', 'route' => 'president', 'href' => $dashboardRoot . '/president', 'icon' => 'grid'],
         ['label' => 'My Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'user'],
         ['label' => 'Browse Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
@@ -23,7 +23,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'secretary' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Overview', 'route' => 'secretary', 'href' => $dashboardRoot . '/secretary', 'icon' => 'grid'],
         ['label' => 'My Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'user'],
         ['label' => 'Browse Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
@@ -36,7 +36,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'treasurer' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Overview', 'route' => 'treasurer', 'href' => $dashboardRoot . '/treasurer', 'icon' => 'grid'],
         ['label' => 'My Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'user'],
         ['label' => 'Browse Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],

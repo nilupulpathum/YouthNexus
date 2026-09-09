@@ -592,6 +592,83 @@ a.club-btn-secondary { text-decoration: none; }
     margin-top: 18px;
 }
 
+.club-form-footer--inline { margin-top: 0; }
+
+.club-field-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: transparent;
+    user-select: none;
+}
+
+/* C6 handover verify card + checklist */
+.club-verify-card {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 13px;
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 1px solid #e9edf5;
+    border-radius: 12px;
+}
+
+.club-verify-card[hidden] { display: none; }
+
+.club-check {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--db-sidebar-bg);
+    cursor: pointer;
+}
+
+/* C6 searchable roster dropdown */
+.club-combo { position: relative; }
+
+.club-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    padding: 6px;
+}
+
+.club-dropdown[hidden] { display: none; }
+
+.club-dropdown-option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.club-dropdown-option:hover { background: #f1f5f9; }
+
+.club-dropdown-option strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.club-dropdown-option span { font-size: 12px; }
+
+.dashboard .club-dropdown-option strong { color: var(--db-text-dark); }
+.dashboard .club-dropdown-option span { color: var(--db-text-grey); }
+
 .club-btn-primary,
 .club-btn-secondary,
 .club-btn-small {
