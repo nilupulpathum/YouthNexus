@@ -47,6 +47,7 @@ class Announcements extends Controller {
         ];
 
         $memberName = trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User';
+        $role = $_SESSION['user_role'] ?? '';
 
         $data = [
             'title' => 'Announcements — YouthNexus Pulse',
@@ -59,7 +60,9 @@ class Announcements extends Controller {
             'userInitials' => $_SESSION['user_initials'] ?? '',
             'unreadNotificationCount' => 2,
             'unreadCount' => 2,
-            'announcements' => $announcements
+            'announcements' => $announcements,
+            // C16: club presidents + secretaries can publish club announcements.
+            'can_publish' => in_array($role, ['ClubPresident', 'ClubSecretary', 'president', 'secretary'], true),
         ];
 
         $this->view('announcements/index', $data);

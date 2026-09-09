@@ -16,6 +16,9 @@ $tiles        = $memberDashboard['tiles'] ?? [];
 $announcements = $memberDashboard['announcements'] ?? [];
 $events       = $memberDashboard['upcoming_events_list'] ?? [];
 $activity     = $memberDashboard['recent_activity'] ?? [];
+$presidentSummary = $presidentSummary ?? null;
+$treasurerSummary = $treasurerSummary ?? null;
+$secretarySummary = $secretarySummary ?? null;
 
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -34,6 +37,69 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <section class="member-dashboard" aria-labelledby="member-dashboard-heading">
     <h1 id="member-dashboard-heading" class="sr-only">Member dashboard</h1>
+
+    <?php if (!empty($presidentSummary)): ?>
+        <section class="member-panel member-exec-strip" aria-label="President summary">
+            <div class="member-exec-health">
+                <p class="member-eyebrow">President summary</p>
+                <p class="member-exec-score"><?= $escape($presidentSummary['health_score'] ?? 0) ?><span>/100</span></p>
+                <span class="member-status member-status--attending"><?= $escape($presidentSummary['health_label'] ?? '') ?></span>
+            </div>
+            <div class="member-exec-pending">
+                <div>
+                    <strong><?= $escape($presidentSummary['pending_events'] ?? 0) ?></strong>
+                    <span>Event approval</span>
+                </div>
+                <div>
+                    <strong><?= $escape($presidentSummary['pending_members'] ?? 0) ?></strong>
+                    <span>Member approval</span>
+                </div>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
+        </section>
+    <?php endif; ?>
+
+    <?php if (!empty($treasurerSummary)): ?>
+        <section class="member-panel member-exec-strip" aria-label="Treasurer summary">
+            <div class="member-exec-health">
+                <p class="member-eyebrow">Treasurer summary</p>
+                <p class="member-exec-score"><?= $escape($treasurerSummary['balance'] ?? '') ?></p>
+                <span class="member-status member-status--pending"><?= $escape(($treasurerSummary['pending_voids'] ?? 0) . ' pending void') ?></span>
+            </div>
+            <div class="member-exec-pending">
+                <div>
+                    <strong><?= $escape($treasurerSummary['income'] ?? '') ?></strong>
+                    <span>Income</span>
+                </div>
+                <div>
+                    <strong><?= $escape($treasurerSummary['expenses'] ?? '') ?></strong>
+                    <span>Expenses</span>
+                </div>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/treasurer">Open treasurer overview <span aria-hidden="true">›</span></a>
+        </section>
+    <?php endif; ?>
+
+    <?php if (!empty($secretarySummary)): ?>
+        <section class="member-panel member-exec-strip" aria-label="Secretary summary">
+            <div class="member-exec-health">
+                <p class="member-eyebrow">Secretary summary</p>
+                <p class="member-exec-score"><?= $escape($secretarySummary['pending_members'] ?? 0) ?><span> + <?= $escape($secretarySummary['pending_events'] ?? 0) ?></span></p>
+                <span class="member-status member-status--pending">Queue</span>
+            </div>
+            <div class="member-exec-pending">
+                <div>
+                    <strong><?= $escape($secretarySummary['pending_members'] ?? 0) ?></strong>
+                    <span>Member approval</span>
+                </div>
+                <div>
+                    <strong><?= $escape($secretarySummary['pending_events'] ?? 0) ?></strong>
+                    <span>Event approval</span>
+                </div>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/secretary">Open secretary overview <span aria-hidden="true">›</span></a>
+        </section>
+    <?php endif; ?>
 
     <div class="member-stat-grid" aria-label="Member activity summary">
         <article class="member-stat-card member-stat-card--blue">
