@@ -114,6 +114,9 @@ class Member extends Controller {
             'treasurerSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubTreasurer', 'treasurer'], true)
                 ? ['balance' => 'Rs. 132,400', 'income' => 'Rs. 74,500', 'expenses' => 'Rs. 25,500', 'pending_voids' => 1]
                 : null,
+            'secretarySummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubSecretary', 'secretary'], true)
+                ? ['pending_members' => 1, 'pending_events' => 1]
+                : null,
         ]);
     }
 }

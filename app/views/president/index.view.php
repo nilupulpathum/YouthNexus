@@ -16,6 +16,9 @@ $health        = $health ?? [];
 $pendingEvents = $pendingEvents ?? [];
 $pendingMembers = $pendingMembers ?? [];
 $execRoster    = $execRoster ?? [];
+$announcements  = $announcements ?? [];
+$upcomingEvents = $upcomingEvents ?? [];
+$socialCv       = $socialCv ?? [];
 ?>
 
 <section class="club-page" aria-labelledby="president-overview-heading">
@@ -135,6 +138,78 @@ $execRoster    = $execRoster ?? [];
             </table>
         </div>
     </section>
+
+    <section class="member-panel" aria-labelledby="president-announcements-heading">
+        <div class="member-panel-header">
+            <div>
+                <p class="member-eyebrow">Stay informed</p>
+                <h2 id="president-announcements-heading">Announcements</h2>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/announcements">View all <span aria-hidden="true">›</span></a>
+        </div>
+
+        <div class="member-announcement-list">
+            <?php foreach ($announcements as $a): ?>
+                <article class="member-announcement-item<?= !empty($a['is_new']) ? ' is-new' : '' ?>">
+                    <span class="member-list-dot" aria-hidden="true"></span>
+                    <div class="member-list-copy">
+                        <div class="member-list-meta">
+                            <span><?= $escape($a['age'] ?? '') ?></span>
+                            <?php if (!empty($a['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?>
+                        </div>
+                        <h3><?= $escape($a['title'] ?? '') ?></h3>
+                        <p><?= $escape($a['summary'] ?? '') ?></p>
+                        <span class="member-scope-tag"><?= $escape($a['scope'] ?? '') ?></span>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="member-panel" aria-labelledby="president-events-heading">
+        <div class="member-panel-header">
+            <div>
+                <p class="member-eyebrow">Plan ahead</p>
+                <h2 id="president-events-heading">Upcoming Events</h2>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/events">View all <span aria-hidden="true">›</span></a>
+        </div>
+
+        <div class="member-event-list">
+            <?php foreach ($upcomingEvents as $e): ?>
+                <article class="member-event-item">
+                    <div class="member-event-icon" aria-hidden="true"><?= yn_icon('calendar') ?></div>
+                    <div class="member-event-copy">
+                        <div class="member-event-heading">
+                            <h3><?= $escape($e['title'] ?? '') ?></h3>
+                            <span class="member-scope-text"><?= $escape($e['scope'] ?? '') ?></span>
+                        </div>
+                        <p><?= $escape($e['date'] ?? '') ?> · <?= $escape($e['location'] ?? '') ?></p>
+                    </div>
+                    <span class="member-status member-status--<?= $escape($e['status_key'] ?? 'pending') ?>"><?= $escape($e['status'] ?? '') ?></span>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="member-panel member-exec-strip" aria-label="Social CV summary">
+        <div class="member-exec-health">
+            <p class="member-eyebrow">Social CV</p>
+            <p class="member-exec-score"><?= $escape($socialCv['volunteer_hours'] ?? 0) ?><span>h</span></p>
+            <span class="member-status member-status--attending">Verified</span>
+        </div>
+        <div class="member-exec-pending">
+            <div>
+                <strong><?= $escape($socialCv['events_count'] ?? 0) ?></strong>
+                <span>Events attended</span>
+            </div>
+            <div>
+                <strong>1</strong>
+                <span><?= $escape($socialCv['leadership'] ?? 'Leadership role') ?></span>
+            </div>
+        </div>
+        <a class="member-panel-link" href="<?= ROOT ?>/profile">Open Social CV <span aria-hidden="true">›</span></a>
+    </section>
     <div id="member-review-modal" class="popup-overlay" hidden>
         <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="mr-title">
             <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
@@ -248,5 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/member-dashboard.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
