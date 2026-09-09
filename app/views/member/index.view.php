@@ -17,6 +17,7 @@ $announcements = $memberDashboard['announcements'] ?? [];
 $events       = $memberDashboard['upcoming_events_list'] ?? [];
 $activity     = $memberDashboard['recent_activity'] ?? [];
 $presidentSummary = $presidentSummary ?? null;
+$treasurerSummary = $treasurerSummary ?? null;
 
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -37,13 +38,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="member-dashboard-heading" class="sr-only">Member dashboard</h1>
 
     <?php if (!empty($presidentSummary)): ?>
-        <section class="member-panel member-president-strip" aria-label="President summary">
-            <div class="member-president-health">
+        <section class="member-panel member-exec-strip" aria-label="President summary">
+            <div class="member-exec-health">
                 <p class="member-eyebrow">President summary</p>
-                <p class="member-president-score"><?= $escape($presidentSummary['health_score'] ?? 0) ?><span>/100</span></p>
+                <p class="member-exec-score"><?= $escape($presidentSummary['health_score'] ?? 0) ?><span>/100</span></p>
                 <span class="member-status member-status--attending"><?= $escape($presidentSummary['health_label'] ?? '') ?></span>
             </div>
-            <div class="member-president-pending">
+            <div class="member-exec-pending">
                 <div>
                     <strong><?= $escape($presidentSummary['pending_events'] ?? 0) ?></strong>
                     <span>Event approval</span>
@@ -54,6 +55,27 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
             </div>
             <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
+        </section>
+    <?php endif; ?>
+
+    <?php if (!empty($treasurerSummary)): ?>
+        <section class="member-panel member-exec-strip" aria-label="Treasurer summary">
+            <div class="member-exec-health">
+                <p class="member-eyebrow">Treasurer summary</p>
+                <p class="member-exec-score"><?= $escape($treasurerSummary['balance'] ?? '') ?></p>
+                <span class="member-status member-status--pending"><?= $escape(($treasurerSummary['pending_voids'] ?? 0) . ' pending void') ?></span>
+            </div>
+            <div class="member-exec-pending">
+                <div>
+                    <strong><?= $escape($treasurerSummary['income'] ?? '') ?></strong>
+                    <span>Income</span>
+                </div>
+                <div>
+                    <strong><?= $escape($treasurerSummary['expenses'] ?? '') ?></strong>
+                    <span>Expenses</span>
+                </div>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/treasurer">Open treasurer overview <span aria-hidden="true">›</span></a>
         </section>
     <?php endif; ?>
 

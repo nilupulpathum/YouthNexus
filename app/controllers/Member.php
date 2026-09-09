@@ -107,9 +107,12 @@ class Member extends Controller {
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
             'unreadNotificationCount' => 2,
             'memberDashboard'         => $memberDashboard,
-            // President-only summary strip (C2 data, full overview lives at /president).
+            // Exec summary strips (C2/C9 data, full overviews live at /president + /treasurer).
             'presidentSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubPresident', 'president'], true)
                 ? ['health_score' => 78, 'health_label' => 'Green', 'pending_events' => 1, 'pending_members' => 1]
+                : null,
+            'treasurerSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubTreasurer', 'treasurer'], true)
+                ? ['balance' => 'Rs. 132,400', 'income' => 'Rs. 74,500', 'expenses' => 'Rs. 25,500', 'pending_voids' => 1]
                 : null,
         ]);
     }
