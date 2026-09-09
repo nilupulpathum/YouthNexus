@@ -316,7 +316,8 @@
 }
 
 .club-field input,
-.club-field select {
+.club-field select,
+.club-field textarea {
     padding: 10px 12px;
     border: 1.5px solid var(--db-border);
     border-radius: 10px;
@@ -324,6 +325,67 @@
     font-size: 13px;
     color: var(--db-text-dark);
     background: #fff;
+}
+
+.club-field textarea { resize: vertical; min-height: 76px; }
+
+/* C4: event filters + decision panel (compose from 3.3 toolbar + 3.4 decision panel) */
+.club-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    padding: 16px 25px;
+    border-bottom: 1px solid #edf0f5;
+}
+
+.club-filter-field select {
+    padding: 9px 12px;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--db-text-dark);
+    background: #f8fafc;
+}
+
+.club-event-meta {
+    margin-top: 6px;
+    color: #7b8492;
+    font-size: 12px;
+}
+
+.club-event-side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.club-impact {
+    margin: 14px 0 0;
+    padding: 12px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    color: #1e40af;
+    font-size: 13px;
+}
+
+.club-impact strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.club-impact p { margin: 0; }
+
+.club-impact.is-reject {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #9a3412;
 }
 
 .club-form-error {
@@ -418,5 +480,7 @@
     .club-panel-header { flex-direction: column; padding: 19px 18px 16px; }
     .club-list-item { grid-template-columns: 38px minmax(0, 1fr); }
     .club-list-item .club-pill { grid-column: 2; justify-self: start; }
+    .club-event-side { grid-column: 2; justify-content: flex-start; flex-wrap: wrap; }
+    .club-filters { padding: 14px 18px; }
     .club-search input { width: 100%; }
 }
