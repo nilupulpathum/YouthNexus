@@ -128,4 +128,41 @@ class President extends Controller {
 
         $this->view('president/index', $data);
     }
+
+    /**
+     * Leadership handover (C6): successor member-ID verify (invalid →
+     * error + abort) + asset-freeze inventory checklist + president
+     * confirm → atomic demote/promote + handover log + member notify.
+     * Presentation-only: no DB writes.
+     */
+    public function handover() {
+        $this->requirePresident();
+
+        $members = [
+            ['id' => 'M-001', 'name' => 'Nuwan Bandara',    'role' => 'President', 'status' => 'Active',  'current' => true],
+            ['id' => 'M-002', 'name' => 'Amal Perera',      'role' => 'Secretary', 'status' => 'Active',  'current' => false],
+            ['id' => 'M-003', 'name' => 'Kasun Fernando',   'role' => 'Treasurer', 'status' => 'Active',  'current' => false],
+            ['id' => 'M-004', 'name' => 'Dilini Jayasuriya','role' => 'Member',    'status' => 'Active',  'current' => false],
+            ['id' => 'M-005', 'name' => 'Ruwan Silva',      'role' => 'Member',    'status' => 'Active',  'current' => false],
+            ['id' => 'M-006', 'name' => 'Sanduni Wickrama', 'role' => 'Member',    'status' => 'Pending', 'current' => false],
+        ];
+
+        $freezeAssets = [
+            ['serial' => 'AST-2024-001', 'name' => 'Sound System (Portable PA)', 'custodian' => 'Club Centre'],
+            ['serial' => 'AST-2024-002', 'name' => 'Multimedia Projector',       'custodian' => 'Club Centre'],
+            ['serial' => 'AST-2025-003', 'name' => 'Cricket Gear Set',           'custodian' => 'Ruwan Silva'],
+            ['serial' => 'AST-2025-004', 'name' => 'First-Aid Kit',              'custodian' => 'Club Centre'],
+        ];
+
+        $data = $this->shell(
+            'Leadership Handover — YouthNexus Pulse',
+            'Leadership Handover',
+            'Transfer the presidency of Gampaha Youth Development Club.',
+            'president/handover'
+        );
+        $data['members'] = $members;
+        $data['freezeAssets'] = $freezeAssets;
+
+        $this->view('president/handover', $data);
+    }
 }

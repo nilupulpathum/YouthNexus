@@ -115,6 +115,7 @@ $socialCv       = $socialCv ?? [];
                 <p class="club-eyebrow">Gampaha Youth Development Club</p>
                 <h2 id="president-exec-heading">Executive Roster</h2>
             </div>
+            <a class="club-btn-secondary" href="<?= ROOT ?>/president/handover">Initiate handover</a>
         </div>
 
         <div class="club-table-wrap">
