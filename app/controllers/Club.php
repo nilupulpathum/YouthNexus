@@ -197,6 +197,13 @@ class Club extends Controller {
         $data['assets'] = $assets;
         $data['can_transfer'] = ($this->roleKey() === 'treasurer');
         $data['can_register'] = ($this->roleKey() === 'secretary');
+        $data['can_request'] = ($this->roleKey() === 'treasurer');
+        // Outbox for division requests (C18). Payload shape is the contract
+        // the division developer consumes later (see C13): item, category,
+        // quantity, justification, club, requested_by, date, status.
+        $data['divisionRequests'] = [
+            ['item' => 'Volleyball net', 'category' => 'Sports', 'quantity' => 2, 'justification' => 'Inter-club tournament, Sep 2026', 'date' => 'Sep 5, 2026', 'status' => 'Pending', 'status_key' => 'pending'],
+        ];
 
         $this->view('club/assets', $data);
     }
@@ -208,10 +215,10 @@ class Club extends Controller {
         $this->requireRoles(['president', 'treasurer']);
 
         $transactions = [
-            ['id' => 1, 'date' => 'Sep 2, 2026',  'description' => 'Membership drive collections', 'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 24,500',  'balance' => 'Rs. 132,400', 'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 2, 'date' => 'Aug 28, 2026', 'description' => 'Sports equipment purchase',    'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 18,000',  'balance' => 'Rs. 107,900', 'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 3, 'date' => 'Aug 15, 2026', 'description' => 'Divisional grant received',    'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 50,000',  'balance' => 'Rs. 125,900', 'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 4, 'date' => 'Aug 9, 2026',  'description' => 'Venue hire for seminar',       'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 7,500',   'balance' => 'Rs. 75,900',  'status' => 'Pending Void',  'status_key' => 'pending-void'],
+            ['id' => 1, 'date' => 'Sep 2, 2026',  'description' => 'Membership drive collections', 'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 24,500',  'balance' => 'Rs. 132,400', 'receipt' => 'receipt-sep-drive.txt',  'status' => 'Verified', 'status_key' => 'verified'],
+            ['id' => 2, 'date' => 'Aug 28, 2026', 'description' => 'Sports equipment purchase',    'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 18,000',  'balance' => 'Rs. 107,900', 'receipt' => 'receipt-sports-gear.txt', 'status' => 'Verified', 'status_key' => 'verified'],
+            ['id' => 3, 'date' => 'Aug 15, 2026', 'description' => 'Divisional grant received',    'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 50,000',  'balance' => 'Rs. 125,900', 'receipt' => 'receipt-div-grant.txt',   'status' => 'Verified', 'status_key' => 'verified'],
+            ['id' => 4, 'date' => 'Aug 9, 2026',  'description' => 'Venue hire for seminar',       'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 7,500',   'balance' => 'Rs. 75,900',  'receipt' => 'venue-quote-aug.txt',     'status' => 'Pending Void',  'status_key' => 'pending-void'],
         ];
 
         $data = $this->shell(

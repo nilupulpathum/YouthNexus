@@ -18,8 +18,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $stats         = $stats ?? [];
 $assets        = $assets ?? [];
+$divisionRequests = $divisionRequests ?? [];
 $can_transfer  = !empty($can_transfer);
 $can_register  = !empty($can_register);
+$can_request   = !empty($can_request);
 $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jayasuriya', 'Ruwan Silva'];
 ?>
 
@@ -53,6 +55,9 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
             </div>
             <?php if ($can_register): ?>
                 <button type="button" class="club-btn-primary" id="club-asset-open">Register Asset</button>
+            <?php endif; ?>
+            <?php if ($can_request): ?>
+                <button type="button" class="club-btn-secondary" id="club-request-open">Request from Division</button>
             <?php endif; ?>
         </div>
 
@@ -117,7 +122,55 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                             <td><?= $escape($a['valuation'] ?? '') ?></td>
                             <td><?= $escape($a['custodian'] ?? '') ?></td>
                             <td><span class="club-pill club-pill--<?= $escape($a['status_key'] ?? 'available') ?>"><?= $escape($a['status'] ?? '') ?></span></td>
-                            <?php if ($can_transfer): ?>
+<?php if ($can_request): ?>
+    <div id="club-request-modal" class="popup-overlay" hidden>
+        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="req-modal-title">
+            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
+            <p class="club-eyebrow">Treasurer action</p>
+            <h2 id="req-modal-title">Request from Division</h2>
+            <p class="club-sub-note">Requests land in the division queue as Pending. The division side is built separately.</p>
+            <form id="club-request-form" class="club-form" novalidate>
+                <div class="club-form-grid">
+                    <div class="club-field">
+                        <label for="req-category">Category</label>
+                        <select id="req-category" required>
+                            <option value="">Select category...</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Audio Video Equipments">Audio Video Equipments</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="Official Equipments">Official Equipments</option>
+                        </select>
+                    </div>
+                    <div class="club-field">
+                        <label for="req-item">Item</label>
+                        <select id="req-item" required>
+                            <option value="">Select a category first...</option>
+                        </select>
+                    </div>
+                    <div class="club-field">
+                        <label for="req-qty">Quantity</label>
+                        <input id="req-qty" type="number" required min="1" step="1" placeholder="e.g., 2">
+                    </div>
+                    <div class="club-field">
+                        <label for="req-date">Needed by</label>
+                        <input id="req-date" type="date" required>
+                    </div>
+                    <div class="club-field club-field--full">
+                        <label for="req-just">Justification / event</label>
+                        <textarea id="req-just" rows="3" required maxlength="500" placeholder="Why does the club need this, and for which event?"></textarea>
+                    </div>
+                </div>
+                <p id="req-error" class="club-form-error" hidden></p>
+                <div class="club-modal-footer">
+                    <button type="button" class="club-btn-secondary" data-close>Cancel</button>
+                    <button type="submit" class="club-btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($can_transfer): ?>
                                 <td>
                                     <?php if (($a['status_key'] ?? '') === 'available'): ?>
                                         <button type="button" class="club-btn-small" data-action="transfer">Transfer</button>
@@ -131,6 +184,45 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
         </div>
         <p id="club-asset-empty" class="club-note" hidden>No assets match these filters.</p>
     </section>
+
+    <?php if ($can_request): ?>
+        <section class="club-panel" aria-labelledby="club-requests-heading">
+            <div class="club-panel-header">
+                <div>
+                    <p class="club-eyebrow">Division queue (read-only copy)</p>
+                    <h2 id="club-requests-heading">My Requests</h2>
+                </div>
+            </div>
+
+            <div class="club-table-wrap">
+                <table class="club-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Qty</th>
+                            <th>Justification</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="club-request-body">
+                        <?php foreach ($divisionRequests as $r): ?>
+                            <tr>
+                                <td><strong><?= $escape($r['item'] ?? '') ?></strong></td>
+                                <td><?= $escape($r['category'] ?? '') ?></td>
+                                <td><?= $escape($r['quantity'] ?? '') ?></td>
+                                <td><?= $escape($r['justification'] ?? '') ?></td>
+                                <td><?= $escape($r['date'] ?? '') ?></td>
+                                <td><span class="club-pill club-pill--<?= $escape($r['status_key'] ?? 'pending') ?>"><?= $escape($r['status'] ?? '') ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <p class="club-note">Requests are decided in the division queue, which is built by the division developer.</p>
+        </section>
+    <?php endif; ?>
 </section>
 
 <?php if ($can_register): ?>
@@ -409,6 +501,90 @@ document.addEventListener('DOMContentLoaded', () => {
             close();
             applyFilters();
             showToast('Custody transferred to ' + custodianSel.value + ' — history logged (demo).');
+        });
+    }
+
+    // Request-from-Division flow (treasurer; division side excluded — intent + outbox only).
+    const reqOpen = document.getElementById('club-request-open');
+    const reqModal = document.getElementById('club-request-modal');
+    const reqForm = document.getElementById('club-request-form');
+    if (reqOpen && reqModal && reqForm) {
+        const CATALOG = {
+            'Sports': ['Cricket bat', 'Cricket ball', 'Volleyball net', 'Volleyball', 'Sports shoes'],
+            'Audio Video Equipments': ['PA system', 'Loudspeakers', 'Microphones'],
+            'Cleaning': ['Mamoty', 'Paint roller set'],
+            'Official Equipments': ['Office chairs', 'Filing cabinet', 'Notice board'],
+        };
+        const catSel = document.getElementById('req-category');
+        const itemSel = document.getElementById('req-item');
+        const err = document.getElementById('req-error');
+        const reqBody = document.getElementById('club-request-body');
+
+        const open = () => {
+            reqForm.reset();
+            itemSel.textContent = '';
+            const ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = 'Select a category first...';
+            itemSel.appendChild(ph);
+            err.hidden = true;
+            reqModal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        };
+        const closeReq = () => { reqModal.hidden = true; document.body.style.overflow = ''; };
+        reqOpen.addEventListener('click', open);
+        reqModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeReq));
+        reqModal.addEventListener('click', (e) => { if (e.target === reqModal) closeReq(); });
+
+        catSel.addEventListener('change', () => {
+            itemSel.textContent = '';
+            (CATALOG[catSel.value] || []).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                itemSel.appendChild(opt);
+            });
+            if (!itemSel.children.length) {
+                const ph = document.createElement('option');
+                ph.value = '';
+                ph.textContent = 'Select a category first...';
+                itemSel.appendChild(ph);
+            }
+        });
+
+        reqForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const category = catSel.value;
+            const item = itemSel.value;
+            const qtyVal = document.getElementById('req-qty').value.trim();
+            const dateVal = document.getElementById('req-date').value;
+            const just = document.getElementById('req-just').value.trim();
+            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            err.hidden = true;
+            if (!category || !item || !qtyVal || !dateVal || !just) return fail('All fields are required.');
+            const qty = Number(qtyVal);
+            if (!isFinite(qty) || qty < 1) return fail('Quantity must be at least 1.');
+            const nice = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const row = document.createElement('tr');
+            const itemTd = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = item;
+            itemTd.appendChild(strong);
+            row.appendChild(itemTd);
+            [category, String(Math.round(qty)), just, nice].forEach(text => {
+                const td = document.createElement('td');
+                td.textContent = text;
+                row.appendChild(td);
+            });
+            const statusTd = document.createElement('td');
+            const pill = document.createElement('span');
+            pill.className = 'club-pill club-pill--pending';
+            pill.textContent = 'Pending';
+            statusTd.appendChild(pill);
+            row.appendChild(statusTd);
+            reqBody.prepend(row);
+            closeReq();
+            showToast(item + ' requested — sent to the division queue (demo).');
         });
     }
 });

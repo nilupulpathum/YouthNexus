@@ -84,6 +84,7 @@ $can_log      = !empty($can_log);
                         <th>Type</th>
                         <th>Amount</th>
                         <th>Balance</th>
+                        <th>Receipt</th>
                         <th>Status</th>
                         <?php if ($can_log): ?>
                             <th>Action</th>
@@ -101,6 +102,19 @@ $can_log      = !empty($can_log);
                             <td><span class="club-pill club-pill--<?= $escape($t['type_key'] ?? 'income') ?>"><?= $escape($t['type'] ?? '') ?></span></td>
                             <td><?= $escape($t['amount'] ?? '') ?></td>
                             <td><?= $escape($t['balance'] ?? '') ?></td>
+                            <td>
+                                <?php if (!empty($t['receipt'])): ?>
+                                    <button type="button" class="club-btn-small" data-action="receipt"
+                                        data-file="<?= $escape($t['receipt']) ?>"
+                                        data-desc="<?= $escape($t['description'] ?? '') ?>"
+                                        data-amount="<?= $escape($t['amount'] ?? '') ?>"
+                                        data-date="<?= $escape($t['date'] ?? '') ?>"
+                                        data-status="<?= $escape($t['status'] ?? '') ?>"
+                                        title="Download <?= $escape($t['receipt']) ?>" aria-label="Download receipt"><?= yn_icon('download') ?></button>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
                             <td><span class="club-pill club-pill--<?= $escape($t['status_key'] ?? 'verified') ?>"><?= $escape($t['status'] ?? '') ?></span></td>
                             <?php if ($can_log): ?>
                                 <td>
@@ -304,6 +318,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const c2 = document.createElement('td'); c2.appendChild(pillFor(type.toLowerCase(), type)); row.appendChild(c2);
             const c3 = document.createElement('td'); c3.textContent = fmtRs(amount); row.appendChild(c3);
             const c4 = document.createElement('td'); c4.textContent = fmtRs(next); row.appendChild(c4);
+            const c4b = document.createElement('td');
+            const dlBtn = document.createElement('button');
+            dlBtn.type = 'button';
+            dlBtn.className = 'club-btn-small';
+            dlBtn.setAttribute('title', 'Download ' + receipt.files[0].name);
+            dlBtn.setAttribute('aria-label', 'Download receipt');
+            const firstDl = body.querySelector('[data-action="receipt"]');
+            if (firstDl) dlBtn.innerHTML = firstDl.innerHTML;
+            else dlBtn.textContent = 'Download';
+            const fileUrl = URL.createObjectURL(receipt.files[0]);
+            const fileName = receipt.files[0].name;
+            dlBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = fileUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showToast(fileName + ' downloaded (demo).');
+            });
+            c4b.appendChild(dlBtn);
+            row.appendChild(c4b);
             const c5 = document.createElement('td'); c5.appendChild(pillFor('verified', 'Verified')); row.appendChild(c5);
             const c6 = document.createElement('td');
             const voidBtn = document.createElement('button');
@@ -320,6 +356,30 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(desc + ' logged — balance updated (demo — persists in C13 backend).');
         });
     }
+
+    // Demo receipt downloads (mock rows serve a generated demo file;
+    // real files land with the C13 backend).
+    body.querySelectorAll('[data-action="receipt"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lines = [
+                'YouthNexus — demo receipt',
+                'Transaction: ' + (btn.getAttribute('data-desc') || ''),
+                'Amount: ' + (btn.getAttribute('data-amount') || ''),
+                'Date: ' + (btn.getAttribute('data-date') || ''),
+                'Status: ' + (btn.getAttribute('data-status') || ''),
+                '',
+                '(Demo file — real receipts land in C13 backend.)',
+            ];
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = btn.getAttribute('data-file') || 'receipt.txt';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast((btn.getAttribute('data-file') || 'Receipt') + ' downloaded (demo).');
+        });
+    });
 
     // Request-void modal (treasurer → Divisional Treasurer).
     const voidModal = document.getElementById('club-void-modal');
@@ -355,7 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (target) {
                 target.setAttribute('data-status', 'pending-void');
-                const statusCell = target.children[5];
+                const statusCell = target.children[6];
                 statusCell.textContent = '';
                 statusCell.appendChild(pillFor('pending-void', 'Pending Void'));
                 const btn = target.querySelector('[data-action="void"]');
