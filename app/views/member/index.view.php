@@ -37,14 +37,23 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="member-dashboard-heading" class="sr-only">Member dashboard</h1>
 
     <?php if (!empty($presidentSummary)): ?>
-        <section class="member-panel" aria-labelledby="president-strip-heading">
-            <div class="member-panel-header">
-                <div>
-                    <p class="member-eyebrow">President summary</p>
-                    <h2 id="president-strip-heading">Health <?= $escape($presidentSummary['health_score'] ?? 0) ?>/100 (<?= $escape($presidentSummary['health_label'] ?? '') ?>) · <?= $escape($presidentSummary['pending_events'] ?? 0) ?> event and <?= $escape($presidentSummary['pending_members'] ?? 0) ?> member approval pending</h2>
-                </div>
-                <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
+        <section class="member-panel member-president-strip" aria-label="President summary">
+            <div class="member-president-health">
+                <p class="member-eyebrow">President summary</p>
+                <p class="member-president-score"><?= $escape($presidentSummary['health_score'] ?? 0) ?><span>/100</span></p>
+                <span class="member-status member-status--attending"><?= $escape($presidentSummary['health_label'] ?? '') ?></span>
             </div>
+            <div class="member-president-pending">
+                <div>
+                    <strong><?= $escape($presidentSummary['pending_events'] ?? 0) ?></strong>
+                    <span>Event approval</span>
+                </div>
+                <div>
+                    <strong><?= $escape($presidentSummary['pending_members'] ?? 0) ?></strong>
+                    <span>Member approval</span>
+                </div>
+            </div>
+            <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
         </section>
     <?php endif; ?>
 
