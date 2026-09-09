@@ -76,7 +76,8 @@ $existing_nics = $existing_nics ?? [];
                         <tr data-search="<?= $escape(strtolower(($m['name'] ?? '') . ' ' . ($m['role'] ?? '') . ' ' . ($m['email'] ?? ''))) ?>"
                             data-name="<?= $escape($m['name'] ?? '') ?>"
                             data-role="<?= $escape($m['role'] ?? '') ?>"
-                            data-email="<?= $escape($m['email'] ?? '') ?>">
+                            data-email="<?= $escape($m['email'] ?? '') ?>"
+                            data-status="<?= $escape($m['status_key'] ?? 'active') ?>">
                             <td><strong><?= $escape($m['name'] ?? '') ?></strong></td>
                             <td><?= $escape($m['role'] ?? '') ?></td>
                             <td><?= $escape($m['email'] ?? '') ?></td>
@@ -84,7 +85,13 @@ $existing_nics = $existing_nics ?? [];
                             <td><?= $escape($m['joined'] ?? '') ?></td>
                             <td><span class="club-pill club-pill--<?= $escape($m['status_key'] ?? 'active') ?>"><?= $escape($m['status'] ?? '') ?></span></td>
                             <?php if ($can_manage): ?>
-                                <td><button type="button" class="club-btn-small" data-action="assign">Assign role</button></td>
+                                <td>
+                                    <?php if (($m['status_key'] ?? '') === 'pending'): ?>
+                                        <button type="button" class="club-btn-small" data-action="approve">Approve</button>
+                                    <?php else: ?>
+                                        <button type="button" class="club-btn-small" data-action="assign">Assign role</button>
+                                    <?php endif; ?>
+                                </td>
                             <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
@@ -101,7 +108,7 @@ $existing_nics = $existing_nics ?? [];
             <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
             <p class="club-eyebrow">Secretary action</p>
             <h2 id="reg-modal-title">Register Member</h2>
-            <p class="club-sub-note">New members join as General Member. NIC and email must be unique.</p>
+            <p class="club-sub-note">New members join as General Member once the president approves. NIC and email must be unique.</p>
             <form id="club-register-form" class="club-form" novalidate>
                 <div class="club-form-grid">
                     <div class="club-field">
@@ -210,16 +217,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        body.querySelectorAll('[data-action="assign"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                targetRow = btn.closest('tr');
-                memberEl.textContent = targetRow.getAttribute('data-name') || '';
-                currentEl.textContent = targetRow.getAttribute('data-role') || '';
-                refreshWarning();
-                modal.hidden = false;
-                document.body.style.overflow = 'hidden';
-            });
-        });
+        const openAssign = (btn) => {
+            targetRow = btn.closest('tr');
+            memberEl.textContent = targetRow.getAttribute('data-name') || '';
+            currentEl.textContent = targetRow.getAttribute('data-role') || '';
+            refreshWarning();
+            modal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        };
+        const bindAssign = (btn) => btn.addEventListener('click', () => openAssign(btn));
+        body.querySelectorAll('[data-action="assign"]').forEach(bindAssign);
 
         roleSel.addEventListener('change', refreshWarning);
 
@@ -234,6 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             close();
             showToast('Role assignment recorded (demo — persists in C13 backend).');
+        });
+
+        // Approve-member action (president approves secretary registrations).
+        body.querySelectorAll('[data-action="approve"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                const who = row.getAttribute('data-name') || 'Member';
+                row.setAttribute('data-status', 'active');
+                row.setAttribute('data-role', 'Member');
+                row.children[1].textContent = 'Member';
+                const pill = row.querySelector('.club-pill');
+                if (pill) { pill.textContent = 'Active'; pill.className = 'club-pill club-pill--active'; }
+                const assignBtn = document.createElement('button');
+                assignBtn.type = 'button';
+                assignBtn.className = 'club-btn-small';
+                assignBtn.setAttribute('data-action', 'assign');
+                assignBtn.textContent = 'Assign role';
+                btn.replaceWith(assignBtn);
+                bindAssign(assignBtn);
+                showToast(who + ' approved as General Member (demo — persists in C13 backend).');
+            });
         });
     }
 
@@ -269,8 +297,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const dupEmail = Array.from(body.querySelectorAll('tr'))
                 .some(r => (r.getAttribute('data-email') || '').toLowerCase() === email.toLowerCase());
             if (dupEmail) return fail('This email is already registered — back to the form.');
+            const row = document.createElement('tr');
+            row.setAttribute('data-search', (name + ' Member ' + email).toLowerCase());
+            row.setAttribute('data-name', name);
+            row.setAttribute('data-role', 'Member');
+            row.setAttribute('data-email', email);
+            row.setAttribute('data-status', 'pending');
+            const nameTd = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = name;
+            nameTd.appendChild(strong);
+            row.appendChild(nameTd);
+            [ 'Member', email, phone, 'Just now' ].forEach(text => {
+                const td = document.createElement('td');
+                td.textContent = text;
+                row.appendChild(td);
+            });
+            const statusTd = document.createElement('td');
+            const pill = document.createElement('span');
+            pill.className = 'club-pill club-pill--pending';
+            pill.textContent = 'Pending';
+            statusTd.appendChild(pill);
+            row.appendChild(statusTd);
+            body.prepend(row);
             close();
-            showToast(name + ' registered as General Member (demo — persists in C13 backend).');
+            showToast(name + ' added — awaiting president approval (demo).');
         });
     }
 });
