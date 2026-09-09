@@ -44,11 +44,16 @@ $existing_nics = $existing_nics ?? [];
                 <p class="club-eyebrow">Gampaha Youth Development Club</p>
                 <h2 id="club-roster-heading">Member Roster</h2>
             </div>
-            <label class="club-search" for="club-member-search">
-                <span class="icon"><?= yn_icon('eye') ?></span>
-                <span class="sr-only">Search roster</span>
-                <input id="club-member-search" type="search" placeholder="Search name, role, email..." autocomplete="off">
-            </label>
+            <div class="club-header-actions">
+                <label class="club-search" for="club-member-search">
+                    <span class="icon"><?= yn_icon('eye') ?></span>
+                    <span class="sr-only">Search roster</span>
+                    <input id="club-member-search" type="search" placeholder="Search name, role, email..." autocomplete="off">
+                </label>
+                <?php if ($can_register): ?>
+                    <button type="button" class="club-btn-primary" id="club-register-open">Register Member</button>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="club-table-wrap">
@@ -87,46 +92,48 @@ $existing_nics = $existing_nics ?? [];
             </table>
         </div>
 
-        <?php if ($can_register): ?>
-            <div class="club-divider" aria-hidden="true"></div>
-            <div class="club-panel-sub" aria-labelledby="club-register-heading">
-                <div>
-                    <p class="club-eyebrow">Secretary action</p>
-                    <h2 id="club-register-heading">Register Member</h2>
-                    <p class="club-sub-note">New members join as General Member. NIC and email must be unique.</p>
-                </div>
-                <form id="club-register-form" class="club-form" novalidate>
-                    <div class="club-form-grid">
-                        <div class="club-field">
-                            <label for="reg-name">Full name</label>
-                            <input id="reg-name" name="name" type="text" required autocomplete="off">
-                        </div>
-                        <div class="club-field">
-                            <label for="reg-nic">NIC</label>
-                            <input id="reg-nic" name="nic" type="text" required autocomplete="off">
-                        </div>
-                        <div class="club-field">
-                            <label for="reg-email">Email</label>
-                            <input id="reg-email" name="email" type="email" required autocomplete="off">
-                        </div>
-                        <div class="club-field">
-                            <label for="reg-phone">Phone</label>
-                            <input id="reg-phone" name="phone" type="tel" required autocomplete="off">
-                        </div>
-                        <div class="club-field club-field--full">
-                            <label for="reg-address">Address</label>
-                            <input id="reg-address" name="address" type="text" required autocomplete="off">
-                        </div>
-                    </div>
-                    <p id="reg-error" class="club-form-error" hidden></p>
-                    <div class="club-form-footer">
-                        <button type="submit" class="club-btn-primary">Register as General Member</button>
-                    </div>
-                </form>
-            </div>
-        <?php endif; ?>
     </section>
 </section>
+
+<?php if ($can_register): ?>
+    <div id="club-register-modal" class="popup-overlay" hidden>
+        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="reg-modal-title">
+            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
+            <p class="club-eyebrow">Secretary action</p>
+            <h2 id="reg-modal-title">Register Member</h2>
+            <p class="club-sub-note">New members join as General Member. NIC and email must be unique.</p>
+            <form id="club-register-form" class="club-form" novalidate>
+                <div class="club-form-grid">
+                    <div class="club-field">
+                        <label for="reg-name">Full name</label>
+                        <input id="reg-name" name="name" type="text" required autocomplete="off">
+                    </div>
+                    <div class="club-field">
+                        <label for="reg-nic">NIC</label>
+                        <input id="reg-nic" name="nic" type="text" required autocomplete="off">
+                    </div>
+                    <div class="club-field">
+                        <label for="reg-email">Email</label>
+                        <input id="reg-email" name="email" type="email" required autocomplete="off">
+                    </div>
+                    <div class="club-field">
+                        <label for="reg-phone">Phone</label>
+                        <input id="reg-phone" name="phone" type="tel" required autocomplete="off">
+                    </div>
+                    <div class="club-field club-field--full">
+                        <label for="reg-address">Address</label>
+                        <input id="reg-address" name="address" type="text" required autocomplete="off">
+                    </div>
+                </div>
+                <p id="reg-error" class="club-form-error" hidden></p>
+                <div class="club-modal-footer">
+                    <button type="button" class="club-btn-secondary" data-close>Cancel</button>
+                    <button type="submit" class="club-btn-primary">Register Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
 
 <?php if ($can_manage): ?>
     <div id="assign-modal" class="popup-overlay" hidden>
@@ -230,11 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Register-member form (secretary).
+    // Register-member modal (secretary).
+    const regOpen = document.getElementById('club-register-open');
+    const regModal = document.getElementById('club-register-modal');
     const form = document.getElementById('club-register-form');
-    if (form && body) {
+    if (regOpen && regModal && form && body) {
         const err = document.getElementById('reg-error');
         const existingNics = <?= json_encode(array_values($existing_nics)) ?>;
+        const open = () => {
+            form.reset();
+            err.hidden = true;
+            regModal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        };
+        const close = () => { regModal.hidden = true; document.body.style.overflow = ''; };
+        regOpen.addEventListener('click', open);
+        regModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+        regModal.addEventListener('click', (e) => { if (e.target === regModal) close(); });
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -250,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dupEmail = Array.from(body.querySelectorAll('tr'))
                 .some(r => (r.getAttribute('data-email') || '').toLowerCase() === email.toLowerCase());
             if (dupEmail) return fail('This email is already registered — back to the form.');
-            form.reset();
+            close();
             showToast(name + ' registered as General Member (demo — persists in C13 backend).');
         });
     }
