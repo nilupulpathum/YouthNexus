@@ -16,6 +16,7 @@ $tiles        = $memberDashboard['tiles'] ?? [];
 $announcements = $memberDashboard['announcements'] ?? [];
 $events       = $memberDashboard['upcoming_events_list'] ?? [];
 $activity     = $memberDashboard['recent_activity'] ?? [];
+$presidentSummary = $presidentSummary ?? null;
 
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -34,6 +35,18 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <section class="member-dashboard" aria-labelledby="member-dashboard-heading">
     <h1 id="member-dashboard-heading" class="sr-only">Member dashboard</h1>
+
+    <?php if (!empty($presidentSummary)): ?>
+        <section class="member-panel" aria-labelledby="president-strip-heading">
+            <div class="member-panel-header">
+                <div>
+                    <p class="member-eyebrow">President summary</p>
+                    <h2 id="president-strip-heading">Health <?= $escape($presidentSummary['health_score'] ?? 0) ?>/100 (<?= $escape($presidentSummary['health_label'] ?? '') ?>) · <?= $escape($presidentSummary['pending_events'] ?? 0) ?> event and <?= $escape($presidentSummary['pending_members'] ?? 0) ?> member approval pending</h2>
+                </div>
+                <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <div class="member-stat-grid" aria-label="Member activity summary">
         <article class="member-stat-card member-stat-card--blue">
