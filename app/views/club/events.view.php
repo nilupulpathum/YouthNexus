@@ -97,6 +97,9 @@ $can_create  = !empty($can_create);
                         <?php if ($can_approve && (($e['status_key'] ?? '') === 'pending')): ?>
                             <button type="button" class="club-btn-small" data-action="review">Review</button>
                         <?php endif; ?>
+                        <?php if ($can_create && (($e['status_key'] ?? '') === 'approved')): ?>
+                            <button type="button" class="club-btn-small" data-action="complete">Mark complete</button>
+                        <?php endif; ?>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -159,6 +162,35 @@ $can_create  = !empty($can_create);
                     <button type="submit" class="club-btn-primary">Create Event</button>
                 </div>
             </form>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($can_create): ?>
+    <div id="club-complete-modal" class="popup-overlay" hidden>
+        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="cp-title">
+            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
+            <p class="club-eyebrow">Secretary action</p>
+            <h2 id="cp-title">Mark Event Complete</h2>
+            <p id="cp-meta" class="club-sub-note"></p>
+            <div class="club-field">
+                <label for="cp-sheet">Attendance sheet (required)</label>
+                <input id="cp-sheet" type="file" accept=".csv,.xls,.xlsx,.pdf,image/*">
+            </div>
+            <div class="club-field">
+                <label for="cp-photos">Event photos (optional)</label>
+                <input id="cp-photos" type="file" accept="image/*" multiple>
+            </div>
+            <p id="cp-files" class="club-sub-note" hidden></p>
+            <p id="cp-error" class="club-form-error" hidden></p>
+            <div class="club-impact" role="note">
+                <strong>What happens next</strong>
+                <p>Completed events with evidence go to the Zonal Coordinator for verification, and feed the Events slice of the club health score.</p>
+            </div>
+            <div class="club-modal-footer">
+                <button type="button" class="club-btn-secondary" data-close>Cancel</button>
+                <button type="button" class="club-btn-primary" id="cp-confirm">Submit for verification</button>
+            </div>
         </div>
     </div>
 <?php endif; ?>
@@ -399,6 +431,74 @@ document.addEventListener('DOMContentLoaded', () => {
             close();
             applyFilters();
             showToast(title + ' submitted for approval (demo — persists in C13 backend).');
+        });
+    }
+
+    // Mark-complete + evidence modal (secretary sends approved events for verification).
+    const cpModal = document.getElementById('club-complete-modal');
+    if (cpModal && list) {
+        const metaEl = document.getElementById('cp-meta');
+        const sheet = document.getElementById('cp-sheet');
+        const photos = document.getElementById('cp-photos');
+        const filesNote = document.getElementById('cp-files');
+        const err = document.getElementById('cp-error');
+        const confirmBtn = document.getElementById('cp-confirm');
+        let target = null;
+
+        const closeCp = () => { cpModal.hidden = true; document.body.style.overflow = ''; };
+        cpModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeCp));
+        cpModal.addEventListener('click', (e) => { if (e.target === cpModal) closeCp(); });
+
+        const refreshFiles = () => {
+            const names = [];
+            if (sheet.files.length) names.push('Sheet: ' + sheet.files[0].name);
+            if (photos.files.length) names.push(photos.files.length + ' photo' + (photos.files.length === 1 ? '' : 's'));
+            if (names.length) {
+                filesNote.textContent = names.join(' · ');
+                filesNote.hidden = false;
+            } else {
+                filesNote.hidden = true;
+            }
+        };
+        sheet.addEventListener('change', refreshFiles);
+        photos.addEventListener('change', refreshFiles);
+
+        list.querySelectorAll('[data-action="complete"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                target = btn.closest('.club-event-item');
+                metaEl.textContent = target.getAttribute('data-title') || '';
+                sheet.value = '';
+                photos.value = '';
+                filesNote.hidden = true;
+                err.hidden = true;
+                cpModal.hidden = false;
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            if (!sheet.files.length) {
+                err.textContent = 'Attach the attendance sheet — evidence is required to complete an event.';
+                err.hidden = false;
+                sheet.focus();
+                return;
+            }
+            const who = target ? (target.getAttribute('data-title') || 'Event') : 'Event';
+            if (target) {
+                target.setAttribute('data-status', 'completed');
+                const pill = target.querySelector('.club-pill');
+                if (pill) { pill.textContent = 'Completed'; pill.className = 'club-pill club-pill--completed'; }
+                const btn = target.querySelector('[data-action="complete"]');
+                if (btn) btn.remove();
+                const tiles = document.querySelectorAll('.club-stat-grid .club-stat-value');
+                if (tiles.length >= 3) {
+                    tiles[1].textContent = String(Math.max(0, (parseInt(tiles[1].textContent, 10) || 0) - 1));
+                    tiles[2].textContent = String((parseInt(tiles[2].textContent, 10) || 0) + 1);
+                }
+            }
+            closeCp();
+            applyFilters();
+            showToast(who + ' marked complete — sent for verification (demo).');
         });
     }
 });

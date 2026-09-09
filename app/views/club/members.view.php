@@ -1,6 +1,8 @@
 <?php
 /**
- * Club Members — C1 shell. Role assignment + registration flows land in C3.
+ * Club Members — roster + search/role/status filters; president assign-role
+ * modal + member review modal; secretary register-member modal.
+ * Presentation-only: no DB writes; backend contract lands in C13.
  */
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
