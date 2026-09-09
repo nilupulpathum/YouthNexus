@@ -50,6 +50,24 @@ $existing_nics = $existing_nics ?? [];
                     <span class="sr-only">Search roster</span>
                     <input id="club-member-search" type="search" placeholder="Search name, role, email..." autocomplete="off">
                 </label>
+                <label class="club-filter-field">
+                    <span class="sr-only">Filter by role</span>
+                    <select id="club-member-role">
+                        <option value="">All roles</option>
+                        <option value="president">President</option>
+                        <option value="secretary">Secretary</option>
+                        <option value="treasurer">Treasurer</option>
+                        <option value="member">Member</option>
+                    </select>
+                </label>
+                <label class="club-filter-field">
+                    <span class="sr-only">Filter by status</span>
+                    <select id="club-member-status">
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </label>
                 <?php if ($can_register): ?>
                     <button type="button" class="club-btn-primary" id="club-register-open">Register Member</button>
                 <?php endif; ?>
@@ -98,6 +116,7 @@ $existing_nics = $existing_nics ?? [];
                 </tbody>
             </table>
         </div>
+        <p id="club-roster-empty" class="club-note" hidden>No members match these filters.</p>
 
     </section>
 </section>
@@ -172,13 +191,28 @@ $existing_nics = $existing_nics ?? [];
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('club-member-search');
     const body = document.getElementById('club-roster-body');
+    const roleSel = document.getElementById('club-member-role');
+    const statusSel = document.getElementById('club-member-status');
+    const rosterEmpty = document.getElementById('club-roster-empty');
     if (input && body) {
-        input.addEventListener('input', () => {
+        const applyRosterFilters = () => {
             const q = input.value.trim().toLowerCase();
+            const r = roleSel ? roleSel.value.toLowerCase() : '';
+            const s = statusSel ? statusSel.value : '';
+            let visible = 0;
             body.querySelectorAll('tr').forEach(row => {
-                row.style.display = (!q || (row.getAttribute('data-search') || '').includes(q)) ? '' : 'none';
+                const okQ = !q || (row.getAttribute('data-search') || '').includes(q);
+                const okR = !r || (row.getAttribute('data-role') || '').toLowerCase() === r;
+                const okS = !s || (row.getAttribute('data-status') || '') === s;
+                const show = okQ && okR && okS;
+                row.style.display = show ? '' : 'none';
+                if (show) visible += 1;
             });
-        });
+            if (rosterEmpty) rosterEmpty.hidden = visible !== 0;
+        };
+        input.addEventListener('input', applyRosterFilters);
+        if (roleSel) roleSel.addEventListener('change', applyRosterFilters);
+        if (statusSel) statusSel.addEventListener('change', applyRosterFilters);
     }
 
     const toast = document.getElementById('club-toast');

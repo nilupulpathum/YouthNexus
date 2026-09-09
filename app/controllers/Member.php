@@ -107,6 +107,10 @@ class Member extends Controller {
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
             'unreadNotificationCount' => 2,
             'memberDashboard'         => $memberDashboard,
+            // President-only summary strip (C2 data, full overview lives at /president).
+            'presidentSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubPresident', 'president'], true)
+                ? ['health_score' => 78, 'health_label' => 'Green', 'pending_events' => 1, 'pending_members' => 1]
+                : null,
         ]);
     }
 }
