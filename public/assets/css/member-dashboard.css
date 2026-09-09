@@ -16,6 +16,69 @@
     gap: 24px;
 }
 
+/* Exec summary strip (president / treasurer — links to the full overview) */
+.member-exec-strip {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex-wrap: wrap;
+    padding: 20px 25px;
+}
+
+.member-exec-health .member-eyebrow {
+    margin-bottom: 6px;
+}
+
+.member-exec-score {
+    display: inline;
+    margin: 0 10px 0 0;
+    color: #18263c;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.member-exec-score span {
+    color: #8a93a2;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.member-exec-strip .member-status {
+    vertical-align: middle;
+}
+
+.member-exec-pending {
+    display: flex;
+    gap: 24px;
+    margin-left: auto;
+}
+
+.member-exec-pending > div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.member-exec-pending strong {
+    color: #18263c;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.member-exec-pending span {
+    color: #7b8492;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.member-exec-strip .member-panel-link {
+    flex: none;
+}
+
 .member-stat-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

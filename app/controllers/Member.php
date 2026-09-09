@@ -3,16 +3,16 @@
 class Member extends Controller {
 
     /**
-     * Restrict this dashboard to authenticated Club Member accounts.
-     * The Member alias is retained for local/demo compatibility with the
-     * existing shared sidebar role vocabulary.
+     * Restrict this dashboard to authenticated club-level accounts.
+     * President / Secretary / Treasurer are subclasses of Club Member
+     * (subclass rule, C14) so they share the member dashboard.
      */
     private function requireMember() {
         if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
         }
 
-        $allowedRoles = ['ClubMember', 'Member'];
+        $allowedRoles = ['ClubMember', 'Member', 'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'president', 'secretary', 'treasurer'];
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
@@ -107,6 +107,16 @@ class Member extends Controller {
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
             'unreadNotificationCount' => 2,
             'memberDashboard'         => $memberDashboard,
+            // Exec summary strips (C2/C9 data, full overviews live at /president + /treasurer).
+            'presidentSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubPresident', 'president'], true)
+                ? ['health_score' => 78, 'health_label' => 'Green', 'pending_events' => 1, 'pending_members' => 1]
+                : null,
+            'treasurerSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubTreasurer', 'treasurer'], true)
+                ? ['balance' => 'Rs. 132,400', 'income' => 'Rs. 74,500', 'expenses' => 'Rs. 25,500', 'pending_voids' => 1]
+                : null,
+            'secretarySummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubSecretary', 'secretary'], true)
+                ? ['pending_members' => 1, 'pending_events' => 1]
+                : null,
         ]);
     }
 }
