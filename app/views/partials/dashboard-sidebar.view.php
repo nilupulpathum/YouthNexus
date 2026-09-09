@@ -31,7 +31,7 @@ $navigation = [
         ['label' => 'Members', 'route' => 'club/members', 'href' => $dashboardRoot . '/club/members', 'icon' => 'users'],
         ['label' => 'Club Events', 'route' => 'club/events', 'href' => $dashboardRoot . '/club/events', 'icon' => 'calendar'],
         ['label' => 'Assets', 'route' => 'club/assets', 'href' => $dashboardRoot . '/club/assets', 'icon' => 'briefcase'],
-        ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
+        ['label' => 'Manage Attendance', 'route' => 'club/attendance', 'href' => $dashboardRoot . '/club/attendance', 'icon' => 'check'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -49,6 +49,7 @@ $navigation = [
     'member' => [
         ['label' => 'Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'grid'],
         ['label' => 'Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
+        ['label' => 'Attendance', 'route' => 'club/attendance', 'href' => $dashboardRoot . '/club/attendance', 'icon' => 'check'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Social CV', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'certificate'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],

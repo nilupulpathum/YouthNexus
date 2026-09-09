@@ -1,22 +1,22 @@
 <?php
 
 /**
- * President — club president overview (C2).
+ * Secretary — club secretary overview (C10).
  *
  * Presentation-only: mock data mirroring the future backend contract.
- * No database reads or writes. Member-base panels land in C15;
- * leadership handover lands in C6.
+ * No database reads or writes. Full member-panel embedding across all
+ * exec overviews lands in C15.
  *
  * Routes:
- *   president -> index()  (president only)
+ *   secretary -> index()  (secretary only)
  */
-class President extends Controller {
+class Secretary extends Controller {
 
-    private function requirePresident() {
+    private function requireSecretary() {
         if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
         }
-        $allowedRoles = ['ClubPresident', 'president'];
+        $allowedRoles = ['ClubSecretary', 'secretary'];
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
@@ -32,7 +32,7 @@ class President extends Controller {
             'pageTitle'               => $pageTitle,
             'pageDescription'         => $pageDescription,
             'currentRoute'            => $currentRoute,
-            'userRole'                => $_SESSION['user_role'] ?? 'ClubPresident',
+            'userRole'                => $_SESSION['user_role'] ?? 'ClubSecretary',
             'userName'                => $memberName,
             'userEmail'               => $_SESSION['user_email'] ?? '',
             'userInitials'            => $_SESSION['user_initials'] ?? '',
@@ -41,33 +41,23 @@ class President extends Controller {
     }
 
     /**
-     * President overview: health score + 40/30/30 breakdown, pending club
-     * events, exec-roster summary.
+     * Secretary overview: member/event/attendance/announcement shortcuts,
+     * plus the member-base panels (announcements preview, upcoming events,
+     * Social CV summary) per the subclass rule.
      */
     public function index() {
-        $this->requirePresident();
+        $this->requireSecretary();
 
-        $health = [
-            'score'  => 78,
-            'label'  => 'Green',
-            'state'  => 'Active',
-            'events' => ['points' => 32, 'max' => 40],
-            'finances' => ['points' => 24, 'max' => 30],
-            'attendance' => ['points' => 22, 'max' => 30],
+        $shortcuts = [
+            ['title' => 'Register Member', 'desc' => 'Add a member — president approves', 'href' => 'club/members', 'icon' => 'user'],
+            ['title' => 'Create Event', 'desc' => 'Submit an event for approval', 'href' => 'club/events', 'icon' => 'calendar'],
+            ['title' => 'Mark Attendance', 'desc' => 'Single entry or bulk CSV', 'href' => 'club/attendance', 'icon' => 'check'],
+            ['title' => 'Publish Announcement', 'desc' => 'Normal or Urgent club update', 'href' => 'announcements', 'icon' => 'bell'],
         ];
 
-        $pendingEvents = [
-            ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026 · 9:00 AM', 'location' => 'Gampaha Town Hall', 'type' => 'Workshop', 'budget' => 'Rs. 45,000', 'submitted_by' => 'Amal Perera (Secretary)'],
-        ];
-
-        $pendingMembers = [
-            ['name' => 'Sanduni Wickrama', 'email' => 'sanduni@example.test', 'phone' => '+94 78 112 3344', 'address' => '12 Lake Road, Gampaha', 'nic' => '200512345678', 'joined' => 'Jan 2025', 'registered_by' => 'Amal Perera (Secretary)'],
-        ];
-
-        $execRoster = [
-            ['name' => 'Nuwan Bandara',  'role' => 'President', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Amal Perera',    'role' => 'Secretary', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Kasun Fernando', 'role' => 'Treasurer', 'status' => 'Active', 'status_key' => 'active'],
+        $queue = [
+            'pending_members' => 1,
+            'pending_events'  => 1,
         ];
 
         $announcements = [
@@ -107,25 +97,23 @@ class President extends Controller {
         ];
 
         $socialCv = [
-            'volunteer_hours' => 136,
-            'events_count'    => 18,
-            'leadership'      => 'Club President',
+            'volunteer_hours' => 112,
+            'events_count'    => 15,
+            'leadership'      => 'Club Secretary',
         ];
 
         $data = $this->shell(
-            'President Overview — YouthNexus Pulse',
-            'President Overview',
-            'Health, pending approvals and executives of Gampaha Youth Development Club.',
-            'president'
+            'Secretary Overview — YouthNexus Pulse',
+            'Secretary Overview',
+            'Queues, shortcuts and personal summary of Amal Perera.',
+            'secretary'
         );
-        $data['health'] = $health;
-        $data['pendingEvents'] = $pendingEvents;
-        $data['pendingMembers'] = $pendingMembers;
-        $data['execRoster'] = $execRoster;
+        $data['shortcuts'] = $shortcuts;
+        $data['queue'] = $queue;
         $data['announcements'] = $announcements;
         $data['upcomingEvents'] = $upcomingEvents;
         $data['socialCv'] = $socialCv;
 
-        $this->view('president/index', $data);
+        $this->view('secretary/index', $data);
     }
 }

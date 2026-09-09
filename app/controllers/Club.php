@@ -24,6 +24,7 @@ class Club extends Controller {
             'clubpresident' => 'president',
             'clubsecretary' => 'secretary',
             'clubtreasurer' => 'treasurer',
+            'clubmember'    => 'member',
         ];
         return $aliases[$key] ?? $key;
     }
@@ -117,6 +118,58 @@ class Club extends Controller {
         $data['can_create'] = ($this->roleKey() === 'secretary');
 
         $this->view('club/events', $data);
+    }
+
+    /**
+     * Club attendance (C5 mock, club-scoped). Secretary marks attendance
+     * (event list, CSV bulk OR single entry, start/end time + remarks,
+     * unlisted members default to absent); members see their own summary.
+     * Presentation-only, no DB writes. Divisional Attendance untouched.
+     */
+    public function attendance() {
+        $this->requireRoles(['secretary', 'member']);
+
+        $attendanceEvents = [
+            ['id' => 4, 'title' => 'Avurudu Celebration & Fundraiser', 'date' => 'Apr 12, 2026',
+                'roster' => [
+                    ['name' => 'Nuwan Bandara',    'status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Amal Perera',      'status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Kasun Fernando',   'status' => 'Absent',  'status_key' => 'absent'],
+                    ['name' => 'Dilini Jayasuriya','status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Ruwan Silva',      'status' => 'Absent',  'status_key' => 'absent'],
+                ]],
+            ['id' => 2, 'title' => 'Community Green Environment Cleanup', 'date' => 'Sep 28, 2026',
+                'roster' => [
+                    ['name' => 'Nuwan Bandara',    'status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Amal Perera',      'status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Kasun Fernando',   'status' => 'Present', 'status_key' => 'present'],
+                    ['name' => 'Dilini Jayasuriya','status' => 'Absent',  'status_key' => 'absent'],
+                    ['name' => 'Ruwan Silva',      'status' => 'Present', 'status_key' => 'present'],
+                ]],
+        ];
+
+        $mySummary = [
+            'sessions' => 8,
+            'rate'     => '89%',
+            'absent'   => 1,
+            'history'  => [
+                ['title' => 'Avurudu Celebration & Fundraiser', 'date' => 'Apr 12, 2026', 'status' => 'Present', 'status_key' => 'present'],
+                ['title' => 'Community Green Environment Cleanup', 'date' => 'Sep 28, 2026', 'status' => 'Present', 'status_key' => 'present'],
+                ['title' => 'Club Monthly Planning Session', 'date' => 'Oct 5, 2026', 'status' => 'Absent', 'status_key' => 'absent'],
+            ],
+        ];
+
+        $data = $this->shell(
+            'Club Attendance — YouthNexus Pulse',
+            'Club Attendance',
+            'Attendance records of Gampaha Youth Development Club.',
+            'club/attendance'
+        );
+        $data['attendanceEvents'] = $attendanceEvents;
+        $data['mySummary'] = $mySummary;
+        $data['can_mark'] = ($this->roleKey() === 'secretary');
+
+        $this->view('club/attendance', $data);
     }
 
     /**
