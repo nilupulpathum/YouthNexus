@@ -128,10 +128,10 @@ class Club extends Controller {
         $this->requireRoles(['president', 'treasurer', 'secretary']);
 
         $assets = [
-            ['id' => 1, 'name' => 'Sound System (Portable PA)', 'serial' => 'AST-2024-001', 'purchase_date' => 'Jan 12, 2024', 'valuation' => 'Rs. 85,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
-            ['id' => 2, 'name' => 'Multimedia Projector',       'serial' => 'AST-2024-002', 'purchase_date' => 'Mar 3, 2024',  'valuation' => 'Rs. 120,000', 'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
-            ['id' => 3, 'name' => 'Cricket Gear Set',           'serial' => 'AST-2025-003', 'purchase_date' => 'Jun 20, 2025', 'valuation' => 'Rs. 45,000',  'status' => 'In Use',    'status_key' => 'inuse',     'custodian' => 'Ruwan Silva'],
-            ['id' => 4, 'name' => 'First-Aid Kit',              'serial' => 'AST-2025-004', 'purchase_date' => 'Feb 8, 2025',  'valuation' => 'Rs. 12,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
+            ['id' => 1, 'name' => 'Sound System (Portable PA)', 'serial' => 'AST-2024-001', 'category' => 'Audio Video Equipments', 'purchase_date' => 'Jan 12, 2024', 'valuation' => 'Rs. 85,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
+            ['id' => 2, 'name' => 'Multimedia Projector',       'serial' => 'AST-2024-002', 'category' => 'Audio Video Equipments', 'purchase_date' => 'Mar 3, 2024',  'valuation' => 'Rs. 120,000', 'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
+            ['id' => 3, 'name' => 'Cricket Gear Set',           'serial' => 'AST-2025-003', 'category' => 'Sports',                 'purchase_date' => 'Jun 20, 2025', 'valuation' => 'Rs. 45,000',  'status' => 'In Use',    'status_key' => 'inuse',     'custodian' => 'Ruwan Silva'],
+            ['id' => 4, 'name' => 'First-Aid Kit',              'serial' => 'AST-2025-004', 'category' => 'Official Equipments',    'purchase_date' => 'Feb 8, 2025',  'valuation' => 'Rs. 12,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
         ];
 
         $data = $this->shell(

@@ -1,10 +1,10 @@
 <?php
 /**
  * Club Assets — C7 full UI.
- * Inventory grid (photo thumb, name + generated asset ID, serial,
- * purchase date, valuation, custodian, Available status) + filters for
- * president, treasurer, secretary. Secretary-only: "Register Asset"
- * button + modal (name, serial, purchase date, valuation, photo →
+ * Inventory grid (photo thumb, name + generated asset ID, category, serial,
+ * purchase date, valuation, custodian, Available status) + search/status/
+ * category filters for president, treasurer, secretary. Secretary-only: "Register Asset"
+ * button + modal (name, serial, category, purchase date, valuation, photo →
  * generated ID, Available). Treasurer-only: per-Available-row "Transfer"
  * action + custody modal (custodian + date + history note → In Use).
  * Presentation-only: no DB writes; backend contract lands in C13.
@@ -63,6 +63,16 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                 <input id="club-asset-search" type="search" placeholder="Search name or serial..." autocomplete="off">
             </label>
             <label class="club-filter-field">
+                <span class="sr-only">Filter by category</span>
+                <select id="club-asset-category">
+                    <option value="">All categories</option>
+                    <option value="sports">Sports</option>
+                    <option value="audio video equipments">Audio Video Equipments</option>
+                    <option value="cleaning">Cleaning</option>
+                    <option value="official equipments">Official Equipments</option>
+                </select>
+            </label>
+            <label class="club-filter-field">
                 <span class="sr-only">Filter by status</span>
                 <select id="club-asset-status">
                     <option value="">All statuses</option>
@@ -77,6 +87,7 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                 <thead>
                     <tr>
                         <th>Asset</th>
+                        <th>Category</th>
                         <th>Serial</th>
                         <th>Purchase date</th>
                         <th>Valuation</th>
@@ -89,8 +100,9 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                 </thead>
                 <tbody id="club-asset-body">
                     <?php foreach ($assets as $a): ?>
-                        <tr data-search="<?= $escape(strtolower(($a['name'] ?? '') . ' ' . ($a['serial'] ?? ''))) ?>"
+                        <tr data-search="<?= $escape(strtolower(($a['name'] ?? '') . ' ' . ($a['serial'] ?? '') . ' ' . ($a['category'] ?? ''))) ?>"
                             data-status="<?= $escape($a['status_key'] ?? 'available') ?>"
+                            data-category="<?= $escape(strtolower($a['category'] ?? '')) ?>"
                             data-name="<?= $escape($a['name'] ?? '') ?>">
                             <td>
                                 <div class="club-asset-cell">
@@ -99,6 +111,7 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                                     <span class="club-asset-id"><?= $escape($a['serial'] ?? '') ?></span></span>
                                 </div>
                             </td>
+                            <td><?= $escape($a['category'] ?? '') ?></td>
                             <td><?= $escape($a['serial'] ?? '') ?></td>
                             <td><?= $escape($a['purchase_date'] ?? '') ?></td>
                             <td><?= $escape($a['valuation'] ?? '') ?></td>
@@ -138,6 +151,16 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                         <input id="asset-serial" name="serial" type="text" required maxlength="50" autocomplete="off" placeholder="e.g., TENT-2026-001">
                     </div>
                     <div class="club-field">
+                        <label for="asset-category">Category</label>
+                        <select id="asset-category" name="category" required>
+                            <option value="">Select category...</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Audio Video Equipments">Audio Video Equipments</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="Official Equipments">Official Equipments</option>
+                        </select>
+                    </div>
+                    <div class="club-field">
                         <label for="asset-date">Purchase date</label>
                         <input id="asset-date" name="purchase_date" type="date" required>
                     </div>
@@ -145,7 +168,7 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                         <label for="asset-value">Valuation (LKR)</label>
                         <input id="asset-value" name="valuation" type="number" required min="1" step="0.01" placeholder="0.00">
                     </div>
-                    <div class="club-field">
+                    <div class="club-field club-field--full">
                         <label for="asset-photo">Photo (optional)</label>
                         <input id="asset-photo" name="photo" type="file" accept="image/*">
                     </div>
@@ -199,24 +222,27 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
 document.addEventListener('DOMContentLoaded', () => {
     const body = document.getElementById('club-asset-body');
     const search = document.getElementById('club-asset-search');
+    const categorySel = document.getElementById('club-asset-category');
     const statusSel = document.getElementById('club-asset-status');
     const empty = document.getElementById('club-asset-empty');
 
     const applyFilters = () => {
         if (!body) return;
         const q = (search ? search.value.trim().toLowerCase() : '');
+        const c = categorySel ? categorySel.value.toLowerCase() : '';
         const s = statusSel ? statusSel.value : '';
         let visible = 0;
         body.querySelectorAll('tr').forEach(row => {
             const okQ = !q || (row.getAttribute('data-search') || '').includes(q);
+            const okC = !c || (row.getAttribute('data-category') || '') === c;
             const okS = !s || (row.getAttribute('data-status') || '') === s;
-            const show = okQ && okS;
+            const show = okQ && okC && okS;
             row.style.display = show ? '' : 'none';
             if (show) visible += 1;
         });
         if (empty) empty.hidden = visible !== 0;
     };
-    [search, statusSel].forEach(el => {
+    [search, categorySel, statusSel].forEach(el => {
         if (el) el.addEventListener('input', applyFilters);
         if (el) el.addEventListener('change', applyFilters);
     });
@@ -268,18 +294,20 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const name = document.getElementById('asset-name').value.trim();
             const serial = document.getElementById('asset-serial').value.trim();
+            const category = document.getElementById('asset-category').value;
             const dateVal = document.getElementById('asset-date').value;
             const valueVal = document.getElementById('asset-value').value.trim();
             const fail = (m) => { err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!name || !serial || !dateVal || !valueVal) return fail('All fields except photo are required.');
+            if (!name || !serial || !category || !dateVal || !valueVal) return fail('All fields except photo are required.');
             const value = Number(valueVal);
             if (!isFinite(value) || value <= 0) return fail('Valuation must be a positive amount.');
             const nice = new Date(dateVal + 'T00:00').toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const assetId = nextAssetId();
             const row = document.createElement('tr');
-            row.setAttribute('data-search', (name + ' ' + serial).toLowerCase());
+            row.setAttribute('data-search', (name + ' ' + serial + ' ' + category).toLowerCase());
             row.setAttribute('data-status', 'available');
+            row.setAttribute('data-category', category.toLowerCase());
             row.setAttribute('data-name', name);
             const assetCell = document.createElement('td');
             const wrap = document.createElement('div');
@@ -308,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wrap.appendChild(copy);
             assetCell.appendChild(wrap);
             row.appendChild(assetCell);
-            [serial, nice, fmtVal(value), 'Club Centre'].forEach(text => {
+            [category, serial, nice, fmtVal(value), 'Club Centre'].forEach(text => {
                 const td = document.createElement('td');
                 td.textContent = text;
                 row.appendChild(td);
@@ -367,9 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (target) {
-                target.children[4].textContent = custodianSel.value;
+                target.children[5].textContent = custodianSel.value;
                 target.setAttribute('data-status', 'inuse');
-                const statusCell = target.children[5];
+                const statusCell = target.children[6];
                 statusCell.textContent = '';
                 const pill = document.createElement('span');
                 pill.className = 'club-pill club-pill--inuse';
