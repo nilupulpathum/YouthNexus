@@ -54,6 +54,15 @@
 
 .club-stat-value--small { font-size: 22px; }
 
+.club-stat-unit {
+    font-size: 15px;
+    font-weight: 600;
+    color: #626b7a;
+    letter-spacing: 0;
+}
+
+a.club-btn-small { text-decoration: none; }
+
 .club-panel {
     min-width: 0;
     background: #fff;
