@@ -60,6 +60,10 @@ class President extends Controller {
             ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026 · 9:00 AM', 'location' => 'Gampaha Town Hall', 'type' => 'Workshop', 'budget' => 'Rs. 45,000', 'submitted_by' => 'Amal Perera (Secretary)'],
         ];
 
+        $pendingMembers = [
+            ['name' => 'Sanduni Wickrama', 'email' => 'sanduni@example.test', 'phone' => '+94 78 112 3344', 'address' => '12 Lake Road, Gampaha', 'nic' => '200512345678', 'joined' => 'Jan 2025', 'registered_by' => 'Amal Perera (Secretary)'],
+        ];
+
         $execRoster = [
             ['name' => 'Nuwan Bandara',  'role' => 'President', 'status' => 'Active', 'status_key' => 'active'],
             ['name' => 'Amal Perera',    'role' => 'Secretary', 'status' => 'Active', 'status_key' => 'active'],
@@ -74,6 +78,7 @@ class President extends Controller {
         );
         $data['health'] = $health;
         $data['pendingEvents'] = $pendingEvents;
+        $data['pendingMembers'] = $pendingMembers;
         $data['execRoster'] = $execRoster;
 
         $this->view('president/index', $data);

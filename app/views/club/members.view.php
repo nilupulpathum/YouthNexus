@@ -95,6 +95,10 @@ $existing_nics = $existing_nics ?? [];
                             data-name="<?= $escape($m['name'] ?? '') ?>"
                             data-role="<?= $escape($m['role'] ?? '') ?>"
                             data-email="<?= $escape($m['email'] ?? '') ?>"
+                            data-phone="<?= $escape($m['phone'] ?? '') ?>"
+                            data-address="<?= $escape($m['address'] ?? '') ?>"
+                            data-nic="<?= $escape($m['nic'] ?? '') ?>"
+                            data-joined="<?= $escape($m['joined'] ?? '') ?>"
                             data-status="<?= $escape($m['status_key'] ?? 'active') ?>">
                             <td><strong><?= $escape($m['name'] ?? '') ?></strong></td>
                             <td><?= $escape($m['role'] ?? '') ?></td>
@@ -105,7 +109,7 @@ $existing_nics = $existing_nics ?? [];
                             <?php if ($can_manage): ?>
                                 <td>
                                     <?php if (($m['status_key'] ?? '') === 'pending'): ?>
-                                        <button type="button" class="club-btn-small" data-action="approve">Approve</button>
+                                        <button type="button" class="club-btn-small" data-action="member-review">Review</button>
                                     <?php else: ?>
                                         <button type="button" class="club-btn-small" data-action="assign">Assign role</button>
                                     <?php endif; ?>
@@ -180,6 +184,34 @@ $existing_nics = $existing_nics ?? [];
             <div class="club-modal-footer">
                 <button type="button" class="club-btn-secondary" data-close>Cancel</button>
                 <button type="button" class="club-btn-primary" id="assign-confirm">Confirm assignment</button>
+            </div>
+        </div>
+    </div>
+    <div id="member-review-modal" class="popup-overlay" hidden>
+        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="mr-title">
+            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
+            <p class="club-eyebrow">President decision</p>
+            <h2 id="mr-title">Review member</h2>
+            <div id="mr-details" class="club-review-details"></div>
+            <div class="club-field">
+                <label for="mr-result">Review result</label>
+                <select id="mr-result">
+                    <option value="approve">Approve member</option>
+                    <option value="reject">Reject application</option>
+                </select>
+            </div>
+            <div class="club-field">
+                <label for="mr-remarks">Decision note (required if rejecting)</label>
+                <textarea id="mr-remarks" rows="3" placeholder="Reason for this decision..."></textarea>
+            </div>
+            <p id="mr-error" class="club-form-error" hidden></p>
+            <div class="club-impact" role="note">
+                <strong>What happens next</strong>
+                <p>Approving adds them as a General Member of the club. Rejecting discards the application with your note.</p>
+            </div>
+            <div class="club-modal-footer">
+                <button type="button" class="club-btn-secondary" data-close>Cancel</button>
+                <button type="button" class="club-btn-primary" id="mr-confirm">Confirm &amp; submit decision</button>
             </div>
         </div>
     </div>
@@ -277,26 +309,94 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Role assignment recorded (demo — persists in C13 backend).');
         });
 
-        // Approve-member action (president approves secretary registrations).
-        body.querySelectorAll('[data-action="approve"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const row = btn.closest('tr');
-                const who = row.getAttribute('data-name') || 'Member';
-                row.setAttribute('data-status', 'active');
-                row.setAttribute('data-role', 'Member');
-                row.children[1].textContent = 'Member';
-                const pill = row.querySelector('.club-pill');
-                if (pill) { pill.textContent = 'Active'; pill.className = 'club-pill club-pill--active'; }
-                const assignBtn = document.createElement('button');
-                assignBtn.type = 'button';
-                assignBtn.className = 'club-btn-small';
-                assignBtn.setAttribute('data-action', 'assign');
-                assignBtn.textContent = 'Assign role';
-                btn.replaceWith(assignBtn);
-                bindAssign(assignBtn);
-                showToast(who + ' approved as General Member (demo — persists in C13 backend).');
+        // Member review modal (president: full details, approve or reject with note).
+        const mrModal = document.getElementById('member-review-modal');
+        if (mrModal) {
+            const mrTitle = document.getElementById('mr-title');
+            const mrDetails = document.getElementById('mr-details');
+            const mrResult = document.getElementById('mr-result');
+            const mrRemarks = document.getElementById('mr-remarks');
+            const mrErr = document.getElementById('mr-error');
+            const mrConfirm = document.getElementById('mr-confirm');
+            const MR_FIELDS = [
+                ['Email', 'email'], ['Phone', 'phone'], ['Address', 'address'],
+                ['NIC', 'nic'], ['Role', 'role'], ['Joined', 'joined'],
+            ];
+            let reviewRow = null;
+
+            const mrClose = () => { mrModal.hidden = true; document.body.style.overflow = ''; };
+            mrModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', mrClose));
+            mrModal.addEventListener('click', (e) => { if (e.target === mrModal) mrClose(); });
+
+            const refreshRosterEmpty = () => {
+                if (!rosterEmpty) return;
+                const visible = Array.from(body.querySelectorAll('tr'))
+                    .filter(r => r.style.display !== 'none').length;
+                rosterEmpty.hidden = visible !== 0;
+            };
+
+            body.querySelectorAll('[data-action="member-review"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    reviewRow = btn.closest('tr');
+                    mrTitle.textContent = reviewRow.getAttribute('data-name') || 'Review member';
+                    mrDetails.textContent = '';
+                    MR_FIELDS.forEach(([label, key]) => {
+                        const row = document.createElement('p');
+                        row.className = 'club-review-row';
+                        const lab = document.createElement('span');
+                        lab.textContent = label;
+                        const val = document.createElement('strong');
+                        val.textContent = reviewRow.getAttribute('data-' + key) || '—';
+                        row.appendChild(lab);
+                        row.appendChild(val);
+                        mrDetails.appendChild(row);
+                    });
+                    mrResult.value = 'approve';
+                    mrRemarks.value = '';
+                    mrErr.hidden = true;
+                    mrModal.hidden = false;
+                    document.body.style.overflow = 'hidden';
+                });
             });
-        });
+
+            mrConfirm.addEventListener('click', () => {
+                const reject = mrResult.value === 'reject';
+                if (reject && !mrRemarks.value.trim()) {
+                    mrErr.textContent = 'Please add a note explaining the rejection.';
+                    mrErr.hidden = false;
+                    mrRemarks.focus();
+                    return;
+                }
+                const who = reviewRow ? (reviewRow.getAttribute('data-name') || 'Member') : 'Member';
+                if (reject) {
+                    if (reviewRow) reviewRow.remove();
+                    refreshRosterEmpty();
+                    showToast(who + '’s application rejected with note (demo).');
+                } else {
+                    if (reviewRow) {
+                        reviewRow.setAttribute('data-status', 'active');
+                        reviewRow.setAttribute('data-role', 'Member');
+                        reviewRow.children[1].textContent = 'Member';
+                        const pill = reviewRow.querySelector('.club-pill');
+                        if (pill) { pill.textContent = 'Active'; pill.className = 'club-pill club-pill--active'; }
+                        const assignBtn = document.createElement('button');
+                        assignBtn.type = 'button';
+                        assignBtn.className = 'club-btn-small';
+                        assignBtn.setAttribute('data-action', 'assign');
+                        assignBtn.textContent = 'Assign role';
+                        const oldBtn = reviewRow.querySelector('[data-action="member-review"]');
+                        if (oldBtn) oldBtn.replaceWith(assignBtn);
+                        bindAssign(assignBtn);
+                        if (statusSel && statusSel.value && statusSel.value !== 'active') {
+                            reviewRow.style.display = 'none';
+                        }
+                    }
+                    showToast(who + ' approved as General Member (demo — persists in C13 backend).');
+                }
+                reviewRow = null;
+                mrClose();
+            });
+        }
     }
 
     // Register-member modal (secretary).
@@ -336,6 +436,10 @@ document.addEventListener('DOMContentLoaded', () => {
             row.setAttribute('data-name', name);
             row.setAttribute('data-role', 'Member');
             row.setAttribute('data-email', email);
+            row.setAttribute('data-phone', phone);
+            row.setAttribute('data-address', address);
+            row.setAttribute('data-nic', nic);
+            row.setAttribute('data-joined', 'Just now');
             row.setAttribute('data-status', 'pending');
             const nameTd = document.createElement('td');
             const strong = document.createElement('strong');
