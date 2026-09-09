@@ -66,12 +66,12 @@ class Club extends Controller {
         $this->requireRoles(['president', 'secretary']);
 
         $roster = [
-            ['name' => 'Nuwan Bandara',  'role' => 'President', 'email' => 'nuwan@example.test',  'phone' => '+94 77 556 6778', 'joined' => 'Jan 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Amal Perera',    'role' => 'Secretary', 'email' => 'amal@example.test',   'phone' => '+94 71 223 4455', 'joined' => 'Feb 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Kasun Fernando', 'role' => 'Treasurer', 'email' => 'kasun@example.test',  'phone' => '+94 76 889 0011', 'joined' => 'Mar 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Dilini Jayasuriya', 'role' => 'Member', 'email' => 'dilini@example.test', 'phone' => '+94 72 334 5566', 'joined' => 'Jun 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Ruwan Silva',    'role' => 'Member',    'email' => 'ruwan@example.test',  'phone' => '+94 75 667 8899', 'joined' => 'Aug 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Sanduni Wickrama', 'role' => 'Member',  'email' => 'sanduni@example.test','phone' => '+94 78 112 3344', 'joined' => 'Jan 2025', 'status' => 'Pending', 'status_key' => 'pending'],
+            ['name' => 'Nuwan Bandara',  'role' => 'President', 'email' => 'nuwan@example.test',  'phone' => '+94 77 556 6778', 'address' => '45 Main Street, Gampaha',  'nic' => '199012345678', 'joined' => 'Jan 2024', 'status' => 'Active', 'status_key' => 'active'],
+            ['name' => 'Amal Perera',    'role' => 'Secretary', 'email' => 'amal@example.test',   'phone' => '+94 71 223 4455', 'address' => '78 Station Road, Gampaha', 'nic' => '199512345678', 'joined' => 'Feb 2024', 'status' => 'Active', 'status_key' => 'active'],
+            ['name' => 'Kasun Fernando', 'role' => 'Treasurer', 'email' => 'kasun@example.test',  'phone' => '+94 76 889 0011', 'address' => '7 Hill Street, Gampaha',   'nic' => '199812345678', 'joined' => 'Mar 2024', 'status' => 'Active', 'status_key' => 'active'],
+            ['name' => 'Dilini Jayasuriya', 'role' => 'Member', 'email' => 'dilini@example.test', 'phone' => '+94 72 334 5566', 'address' => '9 Park Avenue, Gampaha',   'nic' => '200112345679', 'joined' => 'Jun 2024', 'status' => 'Active', 'status_key' => 'active'],
+            ['name' => 'Ruwan Silva',    'role' => 'Member',    'email' => 'ruwan@example.test',  'phone' => '+94 75 667 8899', 'address' => '33 Temple Road, Gampaha', 'nic' => '200212345678', 'joined' => 'Aug 2024', 'status' => 'Active', 'status_key' => 'active'],
+            ['name' => 'Sanduni Wickrama', 'role' => 'Member',  'email' => 'sanduni@example.test','phone' => '+94 78 112 3344', 'address' => '12 Lake Road, Gampaha',   'nic' => '200512345678', 'joined' => 'Jan 2025', 'status' => 'Pending', 'status_key' => 'pending'],
         ];
 
         $data = $this->shell(
