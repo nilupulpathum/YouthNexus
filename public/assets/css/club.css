@@ -226,6 +226,10 @@
 
 .club-pill--pending { color: #ca6e1a; background: #fff0dc; }
 
+.club-pill--pending-void { color: #ca6e1a; background: #fff0dc; }
+
+.club-pill--voided { color: #475569; background: #e2e8f0; }
+
 .club-pill--inuse,
 .club-pill--completed,
 .club-pill--expense { color: #1e40af; background: #dbeafe; }
