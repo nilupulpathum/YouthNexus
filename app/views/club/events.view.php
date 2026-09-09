@@ -3,9 +3,10 @@
  * Club Events — C4 full UI.
  * President: pending list + approve/request-changes decision modal
  * (mirrors eventapproval decision panel; remarks mandatory on
- * request-changes). Secretary: create-event form (title, date/time,
- * location, type, budget + future-date validation) + list.
- * Presentation-only: no DB writes; backend contract lands in C13.
+ * request-changes). Secretary: "Create Event" button + create-event modal
+ * (title, date + time, location, type, budget + future-date validation
+ * with error banner, per owner mock). Presentation-only: no DB writes;
+ * backend contract lands in C13.
  */
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -44,6 +45,9 @@ $can_create  = !empty($can_create);
                 <p class="club-eyebrow">Gampaha Youth Development Club</p>
                 <h2 id="club-events-list-heading">Events</h2>
             </div>
+            <?php if ($can_create): ?>
+                <button type="button" class="club-btn-primary" id="club-event-open">Create Event</button>
+            <?php endif; ?>
         </div>
 
         <div class="club-filters" role="search" aria-label="Filter events">
@@ -98,53 +102,66 @@ $can_create  = !empty($can_create);
             <?php endforeach; ?>
         </div>
         <p id="club-event-empty" class="club-note" hidden>No events match these filters.</p>
-
-        <?php if ($can_create): ?>
-            <div class="club-divider" aria-hidden="true"></div>
-            <div class="club-panel-sub" aria-labelledby="club-event-create-heading">
-                <div>
-                    <p class="club-eyebrow">Secretary action</p>
-                    <h2 id="club-event-create-heading">Create Event</h2>
-                    <p class="club-sub-note">New events enter as Pending Approval. The start date must be in the future.</p>
-                </div>
-                <form id="club-event-form" class="club-form" novalidate>
-                    <div class="club-form-grid">
-                        <div class="club-field club-field--full">
-                            <label for="ev-title">Event title</label>
-                            <input id="ev-title" name="title" type="text" required maxlength="150" autocomplete="off" placeholder="e.g., Youth First-Aid Training Day">
-                        </div>
-                        <div class="club-field">
-                            <label for="ev-datetime">Date &amp; time</label>
-                            <input id="ev-datetime" name="datetime" type="datetime-local" required>
-                        </div>
-                        <div class="club-field">
-                            <label for="ev-location">Location</label>
-                            <input id="ev-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="e.g., Club Centre, Gampaha">
-                        </div>
-                        <div class="club-field">
-                            <label for="ev-type">Event type</label>
-                            <select id="ev-type" name="type" required>
-                                <option value="">Select type...</option>
-                                <option value="Workshop">Workshop</option>
-                                <option value="Meeting">Meeting</option>
-                                <option value="Community Service">Community Service</option>
-                                <option value="Fundraiser">Fundraiser</option>
-                            </select>
-                        </div>
-                        <div class="club-field">
-                            <label for="ev-budget">Budget (Rs.)</label>
-                            <input id="ev-budget" name="budget" type="number" required min="1" step="1" placeholder="e.g., 15000">
-                        </div>
-                    </div>
-                    <p id="ev-error" class="club-form-error" hidden></p>
-                    <div class="club-form-footer">
-                        <button type="submit" class="club-btn-primary">Submit for approval</button>
-                    </div>
-                </form>
-            </div>
-        <?php endif; ?>
     </section>
 </section>
+
+<?php if ($can_create): ?>
+    <div id="club-event-modal" class="popup-overlay" hidden>
+        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="ev-modal-title">
+            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
+            <p class="club-eyebrow">Secretary action</p>
+            <h2 id="ev-modal-title">Create Event</h2>
+            <p class="club-sub-note">New events enter as Pending Approval for the president.</p>
+            <form id="club-event-form" class="club-form" novalidate>
+                <div id="ev-banner" class="club-error-banner" hidden>
+                    <span class="club-error-icon" aria-hidden="true"><?= yn_icon('info') ?></span>
+                    <div>
+                        <strong>Event date must be in the future</strong>
+                        <p>The date and time you selected has already passed. Please choose a future date to continue.</p>
+                    </div>
+                </div>
+                <div class="club-form-grid">
+                    <div class="club-field club-field--full">
+                        <label for="ev-title">Event Title</label>
+                        <input id="ev-title" name="title" type="text" required maxlength="150" autocomplete="off" placeholder="Community Clean-up Drive">
+                    </div>
+                    <div class="club-field">
+                        <label for="ev-date">Date</label>
+                        <input id="ev-date" name="date" type="date" required>
+                        <p id="ev-date-error" class="club-field-error" hidden>This date has already passed</p>
+                    </div>
+                    <div class="club-field">
+                        <label for="ev-time">Time</label>
+                        <input id="ev-time" name="time" type="time" required>
+                    </div>
+                    <div class="club-field club-field--full">
+                        <label for="ev-location">Location</label>
+                        <input id="ev-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Venue or coordinates">
+                    </div>
+                    <div class="club-field">
+                        <label for="ev-type">Event Type</label>
+                        <select id="ev-type" name="type" required>
+                            <option value="">Select type...</option>
+                            <option value="Community Service">Community Service</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Fundraiser">Fundraiser</option>
+                        </select>
+                    </div>
+                    <div class="club-field">
+                        <label for="ev-budget">Estimated Budget (LKR)</label>
+                        <input id="ev-budget" name="budget" type="number" required min="1" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <p id="ev-error" class="club-form-error" hidden></p>
+                <div class="club-modal-footer">
+                    <button type="button" class="club-btn-secondary" data-close>Cancel</button>
+                    <button type="submit" class="club-btn-primary">Create Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
 
 <?php if ($can_approve): ?>
     <div id="event-decision-modal" class="popup-overlay" hidden>
@@ -287,23 +304,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Secretary create-event form.
+    // Secretary create-event modal (per owner mock: error banner + red
+    // date state when the selected date/time has already passed).
+    const openBtn = document.getElementById('club-event-open');
+    const evModal = document.getElementById('club-event-modal');
     const form = document.getElementById('club-event-form');
-    if (form && list) {
+    if (openBtn && evModal && form && list) {
+        const banner = document.getElementById('ev-banner');
         const err = document.getElementById('ev-error');
+        const dateInput = document.getElementById('ev-date');
+        const timeInput = document.getElementById('ev-time');
+        const dateErr = document.getElementById('ev-date-error');
+
+        const clearDateError = () => {
+            banner.hidden = true;
+            dateErr.hidden = true;
+            dateInput.classList.remove('is-invalid');
+        };
+
+        const open = () => {
+            form.reset();
+            err.hidden = true;
+            clearDateError();
+            evModal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        };
+        const close = () => { evModal.hidden = true; document.body.style.overflow = ''; };
+        openBtn.addEventListener('click', open);
+        evModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+        evModal.addEventListener('click', (e) => { if (e.target === evModal) close(); });
+        dateInput.addEventListener('input', clearDateError);
+        timeInput.addEventListener('input', clearDateError);
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const title = document.getElementById('ev-title').value.trim();
-            const dtVal = document.getElementById('ev-datetime').value;
+            const dateVal = dateInput.value;
+            const timeVal = timeInput.value;
             const location = document.getElementById('ev-location').value.trim();
             const type = document.getElementById('ev-type').value;
             const budgetVal = document.getElementById('ev-budget').value.trim();
             const fail = (m) => { err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!title || !dtVal || !location || !type || !budgetVal) return fail('All fields are required.');
-            const dt = new Date(dtVal);
+            if (!title || !dateVal || !timeVal || !location || !type || !budgetVal) return fail('All fields are required.');
+            const dt = new Date(dateVal + 'T' + timeVal);
             if (isNaN(dt.getTime())) return fail('Enter a valid date and time.');
-            if (dt <= new Date()) return fail('Event date must be in the future.');
+            if (dt <= new Date()) {
+                banner.hidden = false;
+                dateErr.hidden = false;
+                dateInput.classList.add('is-invalid');
+                dateInput.focus();
+                return;
+            }
             const budgetNum = Number(budgetVal);
             if (!isFinite(budgetNum) || budgetNum <= 0) return fail('Budget must be a positive amount.');
             const nice = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
@@ -344,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(copy);
             card.appendChild(side);
             list.prepend(card);
-            form.reset();
+            close();
             applyFilters();
             showToast(title + ' submitted for approval (demo — persists in C13 backend).');
         });
