@@ -84,6 +84,39 @@
     white-space: nowrap;
 }
 
+.club-asset-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.club-thumb {
+    display: grid;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    color: #5f55cc;
+    background: #f0efff;
+    border-radius: 11px;
+    overflow: hidden;
+}
+
+.club-thumb svg { width: 18px; height: 18px; }
+
+.club-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.club-asset-id {
+    display: block;
+    color: #7b8492;
+    font-size: 11px;
+    font-weight: 400;
+}
+
 /* C4 create-event modal: future-date error banner (owner mock) */
 .club-error-banner {
     display: flex;

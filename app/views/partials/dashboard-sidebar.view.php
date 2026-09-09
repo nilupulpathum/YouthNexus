@@ -30,6 +30,7 @@ $navigation = [
         ['label' => 'Social CV', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'certificate'],
         ['label' => 'Members', 'route' => 'club/members', 'href' => $dashboardRoot . '/club/members', 'icon' => 'users'],
         ['label' => 'Club Events', 'route' => 'club/events', 'href' => $dashboardRoot . '/club/events', 'icon' => 'calendar'],
+        ['label' => 'Assets', 'route' => 'club/assets', 'href' => $dashboardRoot . '/club/assets', 'icon' => 'briefcase'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
