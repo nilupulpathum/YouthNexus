@@ -3,10 +3,11 @@
  * Club Ledger — C8 full UI.
  * Balance header + filterable running-balance table for president and
  * treasurer. Treasurer-only: "Log Transaction" button + modal (income /
- * expense + mandatory receipt upload, blocked-with-error if missing) and
- * per-row "Request void" action + reason modal (sent to the Divisional
- * Treasurer → row flips to Pending). Presentation-only: no DB writes;
- * backend contract lands in C13.
+ * expense + mandatory receipt upload, blocked-with-error if missing; new
+ * entries post as Active with recalculated balance, per the treasurer
+ * workflow) and per-row "Request void" action + reason modal (sent to the
+ * Divisional Treasurer → row flips to Pending Void; Voided/Disapproved
+ * outcomes land with the backend in C13). Presentation-only: no DB writes.
  */
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -68,7 +69,8 @@ $can_log      = !empty($can_log);
                 <select id="club-ledger-status">
                     <option value="">All statuses</option>
                     <option value="verified">Verified</option>
-                    <option value="pending">Pending</option>
+                    <option value="pending-void">Pending Void</option>
+                    <option value="voided">Voided</option>
                 </select>
             </label>
         </div>
@@ -122,7 +124,7 @@ $can_log      = !empty($can_log);
             <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
             <p class="club-eyebrow">Treasurer action</p>
             <h2 id="log-modal-title">Log Transaction</h2>
-            <p class="club-sub-note">New entries land as Pending. A receipt upload is mandatory.</p>
+            <p class="club-sub-note">New entries post as Active and the balance is recalculated. A receipt upload is mandatory.</p>
             <form id="club-log-form" class="club-form" novalidate>
                 <div id="log-banner" class="club-error-banner" hidden>
                     <span class="club-error-icon" aria-hidden="true"><?= yn_icon('info') ?></span>
@@ -179,7 +181,7 @@ $can_log      = !empty($can_log);
             <p id="void-error" class="club-form-error" hidden></p>
             <div id="void-impact" class="club-impact" role="note">
                 <strong>Where this goes</strong>
-                <p>Void requests go to the Divisional Treasurer. The entry flips to Pending until they void it (balance recalculated) or leave it unchanged.</p>
+                <p>Void requests go to the Divisional Treasurer. The entry flips to Pending Void until they void it (totals recalculated) or disapprove (entry unchanged).</p>
             </div>
             <div class="club-modal-footer">
                 <button type="button" class="club-btn-secondary" data-close>Cancel</button>
@@ -294,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             row.setAttribute('data-search', desc.toLowerCase());
             row.setAttribute('data-type', type.toLowerCase());
-            row.setAttribute('data-status', 'pending');
+            row.setAttribute('data-status', 'verified');
             row.setAttribute('data-desc', desc);
             const cells = [nice, desc];
             const c0 = document.createElement('td'); c0.textContent = cells[0]; row.appendChild(c0);
@@ -302,12 +304,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const c2 = document.createElement('td'); c2.appendChild(pillFor(type.toLowerCase(), type)); row.appendChild(c2);
             const c3 = document.createElement('td'); c3.textContent = fmtRs(amount); row.appendChild(c3);
             const c4 = document.createElement('td'); c4.textContent = fmtRs(next); row.appendChild(c4);
-            const c5 = document.createElement('td'); c5.appendChild(pillFor('pending', 'Pending')); row.appendChild(c5);
-            row.appendChild(document.createElement('td'));
+            const c5 = document.createElement('td'); c5.appendChild(pillFor('verified', 'Verified')); row.appendChild(c5);
+            const c6 = document.createElement('td');
+            const voidBtn = document.createElement('button');
+            voidBtn.type = 'button';
+            voidBtn.className = 'club-btn-small';
+            voidBtn.setAttribute('data-action', 'void');
+            voidBtn.textContent = 'Request void';
+            c6.appendChild(voidBtn);
+            row.appendChild(c6);
+            bindVoidButton(voidBtn);
             body.prepend(row);
             close();
             applyFilters();
-            showToast(desc + ' logged as Pending (demo — persists in C13 backend).');
+            showToast(desc + ' logged — balance updated (demo — persists in C13 backend).');
         });
     }
 
@@ -324,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         voidModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
         voidModal.addEventListener('click', (e) => { if (e.target === voidModal) close(); });
 
-        body.querySelectorAll('[data-action="void"]').forEach(btn => {
+        const bindVoidButton = (btn) => {
             btn.addEventListener('click', () => {
                 target = btn.closest('tr');
                 descEl.textContent = target.getAttribute('data-desc') || '';
@@ -333,7 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 voidModal.hidden = false;
                 document.body.style.overflow = 'hidden';
             });
-        });
+        };
+        body.querySelectorAll('[data-action="void"]').forEach(bindVoidButton);
 
         confirmBtn.addEventListener('click', () => {
             if (!reason.value.trim()) {
@@ -343,10 +354,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (target) {
-                target.setAttribute('data-status', 'pending');
+                target.setAttribute('data-status', 'pending-void');
                 const statusCell = target.children[5];
                 statusCell.textContent = '';
-                statusCell.appendChild(pillFor('pending', 'Pending'));
+                statusCell.appendChild(pillFor('pending-void', 'Pending Void'));
                 const btn = target.querySelector('[data-action="void"]');
                 if (btn) btn.remove();
             }
