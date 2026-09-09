@@ -79,6 +79,63 @@
     letter-spacing: -0.02em;
 }
 
+.club-panel-header .club-btn-primary {
+    align-self: center;
+    white-space: nowrap;
+}
+
+/* C4 create-event modal: future-date error banner (owner mock) */
+.club-error-banner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin: 0 0 18px;
+    padding: 16px 18px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 14px;
+    color: #b91c1c;
+}
+
+.club-error-banner[hidden] { display: none; }
+
+.club-error-icon {
+    display: inline-flex;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #f87171;
+    border-radius: 50%;
+    color: #b91c1c;
+}
+
+.club-error-icon svg { width: 14px; height: 14px; }
+
+.club-error-banner strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.club-error-banner p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #b91c1c;
+}
+
+.club-field input.is-invalid {
+    border-color: #f87171;
+    background: #fef2f2;
+}
+
+.club-field-error {
+    margin: 0;
+    color: #dc2626;
+    font-size: 12px;
+}
+
 .club-eyebrow {
     margin: 0;
     color: #8a93a2;
@@ -227,6 +284,8 @@
 }
 
 /* Detail modal (same shape as events/announcements popups) */
+.popup-overlay[hidden] { display: none; }
+
 .popup-content {
     background: #fff;
     width: 100%;
