@@ -156,6 +156,15 @@
     color: var(--db-text-grey);
 }
 
+.club-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.club-header-actions .club-btn-primary { white-space: nowrap; }
+
 .club-search input {
     border: 0;
     background: none;
