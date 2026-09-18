@@ -300,7 +300,9 @@ CREATE TABLE Announcement (
     level                 ENUM('Club','Divisional','Zonal','NYSC')
                           NOT NULL DEFAULT 'Divisional',
 
+    organizer_club_id INT NULL,
     organizer_division_id INT NULL,
+    organizer_zonal_id INT NULL,
 
     target_audience       ENUM(
                             'AllDivisionalClubs',
@@ -328,9 +330,17 @@ CREATE TABLE Announcement (
 
     created_at            TIMESTAMP
                           DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
 
-    FOREIGN KEY (organizer_division_id)
-        REFERENCES Division(division_id),
+FOREIGN KEY (organizer_club_id)
+    REFERENCES Club(club_id),
+
+FOREIGN KEY (organizer_division_id)
+    REFERENCES Division(division_id),
+
+FOREIGN KEY (organizer_zonal_id)
+    REFERENCES Zone(zonal_id),
+
 
     FOREIGN KEY (created_by)
         REFERENCES User(user_id),
@@ -341,6 +351,23 @@ CREATE TABLE Announcement (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE AnnouncementAudience (
+    audience_id INT AUTO_INCREMENT PRIMARY KEY,
+    announcement_id INT NOT NULL,
+    target_role VARCHAR(50) NOT NULL,
+
+    UNIQUE KEY uq_announcement_target_role (
+        announcement_id,
+        target_role
+    ),
+
+    FOREIGN KEY (announcement_id)
+        REFERENCES Announcement(announcement_id)
+        ON DELETE CASCADE,
+
+    INDEX idx_announcement_audience_role (target_role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE AnnouncementAttachment (
     attachment_id   INT AUTO_INCREMENT PRIMARY KEY,
