@@ -28,6 +28,27 @@ class UserModel extends Model {
         );
     }
 
+    public function findByUserIdWithHierarchy($userId)
+    {
+        return $this->single(
+            "SELECT
+                u.*,
+                COALESCE(u.division_id, c.division_id) AS effective_division_id,
+                COALESCE(u.zonal_id, d.zonal_id) AS effective_zonal_id
+            FROM User u
+            LEFT JOIN Club c
+                ON u.club_id = c.club_id
+            LEFT JOIN Division d
+                ON d.division_id = COALESCE(u.division_id, c.division_id)
+            WHERE u.user_id = ?
+            LIMIT 1",
+            [(int)$userId]
+        );
+    }
+
+
+    
+
     /**
      * Insert a new user into the database adhering to the User table schema.
      *
