@@ -46,6 +46,7 @@ class Auth extends Controller {
                         'username'     => $user->username ?? '',
                         'email'        => $user->email,
                         'user_role'    => $user->role ?? 'UnassignedUser',
+                        'club_id'      => $user->club_id ?? null,
                         'division_id'  => $user->division_id ?? null,
                         'zonal_id'     => $user->zonal_id ?? null,
                         'user_initials'=> strtoupper(
@@ -183,6 +184,7 @@ class Auth extends Controller {
                     $_SESSION['username']      = $s['username'];
                     $_SESSION['user_email']    = $s['email'];
                     $_SESSION['user_role']     = $s['user_role'];
+                    $_SESSION['club_id']       = $s['club_id'];
                     $_SESSION['division_id']   = $s['division_id'];
                     $_SESSION['zonal_id']      = $s['zonal_id'];
                     $_SESSION['user_initials'] = $s['user_initials'];
