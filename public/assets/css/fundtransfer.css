@@ -1,0 +1,971 @@
+/* ============================================================
+   fundtransfer.css — Fund Transfer Module & Modal Popups
+   NYSC Administration · YouthNexus
+   ============================================================ */
+
+/* ── Container & Header ───────────────────────────────────── */
+.fund-transfer-module {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1e293b;
+}
+
+.ft-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.ft-section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+}
+
+.ft-section-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+.ft-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ── Action Buttons ───────────────────────────────────────── */
+.ft-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.ft-btn-primary {
+    background: #1e5eff;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(30, 94, 255, 0.25);
+}
+.ft-btn-primary:hover {
+    background: #164bd8;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.ft-btn-outline {
+    background: #eef1fb;
+    color: #1e3fa0;
+    border: 1px solid #dce4f9;
+}
+.ft-btn-outline:hover {
+    background: #dfe6fa;
+    color: #162f7a;
+}
+
+.ft-btn-sm {
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+.ft-btn-filter {
+    background: #1e3fa0;
+    color: #ffffff;
+}
+.ft-btn-filter:hover {
+    background: #173180;
+}
+
+.ft-btn-clear {
+    background: #f1f5f9;
+    color: #64748b;
+}
+.ft-btn-clear:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.ft-btn-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* ── 4 Stat Cards Row ─────────────────────────────────────── */
+.ft-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.ft-stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ft-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ft-stat-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.ft-stat-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
+}
+
+.ft-stat-big {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 4px 0;
+    line-height: 1.2;
+}
+
+.ft-stat-unit {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.ft-stat-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.ft-stat-detail {
+    font-size: 11px;
+    color: #1e3fa0;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Progress bar in Budget card */
+.ft-progress-wrap {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.ft-progress-bar {
+    height: 100%;
+    background: #1e5eff;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+/* ── Badges ───────────────────────────────────────────────── */
+.ft-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.ft-badge-yellow {
+    background: #fdf3d7;
+    color: #b8860b;
+}
+
+.ft-badge-blue {
+    background: #e3ecff;
+    color: #1e3fa0;
+}
+
+.ft-badge-green {
+    background: #e0f5e9;
+    color: #1e9e5a;
+}
+
+.ft-badge-red {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ── Filter Bar ───────────────────────────────────────────── */
+.ft-filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ft-search-box-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+}
+
+.ft-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.ft-filter-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ft-filter-input:focus,
+.ft-filter-select:focus {
+    border-color: #1e5eff;
+    box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.15);
+}
+
+.ft-filter-select {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #334155;
+    outline: none;
+    min-width: 160px;
+    cursor: pointer;
+}
+
+/* ── Table Card ───────────────────────────────────────────── */
+.ft-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 360px);
+    min-height: 250px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ft-table-card::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.ft-table-card::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.ft-table-card::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.ft-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.ft-table th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: inset 0 -1px 0 #e2e8f0;
+}
+
+.ft-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.ft-row:hover td {
+    background: #f8fbff;
+}
+
+.ft-val-date {
+    display: block;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.ft-val-ref {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 3px;
+    font-family: monospace, sans-serif;
+    font-weight: 600;
+}
+
+.ft-val-zone {
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.ft-val-sub {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.ft-val-method {
+    font-weight: 500;
+    color: #334155;
+}
+
+.ft-amount-outflow {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.ft-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eef1fb;
+    color: #1e5eff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.ft-link-btn:hover {
+    background: #dce4f9;
+    color: #164bd8;
+}
+
+.ft-empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: #64748b;
+}
+
+.ft-empty-icon {
+    font-size: 38px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.ft-table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.ft-pages .ft-page-link {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.ft-page-active {
+    background: #1e5eff;
+    color: #ffffff;
+}
+
+/* ============================================================
+   POPUP MODAL COMMON OVERLAY (Matching fundAllocation.php)
+   ============================================================ */
+.ft-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.ft-overlay[hidden] {
+    display: none !important;
+    opacity: 0;
+}
+
+.ft-popup {
+    background: #ffffff;
+    width: 100%;
+    max-width: 760px;
+    max-height: 92vh;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+    position: relative;
+    animation: ftModalSlideIn 0.2s ease-out;
+}
+
+.ft-popup-wide {
+    max-width: 900px;
+}
+
+@keyframes ftModalSlideIn {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Blue Strip on Details popup */
+.ft-top-strip {
+    height: 6px;
+    background: #1e3fa0;
+    width: 100%;
+}
+
+/* Popup Header */
+.ft-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.ft-popup-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ft-header-icon {
+    width: 42px;
+    height: 42px;
+    background: #1e3fa0;
+    color: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.ft-popup-title h1 {
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.ft-popup-title p {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+    margin-bottom: 0;
+}
+
+.ft-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.ft-close-btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+/* Popup Body */
+.ft-popup-body {
+    padding: 25px;
+}
+
+.ft-field {
+    margin-bottom: 20px;
+}
+
+.ft-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 8px;
+}
+
+.ft-required {
+    color: #ef4444;
+}
+
+.ft-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+.ft-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
+    border-radius: 8px;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.ft-input:focus {
+    background: #ffffff;
+    border-color: #1e5eff;
+    box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.18);
+}
+
+.ft-textarea {
+    resize: vertical;
+    min-height: 75px;
+    line-height: 1.5;
+}
+
+/* Form Row Grid */
+.ft-form-row {
+    display: flex;
+    gap: 18px;
+}
+
+.ft-form-row .ft-field {
+    flex: 1;
+}
+
+/* Amount Wrap with LKR Prefix */
+.ft-amount-wrap {
+    position: relative;
+}
+
+.ft-amount-wrap .ft-currency {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1e3fa0;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.ft-amount-wrap .ft-amount-input {
+    padding-left: 55px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Bank Box in Modal */
+.ft-bank-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.ft-bank-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ft-bank-icon {
+    width: 38px;
+    height: 38px;
+    background: #dbe6ff;
+    color: #1e3fa0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ft-bank-info h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.ft-bank-sub {
+    color: #64748b;
+    font-weight: normal;
+    font-size: 13px;
+}
+
+.ft-bank-info p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 3px 0 0;
+}
+
+.ft-verified-badge {
+    background: #e0f5e9;
+    color: #1e9e5a;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 15px;
+    white-space: nowrap;
+}
+
+/* Method Toggle Buttons */
+.ft-methods {
+    display: flex;
+    gap: 10px;
+}
+
+.ft-method-btn {
+    flex: 1;
+    padding: 11px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    background: #eef2fb;
+    color: #334155;
+    border: 1px solid #e0e6f5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ft-method-btn.ft-method-selected {
+    background: #1e5eff;
+    color: #ffffff;
+    border-color: #1e5eff;
+    box-shadow: 0 2px 6px rgba(30, 94, 255, 0.25);
+}
+
+/* Popup Footer */
+.ft-popup-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 16px 25px;
+    border-top: 1px solid #eef2f6;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ft-authorizer {
+    font-size: 13px;
+    color: #475569;
+}
+
+.ft-footer-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.ft-btn-cancel {
+    background: #e2e8f0;
+    color: #334155;
+}
+.ft-btn-cancel:hover {
+    background: #cbd5e1;
+}
+
+.ft-btn-authorize {
+    background: #1e5eff;
+    color: #ffffff;
+    font-weight: 700;
+}
+.ft-btn-authorize:hover {
+    background: #164bd8;
+}
+
+.ft-alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.ft-alert-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* ============================================================
+   TRANSACTION DETAILS POPUP SPECIFIC (Matching transferDetails.php)
+   ============================================================ */
+.ft-details-header {
+    padding: 22px 28px 18px;
+}
+
+.ft-header-left h1 {
+    font-size: 21px;
+    font-weight: 700;
+    color: #0f172a;
+    display: inline;
+    margin: 0;
+}
+
+.ft-ref-chip {
+    display: inline-block;
+    background: #eef2fb;
+    color: #1e3fa0;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.ft-status-chip {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 15px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.ft-status-completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.ft-status-processing {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.ft-header-left p {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.ft-details-close {
+    background: #eef2fb;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* Amount Band */
+.ft-amount-band {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 28px;
+    border-bottom: 1px solid #eef2f6;
+    background: #fafcff;
+}
+
+.ft-amount-band-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.ft-amount-band-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e5eff;
+    margin-top: 4px;
+}
+
+.ft-amount-band-datetime {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Two Details Cards */
+.ft-details-grid {
+    display: flex;
+    gap: 20px;
+    padding: 22px 28px;
+}
+
+.ft-detail-info-card {
+    flex: 1;
+    border: 1px solid #e3e7f2;
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: #ffffff;
+}
+
+.ft-detail-info-card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 12px;
+}
+
+.ft-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.ft-detail-row:last-child {
+    border-bottom: none;
+}
+
+.ft-dk {
+    color: #64748b;
+}
+
+.ft-dv {
+    font-weight: 600;
+    text-align: right;
+    color: #0f172a;
+}
+
+.ft-verified-tag {
+    color: #1e5eff;
+    font-size: 11px;
+    display: block;
+    margin-top: 2px;
+}
+
+/* Purpose Wrap */
+.ft-purpose-wrap {
+    padding: 0 28px 22px;
+}
+
+.ft-purpose-wrap h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 10px;
+}
+
+.ft-purpose-box {
+    background: #eef2fb;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+/* Details Footer */
+.ft-details-footer {
+    justify-content: flex-end;
+    padding: 16px 28px;
+}
+
+.ft-btn-close {
+    background: #dbe6ff;
+    color: #1e3fa0;
+    font-weight: 600;
+}
+.ft-btn-close:hover {
+    background: #ccdcff;
+}
+
+.ft-btn-download {
+    background: #1e5eff;
+    color: #ffffff;
+    font-weight: 700;
+}
+.ft-btn-download:hover {
+    background: #164bd8;
+    color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .ft-form-row,
+    .ft-details-grid {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .ft-amount-band {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .ft-cards-row {
+        grid-template-columns: 1fr;
+    }
+}
