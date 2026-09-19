@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+
+<rect width="400" height="300" rx="12" fill="#059669" />
+<rect x="12" y="12" width="376" height="276" rx="8" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.4" />
+<circle cx="200" cy="110" r="45" fill="#ffffff" opacity="0.2" />
+<path d="M180 110 L195 125 L225 95" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="24" y="180" width="352" height="96" rx="8" fill="#0f172a" opacity="0.8" />
+<text x="200" y="210" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">65L Hiking Backpacks</text>
+<text x="200" y="235" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="700" fill="#38bdf8" text-anchor="middle">Qty: 12 &bull; Condition: Good</text>
+<text x="200" y="258" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">ASSET INVENTORY SPECIMEN</text>
+
+</svg>

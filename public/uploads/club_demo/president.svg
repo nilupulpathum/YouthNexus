@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+
+<defs>
+  <linearGradient id="bg_president.svg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#065f46" />
+    <stop offset="100%" stop-color="#0f172a" />
+  </linearGradient>
+</defs>
+<rect width="240" height="240" rx="120" fill="url(#bg_president.svg)" />
+<!-- Body / Shoulders -->
+<ellipse cx="120" cy="220" rx="75" ry="45" fill="#ffffff" opacity="0.95" />
+<polygon points="120,165 95,210 145,210" fill="#e2e8f0" />
+<!-- Neck -->
+<rect x="105" y="130" width="30" height="35" rx="6" fill="#fcd34d" />
+<!-- Head -->
+<ellipse cx="120" cy="105" rx="42" ry="48" fill="#fcd34d" />
+<!-- Hair -->
+<path d="M78 100 C78 60 162 60 162 100 C162 70 140 60 120 60 C100 60 78 70 78 100 Z" fill="#1e293b" />
+<!-- Eyes -->
+<circle cx="106" cy="105" r="4" fill="#1e293b" />
+<circle cx="134" cy="105" r="4" fill="#1e293b" />
+<!-- Smile -->
+<path d="M110 125 Q120 135 130 125" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" />
+<!-- Badge banner -->
+<rect x="30" y="195" width="180" height="26" rx="13" fill="#1e40af" stroke="#ffffff" stroke-width="1.5" />
+<text x="120" y="212" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">R. WICKRAMASINGHE</text>
+
+</svg>

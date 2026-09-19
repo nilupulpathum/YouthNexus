@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --blue: #1e3a8a;
+  --blue-panel: #1e40af;
+  --blue-hover: #152c6e;
+  --orange: #f97316;
+  --link: #2563eb;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --btn: #1e3a8a;
+  --bg-light: #f4f7fb;
+  --error: #b91c1c;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --success: #15803d;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+/* Standalone Center-Card Page Layouts */
+.auth-card-body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 50%, #d6dce8 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Premium Card Base */
+.card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+/* Buttons */
+.btn, .signin-btn, .btn-submit, .submit-btn {
+  width: 100%;
+  height: 56px;
+  border: none;
+  border-radius: 12px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.btn:hover, .signin-btn:hover, .btn-submit:hover, .submit-btn:hover {
+  background: var(--blue-panel);
+}
+
+.btn:active, .signin-btn:active, .btn-submit:active, .submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* Form Groups and Inputs */
+.form-group, .input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.field-label, .form-group label, .input-group label, .label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.input, .input-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.input input, .input-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--ink);
+  background: transparent;
+  height: 100%;
+  font-family: inherit;
+}
+
+.input input::placeholder, .input-box input::placeholder {
+  color: #94a3b8;
+}
+
+.input:focus-within, .input-box:focus-within {
+  border-color: var(--link);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Direct (Unwrapped) Inputs & Selects */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  background: #ffffff;
+  font-family: inherit;
+  color: var(--ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--link);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.input-icon, .icon-left {
+  color: var(--muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Alert Boxes & Validation feedback */
+.alert, .message, .error, .msg {
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  text-align: left;
+}
+
+.alert-error, .error, .message.error, .msg.error {
+  background: var(--error-bg);
+  color: var(--error);
+  border-color: var(--error-border);
+}
+
+.alert-success, .success, .message.success, .msg.success {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: var(--success-border);
+}
+
+/* Popup Overlay Modals */
+.popup-overlay, .error-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-box, .error-box {
+  background: #ffffff;
+  width: 90%;
+  max-width: 380px;
+  border-radius: 20px;
+  text-align: center;
+  padding: 40px 30px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.popup-icon-wrap, .error-icon, .popup-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.popup-btn, .error-btn {
+  display: inline-flex;
+  width: 100%;
+  padding: 14px;
+  background: var(--blue);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+}
+
+.popup-btn:hover, .error-btn:hover {
+  background: var(--blue-panel);
+}
