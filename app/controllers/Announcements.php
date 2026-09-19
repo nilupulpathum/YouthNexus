@@ -1783,26 +1783,35 @@ class Announcements extends Controller
                             ]
                         );
                     }
-                } elseif (
+                                } elseif (
                     $contentChanged
                     ||
                     (
                         $wasPublished
                         &&
-                        $audienceChanged
+                        $changed
                     )
                 ) {
                     /*
-                     * Audience-only change on a Published
-                     * announcement should also update the
-                     * Edited timestamp.
+                     * Any meaningful change to a Published
+                     * announcement should update the Edited
+                     * timestamp.
+                     *
+                     * This includes:
+                     * - title/body/category/priority changes
+                     * - target audience changes
+                     * - adding attachments
+                     * - removing attachments
+                     *
+                     * Draft audience/attachment-only changes
+                     * do not need an Edited timestamp before
+                     * first publication.
                      */
                     $model->updateContent(
                         $id,
                         $data
                     );
                 }
-
 
                 if ($audienceChanged) {
                     $audienceModel
