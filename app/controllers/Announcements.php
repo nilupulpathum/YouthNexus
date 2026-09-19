@@ -1783,7 +1783,8 @@ class Announcements extends Controller
                             ]
                         );
                     }
-                                } elseif (
+                }
+                elseif (
                     $contentChanged
                     ||
                     (
