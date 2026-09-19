@@ -229,10 +229,15 @@
     white-space: nowrap;
 }
 
-.me-filter-btn:hover,
-.me-filter-btn[aria-expanded="true"] {
+.me-filter-btn:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
+}
+
+.me-filter-btn[aria-expanded="true"] {
+    background: var(--dashboard-blue-soft);
+    border-color: var(--db-sidebar-bg);
+    color: var(--db-sidebar-bg);
 }
 
 .me-filter-count {
