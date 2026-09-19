@@ -180,4 +180,136 @@ class UserModel extends Model {
         );
         return true;
     }
+
+    public function findAnnouncementRecipients(
+    $targetRole,
+    $managerLevel,
+    $scopeId = null
+) {
+    $sql = "
+        SELECT
+            u.user_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.role,
+            u.club_id,
+
+            c.club_name,
+
+            COALESCE(
+                u.division_id,
+                c.division_id
+            ) AS effective_division_id,
+
+            d.division_name,
+
+            COALESCE(
+                u.zonal_id,
+                d.zonal_id
+            ) AS effective_zonal_id,
+
+            z.zonal_name
+
+        FROM User u
+
+        LEFT JOIN Club c
+            ON c.club_id =
+                u.club_id
+
+        LEFT JOIN Division d
+            ON d.division_id =
+                COALESCE(
+                    u.division_id,
+                    c.division_id
+                )
+
+        LEFT JOIN Zone z
+            ON z.zonal_id =
+                COALESCE(
+                    u.zonal_id,
+                    d.zonal_id
+                )
+
+        WHERE u.status = 'Active'
+          AND u.role = ?
+    ";
+
+    $params = [
+        $targetRole,
+    ];
+
+    switch ($managerLevel) {
+        case 'Club':
+
+            $sql .= "
+                AND u.club_id = ?
+            ";
+
+            $params[] =
+                (int)$scopeId;
+
+            break;
+
+
+        case 'Divisional':
+
+            $sql .= "
+                AND COALESCE(
+                    u.division_id,
+                    c.division_id
+                ) = ?
+            ";
+
+            $params[] =
+                (int)$scopeId;
+
+            break;
+
+
+        case 'Zonal':
+
+            $sql .= "
+                AND COALESCE(
+                    u.zonal_id,
+                    d.zonal_id
+                ) = ?
+            ";
+
+            $params[] =
+                (int)$scopeId;
+
+            break;
+
+
+        case 'NYSC':
+            /*
+             * No additional scope restriction.
+             */
+            break;
+
+
+        default:
+
+            throw new InvalidArgumentException(
+                'Invalid announcement manager level.'
+            );
+    }
+
+    $sql .= "
+        ORDER BY
+            c.club_name,
+            d.division_name,
+            u.first_name,
+            u.last_name
+    ";
+
+    return $this->resultSet(
+        $sql,
+        $params
+    );
+}
+
+
+
 }
