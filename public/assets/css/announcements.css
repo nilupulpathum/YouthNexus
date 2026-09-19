@@ -923,132 +923,323 @@
   }
 }
 
-/* Role-targeted announcement recipients */
-
-.ann-role-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.ann-role-option {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-
-  padding: 10px 12px;
-
-  border: 1px solid var(--db-border);
-  border-radius: var(--db-radius);
-
-  background: #fff;
-
-  cursor: pointer;
-
-  font-size: 13px;
-  color: var(--db-text-dark);
-
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.ann-role-option:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.ann-role-option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-
-  flex: 0 0 auto;
-
-  accent-color: var(--db-sidebar-bg);
-}
-
-.ann-role-option:has(input:checked) {
-  background: #eff6ff;
-  border-color: var(--db-sidebar-bg);
-}
-
-@media (max-width: 600px) {
-  .ann-role-options {
-    grid-template-columns: 1fr;
-  }
-}
+/* =====================================================================
+   ROLE-TARGETED ANNOUNCEMENT RECIPIENTS
+   ===================================================================== */
 
 .ann-target-role-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .ann-target-role-card {
-  border: 1px solid #d9e1ea;
-  border-radius: 10px;
-  background: #fff;
+  min-width: 0;
   overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius-lg);
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
 }
 
-.ann-target-role-header {
+.ann-target-role-card:hover {
+  border-color: #cbd5e1;
+}
+
+.ann-target-role-card:has(.ann-target-role-enable:checked) {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 1px rgba(30, 64, 175, .04);
+}
+
+.ann-field .ann-target-role-header {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 12px 14px;
-  font-weight: 600;
+  gap: 10px;
+  margin: 0;
+  padding: 13px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--db-text-dark);
   cursor: pointer;
+}
+
+.ann-target-role-header input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--db-sidebar-bg);
+}
+
+.ann-target-role-header span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ann-target-role-settings {
-  padding: 0 14px 14px;
+  padding: 4px 14px 14px;
   border-top: 1px solid #edf1f5;
+  background: #fbfcfe;
 }
 
-.ann-target-mode {
+.ann-field .ann-target-mode {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-top: 11px;
+  gap: 9px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--db-text-dark);
   cursor: pointer;
+}
+
+.ann-target-mode input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: var(--db-sidebar-bg);
+}
+
+.ann-target-mode span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ann-recipient-picker {
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #dbe2ea;
 }
 
-.ann-recipient-search {
+.dashboard .ann-field .ann-recipient-search {
   width: 100%;
-  margin-bottom: 10px;
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  outline: none;
+  background: #fff;
+  color: var(--db-text-dark);
+  font: 13px var(--db-font-family);
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+.dashboard .ann-field .ann-recipient-search::placeholder {
+  color: #9ca3af;
+}
+
+.dashboard .ann-field .ann-recipient-search:focus {
+  border-color: var(--db-sidebar-bg);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, .1);
 }
 
 .ann-recipient-list {
   display: grid;
   gap: 7px;
   max-height: 220px;
+  padding-right: 3px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.ann-recipient-option {
+.ann-recipient-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.ann-recipient-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.ann-recipient-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ann-field .ann-recipient-option {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
   padding: 9px 10px;
   border: 1px solid #e3e8ef;
   border-radius: 8px;
+  background: #fff;
+  color: var(--db-text-dark);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
   cursor: pointer;
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease;
 }
 
-.ann-recipient-option:hover {
+.ann-field .ann-recipient-option:hover {
   background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
-.ann-audience-detail+.ann-audience-detail {
-  margin-top: 12px;
+.ann-field .ann-recipient-option:has(input:checked) {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.ann-recipient-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: var(--db-sidebar-bg);
+}
+
+.ann-recipient-option span,
+.ann-recipient-option div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ann-recipient-option small {
+  display: block;
+  margin-top: 2px;
+  color: var(--db-text-grey);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+
+/* =====================================================================
+   DETAIL PAGE — AUDIENCE
+   ===================================================================== */
+
+.ann-audience-list {
+  display: grid;
+  gap: 0;
+  margin-top: 14px;
+}
+
+.ann-audience-detail {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--db-border);
+}
+
+.ann-audience-detail:first-child {
+  padding-top: 0;
+}
+
+.ann-audience-detail:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.ann-audience-role {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 5px;
+  color: var(--db-text-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ann-audience-role>span:first-child,
+.ann-audience-role>strong:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ann-audience-mode {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .25px;
+  text-transform: uppercase;
+}
+
+.ann-selected-recipient-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .ann-selected-recipient {
-  margin-top: 4px;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: var(--db-text-dark);
+  font-size: 12.5px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ann-selected-recipient small {
+  color: var(--db-text-grey);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+
+/* =====================================================================
+   RECIPIENT RESPONSIVE RULES
+   ===================================================================== */
+
+@media (max-width: 600px) {
+  .ann-target-role-grid {
+    gap: 10px;
+  }
+
+  .ann-field .ann-target-role-header {
+    padding: 12px;
+  }
+
+  .ann-target-role-settings {
+    padding: 4px 12px 12px;
+  }
+
+  .ann-audience-role {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ann-audience-mode {
+    align-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ann-target-role-card,
+  .ann-field .ann-recipient-option,
+  .dashboard .ann-field .ann-recipient-search {
+    transition: none;
+  }
 }

@@ -345,16 +345,42 @@ FOREIGN KEY (organizer_zonal_id)
     FOREIGN KEY (created_by)
         REFERENCES User(user_id),
 
-    INDEX idx_announcement_division (organizer_division_id),
-    INDEX idx_announcement_status (status),
-    INDEX idx_announcement_created_by (created_by)
+INDEX idx_announcement_club (
+    organizer_club_id
+),
+
+INDEX idx_announcement_division (
+    organizer_division_id
+),
+
+INDEX idx_announcement_zonal (
+    organizer_zonal_id
+),
+
+INDEX idx_announcement_status (
+    status
+),
+
+INDEX idx_announcement_level_status (
+    level,
+    status
+),
+
+INDEX idx_announcement_created_by (
+    created_by
+)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE AnnouncementAudience (
     audience_id INT AUTO_INCREMENT PRIMARY KEY,
+
     announcement_id INT NOT NULL,
+
     target_role VARCHAR(50) NOT NULL,
+
+    selection_mode ENUM('All', 'Selected')
+        NOT NULL DEFAULT 'All',
 
     UNIQUE KEY uq_announcement_target_role (
         announcement_id,
@@ -365,8 +391,35 @@ CREATE TABLE AnnouncementAudience (
         REFERENCES Announcement(announcement_id)
         ON DELETE CASCADE,
 
-    INDEX idx_announcement_audience_role (target_role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    INDEX idx_announcement_audience_role (
+        target_role
+    )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE AnnouncementAudienceUser (
+    audience_id INT NOT NULL,
+    user_id INT NOT NULL,
+
+    PRIMARY KEY (
+        audience_id,
+        user_id
+    ),
+
+    FOREIGN KEY (audience_id)
+        REFERENCES AnnouncementAudience(audience_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (user_id)
+        REFERENCES User(user_id),
+
+    INDEX idx_announcement_audience_user_user (
+        user_id
+    )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE AnnouncementAttachment (
