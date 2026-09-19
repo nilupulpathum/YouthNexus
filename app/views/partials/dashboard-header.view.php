@@ -4,7 +4,7 @@ $displayName = trim((string) $userName) !== '' ? trim((string) $userName) : 'You
 $initials = function_exists('mb_substr')
     ? strtoupper(mb_substr($displayName, 0, 1))
     : strtoupper(substr($displayName, 0, 1));
-$roleLabel = ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
+$roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
 ?>
 <header class="db-topbar dashboard-header">
   <div class="db-topbar-title">
@@ -30,14 +30,35 @@ $roleLabel = ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
       <input id="dashboard-global-search" type="search" placeholder="Search..." autocomplete="off">
     </label>
 
-    <a class="db-icon-btn dashboard-notification" href="<?= htmlspecialchars($notificationUrl, ENT_QUOTES, 'UTF-8') ?>" aria-label="Notifications<?= $unreadNotificationCount > 0 ? ', ' . $unreadNotificationCount . ' unread' : '' ?>">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-        <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <?php if ($unreadNotificationCount > 0): ?>
-        <span class="db-badge-dot"><?= $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount ?></span>
-      <?php endif; ?>
-    </a>
+    <div class="dashboard-notifications" data-notif-menu>
+      <button class="db-icon-btn dashboard-notification" type="button" data-notif-toggle aria-controls="dashboard-notif-menu" aria-expanded="false" aria-label="Notifications<?= $unreadNotificationCount > 0 ? ', ' . $unreadNotificationCount . ' unread' : '' ?>">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <?php if ($unreadNotificationCount > 0): ?>
+          <span class="db-badge-dot"><?= $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount ?></span>
+        <?php endif; ?>
+      </button>
+
+      <div class="dashboard-notif__menu" id="dashboard-notif-menu" data-notif-dropdown hidden>
+        <div class="dashboard-notif__menu-heading">
+          <strong>Notifications</strong>
+          <span><?= $unreadNotificationCount > 0 ? $unreadNotificationCount . ' unread' : 'All caught up' ?></span>
+        </div>
+        <a href="<?= $dashboardRoot ?>/announcements">
+          <strong>Divisional Leadership Summit 2026</strong>
+          <span>Confirm your attendance by Friday · 2 days ago</span>
+        </a>
+        <a href="<?= $dashboardRoot ?>/announcements">
+          <strong>Volunteer hour submission guidelines</strong>
+          <span>Submit within 7 days of the activity · 4 days ago</span>
+        </a>
+        <div class="dashboard-profile__menu-divider"></div>
+        <a class="dashboard-notif__view-all" href="<?= $dashboardRoot ?>/announcements">
+          View all announcements
+        </a>
+      </div>
+    </div>
 
     <div class="dashboard-profile" data-profile-menu>
       <button class="dashboard-profile__trigger db-topbar-avatar" type="button" data-profile-toggle aria-controls="dashboard-profile-menu" aria-expanded="false" aria-label="Open profile menu">
@@ -55,7 +76,7 @@ $roleLabel = ucwords(str_replace(['_', '-'], ' ', (string) $userRole));
           My profile
         </a>
         <a href="<?= $dashboardRoot ?>/settings">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="m19.4 15 .1.1a2 2 0 0 1-2.8 2.8l-.1-.1a2 2 0 0 0-3.4 1.4v.2a2 2 0 0 1-4 0v-.2a2 2 0 0 0-3.4-1.4l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1A2 2 0 0 0 1.7 12a2 2 0 0 0 1.4-3.4L3 8.5A2 2 0 0 1 5.8 5.7l.1.1A2 2 0 0 0 9.3 4.4v-.2a2 2 0 0 1 4 0v.2a2 2 0 0 0 3.4 1.4l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1A2 2 0 0 0 20.9 12a2 2 0 0 0-1.5 3Z"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
           Settings
         </a>
         <div class="dashboard-profile__menu-divider"></div>
