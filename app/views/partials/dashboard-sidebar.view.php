@@ -1126,7 +1126,7 @@ $icons = [
         '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 
     'certificate' =>
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h3" stroke-linecap="round"/><path d="m15 17 1.5 3 1.5-1 1.5 1 1.5-3" stroke-linecap="round" stroke-linejoin="round"/>',
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h3" stroke-linecap="round"/><path d="m15 17 1.5 3 1.5-1 1.5 1 1.5-3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 
     'hours' =>
         '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2M5.5 5.5l-1.5-1.5M18.5 5.5 20 4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
