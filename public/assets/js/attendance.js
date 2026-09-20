@@ -1,6 +1,7 @@
 /* =====================================================================
-   attendance.js — Divisional Attendance Management
-   Client-side only for filtering — NO page reloads for filter changes.
+   attendance.js — Attendance Governance & Management
+   Supports NYSC Administrator (Cascading Filters & National Scope)
+   and Divisional Secretary.
    ===================================================================== */
 
 (function () {
@@ -8,26 +9,26 @@
 
     const ROOT       = window.ROOT || '';
     const CSRF_TOKEN = document.getElementById('csrfToken')?.value || '';
+    const isNYSCAdmin = !!window.isNYSCAdmin;
 
     /* -----------------------------------------------------------------
-       TOAST
+       TOAST HELPER
        ----------------------------------------------------------------- */
-    function showToast(message, type = '') {
+    function showToast(message, type = 'success') {
         const t = document.getElementById('amToast');
         if (!t) return;
         t.textContent = message;
-        t.className   = 'am-toast' + (type ? ' ' + type : '');
-        // force reflow
+        t.className   = 'am-toast ' + type;
         void t.offsetWidth;
         t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3200);
+        setTimeout(() => t.classList.remove('show'), 3500);
     }
 
     /* =================================================================
-       SESSION-LIST PAGE
+       SESSION-LIST PAGE (Filters & Cascading Dropdowns)
        ================================================================= */
 
-    // --- Filter Panel toggle (no page reload) -------------------------
+    // --- Filter Panel Toggle -----------------------------------------
     const filterBtn   = document.getElementById('amFilterBtn');
     const filterPanel = document.getElementById('amFilterPanel');
     if (filterBtn && filterPanel) {
@@ -37,303 +38,344 @@
         });
     }
 
-    // --- Client-side filterCards() ------------------------------------
-    function filterCards() {
-        const query     = (document.getElementById('amSearchInput')?.value || '').toLowerCase().trim();
-        const typeVal   = (document.getElementById('amFilterType')?.value  || '').toLowerCase();
-        const scopeVal  = (document.getElementById('amFilterScope')?.value || '').toLowerCase();
-        const cards     = document.querySelectorAll('#amCardGrid .am-card');
-        let   visible   = 0;
+    // --- Cascading Dropdowns for NYSC Admin --------------------------
+    const zoneSelect = document.getElementById('filterZone');
+    const divSelect  = document.getElementById('filterDivision');
+    const clubSelect = document.getElementById('filterClub');
 
-        cards.forEach(card => {
-            const titleMatch = !query   || (card.dataset.title || '').includes(query);
-            const typeMatch  = !typeVal || (card.dataset.type  || '') === typeVal;
-            const scopeMatch = !scopeVal|| (card.dataset.scope || '') === scopeVal;
-            const show       = titleMatch && typeMatch && scopeMatch;
-            card.style.display = show ? '' : 'none';
-            if (show) visible++;
-        });
+    if (zoneSelect && divSelect) {
+        zoneSelect.addEventListener('change', async function () {
+            const zoneId = this.value;
+            divSelect.innerHTML  = '<option value="">All Divisions</option>';
+            if (clubSelect) clubSelect.innerHTML = '<option value="">All Clubs</option>';
 
-        // Show empty state if nothing visible
-        let emptyMsg = document.getElementById('amFilterEmpty');
-        if (!emptyMsg) {
-            emptyMsg = document.createElement('div');
-            emptyMsg.id = 'amFilterEmpty';
-            emptyMsg.className = 'am-empty-state';
-            emptyMsg.style.gridColumn = '1 / -1';
-            emptyMsg.innerHTML = '<p>No events match your filters.</p>';
-            document.getElementById('amCardGrid')?.appendChild(emptyMsg);
-        }
-        emptyMsg.style.display = visible === 0 ? '' : 'none';
-    }
-
-    document.getElementById('amSearchInput')?.addEventListener('input', filterCards);
-
-    function updateFilterBadge() {
-        const typeVal  = document.getElementById('amFilterType')?.value || '';
-        const scopeVal = document.getElementById('amFilterScope')?.value || '';
-        let count = 0;
-        if (typeVal !== '') count++;
-        if (scopeVal !== '') count++;
-
-        const badge = document.getElementById('amFilterCount');
-        if (badge) {
-            if (count > 0) {
-                badge.textContent = count;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
+            if (zoneId) {
+                try {
+                    const res  = await fetch(`${ROOT}/attendance/getdivisions?zone_id=${encodeURIComponent(zoneId)}`);
+                    const data = await res.json();
+                    if (data.success && data.divisions) {
+                        data.divisions.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.division_id;
+                            opt.textContent = d.division_name;
+                            divSelect.appendChild(opt);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error fetching divisions:', e);
+                }
             }
-        }
+        });
     }
 
-    document.getElementById('amApplyFilterBtn')?.addEventListener('click', () => {
-        filterCards();
-        updateFilterBadge();
-        filterPanel?.classList.remove('open');
-        filterBtn?.setAttribute('aria-expanded', 'false');
-    });
-    document.getElementById('amClearFilterBtn')?.addEventListener('click', () => {
-        const typeEl  = document.getElementById('amFilterType');
-        const scopeEl = document.getElementById('amFilterScope');
-        const search  = document.getElementById('amSearchInput');
-        if (typeEl)  typeEl.value  = '';
-        if (scopeEl) scopeEl.value = '';
-        if (search)  search.value  = '';
-        filterCards();
-        updateFilterBadge();
-    });
+    if (divSelect && clubSelect) {
+        divSelect.addEventListener('change', async function () {
+            const divId = this.value;
+            clubSelect.innerHTML = '<option value="">All Clubs</option>';
 
-    // --- Modal open/close -------------------------------------------
-    const modal       = document.getElementById('amModal');
-    const addBtn      = document.getElementById('amAddBtn');
-    const closeBtn    = document.getElementById('amModalClose');
-    const cancelBtn   = document.getElementById('amModalCancelBtn');
+            if (divId) {
+                try {
+                    const res  = await fetch(`${ROOT}/attendance/getclubs?division_id=${encodeURIComponent(divId)}`);
+                    const data = await res.json();
+                    if (data.success && data.clubs) {
+                        data.clubs.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.club_id;
+                            opt.textContent = c.club_name;
+                            clubSelect.appendChild(opt);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error fetching clubs:', e);
+                }
+            }
+        });
+    }
 
-    function openModal()  { modal?.classList.add('open'); }
-    function closeModal() { modal?.classList.remove('open'); }
+    // --- Client-side search for event cards --------------------------
+    const searchInput = document.getElementById('amSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('#amCardGrid .am-card');
+            let visible = 0;
 
-    addBtn?.addEventListener('click',    openModal);
-    closeBtn?.addEventListener('click',  closeModal);
-    cancelBtn?.addEventListener('click', closeModal);
-    modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+            cards.forEach(card => {
+                const title = card.dataset.title || '';
+                const type  = card.dataset.type  || '';
+                const match = !q || title.includes(q) || type.includes(q);
+                card.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
 
-    // --- Modal tab switching ----------------------------------------
+            let emptyMsg = document.getElementById('amFilterEmpty');
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('div');
+                emptyMsg.id = 'amFilterEmpty';
+                emptyMsg.className = 'am-empty-state';
+                emptyMsg.style.gridColumn = '1 / -1';
+                emptyMsg.innerHTML = '<p>No events match your search term.</p>';
+                document.getElementById('amCardGrid')?.appendChild(emptyMsg);
+            }
+            emptyMsg.style.display = (visible === 0) ? '' : 'none';
+        });
+    }
+
+    /* =================================================================
+       ADD ATTENDANCE MODAL
+       ================================================================= */
+    const addBtn    = document.getElementById('amAddBtn');
+    const modal     = document.getElementById('amModal');
+    const closeBtn  = document.getElementById('amModalClose');
+    const cancelBtn = document.getElementById('amModalCancelBtn');
+    const saveBtn   = document.getElementById('amSaveBtn');
+
+    function openModal() {
+        if (!modal) return;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (addBtn)    addBtn.addEventListener('click', openModal);
+    if (closeBtn)  closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+        modal.addEventListener('click', e => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Modal Tab Switching
     document.querySelectorAll('.am-modal-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.addEventListener('click', function () {
             document.querySelectorAll('.am-modal-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.am-tab-pane').forEach(p => p.classList.remove('active'));
-            tab.classList.add('active');
-            const paneId = 'pane' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
-            document.getElementById(paneId)?.classList.add('active');
+            this.classList.add('active');
+            const targetPane = document.getElementById(this.dataset.tab === 'bulk' ? 'paneBulk' : 'paneSingle');
+            if (targetPane) targetPane.classList.add('active');
         });
     });
 
-    // --- Event select → load members (JSON XHR) ---------------------
+    // Dynamic Member Fetching on Event Selection
     const sEventSelect  = document.getElementById('sEventSelect');
     const sMemberSelect = document.getElementById('sMemberSelect');
 
-    sEventSelect?.addEventListener('change', () => {
-        const eventId = sEventSelect.value;
-        if (!eventId) {
-            sMemberSelect.innerHTML = '<option value="">— Select Event first —</option>';
-            sMemberSelect.disabled = true;
-            return;
-        }
-        sMemberSelect.disabled = true;
-        sMemberSelect.innerHTML = '<option value="">Loading…</option>';
+    if (sEventSelect && sMemberSelect) {
+        sEventSelect.addEventListener('change', async function () {
+            const eventId = this.value;
+            sMemberSelect.innerHTML = '<option value="">Loading members…</option>';
+            sMemberSelect.disabled  = true;
 
-        fetch(ROOT + '/attendance/detail/' + eventId, {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(r => r.json())
-            .then(data => {
-                const members = data.members || [];
-                sMemberSelect.innerHTML = '<option value="">— Select Member —</option>';
-                members.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.user_id;
-                    opt.textContent = m.member_name + ' (' + (m.club_code || m.club_name) + ')';
-                    sMemberSelect.appendChild(opt);
-                });
-                sMemberSelect.disabled = false;
-            })
-            .catch(() => {
-                sMemberSelect.innerHTML = '<option value="">Failed to load members</option>';
-            });
-    });
-
-    // --- Save button -----------------------------------------------
-    document.getElementById('amSaveBtn')?.addEventListener('click', () => {
-        const activeTab = document.querySelector('.am-modal-tab.active')?.dataset.tab || 'single';
-
-        if (activeTab === 'single') {
-            const eventId  = document.getElementById('sEventSelect')?.value;
-            const memberId = document.getElementById('sMemberSelect')?.value;
-            const status   = document.getElementById('sStatus')?.value;
-            const checkIn  = document.getElementById('sCheckIn')?.value;
-            const remark   = document.getElementById('sRemark')?.value;
-
-            if (!eventId || !memberId) {
-                showToast('Please select an event and a member.', 'error');
+            if (!eventId) {
+                sMemberSelect.innerHTML = '<option value="">— Select Event first —</option>';
                 return;
             }
 
-            const fd = new FormData();
-            fd.append('csrf_token', CSRF_TOKEN);
-            fd.append('mode',       'single');
-            fd.append('event_id',   eventId);
-            fd.append('member_id',  memberId);
-            fd.append('status',     status);
-            fd.append('check_in_time', checkIn);
-            fd.append('remark',     remark);
+            try {
+                const res  = await fetch(`${ROOT}/attendance/getmembers?event_id=${encodeURIComponent(eventId)}`);
+                const data = await res.json();
 
-            fetch(ROOT + '/attendance/save', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        closeModal();
-                        showToast('Attendance saved.', 'success');
-                    } else {
-                        showToast(data.error || 'Save failed.', 'error');
-                    }
-                })
-                .catch(() => showToast('Network error.', 'error'));
-
-        } else {
-            // Bulk CSV
-            const eventId = document.getElementById('bEventSelect')?.value;
-            const csvFile = document.getElementById('bCsvFile')?.files[0];
-            if (!eventId) { showToast('Please select an event.', 'error'); return; }
-            if (!csvFile)  { showToast('Please select a CSV file.', 'error'); return; }
-
-            const fd = new FormData();
-            fd.append('csrf_token', CSRF_TOKEN);
-            fd.append('mode',       'bulk');
-            fd.append('event_id',   eventId);
-            fd.append('csv_file',   csvFile);
-
-            fetch(ROOT + '/attendance/save', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        closeModal();
-                        let msg = 'Saved ' + (data.saved || 0) + ' record(s).';
-                        if (data.skipped?.length) {
-                            msg += ' ' + data.skipped.length + ' row(s) skipped.';
-                        }
-                        showToast(msg, 'success');
-                        if (data.skipped?.length) {
-                            console.warn('[Attendance] Skipped rows:', data.skipped);
-                        }
-                    } else {
-                        showToast(data.error || 'Save failed.', 'error');
-                    }
-                })
-                .catch(() => showToast('Network error.', 'error'));
-        }
-    });
-
-    /* =================================================================
-       SESSION-DETAIL PAGE
-       ================================================================= */
-
-    // --- Client-side table search + status filter (no page reload) ----
-    function filterTable() {
-        const query      = (document.getElementById('amTableSearch')?.value || '').toLowerCase().trim();
-        const statusVal  = (document.getElementById('amTableStatusFilter')?.value || '').toLowerCase();
-        const rows       = document.querySelectorAll('#amRosterTable .am-roster-row');
-        rows.forEach(row => {
-            const nameMatch   = !query     || (row.dataset.name   || '').includes(query);
-            const rowStatus   = (row.dataset.status || '').toLowerCase();
-            const statusMatch = !statusVal || rowStatus === statusVal || (statusVal === 'unmarked' && rowStatus === '');
-            row.style.display = (nameMatch && statusMatch) ? '' : 'none';
+                if (data.success && data.members && data.members.length > 0) {
+                    sMemberSelect.innerHTML = '<option value="">— Select Member —</option>';
+                    data.members.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.user_id || m.member_id;
+                        const clubInfo = m.club_name ? ` (${m.club_name})` : '';
+                        opt.textContent = `${m.member_name}${clubInfo}`;
+                        sMemberSelect.appendChild(opt);
+                    });
+                    sMemberSelect.disabled = false;
+                } else {
+                    sMemberSelect.innerHTML = '<option value="">No members found in scope</option>';
+                }
+            } catch (err) {
+                sMemberSelect.innerHTML = '<option value="">Failed to load members</option>';
+            }
         });
     }
 
-    document.getElementById('amTableSearch')?.addEventListener('input', filterTable);
-    document.getElementById('amTableStatusFilter')?.addEventListener('change', filterTable);
+    // Modal Submission (Single & Bulk)
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async function () {
+            const isSingle = document.getElementById('tabSingle')?.classList.contains('active');
+            const formData = new FormData();
+            formData.append('csrf_token', CSRF_TOKEN);
 
-    // --- Quick Update Panel -------------------------------------------
-    const quickPanel    = document.getElementById('amQuickPanel');
-    const quickName     = document.getElementById('amQuickMemberName');
-    const quickStatus   = document.getElementById('amQuickStatus');
-    const quickCheckIn  = document.getElementById('amQuickCheckIn');
-    const quickCheckOut = document.getElementById('amQuickCheckOut');
-    const quickRemark   = document.getElementById('amQuickRemark');
-    const quickCancel   = document.getElementById('amQuickCancelBtn');
-    const quickSave     = document.getElementById('amQuickSaveBtn');
-    const eventIdInput  = document.getElementById('amEventId');
-    let   activeMemberId = null;
+            if (isSingle) {
+                const eventId     = sEventSelect?.value;
+                const memberId    = sMemberSelect?.value;
+                const status      = document.getElementById('sStatus')?.value;
+                const checkIn     = document.getElementById('sCheckIn')?.value;
+                const remark      = document.getElementById('sRemark')?.value;
+
+                if (!eventId || !memberId) {
+                    alert('Please select both an Event and a Member.');
+                    return;
+                }
+
+                formData.append('mode', 'single');
+                formData.append('event_id', eventId);
+                formData.append('member_id', memberId);
+                formData.append('status', status);
+                if (checkIn) formData.append('check_in_time', checkIn);
+                if (remark)  formData.append('remark', remark);
+
+            } else {
+                const eventId = document.getElementById('bEventSelect')?.value;
+                const file    = document.getElementById('bCsvFile')?.files[0];
+
+                if (!eventId || !file) {
+                    alert('Please select an Event and attach a CSV file.');
+                    return;
+                }
+
+                formData.append('mode', 'bulk');
+                formData.append('event_id', eventId);
+                formData.append('csv_file', file);
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+
+            try {
+                const res  = await fetch(`${ROOT}/attendance/save`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(data.message || 'Attendance saved successfully.', 'success');
+                    closeModal();
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    alert(data.error || 'Failed to save attendance.');
+                }
+            } catch (err) {
+                alert('An error occurred during submission. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Attendance';
+            }
+        });
+    }
+
+    /* =================================================================
+       SESSION DETAIL PAGE (Roster Search, Filter & Quick Update)
+       ================================================================= */
+    const tableSearch = document.getElementById('amTableSearch');
+    const statusFilter = document.getElementById('amTableStatusFilter');
+
+    function filterRosterRows() {
+        const query  = (tableSearch?.value || '').toLowerCase().trim();
+        const status = statusFilter?.value || '';
+        const rows   = document.querySelectorAll('.am-roster-row');
+
+        rows.forEach(row => {
+            const name   = row.dataset.name  || '';
+            const email  = row.dataset.email || '';
+            const club   = row.dataset.club  || '';
+            const rStat  = row.dataset.status|| '';
+
+            const matchQuery  = !query  || name.includes(query) || email.includes(query) || club.includes(query);
+            const matchStatus = !status || rStat === status;
+
+            row.style.display = (matchQuery && matchStatus) ? '' : 'none';
+        });
+    }
+
+    if (tableSearch)  tableSearch.addEventListener('input', filterRosterRows);
+    if (statusFilter) statusFilter.addEventListener('change', filterRosterRows);
+
+    // Quick Update Modal on Detail Page
+    const quickModal = document.getElementById('amQuickUpdateModal');
+    const quickClose = document.getElementById('amQuickClose');
+    const quickCancel= document.getElementById('amQuickCancel');
+    const quickSave  = document.getElementById('amQuickSaveBtn');
+
+    function closeQuickModal() {
+        if (!quickModal) return;
+        quickModal.classList.remove('open');
+    }
+
+    if (quickClose)  quickClose.addEventListener('click', closeQuickModal);
+    if (quickCancel) quickCancel.addEventListener('click', closeQuickModal);
 
     document.querySelectorAll('.am-btn-quick-update').forEach(btn => {
-        btn.addEventListener('click', () => {
-            activeMemberId = btn.dataset.memberId;
-            if (quickName)   quickName.textContent = btn.dataset.memberName || '—';
-            if (quickStatus) quickStatus.value     = btn.dataset.currentStatus || 'Present';
-            if (quickCheckIn)  quickCheckIn.value  = '';
-            if (quickCheckOut) quickCheckOut.value = '';
-            if (quickRemark)   quickRemark.value   = '';
-            quickPanel.style.display = '';
-            quickPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        btn.addEventListener('click', function () {
+            if (!quickModal) return;
+            const mId    = this.dataset.memberId;
+            const mName  = this.dataset.memberName;
+            const status = this.dataset.currentStatus || 'Present';
+            const checkin= this.dataset.currentCheckin || '';
+            const remark = this.dataset.currentRemark || '';
+
+            document.getElementById('quMemberId').value = mId;
+            document.getElementById('quMemberName').textContent = mName;
+            document.getElementById('quStatus').value = (status === 'unmarked' || !status) ? 'Present' : status;
+            document.getElementById('quCheckIn').value = checkin;
+            document.getElementById('quRemark').value = remark;
+
+            quickModal.classList.add('open');
         });
     });
 
-    quickCancel?.addEventListener('click', () => {
-        quickPanel.style.display = 'none';
-        activeMemberId = null;
-    });
+    if (quickSave) {
+        quickSave.addEventListener('click', async function () {
+            const eventId  = document.getElementById('quEventId')?.value;
+            const memberId = document.getElementById('quMemberId')?.value;
+            const status   = document.getElementById('quStatus')?.value;
+            const checkIn  = document.getElementById('quCheckIn')?.value;
+            const remark   = document.getElementById('quRemark')?.value;
 
-    quickSave?.addEventListener('click', () => {
-        if (!activeMemberId) return;
-        const fd = new FormData();
-        fd.append('csrf_token',      CSRF_TOKEN);
-        fd.append('event_id',        eventIdInput?.value || '');
-        fd.append('member_id',       activeMemberId);
-        fd.append('status',          quickStatus?.value  || 'Present');
-        fd.append('check_in_time',   quickCheckIn?.value  || '');
-        fd.append('check_out_time',  quickCheckOut?.value || '');
-        fd.append('remark',          quickRemark?.value   || '');
+            const formData = new FormData();
+            formData.append('csrf_token', CSRF_TOKEN);
+            formData.append('mode', 'single');
+            formData.append('event_id', eventId);
+            formData.append('member_id', memberId);
+            formData.append('status', status);
+            if (checkIn) formData.append('check_in_time', checkIn);
+            if (remark)  formData.append('remark', remark);
 
-        fetch(ROOT + '/attendance/updatestatus', { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(data => {
+            quickSave.disabled = true;
+            quickSave.textContent = 'Updating…';
+
+            try {
+                const res  = await fetch(`${ROOT}/attendance/save`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+
                 if (data.success) {
-                    quickPanel.style.display = 'none';
-                    showToast('Status updated. Reload to see changes.', 'success');
+                    showToast('Member attendance updated successfully.', 'success');
+                    closeQuickModal();
+                    setTimeout(() => window.location.reload(), 600);
                 } else {
-                    showToast(data.error || 'Update failed.', 'error');
+                    alert(data.error || 'Failed to update attendance.');
                 }
-            })
-            .catch(() => showToast('Network error.', 'error'));
-    });
-
-    // --- Download CSV (client-side generation) ------------------------
-    document.getElementById('amDownloadCsvBtn')?.addEventListener('click', () => {
-        const rows = document.querySelectorAll('#amRosterTable .am-roster-row');
-        if (!rows.length) { showToast('No data to download.'); return; }
-        let csv = 'Member Name,Club,Status,Check-in,Remark\n';
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const name   = (cells[0]?.querySelector('strong')?.textContent || '').trim();
-            const club   = (cells[1]?.textContent || '').trim();
-            const status = (cells[2]?.querySelector('.am-status-badge')?.textContent || '').trim();
-            const checkin = (cells[3]?.textContent || '').trim();
-            const remark  = (cells[4]?.textContent || '').trim();
-            csv += [name, club, status, checkin, remark].map(v => '"' + v.replace(/"/g, '""') + '"').join(',') + '\n';
+            } catch (err) {
+                alert('Network error. Please try again.');
+            } finally {
+                quickSave.disabled = false;
+                quickSave.textContent = 'Save Update';
+            }
         });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = 'attendance-' + (eventIdInput?.value || 'event') + '.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-    });
+    }
 
-    // --- Export PDF — STUBBED (PDF library not yet in this project) ---
-    document.getElementById('amExportPdfBtn')?.addEventListener('click', () => {
-        alert('PDF export not yet implemented.\n\nThis feature requires a PDF generation library to be agreed on. Flagged for a future sprint.');
+    // Close modals on Escape key
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeModal();
+            closeQuickModal();
+        }
     });
 
 })();
