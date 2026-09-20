@@ -17,21 +17,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <!-- ============ Stat cards ============ -->
     <div class="cr-stats">
-        <button type="button" class="cr-stat-card is-active" data-filter="Pending" id="statPending">
+        <button type="button" class="cr-stat-card is-active" data-filter="Pending" id="statPending" aria-pressed="true">
             <div class="cr-stat-icon pending">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
             <div class="cr-stat-value"><?= (int)$counts['Pending'] ?></div>
             <div class="cr-stat-label">Pending Applications</div>
         </button>
-        <button type="button" class="cr-stat-card" data-filter="Approved" id="statApproved">
+        <button type="button" class="cr-stat-card" data-filter="Approved" id="statApproved" aria-pressed="false">
             <div class="cr-stat-icon approved">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
             </div>
             <div class="cr-stat-value"><?= (int)$counts['Approved'] ?></div>
             <div class="cr-stat-label">Approved Applications</div>
         </button>
-        <button type="button" class="cr-stat-card" data-filter="Rejected" id="statRejected">
+        <button type="button" class="cr-stat-card" data-filter="Rejected" id="statRejected" aria-pressed="false">
             <div class="cr-stat-icon rejected">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </div>
@@ -50,7 +50,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <input type="text" id="crSearchInput" placeholder="Search applications...">
             </div>
         </div>
-        <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false">
+        <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false" aria-controls="crFilterPanel">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
             Filters
         </button>
@@ -76,8 +76,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </select>
         </div>
         <div class="cr-filter-actions">
-            <button type="button" class="cr-btn" id="crClearFilterBtn">Clear Filter</button>
-            <button type="button" class="cr-btn cr-btn-primary" id="crAddFilterBtn">Add Filter</button>
+            <button type="button" class="cr-btn" id="crClearFilterBtn">Reset</button>
+            <button type="button" class="cr-btn cr-btn-primary" id="crAddFilterBtn">Apply Filters</button>
         </div>
     </div>
 
@@ -132,7 +132,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
 
                 <div class="cr-card-footer">
-                    <button type="button" class="cr-btn cr-review-btn" data-id="<?= (int)$app->application_id ?>">Review</button>
+                    <button type="button" class="cr-btn cr-btn-primary cr-review-btn" data-id="<?= (int)$app->application_id ?>">Review</button>
                 </div>
             </div>
             <?php endforeach; ?>
