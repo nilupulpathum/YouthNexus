@@ -104,7 +104,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'admin' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -114,7 +114,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'nyscadmin' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -136,6 +136,8 @@ $roleAliases = [
     'zonalcoordinator' => 'zonalcoordinator',
     'divisionalsecretary' => 'divisionalsecretary',
     'divisional' => 'divisionalcoordinator',
+    'nyscadministrator' => 'nyscadmin',
+    'nyscadmin' => 'nyscadmin',
     'nysc' => 'nyscadmin',
 ];
 $normalisedRoleKey = $roleAliases[$normalisedRoleKey] ?? $normalisedRoleKey;

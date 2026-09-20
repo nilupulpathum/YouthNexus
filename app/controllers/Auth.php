@@ -198,6 +198,9 @@ class Auth extends Controller {
                         case 'DivisionalSecretary':
                             $this->redirect('manageevents');
                             break;
+                        case 'NYSCAdministrator':
+                            $this->redirect('nationaldashboard');
+                            break;
                         default:
                             $this->redirect('home');
                     }
