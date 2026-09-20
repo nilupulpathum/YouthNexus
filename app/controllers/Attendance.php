@@ -1,14 +1,29 @@
 <?php
 
+/**
+ * Attendance Controller
+ *
+ * Supports both NYSC Administrator (National scope with cascading Zone/Division/Club filters)
+ * and Divisional Secretary (Divisional scope).
+ */
 class Attendance extends Controller {
 
-    // ------------------------------------------------------------------
-    // Auth gate — identical pattern to ManageEvents::requireSecretary()
-    // ------------------------------------------------------------------
-    private function requireSecretary() {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'DivisionalSecretary') {
+    /**
+     * Auth gate — allows NYSCAdministrator, DivisionalSecretary, and ZonalSecretary.
+     */
+    private function requireAuthorizedUser() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $role = $_SESSION['user_role'] ?? '';
+        if (empty($_SESSION['user_id']) || !in_array($role, ['NYSCAdministrator', 'DivisionalSecretary', 'ZonalSecretary'])) {
             $this->redirect('auth/signin');
         }
+        return $role;
+    }
+
+    private function isNYSCAdmin() {
+        return ($_SESSION['user_role'] ?? '') === 'NYSCAdministrator';
     }
 
     private function jsonError($message, $code = 400) {
@@ -22,26 +37,66 @@ class Attendance extends Controller {
     // INDEX — session list (approved events with attendance summary)
     // ------------------------------------------------------------------
     public function index() {
-        $this->requireSecretary();
+        $role = $this->requireAuthorizedUser();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
         $attendanceModel = $this->model('AttendanceModel');
+        $isNYSCAdmin     = ($role === 'NYSCAdministrator');
 
-        $events = $attendanceModel->getApprovedEventsByDivision($divisionId);
-        $stats  = $attendanceModel->getDivisionAttendanceStats($divisionId);
+        if ($isNYSCAdmin) {
+            // National Administrator Scope with Cascading Filters
+            $filters = [
+                'zone_id'     => !empty($_GET['zone_id'])     ? (int)$_GET['zone_id']     : null,
+                'division_id' => !empty($_GET['division_id']) ? (int)$_GET['division_id'] : null,
+                'club_id'     => !empty($_GET['club_id'])     ? (int)$_GET['club_id']     : null,
+                'level'       => trim($_GET['level'] ?? 'all'),
+                'event_type'  => trim($_GET['event_type'] ?? ''),
+                'search'      => trim($_GET['search'] ?? ''),
+            ];
 
-        $this->view('attendance/session-list', [
-            'title'       => 'Manage Attendance — YouthNexus',
-            'events'      => $events,
-            'stats'       => $stats,
-            'csrf_token'  => $_SESSION['csrf_token'],
-            'userName'    => $_SESSION['user_name']  ?? 'N. Fernando',
-            'userRole'    => 'DivisionalSecretary',
-        ]);
+            $zones     = $attendanceModel->getAllZones();
+            $divisions = $attendanceModel->getDivisionsByZone($filters['zone_id']);
+            $clubs     = $attendanceModel->getClubsByScope($filters['division_id'], $filters['zone_id']);
+            $events    = $attendanceModel->getApprovedEventsNational($filters);
+            $stats     = $attendanceModel->getNationalAttendanceStats();
+
+            $this->view('attendance/session-list', [
+                'title'       => 'View Attendance — YouthNexus',
+                'pageTitle'   => 'National Attendance Governance',
+                'pageDescription' => 'Review, filter and monitor youth attendance across all zones, divisions, and clubs',
+                'isNYSCAdmin' => true,
+                'zones'       => $zones,
+                'divisions'   => $divisions,
+                'clubs'       => $clubs,
+                'filters'     => $filters,
+                'events'      => $events,
+                'stats'       => $stats,
+                'csrf_token'  => $_SESSION['csrf_token'],
+                'userName'    => $_SESSION['user_name'] ?? 'National Admin',
+                'userRole'    => $role,
+            ]);
+
+        } else {
+            // Divisional Secretary Scope
+            $divisionId = (int)($_SESSION['division_id'] ?? 0);
+            $events     = $attendanceModel->getApprovedEventsByDivision($divisionId);
+            $stats      = $attendanceModel->getDivisionAttendanceStats($divisionId);
+
+            $this->view('attendance/session-list', [
+                'title'       => 'Manage Attendance — YouthNexus',
+                'pageTitle'   => 'Manage Attendance',
+                'pageDescription' => 'Log and review attendance for approved events in your division',
+                'isNYSCAdmin' => false,
+                'events'      => $events,
+                'stats'       => $stats,
+                'csrf_token'  => $_SESSION['csrf_token'],
+                'userName'    => $_SESSION['user_name'] ?? 'N. Fernando',
+                'userRole'    => $role,
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -49,19 +104,24 @@ class Attendance extends Controller {
     // Supports both HTML render and JSON (called by JS for member dropdown)
     // ------------------------------------------------------------------
     public function detail($eventId = null) {
-        $this->requireSecretary();
-
-        $eventId    = (int)$eventId;
-        $divisionId = (int)($_SESSION['division_id'] ?? 0);
+        $role    = $this->requireAuthorizedUser();
+        $eventId = (int)$eventId;
 
         if (!$eventId) {
             $this->redirect('attendance');
         }
 
         $attendanceModel = $this->model('AttendanceModel');
+        $isNYSCAdmin     = ($role === 'NYSCAdministrator');
+        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
 
-        // Server-side scope + status re-check
-        $event = $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+        // Fetch event based on scope
+        if ($isNYSCAdmin) {
+            $event = $attendanceModel->getApprovedEventNational($eventId);
+        } else {
+            $event = $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+        }
+
         if (!$event) {
             http_response_code(404);
             $this->redirect('attendance');
@@ -71,7 +131,10 @@ class Attendance extends Controller {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $xReq   = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
         if (strpos($accept, 'application/json') !== false || strtolower($xReq) === 'xmlhttprequest') {
-            $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+            $roster = $isNYSCAdmin
+                ? $attendanceModel->getMemberRosterForEventNational($eventId)
+                : $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+
             header('Content-Type: application/json');
             echo json_encode(['members' => $roster, 'event' => $event]);
             exit();
@@ -82,7 +145,10 @@ class Attendance extends Controller {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+        $roster = $isNYSCAdmin
+            ? $attendanceModel->getMemberRosterForEventNational($eventId)
+            : $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+
         $aStats = $attendanceModel->getEventAttendanceStats($eventId);
 
         $present   = (int)($aStats->present_count ?? 0);
@@ -92,189 +158,265 @@ class Attendance extends Controller {
         $rate      = $total > 0 ? round(($present / $total) * 100) : 0;
 
         $this->view('attendance/session-detail', [
-            'title'      => 'Event Attendance — YouthNexus',
-            'event'      => $event,
-            'roster'     => $roster,
-            'present'    => $present,
-            'absent'     => $absent,
-            'recorded'   => $recorded,
-            'total'      => $total,
-            'rate'       => $rate,
-            'csrf_token' => $_SESSION['csrf_token'],
-            'userName'   => $_SESSION['user_name'] ?? 'N. Fernando',
-            'userRole'   => 'DivisionalSecretary',
+            'title'       => 'Event Attendance — YouthNexus',
+            'isNYSCAdmin' => $isNYSCAdmin,
+            'event'       => $event,
+            'roster'      => $roster,
+            'present'     => $present,
+            'absent'      => $absent,
+            'recorded'    => $recorded,
+            'total'       => $total,
+            'rate'        => $rate,
+            'csrf_token'  => $_SESSION['csrf_token'],
+            'userName'    => $_SESSION['user_name'] ?? 'Administrator',
+            'userRole'    => $role,
         ]);
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX CASCADING FILTERS
+    // ------------------------------------------------------------------
+
+    /** Get divisions by zone. */
+    public function getdivisions() {
+        $this->requireAuthorizedUser();
+        $zoneId = !empty($_GET['zone_id']) ? (int)$_GET['zone_id'] : null;
+        $model  = $this->model('AttendanceModel');
+        $divs   = $model->getDivisionsByZone($zoneId);
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'divisions' => $divs]);
+        exit();
+    }
+
+    /** Get clubs by division or zone. */
+    public function getclubs() {
+        $this->requireAuthorizedUser();
+        $divId  = !empty($_GET['division_id']) ? (int)$_GET['division_id'] : null;
+        $zoneId = !empty($_GET['zone_id'])     ? (int)$_GET['zone_id']     : null;
+        $model  = $this->model('AttendanceModel');
+        $clubs  = $model->getClubsByScope($divId, $zoneId);
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'clubs' => $clubs]);
+        exit();
+    }
+
+    /** Get members for an event (used by Add Attendance modal). */
+    public function getmembers() {
+        $role    = $this->requireAuthorizedUser();
+        $eventId = (int)($_GET['event_id'] ?? 0);
+        if (!$eventId) {
+            $this->jsonError('Missing event_id.');
+        }
+
+        $model       = $this->model('AttendanceModel');
+        $isNYSCAdmin = ($role === 'NYSCAdministrator');
+        $divisionId  = (int)($_SESSION['division_id'] ?? 0);
+
+        $roster = $isNYSCAdmin
+            ? $model->getMemberRosterForEventNational($eventId)
+            : $model->getMemberRosterForEvent($eventId, $divisionId);
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'members' => $roster]);
+        exit();
     }
 
     // ------------------------------------------------------------------
     // SAVE — POST handler for both single-entry and bulk CSV
     // ------------------------------------------------------------------
     public function save() {
-        $this->requireSecretary();
+        $role = $this->requireAuthorizedUser();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('attendance');
         }
 
-        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            $this->jsonError('Invalid request. Please refresh the page.');
+        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
+            $this->jsonError('Invalid security token. Please refresh the page.');
         }
 
-        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
-        $recordedBy      = (int)$_SESSION['user_id'];
+        $mode        = trim($_POST['mode'] ?? 'single');
+        $isNYSCAdmin = ($role === 'NYSCAdministrator');
+        $divisionId  = $isNYSCAdmin ? null : (int)($_SESSION['division_id'] ?? 0);
+        $recordedBy  = (int)($_SESSION['user_id'] ?? 0);
+
         $attendanceModel = $this->model('AttendanceModel');
 
-        $eventId = (int)($_POST['event_id'] ?? 0);
-        if (!$eventId) {
-            $this->jsonError('No event selected.');
-        }
-
-        // Server-side scope + status re-check — never trust the form alone
-        $event = $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
-        if (!$event) {
-            $this->jsonError('Event not found or not in scope.', 403);
-        }
-
-        $mode = $_POST['mode'] ?? 'single';
-
-        // ------ SINGLE ENTRY ----------------------------------------
         if ($mode === 'single') {
-            $memberId    = (int)($_POST['member_id'] ?? 0);
-            $status      = $_POST['status']        ?? '';
-            $checkIn     = trim($_POST['check_in_time']  ?? '');
-            $checkOut    = trim($_POST['check_out_time'] ?? '');
-            $remark      = trim($_POST['remark']          ?? '');
+            $eventId     = (int)($_POST['event_id']     ?? 0);
+            $memberId    = (int)($_POST['member_id']    ?? 0);
+            $status      = trim($_POST['status']        ?? '');
+            $checkInTime = trim($_POST['check_in_time'] ?? '');
+            $remark      = trim($_POST['remark']        ?? '');
 
-            if (!$memberId || !in_array($status, ['Present', 'Absent'])) {
-                $this->jsonError('Missing or invalid member or status.');
+            if (!$eventId || !$memberId || !in_array($status, ['Present', 'Absent'])) {
+                $this->jsonError('Missing required fields: event, member, and status.');
             }
 
-            if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
-                $this->jsonError('Member is not in scope for this division.', 403);
+            // Verify event exists and is approved
+            $event = $isNYSCAdmin
+                ? $attendanceModel->getApprovedEventNational($eventId)
+                : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+
+            if (!$event) {
+                $this->jsonError('Event not found or not approved for your scope.', 403);
+            }
+
+            if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope ?? 'AllInScope')) {
+                $this->jsonError('Member is not active or not targeted by this event.', 422);
+            }
+
+            // Normalise check-in time
+            if ($status === 'Present') {
+                $checkInTime = !empty($checkInTime) ? date('Y-m-d H:i:s', strtotime($checkInTime)) : date('Y-m-d H:i:s');
+            } else {
+                $checkInTime = null;
             }
 
             $attendanceModel->saveAttendance(
-                $eventId, $memberId, $status,
-                $checkIn  ?: null,
-                $checkOut ?: null,
-                $remark   ?: null,
+                $eventId,
+                $memberId,
+                $status,
+                $checkInTime,
+                null,
+                $remark ?: null,
                 $recordedBy
             );
 
             header('Content-Type: application/json');
-            echo json_encode(['success' => true]);
+            echo json_encode(['success' => true, 'message' => 'Attendance logged successfully.']);
             exit();
-        }
 
-        // ------ BULK CSV -------------------------------------------
-        if ($mode === 'bulk') {
-            if (empty($_FILES['csv_file']['tmp_name'])) {
-                $this->jsonError('No CSV file uploaded.');
+        } elseif ($mode === 'bulk') {
+            $eventId = (int)($_POST['event_id'] ?? 0);
+
+            if (!$eventId || empty($_FILES['csv_file']['tmp_name'])) {
+                $this->jsonError('Please provide both an event and a valid CSV file.');
             }
 
-            $handle = fopen($_FILES['csv_file']['tmp_name'], 'r');
-            if (!$handle) {
-                $this->jsonError('Could not read uploaded file.');
+            $event = $isNYSCAdmin
+                ? $attendanceModel->getApprovedEventNational($eventId)
+                : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+
+            if (!$event) {
+                $this->jsonError('Event not found or not approved.', 403);
             }
 
-            // Skip header row
-            $header = fgetcsv($handle);
+            $file = fopen($_FILES['csv_file']['tmp_name'], 'r');
+            if (!$file) {
+                $this->jsonError('Failed to read uploaded CSV file.');
+            }
 
-            $saved   = 0;
-            $skipped = [];
-            $rowNum  = 1;
+            $savedCount   = 0;
+            $skippedRows  = [];
+            $rowNum       = 0;
 
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($file, 1000, ',')) !== false) {
                 $rowNum++;
-
-                // Assumed column order: member_id, status, check_in_time, remark
-                $memberId   = isset($row[0]) ? (int)trim($row[0]) : 0;
-                $status     = isset($row[1]) ? trim($row[1]) : '';
-                $checkIn    = isset($row[2]) ? trim($row[2]) : null;
-                $remark     = isset($row[3]) ? trim($row[3]) : null;
-
-                if (!$memberId) {
-                    $skipped[] = ['row' => $rowNum, 'member_id' => $row[0] ?? '', 'reason' => 'Missing or non-numeric member_id'];
+                // Skip header row if present
+                if ($rowNum === 1 && (strtolower(trim($row[0])) === 'member_id' || strtolower(trim($row[0])) === 'user_id')) {
                     continue;
                 }
 
-                if (!in_array($status, ['Present', 'Absent'])) {
-                    $skipped[] = ['row' => $rowNum, 'member_id' => $memberId, 'reason' => "Invalid status '{$status}' — must be Present or Absent"];
+                $memberId = (int)trim($row[0] ?? '');
+                $status   = ucfirst(strtolower(trim($row[1] ?? 'Present')));
+                $checkIn  = trim($row[2] ?? '');
+                $remark   = trim($row[3] ?? '');
+
+                if (!$memberId || !in_array($status, ['Present', 'Absent'])) {
+                    $skippedRows[] = "Row $rowNum: invalid member ID or status";
                     continue;
                 }
 
-                if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
-                    $skipped[] = ['row' => $rowNum, 'member_id' => $memberId, 'reason' => 'Member not in scope for this division/event'];
+                if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope ?? 'AllInScope')) {
+                    $skippedRows[] = "Row $rowNum: Member #$memberId not active or out of scope";
                     continue;
                 }
+
+                $checkInTime = ($status === 'Present' && !empty($checkIn)) ? date('Y-m-d H:i:s', strtotime($checkIn)) : null;
 
                 $attendanceModel->saveAttendance(
-                    $eventId, $memberId, $status,
-                    $checkIn  ?: null,
+                    $eventId,
+                    $memberId,
+                    $status,
+                    $checkInTime,
                     null,
-                    $remark   ?: null,
+                    $remark ?: null,
                     $recordedBy
                 );
-                $saved++;
+                $savedCount++;
             }
-            fclose($handle);
+
+            fclose($file);
 
             header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'saved' => $saved, 'skipped' => $skipped]);
+            echo json_encode([
+                'success' => true,
+                'saved'   => $savedCount,
+                'skipped' => $skippedRows,
+                'message' => "Successfully imported $savedCount attendance records." . (!empty($skippedRows) ? " (" . count($skippedRows) . " rows skipped)" : ""),
+            ]);
             exit();
-        }
 
-        $this->jsonError('Unknown save mode.');
+        } else {
+            $this->jsonError('Unsupported submission mode.');
+        }
     }
 
     // ------------------------------------------------------------------
-    // UPDATESTATUS — Quick Update panel (single-member status change)
+    // DOWNLOAD — export attendance roster as CSV
     // ------------------------------------------------------------------
-    public function updatestatus() {
-        $this->requireSecretary();
+    public function download($eventId = null) {
+        $role    = $this->requireAuthorizedUser();
+        $eventId = (int)$eventId;
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->jsonError('POST required.');
+        if (!$eventId) {
+            $this->redirect('attendance');
         }
 
-        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            $this->jsonError('Invalid request. Please refresh the page.');
-        }
-
-        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
-        $recordedBy      = (int)$_SESSION['user_id'];
         $attendanceModel = $this->model('AttendanceModel');
+        $isNYSCAdmin     = ($role === 'NYSCAdministrator');
+        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
 
-        $eventId  = (int)($_POST['event_id']  ?? 0);
-        $memberId = (int)($_POST['member_id'] ?? 0);
-        $status   = $_POST['status'] ?? '';
+        $event = $isNYSCAdmin
+            ? $attendanceModel->getApprovedEventNational($eventId)
+            : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
 
-        if (!$eventId || !$memberId || !in_array($status, ['Present', 'Absent'])) {
-            $this->jsonError('Missing or invalid fields.');
-        }
-
-        // Scope re-check
-        $event = $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
         if (!$event) {
-            $this->jsonError('Event not found or not in scope.', 403);
+            $this->redirect('attendance');
         }
 
-        if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope)) {
-            $this->jsonError('Member is not in scope for this division.', 403);
+        $rows = $attendanceModel->getAttendanceForEvent($eventId);
+
+        $filename = 'Attendance_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $event->title) . '_' . date('Ymd') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        // UTF-8 BOM
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        fputcsv($output, ['Attendance ID', 'Member ID', 'Member Name', 'Club', 'Status', 'Check-in Time', 'Remark', 'Recorded By', 'Recorder Role', 'Recorded At']);
+
+        foreach ($rows as $r) {
+            fputcsv($output, [
+                $r->attendance_id,
+                $r->member_id,
+                $r->member_name,
+                $r->club_name ?? '—',
+                $r->status,
+                $r->check_in_time ?? '—',
+                $r->remark ?? '—',
+                $r->recorded_by_name ?? '—',
+                $r->recorded_by_role ?? '—',
+                $r->recorded_at,
+            ]);
         }
 
-        $checkIn  = trim($_POST['check_in_time']  ?? '') ?: null;
-        $checkOut = trim($_POST['check_out_time'] ?? '') ?: null;
-        $remark   = trim($_POST['remark']          ?? '') ?: null;
-
-        $attendanceModel->saveAttendance(
-            $eventId, $memberId, $status,
-            $checkIn, $checkOut, $remark,
-            $recordedBy
-        );
-
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
+        fclose($output);
         exit();
     }
 }
