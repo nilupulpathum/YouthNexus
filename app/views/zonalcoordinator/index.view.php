@@ -14,6 +14,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $zoneHealth = $zoneHealth ?? [];
 $divisions  = $divisions ?? [];
+$announcements = $announcements ?? [];
+$upcomingEvents = $upcomingEvents ?? [];
 ?>
 
 <section class="club-page" aria-labelledby="zonalcoordinator-overview-heading">
@@ -72,9 +74,33 @@ $divisions  = $divisions ?? [];
         </div>
     </section>
 
+    <section class="member-panel" aria-labelledby="zonalcoordinator-announcements-heading">
+        <div class="member-panel-header">
+            <div><p class="member-eyebrow">Stay informed</p><h2 id="zonalcoordinator-announcements-heading">Zone announcements</h2></div>
+            <a class="member-panel-link" href="<?= ROOT ?>/zonalannouncements">View all</a>
+        </div>
+        <div class="member-announcement-list">
+            <?php foreach ($announcements as $announcement): ?>
+                <article class="member-announcement-item<?= !empty($announcement['is_new']) ? ' is-new' : '' ?>">
+                    <span class="member-list-dot" aria-hidden="true"></span>
+                    <div class="member-list-copy"><div class="member-list-meta"><span><?= $escape($announcement['age']) ?></span><?php if (!empty($announcement['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?></div><h3><?= $escape($announcement['title']) ?></h3><p><?= $escape($announcement['summary']) ?></p><span class="member-scope-tag">Zonal</span></div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="member-panel" aria-labelledby="zonalcoordinator-events-heading">
+        <div class="member-panel-header"><div><p class="member-eyebrow">Plan ahead</p><h2 id="zonalcoordinator-events-heading">Upcoming zonal programmes</h2></div></div>
+        <div class="member-event-list">
+            <?php foreach ($upcomingEvents as $event): ?>
+                <article class="member-event-item"><div class="member-event-icon" aria-hidden="true"><?= yn_icon('calendar') ?></div><div class="member-event-copy"><div class="member-event-heading"><h3><?= $escape($event['title']) ?></h3><span class="member-scope-text">Zonal</span></div><p><?= $escape($event['date']) ?>, <?= $escape($event['location']) ?></p></div><span class="member-status member-status--<?= $escape($event['status_key']) ?>"><?= $escape($event['status']) ?></span></article>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
 </section>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/member-dashboard.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
