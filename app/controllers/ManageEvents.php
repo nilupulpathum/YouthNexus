@@ -3,10 +3,14 @@
 class ManageEvents extends Controller {
 
     /**
-     * Enforce DivisionalSecretary authentication and role.
+     * Enforce authentication and authorized role (DivisionalSecretary or NYSCAdministrator).
      */
-    private function requireSecretary() {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'DivisionalSecretary') {
+    private function requireAuth() {
+        if (empty($_SESSION['user_id'])) {
+            $this->redirect('auth/signin');
+        }
+        $allowed = ['DivisionalSecretary', 'NYSCAdministrator'];
+        if (!in_array($_SESSION['user_role'] ?? '', $allowed)) {
             $this->redirect('auth/signin');
         }
     }
@@ -25,60 +29,83 @@ class ManageEvents extends Controller {
     // LIST: Manage Events page
     // ---------------------------------------------------------------
     public function index() {
-        $this->requireSecretary();
+        $this->requireAuth();
 
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $divisionId = (int)($_SESSION['division_id'] ?? 0);
-        $eventModel = $this->model('EventModel');
+        $userRole    = $_SESSION['user_role'] ?? '';
+        $isNyscAdmin = ($userRole === 'NYSCAdministrator');
+        $divisionId  = (int)($_SESSION['division_id'] ?? 0);
+        $eventModel  = $this->model('EventModel');
 
-        // Extract query filters — now includes event_type and target_scope
+        // Extract query filters
         $filters = [
             'search'         => trim($_GET['search'] ?? ''),
             'status'         => trim($_GET['status'] ?? 'All'),
             'event_type'     => trim($_GET['event_type'] ?? ''),
             'target_scope'   => trim($_GET['target_scope'] ?? ''),
             'target_club_id' => !empty($_GET['target_club_id']) ? (int)$_GET['target_club_id'] : null,
+            'event_level'    => trim($_GET['event_level'] ?? 'All'),
+            'zone_id'        => !empty($_GET['zone_id']) ? (int)$_GET['zone_id'] : null,
+            'division_id'    => !empty($_GET['division_id']) ? (int)$_GET['division_id'] : null,
+            'club_id'        => !empty($_GET['club_id']) ? (int)$_GET['club_id'] : null,
             'date_from'      => trim($_GET['date_from'] ?? ''),
             'date_to'        => trim($_GET['date_to'] ?? ''),
         ];
 
-        $stats      = $eventModel->getDivisionStats($divisionId);
-        $events     = $eventModel->getEventsByDivision($divisionId, $filters);
-        $clubs      = $eventModel->getClubsByDivision($divisionId);
-        $division   = $eventModel->getDivisionById($divisionId);
-        $eventTypes = $eventModel->getUniqueEventTypes($divisionId);
+        if ($isNyscAdmin) {
+            $stats      = $eventModel->getNationalStats();
+            $events     = $eventModel->getAllEventsForAdmin($filters);
+            $zones      = $eventModel->getAllZones();
+            $divisions  = $eventModel->getAllDivisions();
+            $clubs      = $eventModel->getAllClubs();
+            $eventTypes = $eventModel->getAllUniqueEventTypes();
+            $division   = null;
+        } else {
+            $stats      = $eventModel->getDivisionStats($divisionId);
+            $events     = $eventModel->getEventsByDivision($divisionId, $filters);
+            $clubs      = $eventModel->getClubsByDivision($divisionId);
+            $division   = $eventModel->getDivisionById($divisionId);
+            $eventTypes = $eventModel->getUniqueEventTypes($divisionId);
+            $zones      = [];
+            $divisions  = [];
+        }
 
         $this->view('manageevents/list', [
-            'title'         => 'Manage Events — YouthNexus',
+            'title'         => $isNyscAdmin ? 'National Event Management — YouthNexus' : 'Manage Events — YouthNexus',
             'events'        => $events,
             'stats'         => $stats,
             'clubs'         => $clubs,
+            'zones'         => $zones,
+            'divisions'     => $divisions,
             'filters'       => $filters,
             'division'      => $division,
             'event_types'   => $eventTypes,
+            'is_nysc_admin' => $isNyscAdmin,
             'csrf_token'    => $_SESSION['csrf_token'],
-            'user_name'     => $_SESSION['user_name'] ?? 'N. Fernando',
-            'user_role'     => 'DivisionalSecretary',
+            'user_name'     => $_SESSION['user_name'] ?? ($isNyscAdmin ? 'N. Fernando' : 'Divisional Secretary'),
+            'user_role'     => $userRole,
             'user_initials' => $_SESSION['user_initials'] ?? 'NF',
         ]);
     }
 
     // ---------------------------------------------------------------
-    // CREATE: Handle Divisional Event creation
+    // CREATE: Handle Event creation (National or Divisional)
     // ---------------------------------------------------------------
     public function create() {
-        $this->requireSecretary();
+        $this->requireAuth();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('manageevents');
         }
 
-        $divisionId = (int)($_SESSION['division_id'] ?? 0);
-        $userId     = (int)($_SESSION['user_id'] ?? 0);
-        $isJson     = $this->isJsonRequest();
+        $userRole    = $_SESSION['user_role'] ?? '';
+        $isNyscAdmin = ($userRole === 'NYSCAdministrator');
+        $divisionId  = $isNyscAdmin ? null : (int)($_SESSION['division_id'] ?? 0);
+        $userId      = (int)($_SESSION['user_id'] ?? 0);
+        $isJson      = $this->isJsonRequest();
 
         // 1. CSRF Verification
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
@@ -153,9 +180,14 @@ class ManageEvents extends Controller {
         }
 
         // Target audience validation
-        $eventModel    = $this->model('EventModel');
-        $divisionClubs = $eventModel->getClubsByDivision($divisionId);
-        $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
+        $eventModel = $this->model('EventModel');
+        if ($isNyscAdmin) {
+            $validClubs   = $eventModel->getAllClubs();
+            $validClubIds = array_map(fn($c) => (int)$c->club_id, $validClubs);
+        } else {
+            $divisionClubs = $eventModel->getClubsByDivision($divisionId);
+            $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
+        }
 
         $validatedTargets = [];
         if ($targetScope === 'SelectedClubs') {
@@ -178,7 +210,6 @@ class ManageEvents extends Controller {
                 }
             }
         }
-        // AllInScope: validatedTargets stays empty — no EventTarget rows needed
 
         // If validation errors exist
         if (!empty($errors)) {
@@ -206,11 +237,16 @@ class ManageEvents extends Controller {
             'organizer_club_id'     => null,
             'organizer_zonal_id'    => null,
             'target_scope'          => $targetScope,
-            'status'                => 'PendingApproval',
+            'status'                => $isNyscAdmin ? 'Approved' : 'PendingApproval',
             'created_by'            => $userId,
         ];
 
-        $newEventId  = $eventModel->createEvent($eventData);
+        $newEventId = $eventModel->createEvent($eventData);
+
+        if ($isNyscAdmin) {
+            $eventModel->updateEventStatus($newEventId, 'Approved', $userId, null);
+        }
+
         $targetModel = $this->model('EventTargetModel');
         $targetModel->saveTargets($newEventId, $validatedTargets);
 
@@ -234,7 +270,7 @@ class ManageEvents extends Controller {
     // STATUS: View Event Details and Read-only Submission Status
     // ---------------------------------------------------------------
     public function status($id = null) {
-        $this->requireSecretary();
+        $this->requireAuth();
 
         $eventId = (int)$id;
         if (!$eventId) {
@@ -245,9 +281,11 @@ class ManageEvents extends Controller {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $divisionId = (int)($_SESSION['division_id'] ?? 0);
-        $userId     = (int)($_SESSION['user_id'] ?? 0);
-        $eventModel = $this->model('EventModel');
+        $userRole    = $_SESSION['user_role'] ?? '';
+        $isNyscAdmin = ($userRole === 'NYSCAdministrator');
+        $divisionId  = (int)($_SESSION['division_id'] ?? 0);
+        $userId      = (int)($_SESSION['user_id'] ?? 0);
+        $eventModel  = $this->model('EventModel');
 
         $event = $eventModel->findById($eventId);
 
@@ -255,25 +293,30 @@ class ManageEvents extends Controller {
             $this->redirect('manageevents');
         }
 
-        // Scope verification: Event must be organized by this division or by a club in this division
-        $isInDivision = false;
-        if ((int)$event->organizer_division_id === $divisionId) {
-            $isInDivision = true;
+        // Scope verification
+        $hasAccess = false;
+        if ($isNyscAdmin) {
+            $hasAccess = true;
+        } elseif ($event->organizer_division_id === null && $event->organizer_club_id === null && $event->organizer_zonal_id === null) {
+            // National event is visible to all
+            $hasAccess = true;
+        } elseif ((int)$event->organizer_division_id === $divisionId) {
+            $hasAccess = true;
         } elseif (!empty($event->organizer_club_id)) {
             $divisionClubs = $eventModel->getClubsByDivision($divisionId);
             foreach ($divisionClubs as $c) {
                 if ((int)$c->club_id === (int)$event->organizer_club_id) {
-                    $isInDivision = true;
+                    $hasAccess = true;
                     break;
                 }
             }
         }
 
-        if (!$isInDivision) {
+        if (!$hasAccess) {
             $this->redirect('manageevents');
         }
 
-        $clubs = $eventModel->getClubsByDivision($divisionId);
+        $clubs = $isNyscAdmin ? $eventModel->getAllClubs() : $eventModel->getClubsByDivision($divisionId);
 
         // Fetch event targets for display and edit pre-population
         $targetModel = $this->model('EventTargetModel');
@@ -287,9 +330,10 @@ class ManageEvents extends Controller {
             }
         }
 
-        // Check if editable: Only if status is PendingApproval AND created by the logged-in user
-        // Both $event->created_by and $userId come from the same source (Event.created_by joined to User.user_id)
-        $canEdit = ($event->status === 'PendingApproval' && (int)$event->created_by === $userId);
+        // Check if editable
+        $canEdit = $isNyscAdmin
+            ? ((int)$event->created_by === $userId)
+            : ($event->status === 'PendingApproval' && (int)$event->created_by === $userId);
 
         $this->view('manageevents/status', [
             'title'         => htmlspecialchars($event->title) . ' — Event Status — YouthNexus',
@@ -298,36 +342,45 @@ class ManageEvents extends Controller {
             'targets'       => $targets,
             'target_map'    => $targetMap,
             'can_edit'      => $canEdit,
+            'is_nysc_admin' => $isNyscAdmin,
             'csrf_token'    => $_SESSION['csrf_token'],
-            'user_name'     => $_SESSION['user_name'] ?? 'N. Fernando',
-            'user_role'     => 'DivisionalSecretary',
+            'user_name'     => $_SESSION['user_name'] ?? ($isNyscAdmin ? 'N. Fernando' : 'Divisional Secretary'),
+            'user_role'     => $userRole,
             'user_initials' => $_SESSION['user_initials'] ?? 'NF',
         ]);
     }
 
     // ---------------------------------------------------------------
-    // EDIT: Update a pending event created by the current Secretary
+    // EDIT: Update an event created by the current user
     // ---------------------------------------------------------------
     public function edit($id = null) {
-        $this->requireSecretary();
+        $this->requireAuth();
 
         $eventId = (int)$id;
         if (!$eventId) {
             $this->redirect('manageevents');
         }
 
-        $divisionId = (int)($_SESSION['division_id'] ?? 0);
-        $userId     = (int)($_SESSION['user_id'] ?? 0);
-        $isJson     = $this->isJsonRequest();
-        $eventModel = $this->model('EventModel');
+        $userRole    = $_SESSION['user_role'] ?? '';
+        $isNyscAdmin = ($userRole === 'NYSCAdministrator');
+        $divisionId  = $isNyscAdmin ? null : (int)($_SESSION['division_id'] ?? 0);
+        $userId      = (int)($_SESSION['user_id'] ?? 0);
+        $isJson      = $this->isJsonRequest();
+        $eventModel  = $this->model('EventModel');
 
         $event = $eventModel->findById($eventId);
 
         // Ownership and status check
-        if (!$event 
-            || (int)$event->organizer_division_id !== $divisionId 
-            || (int)$event->created_by !== $userId 
-            || $event->status !== 'PendingApproval') {
+        $canEdit = false;
+        if ($event && (int)$event->created_by === $userId) {
+            if ($isNyscAdmin) {
+                $canEdit = true;
+            } elseif ((int)$event->organizer_division_id === $divisionId && $event->status === 'PendingApproval') {
+                $canEdit = true;
+            }
+        }
+
+        if (!$canEdit) {
             if ($isJson) {
                 header('Content-Type: application/json');
                 http_response_code(403);
@@ -412,8 +465,13 @@ class ManageEvents extends Controller {
         }
 
         // Target audience validation
-        $divisionClubs = $eventModel->getClubsByDivision($divisionId);
-        $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
+        if ($isNyscAdmin) {
+            $validClubs   = $eventModel->getAllClubs();
+            $validClubIds = array_map(fn($c) => (int)$c->club_id, $validClubs);
+        } else {
+            $divisionClubs = $eventModel->getClubsByDivision($divisionId);
+            $validClubIds  = array_map(fn($c) => (int)$c->club_id, $divisionClubs);
+        }
 
         $validatedTargets = [];
         if ($targetScope === 'SelectedClubs') {
@@ -459,7 +517,7 @@ class ManageEvents extends Controller {
             'target_scope'   => $targetScope,
         ];
 
-        // Update event record (organizer_division_id is immutable)
+        // Update event record
         $eventModel->updateEvent($eventId, $divisionId, $userId, $updateData);
 
         // Save target records atomically
@@ -481,3 +539,4 @@ class ManageEvents extends Controller {
         $this->redirect('manageevents/status/' . $eventId);
     }
 }
+

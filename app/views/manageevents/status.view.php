@@ -1,20 +1,26 @@
 <?php
 /**
- * Event Status — Divisional Secretary dashboard
+ * Event Status — Divisional Secretary & NYSC Administrator dashboard
  *
  * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
  */
+$isNyscAdmin     = !empty($is_nysc_admin);
 $title           = $title ?? 'Event Status — YouthNexus';
 $pageTitle       = 'Event Details & Submission Status';
-$pageDescription = 'Track review progress and specifications for this event';
+$pageDescription = 'Track review progress, governance hierarchy, and specifications for this event';
 $currentRoute    = 'manageevents';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
+
+$isNational   = empty($event->organizer_division_id) && empty($event->organizer_club_id) && empty($event->organizer_zonal_id);
+$isZonal      = !empty($event->organizer_zonal_id);
+$isDivisional = !empty($event->organizer_division_id);
+$isClub       = !empty($event->organizer_club_id);
 ?>
 
             <div class="me-status-page">
 
-                <!-- Back button (styled as me-btn-secondary) -->
+                <!-- Back button -->
                 <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary me-back-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                     Back to Manage Events
@@ -23,14 +29,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="me-status-grid">
 
                     <!-- Left: Event Information Card -->
-                    <div class="me-detail-card">
+                    <div class="me-detail-card<?= $isNational ? ' me-detail-card-national' : '' ?>">
                         <div class="me-detail-card-header">
                             <div>
                                 <div class="me-badges-group">
-                                    <?php if (!empty($event->organizer_division_id)): ?>
-                                        <span class="me-badge me-badge-divisional">Divisional Event</span>
+                                    <?php if ($isNational): ?>
+                                        <span class="me-badge me-badge-national">
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:3px;vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            National Event
+                                        </span>
+                                    <?php elseif ($isZonal): ?>
+                                        <span class="me-badge me-badge-zonal">Zonal: <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zone') ?></span>
+                                    <?php elseif ($isDivisional): ?>
+                                        <span class="me-badge me-badge-divisional">Divisional: <?= htmlspecialchars($event->organizer_division_name ?? 'Division') ?></span>
                                     <?php else: ?>
-                                        <span class="me-badge me-badge-club">Club Event: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
+                                        <span class="me-badge me-badge-club">Club: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
                                     <?php endif; ?>
 
                                     <?php if ($event->status === 'PendingApproval'): ?>
@@ -66,7 +79,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     <?php if ($event->target_scope === 'AllInScope'): ?>
                                         <span class="me-target-all">
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                            All Clubs in Division
+                                            <?= $isNational ? 'All Clubs Nationwide (All Zones & Divisions)' : 'All Clubs in Division' ?>
                                         </span>
                                     <?php elseif (!empty($targets)): ?>
                                         <ul class="me-target-list">
@@ -111,17 +124,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <div class="me-field-item">
                                 <span class="me-field-label">Organized By</span>
                                 <span class="me-field-value">
-                                    <?php if (!empty($event->organizer_division_id)): ?>
-                                        <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?>
+                                    <?php if ($isNational): ?>
+                                        <strong>National Youth Services Council (NYSC)</strong> <small style="color:var(--db-text-grey);">(National Level)</small>
+                                    <?php elseif ($isZonal): ?>
+                                        <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zonal Secretariat') ?> <small style="color:var(--db-text-grey);">(Zonal Level)</small>
+                                    <?php elseif ($isDivisional): ?>
+                                        <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?> <small style="color:var(--db-text-grey);">(Divisional Level)</small>
                                     <?php else: ?>
-                                        <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?>
+                                        <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?> <small style="color:var(--db-text-grey);">(Club Level)</small>
                                     <?php endif; ?>
                                 </span>
                             </div>
 
                             <div class="me-field-item">
                                 <span class="me-field-label">Created By</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? 'Secretary') ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
+                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Administration' : 'Secretary')) ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
                             </div>
 
                             <div class="me-field-item full">
@@ -147,14 +164,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                 </div>
                                 <div class="me-timeline-content">
-                                    <h4>Event Inserted</h4>
-                                    <p>Created by <?= htmlspecialchars($event->creator_name ?? 'Divisional Secretary') ?></p>
+                                    <h4>Event <?= $isNational ? 'Created & Published' : 'Inserted' ?></h4>
+                                    <p>Created by <?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Administration' : 'Divisional Secretary')) ?></p>
                                     <span class="me-timeline-time"><?= date('F j, Y • g:i A', strtotime($event->created_at)) ?></span>
                                 </div>
                             </div>
 
                             <!-- Step 2: Review / Decision -->
-                            <?php if ($event->status === 'PendingApproval'): ?>
+                            <?php if ($isNational): ?>
+                                <div class="me-timeline-step">
+                                    <div class="me-timeline-dot done">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                    <div class="me-timeline-content">
+                                        <h4>National Authority Authorized</h4>
+                                        <p>Published officially across all zones and divisions</p>
+                                    </div>
+                                </div>
+                            <?php elseif ($event->status === 'PendingApproval'): ?>
                                 <div class="me-timeline-step">
                                     <div class="me-timeline-dot active">
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1"/></svg>
@@ -172,7 +199,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     </div>
                                     <div class="me-timeline-content">
                                         <h4>Approved</h4>
-                                        <p>Approved by <?= htmlspecialchars($event->approver_name ?: 'Zonal Coordinator') ?></p>
+                                        <p>Approved by <?= htmlspecialchars($event->approver_name ?: 'Authority') ?></p>
                                     </div>
                                 </div>
                             <?php elseif ($event->status === 'Rejected'): ?>
@@ -199,7 +226,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                         <div class="me-status-notice">
                             <strong style="display: block; margin-bottom: 4px; color: var(--db-text-dark);">Governance Notice</strong>
-                            <?php if ($event->status === 'PendingApproval'): ?>
+                            <?php if ($isNational): ?>
+                                This is a National-level event authorized and published across all zones, divisions, and clubs by the National Youth Services Council.
+                            <?php elseif ($event->status === 'PendingApproval'): ?>
                                 Events submitted at the divisional level remain pending until reviewed and approved by the Zonal Coordinator. Divisional Secretaries do not possess approval privileges.
                             <?php elseif ($event->status === 'Approved'): ?>
                                 This event has been approved by the Zonal Coordinator and is officially scheduled.
@@ -223,7 +252,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="me-modal-backdrop" id="editEventModal">
     <div class="me-modal">
         <div class="me-modal-header">
-            <h3>Edit Divisional Event</h3>
+            <h3><?= $isNational ? 'Edit National Event' : 'Edit Event' ?></h3>
             <button type="button" class="me-modal-close" aria-label="Close modal">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -243,14 +272,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <label class="me-form-label">Event Type</label>
                         <input type="text" name="event_type" class="me-form-input" value="<?= htmlspecialchars($event->event_type ?? '') ?>" maxlength="50">
                         <div class="me-chips-container">
-                            <button type="button" class="me-chip <?= ($event->event_type === 'Workshop') ? 'is-active' : '' ?>" data-value="Workshop">Workshop</button>
-                            <button type="button" class="me-chip <?= ($event->event_type === 'Meeting') ? 'is-active' : '' ?>" data-value="Meeting">Meeting</button>
-                            <button type="button" class="me-chip <?= ($event->event_type === 'Community Service') ? 'is-active' : '' ?>" data-value="Community Service">Community Service</button>
-                            <button type="button" class="me-chip <?= ($event->event_type === 'Sports') ? 'is-active' : '' ?>" data-value="Sports">Sports</button>
+                            <?php if ($isNational || $isNyscAdmin): ?>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'National Conference') ? 'is-active' : '' ?>" data-value="National Conference">National Conference</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Youth Summit') ? 'is-active' : '' ?>" data-value="Youth Summit">Youth Summit</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Workshop') ? 'is-active' : '' ?>" data-value="Workshop">Workshop</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Sports Meet') ? 'is-active' : '' ?>" data-value="Sports Meet">Sports Meet</button>
+                            <?php else: ?>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Workshop') ? 'is-active' : '' ?>" data-value="Workshop">Workshop</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Meeting') ? 'is-active' : '' ?>" data-value="Meeting">Meeting</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Community Service') ? 'is-active' : '' ?>" data-value="Community Service">Community Service</button>
+                                <button type="button" class="me-chip <?= ($event->event_type === 'Sports') ? 'is-active' : '' ?>" data-value="Sports">Sports</button>
+                            <?php endif; ?>
                         </div>
                     </div>
 
-                    <!-- Target Audience — toggle + checklist (pre-populated from existing targets) -->
+                    <!-- Target Audience — toggle + checklist -->
                     <div class="me-form-group me-form-full">
                         <label class="me-form-label">Target Audience <span class="required">*</span></label>
                         <div class="me-audience-toggle" role="group" aria-label="Target Audience">
@@ -258,7 +294,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 <input type="radio" name="target_scope" value="AllInScope" <?= ($event->target_scope === 'AllInScope') ? 'checked' : '' ?>>
                                 <span class="me-toggle-btn">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                    All Clubs
+                                    <?= $isNational ? 'All Clubs Nationwide' : 'All Clubs' ?>
                                 </span>
                             </label>
                             <label class="me-toggle-option">
@@ -283,6 +319,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="me-club-check-name">
                                             <?= htmlspecialchars($club->club_name) ?>
                                             <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
+                                            <?php if (!empty($club->division_name)): ?>
+                                                <small style="color:var(--db-text-grey);font-size:11px;">(<?= htmlspecialchars($club->division_name) ?>)</small>
+                                            <?php endif; ?>
                                         </span>
                                     </div>
                                     <div class="me-club-override <?= $isChecked ? '' : 'hidden' ?>">
@@ -298,7 +337,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 </label>
                             <?php endforeach; ?>
                             <?php if (empty($clubs)): ?>
-                                <p class="me-club-checklist-empty">No active clubs found in your division.</p>
+                                <p class="me-club-checklist-empty">No active clubs found.</p>
                             <?php endif; ?>
                         </div>
                     </div>
