@@ -3,6 +3,12 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Load the bundled PHPMailer classes.
+// "use" creates aliases—it does not load the PHP class files.
+require_once __DIR__ . '/../core/phpmailer/Exception.php';
+require_once __DIR__ . '/../core/phpmailer/PHPMailer.php';
+require_once __DIR__ . '/../core/phpmailer/SMTP.php';
+
 class ClubRegistrationApproval extends Controller {
 
     private function requireCoordinator() {
