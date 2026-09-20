@@ -31,6 +31,7 @@
     // --- Filter Panel Toggle -----------------------------------------
     const filterBtn   = document.getElementById('amFilterBtn');
     const filterPanel = document.getElementById('amFilterPanel');
+    const filterCount = document.getElementById('amFilterCount');
     if (filterBtn && filterPanel) {
         filterBtn.addEventListener('click', () => {
             const open = filterPanel.classList.toggle('open');
@@ -92,32 +93,86 @@
         });
     }
 
-    // --- Client-side search for event cards --------------------------
-    const searchInput = document.getElementById('amSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const q = this.value.toLowerCase().trim();
-            const cards = document.querySelectorAll('#amCardGrid .am-card');
-            let visible = 0;
+    // --- Client-side search and divisional filters -------------------
+    const searchInput  = document.getElementById('amSearchInput');
+    const typeFilter   = document.getElementById('amFilterType');
+    const scopeFilter  = document.getElementById('amFilterScope');
+    const applyFilters = document.getElementById('amApplyFilterBtn');
+    const clearFilters = document.getElementById('amClearFilterBtn');
+    const cardGrid     = document.getElementById('amCardGrid');
 
-            cards.forEach(card => {
-                const title = card.dataset.title || '';
-                const type  = card.dataset.type  || '';
-                const match = !q || title.includes(q) || type.includes(q);
-                card.style.display = match ? '' : 'none';
-                if (match) visible++;
-            });
+    function setFilterCount(count) {
+        if (!filterCount) return;
+        filterCount.textContent = String(count);
+        filterCount.classList.toggle('hidden', count === 0);
+    }
 
-            let emptyMsg = document.getElementById('amFilterEmpty');
-            if (!emptyMsg) {
-                emptyMsg = document.createElement('div');
-                emptyMsg.id = 'amFilterEmpty';
-                emptyMsg.className = 'am-empty-state';
-                emptyMsg.style.gridColumn = '1 / -1';
-                emptyMsg.innerHTML = '<p>No events match your search term.</p>';
-                document.getElementById('amCardGrid')?.appendChild(emptyMsg);
-            }
-            emptyMsg.style.display = (visible === 0) ? '' : 'none';
+    function getClientFilterCount() {
+        let count = 0;
+        if (typeFilter?.value) count++;
+        if (scopeFilter?.value) count++;
+        return count;
+    }
+
+    function getEmptyMessage() {
+        let emptyMessage = document.getElementById('amFilterEmpty');
+        if (emptyMessage || !cardGrid) return emptyMessage;
+
+        emptyMessage = document.createElement('div');
+        emptyMessage.id = 'amFilterEmpty';
+        emptyMessage.className = 'am-empty-state';
+
+        const message = document.createElement('p');
+        message.textContent = 'No events match the current search and filters.';
+        emptyMessage.appendChild(message);
+        cardGrid.appendChild(emptyMessage);
+
+        return emptyMessage;
+    }
+
+    function filterEventCards() {
+        const query = (searchInput?.value || '').toLowerCase().trim();
+        const selectedType = isNYSCAdmin
+            ? ''
+            : (typeFilter?.value || '').toLowerCase();
+        const selectedScope = isNYSCAdmin
+            ? ''
+            : (scopeFilter?.value || '').toLowerCase();
+        const cards = document.querySelectorAll('#amCardGrid .am-card');
+        let visible = 0;
+
+        cards.forEach(card => {
+            const searchableText = card.dataset.search || '';
+            const eventType = card.dataset.type || '';
+            const eventScope = card.dataset.scope || '';
+            const matchesQuery = !query || searchableText.includes(query);
+            const matchesType = !selectedType || eventType === selectedType;
+            const matchesScope = !selectedScope || eventScope === selectedScope;
+            const matches = matchesQuery && matchesType && matchesScope;
+
+            card.style.display = matches ? '' : 'none';
+            if (matches) visible++;
+        });
+
+        const emptyMessage = getEmptyMessage();
+        if (emptyMessage) {
+            emptyMessage.style.display = visible === 0 ? '' : 'none';
+        }
+    }
+
+    searchInput?.addEventListener('input', filterEventCards);
+
+    if (!isNYSCAdmin) {
+        applyFilters?.addEventListener('click', () => {
+            filterEventCards();
+            setFilterCount(getClientFilterCount());
+        });
+
+        clearFilters?.addEventListener('click', () => {
+            if (typeFilter) typeFilter.value = '';
+            if (scopeFilter) scopeFilter.value = '';
+            setFilterCount(0);
+            filterEventCards();
         });
     }
 

@@ -11,6 +11,7 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 
+require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -18,12 +19,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <!-- Action Row -->
     <div class="am-action-row">
-        <div class="am-page-heading">
-            <h2 class="am-heading-title"><?= htmlspecialchars($pageTitle) ?></h2>
-            <p class="am-heading-sub"><?= htmlspecialchars($pageDescription) ?></p>
-        </div>
         <button type="button" class="am-btn am-btn-primary" id="amAddBtn">
-            <span class="am-btn-icon">+</span> Log Attendance
+            Log Attendance
         </button>
     </div>
 
@@ -33,7 +30,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="am-stats <?= $isNYSCAdmin ? 'am-stats-3' : '' ?>">
         <div class="am-stat-card">
             <div class="am-stat-icon events">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16" stroke-linecap="round"/></svg>
+                <?= yn_icon('calendar') ?>
             </div>
             <div class="am-stat-value"><?= (int)($stats->events_this_year ?? 0) ?></div>
             <div class="am-stat-label"><?= $isNYSCAdmin ? 'National Approved Events' : 'Approved Events This Year' ?></div>
@@ -41,7 +38,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
         <div class="am-stat-card">
             <div class="am-stat-icon recorded">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <?= yn_icon('check') ?>
             </div>
             <div class="am-stat-value"><?= (int)($stats->attendance_this_year ?? 0) ?></div>
             <div class="am-stat-label"><?= $isNYSCAdmin ? 'Total Attendances Recorded' : 'Attendance Records This Year' ?></div>
@@ -50,7 +47,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <?php if ($isNYSCAdmin): ?>
         <div class="am-stat-card">
             <div class="am-stat-icon rate">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M5 19V9M12 19V5M19 19v-7" stroke-linecap="round"/><path d="M3 19h18" stroke-linecap="round"/></svg>
+                <?= yn_icon('award') ?>
             </div>
             <div class="am-stat-value"><?= (int)($stats->national_rate ?? 0) ?>%</div>
             <div class="am-stat-label">National Presence Rate</div>
@@ -61,24 +58,50 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- ============================================================
          Toolbar & Filters
          ============================================================ -->
+    <?php
+    $activeFilters = 0;
+    foreach (['zone_id', 'division_id', 'club_id', 'event_type'] as $filterKey) {
+        if (!empty($filters[$filterKey])) {
+            $activeFilters++;
+        }
+    }
+    if (!empty($filters['level']) && $filters['level'] !== 'all') {
+        $activeFilters++;
+    }
+    ?>
     <div class="am-toolbar">
-        <div class="am-search-input-wrapper">
-            <span class="am-search-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            </span>
-            <input type="text" id="amSearchInput" placeholder="Search events by title, location, club or organizer…" autocomplete="off" value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+        <div class="am-search-group">
+            <div class="am-search-input-wrapper">
+                <input
+                    type="text"
+                    id="amSearchInput"
+                    class="am-search-input"
+                    placeholder="Search events by title, location, club or organizer..."
+                    aria-label="Search events"
+                    autocomplete="off"
+                    value="<?= htmlspecialchars($filters['search'] ?? '') ?>"
+                >
+            </div>
         </div>
-        <button type="button" class="am-filter-btn" id="amFilterBtn" aria-expanded="false">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+        <button
+            type="button"
+            class="am-filter-btn"
+            id="amFilterBtn"
+            aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>"
+            aria-controls="amFilterPanel"
+        >
             Filters
-            <span class="am-filter-count hidden" id="amFilterCount">0</span>
+            <span
+                class="am-filter-count<?= $activeFilters > 0 ? '' : ' hidden' ?>"
+                id="amFilterCount"
+            ><?= $activeFilters ?></span>
         </button>
     </div>
 
     <!-- Filter Panel -->
     <?php if ($isNYSCAdmin): ?>
     <!-- NYSC Administrator Cascading Filter Panel (Server & Client supported) -->
-    <form method="GET" action="<?= ROOT ?>/attendance" class="am-filter-panel" id="amFilterPanel">
+    <form method="GET" action="<?= ROOT ?>/attendance" class="am-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
         <div class="am-filter-grid">
             <!-- 1. Zone Filter -->
             <div class="am-filter-field">
@@ -188,7 +211,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="am-list" id="amCardGrid">
         <?php if (empty($events)): ?>
             <div class="am-empty-state">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01" stroke-linecap="round"/></svg>
+                <span class="am-empty-state-icon"><?= yn_icon('info') ?></span>
                 <p>No approved events match the selected criteria.</p>
                 <?php if (!empty($filters['zone_id']) || !empty($filters['division_id']) || !empty($filters['club_id'])): ?>
                     <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-sm" style="margin-top:10px;">Clear All Filters</a>
@@ -211,9 +234,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 if (!empty($evt->organizer_club_name))     $orgHierarchy[] = $evt->organizer_club_name;
                 if (!empty($evt->organizer_division_name)) $orgHierarchy[] = $evt->organizer_division_name;
                 if (!empty($evt->organizer_zonal_name))    $orgHierarchy[] = $evt->organizer_zonal_name;
-                $hierarchyText = !empty($orgHierarchy) ? implode(' &bull; ', $orgHierarchy) : 'National Administration';
+                $hierarchyText = !empty($orgHierarchy) ? implode(', ', $orgHierarchy) : 'National Administration';
+                $searchText = strtolower(implode(' ', array_filter([
+                    $evt->title ?? '',
+                    $evt->event_type ?? '',
+                    $evt->location ?? '',
+                    $evt->organizer_club_name ?? '',
+                    $evt->organizer_division_name ?? '',
+                    $evt->organizer_zonal_name ?? '',
+                    $evt->organizer_club_code ?? '',
+                ])));
             ?>
             <div class="am-card"
+                 data-search="<?= htmlspecialchars($searchText) ?>"
                  data-title="<?= htmlspecialchars(strtolower($evt->title)) ?>"
                  data-type="<?= htmlspecialchars(strtolower($evt->event_type ?? '')) ?>"
                  data-scope="<?= $lvl ?>"
@@ -234,16 +267,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <?php endif; ?>
                 </p>
                 <div class="am-card-meta">
-                    <span>&#128197; <?= date('M j, Y', strtotime($evt->start_datetime)) ?></span>
+                    <span class="am-card-meta-item">
+                        <span class="am-card-meta-icon"><?= yn_icon('calendar') ?></span>
+                        <?= date('M j, Y', strtotime($evt->start_datetime)) ?>
+                    </span>
                     <?php if (!empty($evt->location)): ?>
-                        <span>&#128205; <?= htmlspecialchars($evt->location) ?></span>
+                        <span class="am-card-meta-item">
+                            <span class="am-card-meta-icon"><?= yn_icon('pin') ?></span>
+                            <?= htmlspecialchars($evt->location) ?>
+                        </span>
                     <?php endif; ?>
                 </div>
                 <span class="am-card-attendance-chip<?= $chipClass ?>"><?= $chipLabel ?></span>
                 <div class="am-card-footer">
                     <a href="<?= ROOT ?>/attendance/detail/<?= (int)$evt->event_id ?>" class="am-btn-view">
                         View Attendance
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                 </div>
             </div>
@@ -260,7 +298,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="am-modal-header">
             <h3>Log Attendance</h3>
             <button type="button" class="am-modal-close" id="amModalClose" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </button>
         </div>
         <div class="am-modal-tabs">
