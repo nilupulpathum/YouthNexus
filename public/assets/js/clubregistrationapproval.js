@@ -89,9 +89,19 @@
                     msg.className = 'cr-empty';
                     msg.style.gridColumn = '1 / -1';
                     msg.innerHTML =
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
-                        '<p>No applications match your search/filters.</p>';
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="40" height="40" style="margin-bottom:12px;opacity:0.6;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+                        '<p>No applications match your search or filter criteria.</p>' +
+                        '<button type="button" class="cr-btn cr-btn-secondary" id="crClearFilterEmptyBtn" style="margin-top:12px;">Clear Filters</button>';
                     grid.appendChild(msg);
+                    var clearEmptyBtn = msg.querySelector('#crClearFilterEmptyBtn');
+                    if (clearEmptyBtn) {
+                        clearEmptyBtn.addEventListener('click', function () {
+                            if (searchInput) searchInput.value = '';
+                            if (filterStatus) filterStatus.value = '';
+                            if (filterDocs)   filterDocs.value   = '';
+                            filterCards();
+                        });
+                    }
                 }
             } else if (noMatchEl) {
                 noMatchEl.remove();
@@ -123,13 +133,14 @@
     // Stat cards as filters / views
     // ---------------------------------------------------------------
     var pendingGridHtml = grid ? grid.innerHTML : null; // Cache initial pending cards HTML
+    var currentRequestToken = 0;
 
     function renderApprovedGrid(apps) {
         if (!grid) return;
         if (!apps || apps.length === 0) {
             grid.innerHTML =
                 '<div class="cr-empty" style="grid-column: 1 / -1;">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><path d="M20 6 9 17l-5-5"/></svg>' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="40" height="40" style="margin-bottom:12px;opacity:0.6;"><path d="M20 6 9 17l-5-5"/></svg>' +
                     '<p>No approved applications found in this division.</p>' +
                 '</div>';
             return;
@@ -156,7 +167,10 @@
                         'Proposer: ' + escapeHtml(app.proposer_name || '—') +
                     '</div>' +
                     '<div class="cr-card-footer">' +
-                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                        '<button type="button" class="cr-card-detail-link cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">' +
+                            '<span>View Details</span>' +
+                            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+                        '</button>' +
                     '</div>' +
                 '</div>';
         });
@@ -164,8 +178,16 @@
     }
 
     function setActiveStat(button) {
-        [statPending, statApproved, statRejected].forEach(function (b) { if (b) b.classList.remove('is-active'); });
-        if (button) button.classList.add('is-active');
+        [statPending, statApproved, statRejected].forEach(function (b) {
+            if (b) {
+                b.classList.remove('is-active');
+                b.setAttribute('aria-pressed', 'false');
+            }
+        });
+        if (button) {
+            button.classList.add('is-active');
+            button.setAttribute('aria-pressed', 'true');
+        }
     }
 
     function renderRejectedGrid(apps) {
@@ -173,7 +195,7 @@
         if (!apps || apps.length === 0) {
             grid.innerHTML =
                 '<div class="cr-empty" style="grid-column: 1 / -1;">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="40" height="40" style="margin-bottom:12px;opacity:0.6;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
                     '<p>No rejected applications found in this division.</p>' +
                 '</div>';
             return;
@@ -200,7 +222,10 @@
                         'Proposer: ' + escapeHtml(app.proposer_name || '—') +
                     '</div>' +
                     '<div class="cr-card-footer">' +
-                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                        '<button type="button" class="cr-card-detail-link cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">' +
+                            '<span>View Details</span>' +
+                            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+                        '</button>' +
                     '</div>' +
                 '</div>';
         });
@@ -248,8 +273,71 @@
         });
     }
 
+    function loadApprovedApplications() {
+        var requestToken = ++currentRequestToken;
+        grid.innerHTML = '<div class="cr-empty" style="grid-column: 1 / -1;"><p>Loading approved applications…</p></div>';
+        fetch(ROOT_URL + '/clubregistrationapproval/approved', { credentials: 'same-origin' })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error('Request failed with status ' + res.status);
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                if (requestToken !== currentRequestToken) return;
+                renderApprovedGrid(data.applications || []);
+                filterCards();
+            })
+            .catch(function () {
+                if (requestToken !== currentRequestToken) return;
+                grid.innerHTML =
+                    '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="1.8" width="40" height="40" style="margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+                        '<p style="color:#b91c1c;">Failed to load approved applications.</p>' +
+                        '<button type="button" class="cr-btn" id="crRetryApprovedBtn" style="margin-top:12px;">Retry</button>' +
+                    '</div>';
+                var retryBtn = document.getElementById('crRetryApprovedBtn');
+                if (retryBtn) retryBtn.addEventListener('click', loadApprovedApplications);
+            });
+    }
+
+    function loadRejectedApplications() {
+        var requestToken = ++currentRequestToken;
+        grid.innerHTML = '<div class="cr-empty" style="grid-column: 1 / -1;"><p>Loading rejected applications…</p></div>';
+        fetch(ROOT_URL + '/clubregistrationapproval/rejected', { credentials: 'same-origin' })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error('Request failed with status ' + res.status);
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                if (requestToken !== currentRequestToken) return;
+                renderRejectedGrid(data.applications || []);
+                filterCards();
+            })
+            .catch(function () {
+                if (requestToken !== currentRequestToken) return;
+                grid.innerHTML =
+                    '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="1.8" width="40" height="40" style="margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+                        '<p style="color:#b91c1c;">Failed to load rejected applications.</p>' +
+                        '<button type="button" class="cr-btn" id="crRetryRejectedBtn" style="margin-top:12px;">Retry</button>' +
+                    '</div>';
+                var retryBtn = document.getElementById('crRetryRejectedBtn');
+                if (retryBtn) retryBtn.addEventListener('click', loadRejectedApplications);
+            });
+    }
+
     if (statPending) {
         statPending.addEventListener('click', function () {
+            currentRequestToken++;
             setActiveStat(statPending);
             if (sortToggleBtn) sortToggleBtn.style.display = 'inline-flex';
             if (filterStatus) filterStatus.value = '';
@@ -269,16 +357,7 @@
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
             }
-            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved applications…</p>';
-            fetch(ROOT_URL + '/clubregistrationapproval/approved', { credentials: 'same-origin' })
-                .then(function (res) { return res.json(); })
-                .then(function (data) {
-                    renderApprovedGrid(data.applications || []);
-                    filterCards();
-                })
-                .catch(function () {
-                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved applications.</p>';
-                });
+            loadApprovedApplications();
         });
     }
 
@@ -291,16 +370,7 @@
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
             }
-            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected applications…</p>';
-            fetch(ROOT_URL + '/clubregistrationapproval/rejected', { credentials: 'same-origin' })
-                .then(function (res) { return res.json(); })
-                .then(function (data) {
-                    renderRejectedGrid(data.applications || []);
-                    filterCards();
-                })
-                .catch(function () {
-                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected applications.</p>';
-                });
+            loadRejectedApplications();
         });
     }
 
@@ -664,7 +734,7 @@
                     '<div class="cr-logo-section">' +
                         '<label class="cr-section-field-label">CLUB LOGO</label>' +
                         '<div class="cr-dashed-logo-box">' +
-                            (app.club_logo_path 
+                            (app.club_logo_path
                                 ? renderImg(app.club_logo_path, 'Club Logo', 'cr-logo-preview', 'logo') +
                                   '<span class="cr-logo-filename">' + escapeHtml(app.club_logo_path.split('/').pop()) + '</span>'
                                 : '<svg class="cr-logo-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
@@ -696,7 +766,7 @@
                         '</div>' +
                     '</div>' +
                 '</div>' +
-                (app.description ? 
+                (app.description ?
                 '<div class="cr-mission-section">' +
                     '<label class="cr-section-field-label">CLUB MISSION STATEMENT</label>' +
                     '<div class="cr-mission-box">' +
@@ -723,7 +793,7 @@
                             '<svg class="cr-pin-icon" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
                             '<span class="cr-venue-address-text">' + escapeHtml(app.street_address || '—') + ', ' + escapeHtml(app.city || '—') + ', ' + escapeHtml(app.postal_code || '—') + '.</span>' +
                         '</div>' +
-                        (app.venue_established ? 
+                        (app.venue_established ?
                         '<div class="cr-venue-info-tag">' +
                             '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
                             '<span>PERMANENT MEETING LOCATION ESTABLISHED</span>' +
@@ -739,7 +809,7 @@
                     '<h3 class="cr-section-title">EXECUTIVE COMMITTEE DETAILS</h3>' +
                 '</div>' +
                 '<div class="cr-nominees-container">' +
-                    (president ? 
+                    (president ?
                     '<div class="cr-nominee-horizontal-card">' +
                         '<div class="cr-nominee-horizontal-header">' +
                             '<span class="cr-role-title">' +
@@ -1105,7 +1175,7 @@
                 selectEl.addEventListener('change', function () {
                     if (selectEl.value === 'approve') {
                         alertEl.className = 'cr-decision-impact-alert approve';
-                        alertEl.innerHTML = 
+                        alertEl.innerHTML =
                             '<div class="cr-impact-icon-circle approve">' +
                                 '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
                             '</div>' +
@@ -1115,7 +1185,7 @@
                             '</div>';
                     } else {
                         alertEl.className = 'cr-decision-impact-alert reject';
-                        alertEl.innerHTML = 
+                        alertEl.innerHTML =
                             '<div class="cr-impact-icon-circle reject">' +
                                 '<svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="3" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
                             '</div>' +
@@ -1153,7 +1223,7 @@
                 '</div>' +
                 '<h2 class="cr-success-title">Club Created Successfully</h2>' +
                 '<p class="cr-success-subtitle"><strong>' + escapeHtml(clubName) + '</strong> has been approved. The club record was created automatically and login credentials were emailed to all 3 key/elect executives.</p>' +
-                
+
                 '<div class="cr-success-details-grid">' +
                     '<div class="cr-success-field"><label>CLUB ID / CODE</label><span class="cr-success-val-bold">' + escapeHtml(clubCode) + '</span></div>' +
                     '<div class="cr-success-field"><label>STATUS</label><span><span class="cr-success-status-badge">Active</span></span></div>' +
