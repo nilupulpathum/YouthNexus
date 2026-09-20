@@ -56,11 +56,10 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'zonalcoordinator' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Pending Approvals', 'route' => 'approvals', 'href' => $dashboardRoot . '/approvals', 'icon' => 'clock'],
-        ['label' => 'Clubs in Zone', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Overview', 'route' => 'zonalcoordinator', 'href' => $dashboardRoot . '/zonalcoordinator', 'icon' => 'grid'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalcoordinator/clubs', 'href' => $dashboardRoot . '/zonalcoordinator/clubs', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionalcoordinator' => [
@@ -98,20 +97,24 @@ $navigation = [
         ['label' => 'Help',                'route' => 'help',             'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],
     'zonalsecretary' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Manage Events', 'route' => 'events', 'href' => $dashboardRoot . '/events', 'icon' => 'calendar'],
-        ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
-        ['label' => 'Clubs in Zone', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
+        ['label' => 'Overview', 'route' => 'zonalsecretary', 'href' => $dashboardRoot . '/zonalsecretary', 'icon' => 'grid'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalsecretary/clubs', 'href' => $dashboardRoot . '/zonalsecretary/clubs', 'icon' => 'chart'],
+        ['label' => 'Zonal Events', 'route' => 'zonalsecretary/events', 'href' => $dashboardRoot . '/zonalsecretary/events', 'icon' => 'calendar'],
+        ['label' => 'Attendance', 'route' => 'zonalsecretary/attendance', 'href' => $dashboardRoot . '/zonalsecretary/attendance', 'icon' => 'check'],
+        ['label' => 'Reports', 'route' => 'zonalsecretary/reports', 'href' => $dashboardRoot . '/zonalsecretary/reports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'zonaltreasurer' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
-        ['label' => 'Assets', 'route' => 'assets', 'href' => $dashboardRoot . '/assets', 'icon' => 'briefcase'],
-        ['label' => 'Clubs in Zone', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
+        ['label' => 'Overview', 'route' => 'zonaltreasurer', 'href' => $dashboardRoot . '/zonaltreasurer', 'icon' => 'grid'],
+        ['label' => 'Allocate Funds', 'route' => 'zonaltreasurer/allocate', 'href' => $dashboardRoot . '/zonaltreasurer/allocate', 'icon' => 'users'],
+        ['label' => 'Audit Finance', 'route' => 'zonaltreasurer/audit', 'href' => $dashboardRoot . '/zonaltreasurer/audit', 'icon' => 'clipboard'],
+        ['label' => 'Zonal Assets', 'route' => 'zonaltreasurer/assets', 'href' => $dashboardRoot . '/zonaltreasurer/assets', 'icon' => 'briefcase'],
+        ['label' => 'Zonal Ledger', 'route' => 'zonaltreasurer/ledger', 'href' => $dashboardRoot . '/zonaltreasurer/ledger', 'icon' => 'wallet'],
+        ['label' => 'Void Requests', 'route' => 'zonaltreasurer/voids', 'href' => $dashboardRoot . '/zonaltreasurer/voids', 'icon' => 'clock'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'admin' => [
@@ -221,12 +224,24 @@ $icons = [
 
   <nav class="db-nav dashboard-nav" aria-label="Workspace navigation">
     <p class="dashboard-nav__label">Main menu</p>
+    <?php
+    // Exact match wins: a parent entry (e.g. zonalcoordinator Overview)
+    // must not stay highlighted when a child page (e.g.
+    // zonalcoordinator/clubs) is open. Prefix highlighting applies only
+    // when no entry matches exactly (e.g. president/handover keeps the
+    // president Overview lit since handover has no entry of its own).
+    $hasExactMatch = false;
+    foreach ($roleItems as $entry) {
+        if ($activePath === trim((string) $entry['route'], '/')) { $hasExactMatch = true; break; }
+    }
+    ?>
     <ul>
       <?php foreach ($roleItems as $item):
         $itemRoute = trim((string) $item['route'], '/');
-        $isActive = $activePath === $itemRoute
-          || ($itemRoute === 'audit' && in_array($activePath, ['audit', 'annualaudit']))
-          || ($itemRoute !== 'home' && str_starts_with($activePath, $itemRoute . '/'));
+        $isExact = $activePath === $itemRoute;
+        $isActive = $isExact || (!$hasExactMatch && (
+          ($itemRoute === 'audit' && $activePath === 'annualaudit')
+          || ($itemRoute !== 'home' && str_starts_with($activePath, $itemRoute . '/'))));
       ?>
         <li>
           <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>

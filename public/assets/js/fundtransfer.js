@@ -11,6 +11,8 @@
         csrfToken: '',
     };
 
+    const route = config.route || 'fundtransfer';
+    const listRoute = config.listRoute || route;
     const $ = id => document.getElementById(id);
 
     // ── Number to English Words Helper ────────────────────────
@@ -51,6 +53,7 @@
     function openAllocModal() {
         if (!allocModal) return;
         allocModal.hidden = false;
+        allocModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         if (allocErrorAlert) allocErrorAlert.hidden = true;
         setTimeout(() => {
@@ -62,6 +65,7 @@
     function closeAllocModal() {
         if (!allocModal) return;
         allocModal.hidden = true;
+        allocModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
 
@@ -91,7 +95,7 @@
         }
 
         // Fetch sequential reference for selected method
-        fetch(`${config.rootUrl}/fundtransfer/getreference?method=${encodeURIComponent(method)}`, {
+        fetch(`${config.rootUrl}/${route}/getreference?method=${encodeURIComponent(method)}`, {
             headers: { 'Accept': 'application/json' }
         })
         .then(res => res.json())
@@ -131,7 +135,7 @@
             const btnSubmit = $('btnSubmitAlloc');
             if (btnSubmit) {
                 btnSubmit.disabled = true;
-                btnSubmit.innerHTML = '&#8987; Authorizing Transfer…';
+                btnSubmit.textContent = 'Authorizing Transfer...';
             }
             if (allocErrorAlert) allocErrorAlert.hidden = true;
 
@@ -147,18 +151,18 @@
 
                 if (data.success) {
                     // Success! Refresh page to update table, ledger balances, and cards
-                    window.location.href = data.redirect || `${config.rootUrl}/fundtransfer`;
+                    window.location.href = data.redirect || `${config.rootUrl}/${listRoute}`;
                 } else {
                     if (allocErrorAlert) {
                         const msgs = data.errors
-                            ? Object.values(data.errors).join('<br>')
+                            ? Object.values(data.errors).join(' ')
                             : (data.error || 'An error occurred. Please verify form details.');
-                        allocErrorAlert.innerHTML = msgs;
+                        allocErrorAlert.textContent = msgs;
                         allocErrorAlert.hidden = false;
                     }
                     if (btnSubmit) {
                         btnSubmit.disabled = false;
-                        btnSubmit.innerHTML = '&#9654; Authorize Transfer';
+                        btnSubmit.textContent = 'Authorize Transfer';
                     }
                 }
             } catch (err) {
@@ -168,7 +172,7 @@
                 }
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '&#9654; Authorize Transfer';
+                    btnSubmit.textContent = 'Authorize Transfer';
                 }
             }
         });
@@ -192,7 +196,7 @@
         setT('dtModalRef2', data.ref);
         setT('dtModalSubtitle', 'Fund disbursement for ' + (data.zone || 'Zonal Office'));
         setT('dtModalAmount', 'LKR ' + data.amount);
-        setT('dtModalDatetime', '🕐 ' + (data.datetime || '—'));
+        setT('dtModalDatetime', data.datetime || '—');
         setT('dtModalZone', data.zone);
         setT('dtModalBank', data.bank);
         setT('dtModalBranch', data.branch);
@@ -205,7 +209,7 @@
         // Status chip
         const chip = $('dtModalStatusChip');
         if (chip) {
-            chip.textContent = '● ' + data.status;
+            chip.textContent = data.status;
             chip.className = 'ft-status-chip';
             if (data.status === 'Completed') {
                 chip.classList.add('ft-status-completed');
@@ -216,16 +220,18 @@
 
         // Receipt Download Link
         if (btnReceiptDl) {
-            btnReceiptDl.href = `${config.rootUrl}/fundtransfer/receipt/${data.id}`;
+            btnReceiptDl.href = `${config.rootUrl}/${route}/receipt/${data.id}`;
         }
 
         dtModal.hidden = false;
+        dtModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 
     function closeDetailsModal() {
         if (!dtModal) return;
         dtModal.hidden = true;
+        dtModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
 

@@ -737,3 +737,209 @@ a.club-btn-secondary { text-decoration: none; }
     .club-filters { padding: 14px 18px; }
     .club-search input { width: 100%; }
 }
+
+/* Z1 monitor club health — divisional Figma arrangement (owner-approved
+   2026-09-12). Status colors follow the Figma bands: green healthy,
+   amber at-risk, red dormant (dormant red is the only new color here). */
+.health-band { border-top: 4px solid var(--db-border); }
+.health-band--healthy { border-top-color: #34d399; }
+.health-band--atrisk { border-top-color: #fbbf24; }
+.health-band--dormant { border-top-color: #f87171; }
+
+.health-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.health-search {
+    flex: 1 1 220px;
+    font: inherit;
+    font-size: 13px;
+    padding: 10px 14px;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.health-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.health-chip.is-active { background: var(--db-sidebar-bg); border-color: var(--db-sidebar-bg); }
+.dashboard .health-chip.is-active { color: #fff; }
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.health-card {
+    background: #fff;
+    border: 1px solid var(--db-border);
+    border-radius: 14px;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.health-card--healthy { border-color: #a7f3d0; }
+.health-card--atrisk { border-color: #fde68a; }
+.health-card--dormant { border-color: #fecaca; }
+
+.health-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--db-border);
+    position: relative;
+}
+
+.health-avatar--healthy { background: #ecfdf5; border-color: #a7f3d0; color: #238451; }
+.health-avatar--atrisk { background: #fffbeb; border-color: #fde68a; color: #ca6e1a; }
+.health-avatar--dormant { background: #fef2f2; border-color: #fecaca; color: #b42318; }
+
+.health-flag {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 22px;
+    border: 2px solid #fff;
+}
+
+.health-score { font-size: 30px; font-weight: 800; margin: 0; }
+.health-score span { font-size: 13px; font-weight: 600; color: #7b8492; }
+.health-score--healthy { color: #047857; }
+.health-score--atrisk { color: #b45309; }
+.health-score--dormant { color: #b42318; }
+
+.health-card h3 { font-size: 14px; margin: 0; }
+.dashboard .health-card h3 { color: var(--db-text-dark); }
+
+.club-pill--dormant { color: #b42318; background: #fee2e2; }
+
+.health-open {
+    margin-top: 6px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--db-border);
+    background: #eff6ff;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.dashboard .health-open { color: var(--db-sidebar-bg); }
+.health-open--dormant { background: #ef4444; border-color: #ef4444; }
+.dashboard .health-open--dormant { color: #fff; }
+
+@media (max-width: 700px) {
+    .health-grid { grid-template-columns: 1fr; }
+}
+
+/* Z1 club detail + flag modals and monitor toolbar selects — same Figma
+   arrangement (owner-approved 2026-09-12). Reuses club-table,
+   club-review-row, club-error-banner, buttons and pills above. */
+.popup-content--wide { max-width: 920px; }
+
+.health-select {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    background: #fff;
+}
+.dashboard .health-select { color: var(--db-text-dark); }
+
+.health-detail-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.health-detail-id {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: var(--db-sidebar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+.health-detail-head h2 { margin: 0; padding: 0; }
+.health-detail-head p { margin: 6px 0 0; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.health-detail-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7b8492;
+    margin: 20px 0 10px;
+}
+
+.health-detail-box {
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #fff;
+}
+.health-detail-box p { margin: 0 0 10px; font-size: 13px; }
+.dashboard .health-detail-box p { color: var(--db-text-dark); }
+.health-detail-box .club-review-row:last-child { margin-bottom: 0; }
+
+.health-detail-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; }
+.health-perf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.health-perf-box { text-align: left; }
+.health-perf-big { font-size: 26px; font-weight: 800; margin: 4px 0 0; }
+.dashboard .health-perf-big { color: var(--db-text-dark); }
+.health-perf-big span { font-size: 26px; }
+.health-trend { font-size: 12px; font-weight: 700; color: var(--db-sidebar-bg); }
+
+.health-execs { display: flex; flex-direction: column; border: 1px solid var(--db-border); border-radius: 12px; overflow: hidden; }
+.health-exec-row { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--db-border); }
+.health-exec-row:last-child { border-bottom: 0; }
+.health-exec-disc {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--db-sidebar-bg);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+.health-exec-row strong { font-size: 13px; }
+.dashboard .health-exec-row strong { color: var(--db-text-dark); }
+
+.health-score-total { border-top: 1px solid var(--db-border); padding-top: 10px; font-weight: 800; }
+
+.health-flag-summary {
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+.health-flag-summary .club-review-row:last-child { margin-bottom: 0; }
+
+.health-detail-footer { flex-wrap: wrap; }
+
+@media (max-width: 700px) {
+    .health-detail-grid { grid-template-columns: 1fr; }
+    .health-perf-row { grid-template-columns: 1fr; }
+}
