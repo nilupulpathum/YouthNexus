@@ -87,8 +87,21 @@
     margin-bottom: 24px;
 }
 
+.me-stats-grid.me-stats-grid-admin {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1100px) {
+    .me-stats-grid.me-stats-grid-admin {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 900px) {
     .me-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .me-stats-grid.me-stats-grid-admin {
         grid-template-columns: 1fr;
     }
 }
@@ -133,6 +146,11 @@
 .me-stat-icon.hosted {
     background: #dbeafe;
     color: #1d4ed8;
+}
+
+.me-stat-icon.national {
+    background: #ede9fe;
+    color: #6d28d9;
 }
 
 .me-stat-icon svg {
@@ -420,6 +438,19 @@
     letter-spacing: 0.2px;
 }
 
+.me-badge-national {
+    background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+    color: #ffffff;
+    border: 1px solid rgba(109, 40, 217, 0.3);
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+.me-badge-zonal {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
 .me-badge-divisional {
     background: #eff6ff;
     color: #1e40af;
@@ -430,6 +461,14 @@
     background: #f5f3ff;
     color: #6d28d9;
     border: 1px solid #ddd6fe;
+}
+
+.me-event-card.me-event-card-national {
+    border-top: 3px solid #6366f1;
+}
+
+.me-detail-card.me-detail-card-national {
+    border-top: 3px solid #6366f1;
 }
 
 .me-badge-status-pending {
