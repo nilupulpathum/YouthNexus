@@ -105,6 +105,7 @@ $navigation = [
     ],
     'admin' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -115,6 +116,7 @@ $navigation = [
     ],
     'nyscadmin' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -136,6 +138,8 @@ $roleAliases = [
     'zonalcoordinator' => 'zonalcoordinator',
     'divisionalsecretary' => 'divisionalsecretary',
     'divisional' => 'divisionalcoordinator',
+    'nyscadministrator' => 'nyscadmin',
+    'nyscadmin' => 'nyscadmin',
     'nysc' => 'nyscadmin',
 ];
 $normalisedRoleKey = $roleAliases[$normalisedRoleKey] ?? $normalisedRoleKey;
@@ -159,6 +163,7 @@ $icons = [
     'clipboard' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/></svg>',
     'shield' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 7 3v5c0 4.5-2.5 7.7-7 10-4.5-2.3-7-5.5-7-10V6l7-3Z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     'check' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'reports' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 20V9"/><path d="M15 20V9"/></svg>',
 ];
 ?>
 <aside class="db-sidebar dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
