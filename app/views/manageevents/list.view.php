@@ -1,29 +1,31 @@
 <?php
 /**
- * Manage Events — Divisional Secretary dashboard
+ * Manage Events — Divisional Secretary & NYSC Administrator dashboard
  *
  * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
  */
-$title                   = $title ?? 'Manage Events — YouthNexus';
-$pageTitle               = 'Manage Events';
-$pageDescription         = 'Track divisional events and club activities across ' . htmlspecialchars($division->division_name ?? 'your division');
+$isNyscAdmin             = !empty($is_nysc_admin);
+$title                   = $title ?? ($isNyscAdmin ? 'National Event Management — YouthNexus' : 'Manage Events — YouthNexus');
+$pageTitle               = $isNyscAdmin ? 'National Event Management' : 'Manage Events';
+$pageDescription         = $isNyscAdmin 
+    ? 'Schedule national events and monitor all youth activities across all zones, divisions, and clubs'
+    : 'Track divisional events and club activities across ' . htmlspecialchars($division->division_name ?? 'your division');
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-
             <!-- Action Row -->
             <div class="me-header-row" style="justify-content: flex-end;">
                 <button type="button" class="me-btn-primary" id="btnOpenCreateModal">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Create Event
+                    <?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?>
                 </button>
             </div>
 
             <!-- Stat Cards -->
-            <div class="me-stats-grid">
+            <div class="me-stats-grid<?= $isNyscAdmin ? ' me-stats-grid-admin' : '' ?>">
                 <div class="me-stat-card">
                     <div class="me-stat-icon awaiting">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -53,14 +55,30 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <div class="me-stat-label">Hosted This Year</div>
                     </div>
                 </div>
+
+                <?php if ($isNyscAdmin && isset($stats['national_events'])): ?>
+                    <div class="me-stat-card">
+                        <div class="me-stat-icon national">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </div>
+                        <div class="me-stat-info">
+                            <div class="me-stat-value"><?= (int)$stats['national_events'] ?></div>
+                            <div class="me-stat-label">National Events</div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <!-- Search & Filter Toolbar (matches cr-toolbar pattern) -->
+            <!-- Search & Filter Toolbar -->
             <form method="GET" action="<?= ROOT ?>/manageevents" id="eventFilterForm">
                 <?php
                 $activeFilters = 0;
                 if (!empty($filters['status']) && $filters['status'] !== 'All') $activeFilters++;
                 if (!empty($filters['event_type'])) $activeFilters++;
+                if (!empty($filters['event_level']) && $filters['event_level'] !== 'All') $activeFilters++;
+                if (!empty($filters['zone_id'])) $activeFilters++;
+                if (!empty($filters['division_id'])) $activeFilters++;
+                if (!empty($filters['club_id'])) $activeFilters++;
                 if (!empty($filters['target_scope'])) $activeFilters++;
                 if (!empty($filters['target_club_id'])) $activeFilters++;
                 if (!empty($filters['date_from']) || !empty($filters['date_to'])) $activeFilters++;
@@ -71,7 +89,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <span class="me-search-icon">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                             </span>
-                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, type, location..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, type..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                         </div>
                     </div>
                     <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>">
@@ -85,6 +103,47 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                 <!-- Expandable Filter Panel -->
                 <div class="me-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="meFilterPanel">
+                    
+                    <?php if ($isNyscAdmin): ?>
+                        <!-- Event Level (Admin Only) -->
+                        <div class="me-filter-field">
+                            <label for="meFilterLevel">Event Level</label>
+                            <select id="meFilterLevel" name="event_level">
+                                <option value="All" <?= ($filters['event_level'] ?? 'All') === 'All' ? 'selected' : '' ?>>All Levels</option>
+                                <option value="National" <?= ($filters['event_level'] ?? '') === 'National' ? 'selected' : '' ?>>National Events</option>
+                                <option value="Zonal" <?= ($filters['event_level'] ?? '') === 'Zonal' ? 'selected' : '' ?>>Zonal Events</option>
+                                <option value="Divisional" <?= ($filters['event_level'] ?? '') === 'Divisional' ? 'selected' : '' ?>>Divisional Events</option>
+                                <option value="Club" <?= ($filters['event_level'] ?? '') === 'Club' ? 'selected' : '' ?>>Club Events</option>
+                            </select>
+                        </div>
+
+                        <!-- Zone Filter (Admin Only) -->
+                        <div class="me-filter-field">
+                            <label for="meFilterZone">Zone</label>
+                            <select id="meFilterZone" name="zone_id">
+                                <option value="">All Zones</option>
+                                <?php foreach ($zones as $zone): ?>
+                                    <option value="<?= (int)$zone->zonal_id ?>" <?= ((int)($filters['zone_id'] ?? 0) === (int)$zone->zonal_id) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($zone->zonal_name) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Division Filter (Admin Only) -->
+                        <div class="me-filter-field">
+                            <label for="meFilterDivision">Division</label>
+                            <select id="meFilterDivision" name="division_id">
+                                <option value="">All Divisions</option>
+                                <?php foreach ($divisions as $div): ?>
+                                    <option value="<?= (int)$div->division_id ?>" <?= ((int)($filters['division_id'] ?? 0) === (int)$div->division_id) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($div->division_name) ?> (<?= htmlspecialchars($div->zonal_name ?? 'Zone') ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Date Range -->
                     <div class="me-filter-field">
                         <label for="meFilterDateFrom">Date From</label>
@@ -125,7 +184,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <label for="meFilterAudienceScope">Target Audience</label>
                         <select id="meFilterAudienceScope" name="target_scope">
                             <option value="">All Events</option>
-                            <option value="AllInScope" <?= ($filters['target_scope'] ?? '') === 'AllInScope' ? 'selected' : '' ?>>All Clubs</option>
+                            <option value="AllInScope" <?= ($filters['target_scope'] ?? '') === 'AllInScope' ? 'selected' : '' ?>><?= $isNyscAdmin ? 'All Clubs Nationwide' : 'All Clubs in Division' ?></option>
                             <option value="SelectedClubs" <?= ($filters['target_scope'] ?? '') === 'SelectedClubs' ? 'selected' : '' ?>>Specific Club</option>
                         </select>
                     </div>
@@ -136,6 +195,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <?php foreach ($clubs as $club): ?>
                                 <option value="<?= (int)$club->club_id ?>" <?= ((int)($filters['target_club_id'] ?? 0) === (int)$club->club_id) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($club->club_name) ?> (<?= htmlspecialchars($club->club_code) ?>)
+                                    <?= !empty($club->division_name) ? ' — ' . htmlspecialchars($club->division_name) : '' ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -155,22 +215,33 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
                     <h3>No events found</h3>
-                    <p>No events match your current filter criteria or no events have been scheduled yet in this division.</p>
+                    <p><?= $isNyscAdmin ? 'No events match your current filter criteria or no events have been created yet.' : 'No events match your current filter criteria or no events have been scheduled yet in this division.' ?></p>
                     <button type="button" class="me-btn-primary" onclick="document.getElementById('btnOpenCreateModal').click()">
-                        + Create Your First Event
+                        + <?= $isNyscAdmin ? 'Create National Event' : 'Create Your First Event' ?>
                     </button>
                 </div>
             <?php else: ?>
                 <div class="me-events-grid">
-                    <?php foreach ($events as $event): ?>
-                        <div class="me-event-card">
+                    <?php foreach ($events as $event):
+                        $isNational = empty($event->organizer_division_id) && empty($event->organizer_club_id) && empty($event->organizer_zonal_id);
+                        $isZonal = !empty($event->organizer_zonal_id);
+                        $isDivisional = !empty($event->organizer_division_id);
+                    ?>
+                        <div class="me-event-card<?= $isNational ? ' me-event-card-national' : '' ?>">
                             <div>
                                 <div class="me-card-header">
                                     <div class="me-badges-group">
-                                        <?php if (!empty($event->organizer_division_id)): ?>
-                                            <span class="me-badge me-badge-divisional">Divisional Event</span>
+                                        <?php if ($isNational): ?>
+                                            <span class="me-badge me-badge-national">
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:3px;vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                National Event
+                                            </span>
+                                        <?php elseif ($isZonal): ?>
+                                            <span class="me-badge me-badge-zonal">Zonal: <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zone') ?></span>
+                                        <?php elseif ($isDivisional): ?>
+                                            <span class="me-badge me-badge-divisional">Divisional: <?= htmlspecialchars($event->organizer_division_name ?? 'Division') ?></span>
                                         <?php else: ?>
-                                            <span class="me-badge me-badge-club">Club Event: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
+                                            <span class="me-badge me-badge-club">Club: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
                                         <?php endif; ?>
                                     </div>
 
@@ -205,7 +276,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <div class="me-meta-item">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                             <?php if ($event->target_scope === 'AllInScope'): ?>
-                                                <span>All Clubs in Division</span>
+                                                <span><?= $isNational ? 'All Clubs Nationwide' : 'All Clubs in Division' ?></span>
                                             <?php elseif (!empty($event->target_club_names)): ?>
                                                 <span title="<?= htmlspecialchars($event->target_club_names) ?>">
                                                     <?= htmlspecialchars(mb_strlen($event->target_club_names) > 40 ? mb_substr($event->target_club_names, 0, 37) . '…' : $event->target_club_names) ?>
@@ -225,7 +296,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             </div>
 
                             <div class="me-card-footer">
-                                <span class="me-card-author">By <?= htmlspecialchars($event->creator_name ?? 'Secretary') ?></span>
+                                <span class="me-card-author">By <?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Admin' : 'Secretary')) ?></span>
                                 <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>" class="me-btn-view">
                                     View Details
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -240,11 +311,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
-<!-- ============ Create Divisional Event Modal ============ -->
+<!-- ============ Create Event Modal (National / Divisional) ============ -->
 <div class="me-modal-backdrop" id="createEventModal">
     <div class="me-modal">
         <div class="me-modal-header">
-            <h3>Create Divisional Event</h3>
+            <h3><?= $isNyscAdmin ? 'Create National Event' : 'Create Divisional Event' ?></h3>
             <button type="button" class="me-modal-close" aria-label="Close modal">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -257,17 +328,25 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="me-form-grid">
                     <div class="me-form-group me-form-full">
                         <label class="me-form-label">Event Title <span class="required">*</span></label>
-                        <input type="text" name="title" class="me-form-input" placeholder="e.g., Annual Divisional Youth Leadership Summit" required maxlength="150">
+                        <input type="text" name="title" class="me-form-input" placeholder="<?= $isNyscAdmin ? 'e.g., National Youth Leadership Conference 2026' : 'e.g., Annual Divisional Youth Leadership Summit' ?>" required maxlength="150">
                     </div>
 
                     <div class="me-form-group me-form-full">
                         <label class="me-form-label">Event Type</label>
                         <input type="text" name="event_type" class="me-form-input" placeholder="Type or select a suggestion below" maxlength="50">
                         <div class="me-chips-container">
-                            <button type="button" class="me-chip" data-value="Workshop">Workshop</button>
-                            <button type="button" class="me-chip" data-value="Meeting">Meeting</button>
-                            <button type="button" class="me-chip" data-value="Community Service">Community Service</button>
-                            <button type="button" class="me-chip" data-value="Sports">Sports</button>
+                            <?php if ($isNyscAdmin): ?>
+                                <button type="button" class="me-chip" data-value="National Conference">National Conference</button>
+                                <button type="button" class="me-chip" data-value="Youth Summit">Youth Summit</button>
+                                <button type="button" class="me-chip" data-value="Workshop">Workshop</button>
+                                <button type="button" class="me-chip" data-value="Community Service">Community Service</button>
+                                <button type="button" class="me-chip" data-value="Sports Meet">Sports Meet</button>
+                            <?php else: ?>
+                                <button type="button" class="me-chip" data-value="Workshop">Workshop</button>
+                                <button type="button" class="me-chip" data-value="Meeting">Meeting</button>
+                                <button type="button" class="me-chip" data-value="Community Service">Community Service</button>
+                                <button type="button" class="me-chip" data-value="Sports">Sports</button>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -279,7 +358,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 <input type="radio" name="target_scope" value="AllInScope" checked>
                                 <span class="me-toggle-btn">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                    All Clubs
+                                    <?= $isNyscAdmin ? 'All Clubs Nationwide' : 'All Clubs' ?>
                                 </span>
                             </label>
                             <label class="me-toggle-option">
@@ -300,6 +379,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="me-club-check-name">
                                             <?= htmlspecialchars($club->club_name) ?>
                                             <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
+                                            <?php if (!empty($club->division_name)): ?>
+                                                <small style="color:var(--db-text-grey);font-size:11px;">(<?= htmlspecialchars($club->division_name) ?>)</small>
+                                            <?php endif; ?>
                                         </span>
                                     </div>
                                     <div class="me-club-override hidden">
@@ -309,14 +391,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 </label>
                             <?php endforeach; ?>
                             <?php if (empty($clubs)): ?>
-                                <p class="me-club-checklist-empty">No active clubs found in your division.</p>
+                                <p class="me-club-checklist-empty">No active clubs found.</p>
                             <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="me-form-group">
                         <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
-                        <input type="number" name="max_attendance" class="me-form-input" placeholder="e.g., 100" min="1">
+                        <input type="number" name="max_attendance" class="me-form-input" placeholder="e.g., 500" min="1">
                     </div>
 
                     <div class="me-form-group">
@@ -339,7 +421,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                     <div class="me-form-group me-form-full">
                         <label class="me-form-label">Location</label>
-                        <input type="text" name="location" class="me-form-input" placeholder="e.g., Divisional Secretariat Auditorium, Colombo 07" maxlength="255">
+                        <input type="text" name="location" class="me-form-input" placeholder="<?= $isNyscAdmin ? 'e.g., Sugathadasa Indoor Stadium / BMICH, Colombo' : 'e.g., Divisional Secretariat Auditorium, Colombo 07' ?>" maxlength="255">
                     </div>
 
                     <div class="me-form-group me-form-full">
@@ -351,7 +433,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <div class="me-modal-footer">
                 <button type="button" class="me-btn-secondary me-btn-cancel">Cancel</button>
-                <button type="submit" class="me-btn-primary">Create Event</button>
+                <button type="submit" class="me-btn-primary"><?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?></button>
             </div>
         </form>
     </div>
