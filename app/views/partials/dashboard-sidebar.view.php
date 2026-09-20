@@ -105,6 +105,7 @@ $navigation = [
     ],
     'admin' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Annual Audit', 'route' => 'audit', 'href' => $dashboardRoot . '/audit', 'icon' => 'audit'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -115,6 +116,7 @@ $navigation = [
     ],
     'nyscadmin' => [
         ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Annual Audit', 'route' => 'audit', 'href' => $dashboardRoot . '/audit', 'icon' => 'audit'],
         ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
         ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
         ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
@@ -136,6 +138,8 @@ $roleAliases = [
     'zonalcoordinator' => 'zonalcoordinator',
     'divisionalsecretary' => 'divisionalsecretary',
     'divisional' => 'divisionalcoordinator',
+    'nyscadministrator' => 'nyscadmin',
+    'nyscadmin' => 'nyscadmin',
     'nysc' => 'nyscadmin',
 ];
 $normalisedRoleKey = $roleAliases[$normalisedRoleKey] ?? $normalisedRoleKey;
@@ -159,6 +163,7 @@ $icons = [
     'clipboard' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/></svg>',
     'shield' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 7 3v5c0 4.5-2.5 7.7-7 10-4.5-2.3-7-5.5-7-10V6l7-3Z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     'check' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'audit' => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><circle cx="11.5" cy="17.5" r="2.5"/><line x1="13.3" y1="19.3" x2="16" y2="22"/></svg>',
 ];
 ?>
 <aside class="db-sidebar dashboard-sidebar" id="dashboard-sidebar" aria-label="Primary navigation">
@@ -187,7 +192,9 @@ $icons = [
     <ul>
       <?php foreach ($roleItems as $item):
         $itemRoute = trim((string) $item['route'], '/');
-        $isActive = $activePath === $itemRoute || ($itemRoute !== 'home' && str_starts_with($activePath, $itemRoute . '/'));
+        $isActive = $activePath === $itemRoute
+          || ($itemRoute === 'audit' && in_array($activePath, ['audit', 'annualaudit']))
+          || ($itemRoute !== 'home' && str_starts_with($activePath, $itemRoute . '/'));
       ?>
         <li>
           <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
