@@ -193,7 +193,7 @@ class Auth extends Controller {
                     // Role-based redirect after successful login
                     switch ($s['user_role']) {
                         case 'DivisionalCoordinator':
-                            $this->redirect('clubregistration/index');
+                            $this->redirect('clubregistrationapproval/index');
                             break;
                         case 'DivisionalSecretary':
                             $this->redirect('manageevents');

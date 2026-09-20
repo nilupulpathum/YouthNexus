@@ -8,7 +8,7 @@
 $title           = $title ?? 'Approve Club Registration — YouthNexus';
 $pageTitle       = 'Approve Club Registration';
 $pageDescription = 'Review and approve new club applications';
-$currentRoute    = 'clubregistration';
+$currentRoute    = 'clubregistrationapproval';
 
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 
@@ -142,7 +142,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <!-- ============ Review Modal (populated via JS) ============ -->
 <div class="cr-modal-backdrop" id="crModalBackdrop">
     <div class="cr-modal" id="crModalContent">
-        <!-- filled dynamically by clubregistration.js -->
+        <!-- filled dynamically by clubregistrationapproval.js -->
     </div>
 </div>
 
@@ -164,7 +164,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
 <script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistration.css">
-<script src="<?= ROOT ?>/assets/js/clubregistration.js?v=<?= time() ?>"></script>
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistrationapproval.css">
+<script src="<?= ROOT ?>/assets/js/clubregistrationapproval.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

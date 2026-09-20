@@ -270,7 +270,7 @@
                 pendingGridHtml = grid.innerHTML;
             }
             grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved applications…</p>';
-            fetch(ROOT_URL + '/clubregistration/approved', { credentials: 'same-origin' })
+            fetch(ROOT_URL + '/clubregistrationapproval/approved', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
                     renderApprovedGrid(data.applications || []);
@@ -292,7 +292,7 @@
                 pendingGridHtml = grid.innerHTML;
             }
             grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected applications…</p>';
-            fetch(ROOT_URL + '/clubregistration/rejected', { credentials: 'same-origin' })
+            fetch(ROOT_URL + '/clubregistrationapproval/rejected', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
                     renderRejectedGrid(data.applications || []);
@@ -1195,7 +1195,7 @@
         modalBackdrop.classList.add('open');
         modalContent.innerHTML = '<p style="padding:20px;font-size:13px;color:#6b7280;">Loading application…</p>';
 
-        fetch(ROOT_URL + '/clubregistration/review/' + applicationId, { credentials: 'same-origin' })
+        fetch(ROOT_URL + '/clubregistrationapproval/review/' + applicationId, { credentials: 'same-origin' })
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 if (data.error) {
@@ -1243,7 +1243,7 @@
         body.set('csrf_token', csrfToken);
         body.set('remarks', remarks);
 
-        fetch(ROOT_URL + '/clubregistration/' + action + '/' + applicationId, {
+        fetch(ROOT_URL + '/clubregistrationapproval/' + action + '/' + applicationId, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

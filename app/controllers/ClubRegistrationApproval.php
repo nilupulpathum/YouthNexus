@@ -3,7 +3,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class ClubRegistration extends Controller {
+class ClubRegistrationApproval extends Controller {
 
     private function requireCoordinator() {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'DivisionalCoordinator') {
@@ -33,7 +33,7 @@ class ClubRegistration extends Controller {
             $app->missing_summary    = empty($missing) ? 'Complete' : ('Missing ' . $missing[0]);
         }
 
-        $this->view('clubregistration/index', [
+        $this->view('clubregistrationapproval/application-list', [
             'title'        => 'Approve Club Registration — YouthNexus Pulse',
             'applications' => $applications,
             'counts'       => $counts,
@@ -116,7 +116,7 @@ class ClubRegistration extends Controller {
         $this->requireCoordinator();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id) {
-            $this->redirect('clubregistration/index');
+            $this->redirect('clubregistrationapproval/index');
         }
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
             $this->jsonError('Invalid request. Please refresh the page.');
@@ -177,7 +177,7 @@ class ClubRegistration extends Controller {
         $this->requireCoordinator();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id) {
-            $this->redirect('clubregistration/index');
+            $this->redirect('clubregistrationapproval/index');
         }
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
             $this->jsonError('Invalid request. Please refresh the page.');

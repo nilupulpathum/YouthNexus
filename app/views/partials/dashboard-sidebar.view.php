@@ -65,7 +65,7 @@ $navigation = [
     ],
     'divisionalcoordinator' => [
         ['label' => 'Overview',             'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
-        ['label' => 'Approve Registration', 'route' => 'clubregistration',  'href' => $dashboardRoot . '/clubregistration/index', 'icon' => 'clipboard'],
+        ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval',  'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
         ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
@@ -91,7 +91,7 @@ $navigation = [
     ],
     'coordinator' => [
         ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
-        ['label' => 'Approve Registration', 'route' => 'clubregistration', 'href' => $dashboardRoot . '/clubregistration/index', 'icon' => 'clipboard'],
+        ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval', 'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Clubs',               'route' => 'clubs',            'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
         ['label' => 'Reports',             'route' => 'reports',          'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
         ['label' => 'Announcements',       'route' => 'announcements',    'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
