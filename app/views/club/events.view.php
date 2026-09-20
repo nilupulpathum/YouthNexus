@@ -185,11 +185,11 @@ $can_create  = !empty($can_create);
             <p id="cp-error" class="club-form-error" hidden></p>
             <div class="club-impact" role="note">
                 <strong>What happens next</strong>
-                <p>Completed events with evidence go to the Zonal Coordinator for verification, and feed the Events slice of the club health score.</p>
+                <p>Completion evidence is saved with the event. Completed events feed the Events slice of the club health score.</p>
             </div>
             <div class="club-modal-footer">
                 <button type="button" class="club-btn-secondary" data-close>Cancel</button>
-                <button type="button" class="club-btn-primary" id="cp-confirm">Submit for verification</button>
+                <button type="button" class="club-btn-primary" id="cp-confirm">Mark completed</button>
             </div>
         </div>
     </div>
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Mark-complete + evidence modal (secretary sends approved events for verification).
+    // Mark-complete + evidence modal (secretary records completion evidence).
     const cpModal = document.getElementById('club-complete-modal');
     if (cpModal && list) {
         const metaEl = document.getElementById('cp-meta');
@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             closeCp();
             applyFilters();
-            showToast(who + ' marked complete — sent for verification (demo).');
+            showToast(who + ' marked complete — evidence saved (demo).');
         });
     }
 });
