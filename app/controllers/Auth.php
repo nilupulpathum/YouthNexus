@@ -202,6 +202,9 @@ class Auth extends Controller {
                         case 'Member':
                             $this->redirect('member');
                             break;
+                        case 'NYSCAdministrator':
+                            $this->redirect('nationaldashboard');
+                            break;
                         default:
                             $this->redirect('home');
                     }

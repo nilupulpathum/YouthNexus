@@ -115,7 +115,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'admin' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'View Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check-square'],
         ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
@@ -128,7 +128,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'nyscadmin' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'View Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check-square'],
         ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
