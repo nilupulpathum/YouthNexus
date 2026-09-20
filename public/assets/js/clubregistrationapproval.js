@@ -383,19 +383,33 @@
     var galleryModalContent  = document.getElementById('crGalleryModalContent');
     var currentGalleryItems = [];
     var currentGalleryIndex = 0;
+    var lastActiveElement = null;
 
     function closeModal() {
-        modalBackdrop.classList.remove('open');
-        modalContent.innerHTML = '';
+        if (modalBackdrop) {
+            modalBackdrop.classList.remove('open');
+            modalBackdrop.setAttribute('aria-hidden', 'true');
+        }
+        if (modalContent) modalContent.innerHTML = '';
+        if (lastActiveElement) {
+            try { lastActiveElement.focus(); } catch (err) {}
+            lastActiveElement = null;
+        }
     }
 
     function closeNicModal() {
-        if (nicModalBackdrop) nicModalBackdrop.classList.remove('open');
+        if (nicModalBackdrop) {
+            nicModalBackdrop.classList.remove('open');
+            nicModalBackdrop.setAttribute('aria-hidden', 'true');
+        }
         if (nicModalContent) nicModalContent.innerHTML = '';
     }
 
     function closeGalleryModal() {
-        if (galleryModalBackdrop) galleryModalBackdrop.classList.remove('open');
+        if (galleryModalBackdrop) {
+            galleryModalBackdrop.classList.remove('open');
+            galleryModalBackdrop.setAttribute('aria-hidden', 'true');
+        }
         if (galleryModalContent) galleryModalContent.innerHTML = '';
         currentGalleryItems = [];
     }
@@ -553,8 +567,12 @@
             '</div>';
 
         nicModalBackdrop.classList.add('open');
+        nicModalBackdrop.setAttribute('aria-hidden', 'false');
         var closeBtn = document.getElementById('crNicCloseBtn');
-        if (closeBtn) closeBtn.addEventListener('click', closeNicModal);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeNicModal);
+            try { closeBtn.focus(); } catch (err) {}
+        }
     }
 
     window._openNicModal = openNicModal;
@@ -579,19 +597,22 @@
                     '<h3>' + escapeHtml(item.galleryTitle || 'Photo Inspection') + '</h3>' +
                     '<p>' + escapeHtml(item.title || '') + (item.meta ? ' &bull; ' + escapeHtml(item.meta) : '') + ' &bull; Item ' + (currentGalleryIndex + 1) + ' of ' + total + '</p>' +
                 '</div>' +
-                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn">&times;</button>' +
+                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn" aria-label="Close photo gallery">&times;</button>' +
             '</div>' +
             '<div class="cr-nic-modal-body" style="padding: 16px;">' +
                 '<div class="cr-gallery-stage">' +
                     renderImg(item.path, item.title || 'Image', '', 'stage') +
-                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">&#10094;</button>' : '') +
-                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">&#10095;</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn" aria-label="Previous image">&#10094;</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn" aria-label="Next image">&#10095;</button>' : '') +
                 '</div>' +
                 (total > 1 ? '<div class="cr-gallery-thumbs">' + thumbsHtml + '</div>' : '') +
             '</div>';
 
         var closeBtn = document.getElementById('crGalleryCloseBtn');
-        if (closeBtn) closeBtn.addEventListener('click', closeGalleryModal);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeGalleryModal);
+            try { closeBtn.focus(); } catch (err) {}
+        }
         var prevBtn = document.getElementById('crGalleryPrevBtn');
         if (prevBtn) prevBtn.addEventListener('click', function () { renderGallerySlide(currentGalleryIndex - 1); });
         var nextBtn = document.getElementById('crGalleryNextBtn');
@@ -615,6 +636,7 @@
         if (currentGalleryItems.length === 0) return;
         renderGallerySlide(initialIdx || 0);
         galleryModalBackdrop.classList.add('open');
+        galleryModalBackdrop.setAttribute('aria-hidden', 'false');
     }
 
     function openActivityGallery(photos, initialIdx) {
@@ -631,6 +653,7 @@
         if (currentGalleryItems.length === 0) return;
         renderGallerySlide(initialIdx || 0);
         galleryModalBackdrop.classList.add('open');
+        galleryModalBackdrop.setAttribute('aria-hidden', 'false');
     }
 
     function renderDocumentCard(title, subtitle, tagText, tagClass, path) {
@@ -712,16 +735,19 @@
             openActivityGallery(photos, idx);
         };
 
+        var isPending = app.status === 'Pending';
+        var modalHeadingText = isPending ? 'Review Full Club Application' : 'Club Application Details';
+
         modalContent.innerHTML =
             '<div class="cr-modal-header">' +
                 '<div class="cr-header-left">' +
                     '<div class="cr-header-title-row">' +
                         '<span class="cr-header-phase-tag">REGISTRATION PHASE 1-7</span>' +
-                        '<h2>Review Full Club Application</h2>' +
+                        '<h2 id="crModalHeading">' + modalHeadingText + '</h2>' +
                     '</div>' +
                     '<p>' + escapeHtml(app.club_name) + ' &bull; Application ID: ' + escapeHtml(app.application_ref || ('APP-' + app.application_id)) + ' &bull; Submitted ' + escapeHtml(submittedDate) + '</p>' +
                 '</div>' +
-                '<button type="button" class="cr-modal-close" id="crModalCloseBtn">&times;</button>' +
+                '<button type="button" class="cr-modal-close" id="crModalCloseBtn" aria-label="Close modal">&times;</button>' +
             '</div>' +
 
             // Section 1: Basic Information
@@ -1212,10 +1238,14 @@
         }
 
         var closeHeaderBtn = document.getElementById('crModalCloseBtn');
-        if (closeHeaderBtn) closeHeaderBtn.addEventListener('click', closeModal);
+        if (closeHeaderBtn) {
+            closeHeaderBtn.addEventListener('click', closeModal);
+            try { closeHeaderBtn.focus(); } catch (err) {}
+        }
     }
 
     function renderSuccessModal(clubName, clubCode, applicationId) {
+        if (modalBackdrop) modalBackdrop.setAttribute('aria-hidden', 'false');
         modalContent.innerHTML =
             '<div class="cr-success-modal-content">' +
                 '<div class="cr-success-icon-wrapper">' +
@@ -1261,8 +1291,12 @@
         document.getElementById('crDoneSuccessBtn').addEventListener('click', handleDone);
     }
 
-    function openReview(applicationId) {
-        modalBackdrop.classList.add('open');
+    function openReview(applicationId, triggerEl) {
+        lastActiveElement = triggerEl || document.activeElement;
+        if (modalBackdrop) {
+            modalBackdrop.classList.add('open');
+            modalBackdrop.setAttribute('aria-hidden', 'false');
+        }
         modalContent.innerHTML = '<p style="padding:20px;font-size:13px;color:#6b7280;">Loading application…</p>';
 
         fetch(ROOT_URL + '/clubregistrationapproval/review/' + applicationId, { credentials: 'same-origin' })
@@ -1283,7 +1317,7 @@
         grid.addEventListener('click', function (e) {
             var btn = e.target.closest('.cr-review-btn');
             if (!btn) return;
-            openReview(btn.dataset.id);
+            openReview(btn.dataset.id, btn);
         });
     }
 
