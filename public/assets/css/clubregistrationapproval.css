@@ -650,6 +650,81 @@
         flex: 1 1 100%;
         max-width: 100%;
     }
+    .cr-modal-backdrop {
+        padding: 12px;
+    }
+    .cr-modal {
+        padding: 20px 16px;
+        max-height: calc(100vh - 24px);
+    }
+    .cr-review-modal .cr-modal-header {
+        top: -20px;
+        margin: -20px -16px 16px -16px;
+        padding: 14px 16px;
+    }
+    .cr-basic-info-layout {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .cr-logo-section {
+        width: 100%;
+        align-items: center;
+    }
+    .cr-detail-cols {
+        grid-template-columns: 1fr;
+    }
+    .cr-location-grid {
+        grid-template-columns: 1fr;
+    }
+    .cr-nominee-horizontal-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .cr-nominee-fields-block {
+        grid-template-columns: 1fr;
+        width: 100%;
+        text-align: left;
+    }
+    .cr-nominees-subgrid {
+        grid-template-columns: 1fr;
+    }
+    .cr-assets-two-columns {
+        grid-template-columns: 1fr;
+    }
+    .cr-verification-layout {
+        grid-template-columns: 1fr;
+    }
+    .cr-bank-fields-grid {
+        grid-template-columns: 1fr;
+    }
+    .cr-docs-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    .cr-nic-copies-grid {
+        grid-template-columns: 1fr;
+    }
+    .cr-declaration-layout {
+        grid-template-columns: 1fr;
+    }
+    .cr-decision-fields-row {
+        grid-template-columns: 1fr;
+    }
+    .cr-decision-footer-actions {
+        flex-direction: column-reverse;
+        width: 100%;
+        gap: 10px;
+    }
+    .cr-decision-footer-actions .cr-btn,
+    .cr-decision-footer-actions .cr-btn-cancel-link,
+    .cr-decision-footer-actions .cr-btn-submit-decision {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+    .cr-readonly-summary-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -723,6 +798,19 @@
     border-bottom: 1px solid var(--db-border);
     padding-bottom: 20px;
     margin-bottom: 24px;
+    gap: 16px;
+}
+
+.cr-review-modal .cr-modal-header {
+    position: sticky;
+    top: -32px;
+    margin: -32px -32px 24px -32px;
+    padding: 20px 32px;
+    background: #fff;
+    z-index: 10;
+    border-bottom: 1px solid var(--db-border);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 .cr-modal-header h2 {
@@ -737,24 +825,39 @@
     font-size: 13px;
     color: var(--db-text-grey);
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .cr-modal-close {
-    background: none;
-    border: none;
-    font-size: 26px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--db-radius);
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
     cursor: pointer;
     color: var(--db-text-grey);
     line-height: 1;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
 }
 
 .cr-modal-close:hover {
     color: var(--db-text-dark);
+    background: #f1f5f9;
+    border-color: var(--db-border);
+}
+
+.cr-modal-close:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, .35);
+    outline-offset: 2px;
 }
 
 .cr-modal-section {
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--db-border);
     padding-bottom: 24px;
     margin-bottom: 24px;
 }
@@ -1637,11 +1740,19 @@
     gap: 24px;
 }
 
-.cr-assets-inventory-col,
+.cr-assets-inventory-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    overflow-x: auto;
+}
+
 .cr-assets-photos-col {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
 }
 
 .cr-assets-table {
@@ -2354,8 +2465,11 @@
     transition: border-color 0.15s ease;
 }
 
+.cr-decision-fields-row select:focus,
 .cr-decision-remarks-section textarea:focus {
-    border-color: #b9bfcb;
+    border-color: var(--db-sidebar-bg);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+    outline: none;
 }
 
 .cr-decision-impact-alert {

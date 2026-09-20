@@ -140,23 +140,57 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 
 <!-- ============ Review Modal (populated via JS) ============ -->
-<div class="cr-modal-backdrop" id="crModalBackdrop">
-    <div class="cr-modal" id="crModalContent">
-        <!-- filled dynamically by clubregistrationapproval.js -->
+<div
+    class="cr-modal-backdrop"
+    id="crModalBackdrop"
+    aria-hidden="true"
+>
+    <div
+        class="cr-modal cr-review-modal"
+        id="crModalContent"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="crModalHeading"
+        aria-label="Club application details"
+        tabindex="-1"
+    >
+        <!-- Filled dynamically by clubregistrationapproval.js -->
     </div>
 </div>
 
 <!-- ============ Dual-Sided NIC Verification Modal ============ -->
-<div class="cr-modal-backdrop cr-submodal-backdrop" id="crNicModalBackdrop">
-    <div class="cr-modal cr-nic-modal" id="crNicModalContent">
-        <!-- filled dynamically -->
+<div
+    class="cr-modal-backdrop cr-submodal-backdrop"
+    id="crNicModalBackdrop"
+    aria-hidden="true"
+>
+    <div
+        class="cr-modal cr-nic-modal"
+        id="crNicModalContent"
+        role="dialog"
+        aria-modal="true"
+        aria-label="NIC verification"
+        tabindex="-1"
+    >
+        <!-- Filled dynamically by clubregistrationapproval.js -->
     </div>
 </div>
 
 <!-- ============ Media Gallery / Lightbox Modal ============ -->
-<div class="cr-modal-backdrop cr-submodal-backdrop" id="crGalleryModalBackdrop">
-    <div class="cr-modal cr-gallery-modal" id="crGalleryModalContent">
-        <!-- filled dynamically -->
+<div
+    class="cr-modal-backdrop cr-submodal-backdrop"
+    id="crGalleryModalBackdrop"
+    aria-hidden="true"
+>
+    <div
+        class="cr-modal cr-gallery-modal"
+        id="crGalleryModalContent"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Application photo gallery"
+        tabindex="-1"
+    >
+        <!-- Filled dynamically by clubregistrationapproval.js -->
     </div>
 </div>
 
