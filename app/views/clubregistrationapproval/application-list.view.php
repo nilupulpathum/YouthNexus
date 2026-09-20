@@ -8,7 +8,7 @@
 $title           = $title ?? 'Approve Club Registration — YouthNexus';
 $pageTitle       = 'Approve Club Registration';
 $pageDescription = 'Review and approve new club applications';
-$currentRoute    = 'clubregistration';
+$currentRoute    = 'clubregistrationapproval';
 
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 
