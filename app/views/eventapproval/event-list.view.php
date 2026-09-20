@@ -3,7 +3,7 @@
  * Event Approval — Divisional Coordinator dashboard
  *
  * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
- * Matches the pattern established by app/views/clubregistration/index.view.php.
+ * Matches the pattern established by app/views/clubregistrationapproval/application-list.view.php.
  */
 $coordinatorName = $_SESSION['user_name'] ?? 'R. Perera';
 
