@@ -225,6 +225,7 @@
 .dw-modal[hidden] { display: none; }
 .dw-modal__backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, .46); }
 .dw-modal__dialog { width: min(560px, 100%); max-height: calc(100dvh - 40px); position: relative; overflow-y: auto; border-radius: var(--dw-radius-lg); background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, .25); }
+.dw-modal__dialog--wide { width: min(820px, 100%); }
 .dw-modal__header, .dw-modal__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; }
 .dw-modal__header { border-bottom: 1px solid var(--dw-border); }
 .dw-modal__header h2 { margin: 0; font-size: 14px; }
@@ -232,6 +233,15 @@
 .dw-modal__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; }
 .dw-modal__footer { justify-content: flex-end; border-top: 1px solid var(--dw-border); }
 .dw-modal-open { overflow: hidden; }
+
+.dw-evidence-section { display: grid; gap: 11px; padding: 13px; border: 1px solid var(--dw-border); border-radius: var(--dw-radius); background: #fff; }
+.dw-evidence-section .dw-section-header h3 { margin: 0; font-size: 12px; }
+.dw-evidence-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.dw-evidence-list li { padding: 9px 11px; border-radius: var(--dw-radius); background: var(--dw-warning-bg); color: #92400e; font-size: 10px; line-height: 1.45; }
+.dw-impact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.dw-impact-grid div { display: grid; gap: 5px; padding: 11px; border-radius: var(--dw-radius); background: var(--dw-info-bg); }
+.dw-impact-grid span { color: var(--dw-muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.dw-impact-grid strong { color: var(--dw-text); font-size: 13px; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1100px) {
   .dw-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -243,7 +253,7 @@
   .dw-review-banner { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
-  .dw-summary-grid, .dw-filter-grid, .dw-side-stack, .dw-record-grid, .dw-audit-grid, .dw-audit-totals { grid-template-columns: 1fr; }
+  .dw-summary-grid, .dw-filter-grid, .dw-side-stack, .dw-record-grid, .dw-audit-grid, .dw-audit-totals, .dw-impact-grid { grid-template-columns: 1fr; }
   .dw-toolbar { align-items: stretch; flex-wrap: wrap; }
   .dw-toolbar__search { min-width: 100%; }
   .dw-toolbar .dw-select { flex: 1; }
