@@ -198,6 +198,9 @@ class Auth extends Controller {
                         case 'DivisionalSecretary':
                             $this->redirect('manageevents');
                             break;
+                        case 'DivisionalTreasurer':
+                            $this->redirect('divisionaltreasurer');
+                            break;
                         case 'ClubMember':
                         case 'Member':
                             $this->redirect('member');
