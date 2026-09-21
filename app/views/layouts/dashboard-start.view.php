@@ -16,6 +16,7 @@ $userEmail = $userEmail ?? ($_SESSION['user_email'] ?? '');
 $unreadNotificationCount = (int) ($unreadNotificationCount ?? 0);
 $profileUrl = $profileUrl ?? (defined('ROOT') ? ROOT . '/profile' : '/profile');
 $notificationUrl = $notificationUrl ?? (defined('ROOT') ? ROOT . '/notifications' : '/notifications');
+$pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
 ?>
 <!doctype html>
 <html lang="en">
@@ -26,6 +27,9 @@ $notificationUrl = $notificationUrl ?? (defined('ROOT') ? ROOT . '/notifications
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
+  <?php foreach ($pageStyles as $pageStyle): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars((string) $pageStyle, ENT_QUOTES, 'UTF-8') ?>">
+  <?php endforeach; ?>
 </head>
 <body class="dashboard dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
   <a class="dashboard-skip-link" href="#main-content">Skip to main content</a>
