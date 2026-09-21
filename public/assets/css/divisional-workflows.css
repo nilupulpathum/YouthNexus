@@ -143,6 +143,7 @@
 .dw-status--pending, .dw-status--pendingapproval, .dw-status--processing, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--inprogress, .dw-status--clarificationrequested { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--rejected, .dw-status--voided, .dw-status--unreconciled, .dw-status--open, .dw-status--overdue { background: var(--dw-danger-bg); color: var(--dw-danger); }
+.dw-status--withdrawn { background: #f1f5f9; color: #64748b; }
 
 .dw-detail-box { display: grid; gap: 5px; padding: 12px; border-radius: var(--dw-radius); background: var(--dw-info-bg); }
 .dw-detail-box span { color: var(--dw-muted); font-size: 10px; font-weight: 750; text-transform: uppercase; }
@@ -181,6 +182,22 @@
 .dw-finding--resolved { border-color: #bbf7d0; background: var(--dw-success-bg); }
 .dw-finding strong { color: var(--dw-text); font-size: 11px; }
 .dw-finding p { margin: 4px 0 0; color: var(--dw-muted); font-size: 10px; line-height: 1.45; }
+
+.dw-status-timeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.dw-status-timeline li { position: relative; display: grid; gap: 3px; min-height: 54px; padding: 0 0 16px 28px; }
+.dw-status-timeline li:last-child { min-height: 0; padding-bottom: 0; }
+.dw-status-timeline li::before {
+  position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border: 3px solid #cbd5e1;
+  border-radius: 50%; background: #fff; content: '';
+}
+.dw-status-timeline li::after {
+  position: absolute; top: 17px; bottom: 0; left: 9px; width: 2px; background: #e2e8f0; content: '';
+}
+.dw-status-timeline li:last-child::after { display: none; }
+.dw-status-timeline li.is-complete::before { border-color: var(--dw-success); background: var(--dw-success); }
+.dw-status-timeline li.is-complete::after { background: #86efac; }
+.dw-status-timeline strong { color: var(--dw-text); font-size: 11px; }
+.dw-status-timeline span { color: var(--dw-muted); font-size: 10px; }
 
 .dw-progress { height: 8px; margin: 16px 0; overflow: hidden; border-radius: 999px; background: #eef2f7; }
 .dw-progress span { display: block; height: 100%; border-radius: inherit; background: var(--dw-primary); }
