@@ -10,7 +10,7 @@ class MonitorClubHealthModel extends Model {
      */
     public function getClubsByDivision($divisionId) {
         $sql = "
-            SELECT 
+            SELECT
                 c.club_id,
                 c.club_name,
                 c.description,
@@ -24,20 +24,18 @@ class MonitorClubHealthModel extends Model {
                 c.flagged,
                 d.division_name,
                 COALESCE(u.active_members, 0) AS live_members,
-                cp.photo_path AS club_photo
+                ca.club_logo_path AS club_photo
             FROM Club c
-            JOIN Division d ON c.division_id = d.division_id
+            JOIN Division d
+                ON c.division_id = d.division_id
+            LEFT JOIN ClubApplication ca
+                ON ca.application_id = c.source_application_id
             LEFT JOIN (
                 SELECT club_id, COUNT(*) AS active_members
                 FROM User
                 WHERE club_id IS NOT NULL
                 GROUP BY club_id
             ) u ON c.club_id = u.club_id
-            LEFT JOIN (
-                SELECT application_id, MIN(photo_path) AS photo_path
-                FROM clubapplicationphoto
-                GROUP BY application_id
-            ) cp ON c.source_application_id = cp.application_id
             WHERE c.division_id = ?
             ORDER BY c.overall_health_score DESC, c.club_name ASC
         ";
