@@ -18,6 +18,7 @@
 
 .dw-page { display: grid; gap: 18px; }
 .dw-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.dw-summary-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dw-summary-card {
   min-height: 108px; display: flex; align-items: flex-start; gap: 13px; padding: 18px;
   border: 1px solid var(--dw-border); border-radius: var(--dw-radius-lg); background: #fff;
@@ -107,8 +108,37 @@
 .dw-money--expense { color: var(--dw-danger); font-weight: 750; }
 .dw-row-actions { display: flex; align-items: center; gap: 6px; }
 
+.dw-record-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.dw-record-card {
+  min-width: 0; display: grid; gap: 11px; padding: 16px; border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius-lg); background: #fff; box-shadow: var(--dw-shadow);
+}
+.dw-record-card[hidden] { display: none; }
+.dw-record-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.dw-record-card__identity { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.dw-record-card__icon {
+  width: 30px; height: 30px; flex: 0 0 30px; display: inline-flex; align-items: center;
+  justify-content: center; border-radius: 7px; background: var(--dw-info-bg); color: var(--dw-primary);
+}
+.dw-record-card--income .dw-record-card__icon { background: var(--dw-success-bg); color: var(--dw-success); }
+.dw-record-card--expense .dw-record-card__icon { background: var(--dw-danger-bg); color: var(--dw-danger); }
+.dw-record-card__meta { color: var(--dw-muted); font-size: 9px; font-weight: 750; letter-spacing: .035em; text-transform: uppercase; }
+.dw-record-card__meta span { display: block; }
+.dw-record-card__title { margin: 0; overflow-wrap: anywhere; color: var(--dw-text); font-size: 13px; line-height: 1.45; }
+.dw-record-card__amount { color: var(--dw-text); font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dw-record-card--income .dw-record-card__amount { color: var(--dw-success); }
+.dw-record-card--expense .dw-record-card__amount { color: var(--dw-danger); }
+.dw-record-card__details { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--dw-muted); font-size: 10px; }
+.dw-record-card__footer { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid #eef0f4; }
+.dw-record-card__actions { display: flex; align-items: center; gap: 6px; }
+.dw-record-card__reference { color: var(--dw-muted); font-size: 9px; }
+.dw-section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dw-section-header h2 { margin: 0; font-size: 13px; }
+.dw-section-header p { margin: 4px 0 0; color: var(--dw-muted); font-size: 10px; }
+
 .dw-status { display: inline-flex; align-items: center; min-height: 20px; padding: 3px 7px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 8px; font-weight: 850; letter-spacing: .035em; text-transform: uppercase; white-space: nowrap; }
-.dw-status--approved, .dw-status--posted, .dw-status--reconciled { background: var(--dw-success-bg); color: var(--dw-success); }
+.dw-status--approved, .dw-status--posted, .dw-status--reconciled, .dw-status--income { background: var(--dw-success-bg); color: var(--dw-success); }
+.dw-status--expense { background: var(--dw-danger-bg); color: var(--dw-danger); }
 .dw-status--pending, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--rejected, .dw-status--voided, .dw-status--unreconciled { background: var(--dw-danger-bg); color: var(--dw-danger); }
 
@@ -151,9 +181,10 @@
   .dw-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dw-content-grid { grid-template-columns: 1fr; }
   .dw-side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dw-record-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) {
-  .dw-summary-grid, .dw-filter-grid, .dw-side-stack { grid-template-columns: 1fr; }
+  .dw-summary-grid, .dw-filter-grid, .dw-side-stack, .dw-record-grid { grid-template-columns: 1fr; }
   .dw-toolbar { align-items: stretch; flex-wrap: wrap; }
   .dw-toolbar__search { min-width: 100%; }
   .dw-toolbar .dw-select { flex: 1; }
