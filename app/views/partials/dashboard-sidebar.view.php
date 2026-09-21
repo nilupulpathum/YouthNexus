@@ -86,7 +86,7 @@ $navigation = [
         ['label' => 'Log Transactions', 'route' => 'divisionaltransactions', 'href' => $dashboardRoot . '/divisionaltransactions', 'icon' => 'transfer'],
         ['label' => 'Manage Ledger', 'route' => 'divisionalledger', 'href' => $dashboardRoot . '/divisionalledger', 'icon' => 'wallet'],
         ['label' => 'Allocate Funds', 'route' => 'divisionalallocations', 'href' => $dashboardRoot . '/divisionalallocations', 'icon' => 'chart'],
-        ['label' => 'Audit Club Finance', 'route' => 'divisionalaudit', 'href' => $dashboardRoot . '/divisionalaudit', 'icon' => 'audit'],
+        ['label' => 'Audit Club Finance', 'route' => 'divisionalaudits', 'href' => $dashboardRoot . '/divisionalaudits', 'icon' => 'audit'],
         ['label' => 'Request Void', 'route' => 'divisionalvoidrequest', 'href' => $dashboardRoot . '/divisionalvoidrequest', 'icon' => 'transfer'],
         ['label' => 'Approve Void', 'route' => 'divisionalvoidapproval', 'href' => $dashboardRoot . '/divisionalvoidapproval', 'icon' => 'check'],
         ['label' => 'Manage Assets', 'route' => 'divisionalassets', 'href' => $dashboardRoot . '/divisionalassets', 'icon' => 'briefcase'],
