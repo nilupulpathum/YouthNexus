@@ -1,6 +1,6 @@
 <?php
 
-if ($_SERVER['SERVER_NAME'] == 'localhost') {
+if (($_SERVER['SERVER_NAME'] ?? 'localhost') === 'localhost') {
     $port = $_SERVER['SERVER_PORT'] ?? '80';
     if (php_sapi_name() === 'cli-server') {
         define('ROOT', 'http://localhost:' . $port);
