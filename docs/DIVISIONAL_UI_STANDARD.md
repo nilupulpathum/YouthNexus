@@ -6,8 +6,8 @@ All Divisional Coordinator, Secretary, and Treasurer workflow pages use the shar
 
 1. The shared dashboard header owns the page title, description, global search, notifications, and profile.
 2. The feature begins with a responsive summary-card grid.
-3. A single toolbar contains the page search, primary quick filter, advanced-filter trigger, export action, and primary action.
-4. Advanced filters use the shared collapsible panel directly below the toolbar.
+3. A single toolbar contains the page search, advanced-filter trigger, optional export action, and primary action. Search is the only visible filter input.
+4. Advanced filter fields use the shared collapsible panel directly below the toolbar and remain hidden until the user opens Filters.
 5. Primary data appears in a `.dw-panel` table or card grid. Secondary progress and pending-action panels use the same panel style.
 6. Create/review forms open in the shared modal pattern. Destructive or permanent actions require a warning and confirmation.
 
