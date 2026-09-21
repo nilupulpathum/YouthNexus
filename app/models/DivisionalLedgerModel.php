@@ -96,6 +96,29 @@ class DivisionalLedgerModel extends Model {
         return array_reverse($rows);
     }
 
+    public function getCategories(int $ledgerId): array {
+        return $this->query(
+            "SELECT DISTINCT category FROM LedgerEntry
+             WHERE ledger_id = ? AND category IS NOT NULL AND category <> ''
+             ORDER BY category",
+            [$ledgerId]
+        )->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function getEntry(int $ledgerId, int $entryId) {
+        return $this->single(
+            "SELECT le.*,
+                    EXISTS(
+                        SELECT 1 FROM VoidRequest vr
+                        WHERE vr.entry_id = le.entry_id AND vr.status = 'Pending'
+                    ) AS has_pending_void
+             FROM LedgerEntry le
+             WHERE le.ledger_id = ? AND le.entry_id = ?
+             LIMIT 1",
+            [$ledgerId, $entryId]
+        );
+    }
+
     public function getReconciliation(int $ledgerId): array {
         $row = $this->single(
             "SELECT
@@ -178,6 +201,69 @@ class DivisionalLedgerModel extends Model {
 
             $pdo->commit();
             return $entryId;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    public function updateEntry(int $ledgerId, int $entryId, array $data): ?string {
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+
+        try {
+            $select = $pdo->prepare(
+                "SELECT le.*,
+                        EXISTS(
+                            SELECT 1 FROM VoidRequest vr
+                            WHERE vr.entry_id = le.entry_id AND vr.status = 'Pending'
+                        ) AS has_pending_void
+                 FROM LedgerEntry le
+                 WHERE le.ledger_id = ? AND le.entry_id = ?
+                 FOR UPDATE"
+            );
+            $select->execute([$ledgerId, $entryId]);
+            $entry = $select->fetch();
+
+            if (!$entry || $entry->status !== 'Approved' || (int) $entry->has_pending_void === 1) {
+                throw new RuntimeException('This transaction cannot be edited.');
+            }
+
+            $oldDelta = $entry->type === 'Income' ? (float) $entry->amount : -(float) $entry->amount;
+            $newDelta = $data['type'] === 'Income' ? (float) $data['amount'] : -(float) $data['amount'];
+
+            $update = $pdo->prepare(
+                "UPDATE LedgerEntry
+                 SET amount = ?, type = ?, category = ?, description = ?, attachment_url = ?, date = ?, reconciled = 0
+                 WHERE ledger_id = ? AND entry_id = ? AND status = 'Approved'"
+            );
+            $update->execute([
+                $data['amount'],
+                $data['type'],
+                $data['category'],
+                $data['description'],
+                $data['attachment_url'],
+                $data['date'],
+                $ledgerId,
+                $entryId,
+            ]);
+
+            $balanceDifference = $newDelta - $oldDelta;
+            if (abs($balanceDifference) > 0.00001) {
+                $balance = $pdo->prepare(
+                    "UPDATE Ledger SET current_balance = current_balance + ?
+                     WHERE ledger_id = ? AND status = 'Active'"
+                );
+                $balance->execute([$balanceDifference, $ledgerId]);
+                if ($balance->rowCount() !== 1) {
+                    throw new RuntimeException('The division ledger is not active.');
+                }
+            }
+
+            $pdo->commit();
+            return $entry->attachment_url ?: null;
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();

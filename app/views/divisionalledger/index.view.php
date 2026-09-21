@@ -3,7 +3,7 @@ require_once __DIR__ . '/../partials/icons.view.php';
 
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
-$title = 'Manage Ledger — YouthNexus';
+$title = 'Manage Ledger - YouthNexus';
 $pageTitle = 'Manage Ledger';
 $pageDescription = 'Review, reconcile, and manage all divisional financial entries';
 $currentRoute = 'divisionalledger';
@@ -15,8 +15,8 @@ $pageScripts = [
 
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Current Ledger Balance', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => $money($summary['income']), 'label' => 'Income — Current Year', 'note' => 'Approved entries', 'icon' => 'download', 'tone' => 'green'],
-    ['value' => $money($summary['expenses']), 'label' => 'Expenses — Current Year', 'note' => 'Approved entries', 'icon' => 'upload', 'tone' => 'red'],
+    ['value' => $money($summary['income']), 'label' => 'Income This Year', 'note' => 'Approved entries', 'icon' => 'download', 'tone' => 'green'],
+    ['value' => $money($summary['expenses']), 'label' => 'Expenses This Year', 'note' => 'Approved entries', 'icon' => 'upload', 'tone' => 'red'],
     ['value' => (string) $summary['review_count'], 'label' => 'Entries Requiring Review', 'note' => 'Pending or missing receipts', 'icon' => 'info', 'tone' => 'amber'],
 ];
 
@@ -50,11 +50,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <section class="dw-filter-panel" id="ledger-filters" hidden>
-    <h2 class="dw-filter-panel__heading">Advanced Filters — Ledger Entries</h2>
+    <h2 class="dw-filter-panel__heading">Advanced Filters for Ledger Entries</h2>
     <div class="dw-filter-grid">
       <div class="dw-field">
-        <label for="filter-status">Entry status</label>
+        <label for="filter-entry-type">Entry type</label>
         <select id="filter-entry-type" data-ledger-quick-type>
+          <option value="">All entry types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+      <div class="dw-field">
+        <label for="filter-status">Entry status</label>
+        <select id="filter-status" data-filter-status>
           <option value="">All statuses</option>
           <option value="approved">Approved</option>
           <option value="pending">Pending</option>
@@ -140,8 +148,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <td class="dw-table__description"><?= $e($entry->description) ?></td>
                 <td><?= $e($entry->category ?: 'Uncategorised') ?></td>
                 <td><?php $status = $entry->type; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-                <td class="dw-money dw-money--expense"><?= $entry->type === 'Expense' ? $e($money($entry->amount)) : '—' ?></td>
-                <td class="dw-money dw-money--income"><?= $entry->type === 'Income' ? $e($money($entry->amount)) : '—' ?></td>
+                <td class="dw-money dw-money--expense"><?= $entry->type === 'Expense' ? $e($money($entry->amount)) : '' ?></td>
+                <td class="dw-money dw-money--income"><?= $entry->type === 'Income' ? $e($money($entry->amount)) : '' ?></td>
                 <td class="dw-money"><?= $e($money($entry->running_balance)) ?></td>
                 <td><?php $status = $displayStatus; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                 <td>

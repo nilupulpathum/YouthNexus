@@ -88,7 +88,7 @@ class Divisionalledger extends Controller {
 
         $attachmentUrl = null;
         try {
-            $attachmentUrl = $this->storeReceipt($_FILES['receipt'] ?? null);
+            $attachmentUrl = FinanceReceipt::store($_FILES['receipt'] ?? null);
             $model = $this->model('DivisionalLedgerModel');
             $ledger = $model->ensureDivisionLedger((int) $_SESSION['division_id']);
             $model->createEntry((int) $ledger->ledger_id, (int) $_SESSION['user_id'], [
@@ -103,10 +103,7 @@ class Divisionalledger extends Controller {
             $this->setFlash('success', 'Ledger entry saved and the running balance was updated.');
         } catch (Throwable $exception) {
             if ($attachmentUrl) {
-                $storedPath = dirname(__DIR__, 2) . '/public' . $attachmentUrl;
-                if (is_file($storedPath)) {
-                    unlink($storedPath);
-                }
+                FinanceReceipt::remove($attachmentUrl);
             }
             $this->setFlash('error', $exception instanceof InvalidArgumentException
                 ? $exception->getMessage()
@@ -156,28 +153,4 @@ class Divisionalledger extends Controller {
         fclose($output);
     }
 
-    private function storeReceipt($file): ?string {
-        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-            return null;
-        }
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || (int) $file['size'] > 5 * 1024 * 1024) {
-            throw new InvalidArgumentException('The receipt must be a PDF, JPG, or PNG file no larger than 5 MB.');
-        }
-
-        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        $extensions = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'];
-        if (!isset($extensions[$mime])) {
-            throw new InvalidArgumentException('Only PDF, JPG, and PNG receipts are accepted.');
-        }
-
-        $directory = dirname(__DIR__, 2) . '/public/uploads/ledger-receipts';
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('The receipt storage directory is unavailable.');
-        }
-        $name = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
-        if (!move_uploaded_file($file['tmp_name'], $directory . '/' . $name)) {
-            throw new RuntimeException('The receipt could not be stored.');
-        }
-        return '/uploads/ledger-receipts/' . $name;
-    }
 }
