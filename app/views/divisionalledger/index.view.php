@@ -41,12 +41,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="ledger-search">Search ledger entries</label>
       <input id="ledger-search" type="search" placeholder="Search by reference, description, or category" data-ledger-search>
     </div>
-    <label class="visually-hidden" for="ledger-type">Entry type</label>
-    <select id="ledger-type" class="dw-select" data-ledger-quick-type>
-      <option value="">All entry types</option>
-      <option value="income">Income</option>
-      <option value="expense">Expense</option>
-    </select>
+    
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false">Filters</button>
     <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalledger/export">
       <?= yn_icon('download') ?> Export
@@ -59,7 +54,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dw-filter-grid">
       <div class="dw-field">
         <label for="filter-status">Entry status</label>
-        <select id="filter-status" data-filter-status>
+        <select id="filter-entry-type" data-ledger-quick-type>
           <option value="">All statuses</option>
           <option value="approved">Approved</option>
           <option value="pending">Pending</option>
