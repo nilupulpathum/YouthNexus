@@ -20,6 +20,73 @@ try {
 
     echo "Connected to database.\n";
 
+
+        // -------------------------------------------------------------
+    // 0. CREATE BASE FINANCE TABLES
+    //
+    // These tables must exist before this migration can extend them.
+    // CREATE TABLE IF NOT EXISTS makes this safe to run repeatedly.
+    // -------------------------------------------------------------
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `Ledger` (
+            `ledger_id` INT AUTO_INCREMENT PRIMARY KEY,
+            `owner_type` ENUM('Zone', 'Division', 'Club') NOT NULL,
+            `owner_level` ENUM(
+                'National',
+                'Zonal',
+                'Divisional',
+                'Club'
+            ) NOT NULL,
+            `owner_id` INT NOT NULL,
+            `current_balance` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+            `status` ENUM('Active', 'Closed')
+                NOT NULL DEFAULT 'Active',
+            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE KEY `uq_ledger_owner` (`owner_type`, `owner_id`),
+            INDEX `idx_ledger_owner_level` (`owner_level`),
+            INDEX `idx_ledger_status` (`status`)
+        ) ENGINE=InnoDB
+          DEFAULT CHARSET=utf8mb4
+          COLLATE=utf8mb4_unicode_ci
+    ");
+
+    echo "Table `Ledger` ready.\n";
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `LedgerEntry` (
+            `entry_id` INT AUTO_INCREMENT PRIMARY KEY,
+            `ledger_id` INT NOT NULL,
+            `amount` DECIMAL(15,2) NOT NULL,
+            `type` ENUM('Income', 'Expense') NOT NULL,
+            `description` TEXT NULL,
+            `status` ENUM(
+                'Pending',
+                'Approved',
+                'Rejected',
+                'Voided'
+            ) NOT NULL DEFAULT 'Pending',
+            `date` DATE NOT NULL,
+
+            CONSTRAINT `fk_ledger_entry_ledger`
+                FOREIGN KEY (`ledger_id`)
+                REFERENCES `Ledger` (`ledger_id`)
+                ON UPDATE CASCADE
+                ON DELETE RESTRICT,
+
+            INDEX `idx_ledger_entry_ledger` (`ledger_id`),
+            INDEX `idx_ledger_entry_date` (`date`),
+            INDEX `idx_ledger_entry_status` (`status`),
+            INDEX `idx_ledger_entry_type` (`type`)
+        ) ENGINE=InnoDB
+          DEFAULT CHARSET=utf8mb4
+          COLLATE=utf8mb4_unicode_ci
+    ");
+
+    echo "Table `LedgerEntry` ready.\n";
+    
+
     // -------------------------------------------------------------
     // 1. EXTEND ZONE TABLE (non-destructively add province & hub_name)
     // -------------------------------------------------------------
