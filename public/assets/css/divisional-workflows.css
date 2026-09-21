@@ -18,6 +18,7 @@
 
 .dw-page { display: grid; gap: 18px; }
 .dw-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.dw-summary-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dw-summary-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dw-summary-card {
   min-height: 108px; display: flex; align-items: flex-start; gap: 13px; padding: 18px;
@@ -137,10 +138,19 @@
 .dw-section-header p { margin: 4px 0 0; color: var(--dw-muted); font-size: 10px; }
 
 .dw-status { display: inline-flex; align-items: center; min-height: 20px; padding: 3px 7px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 8px; font-weight: 850; letter-spacing: .035em; text-transform: uppercase; white-space: nowrap; }
-.dw-status--approved, .dw-status--posted, .dw-status--reconciled, .dw-status--income { background: var(--dw-success-bg); color: var(--dw-success); }
+.dw-status--approved, .dw-status--posted, .dw-status--reconciled, .dw-status--income, .dw-status--completed { background: var(--dw-success-bg); color: var(--dw-success); }
 .dw-status--expense { background: var(--dw-danger-bg); color: var(--dw-danger); }
-.dw-status--pending, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
+.dw-status--pending, .dw-status--pendingapproval, .dw-status--processing, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--rejected, .dw-status--voided, .dw-status--unreconciled { background: var(--dw-danger-bg); color: var(--dw-danger); }
+
+.dw-detail-box { display: grid; gap: 5px; padding: 12px; border-radius: var(--dw-radius); background: var(--dw-info-bg); }
+.dw-detail-box span { color: var(--dw-muted); font-size: 10px; font-weight: 750; text-transform: uppercase; }
+.dw-detail-box strong { color: var(--dw-text); font-size: 12px; }
+.dw-review-list { display: grid; gap: 0; margin: 0; border: 1px solid var(--dw-border); border-radius: var(--dw-radius); overflow: hidden; }
+.dw-review-list div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--dw-border); }
+.dw-review-list div:last-child { border-bottom: 0; }
+.dw-review-list dt { color: var(--dw-muted); font-size: 10px; }
+.dw-review-list dd { margin: 0; color: var(--dw-text); font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
 
 .dw-progress { height: 8px; margin: 16px 0; overflow: hidden; border-radius: 999px; background: #eef2f7; }
 .dw-progress span { display: block; height: 100%; border-radius: inherit; background: var(--dw-primary); }
