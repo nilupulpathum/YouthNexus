@@ -21,7 +21,7 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Division void requests">
+<section class="dw-page" aria-label="Division void requests"<?= !empty($flash['finance_changed']) ? ' data-finance-state-changed' : '' ?>>
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>

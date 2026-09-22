@@ -54,4 +54,35 @@
       if (label) label.textContent = input.files.length ? input.files[0].name : 'Choose a PDF, JPG, or PNG receipt';
     });
   });
+
+  var financeChangeKey = 'youthnexus:divisional-finance-change';
+  var refreshFinance = document.querySelector('[data-finance-refresh-on-change]');
+  var changedFinance = document.querySelector('[data-finance-state-changed]');
+  var loadedAt = Date.now();
+
+  if (changedFinance) {
+    try {
+      window.localStorage.setItem(financeChangeKey, String(Date.now()));
+    } catch (error) {
+      // The server-side lock still protects the entry when storage is unavailable.
+    }
+  }
+
+  if (refreshFinance) {
+    window.addEventListener('storage', function (event) {
+      if (event.key === financeChangeKey) window.location.reload();
+    });
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) window.location.reload();
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        var changedAt = Number(window.localStorage.getItem(financeChangeKey) || 0);
+        if (changedAt > loadedAt) window.location.reload();
+      } catch (error) {
+        // A normal navigation still loads the current server state.
+      }
+    });
+  }
 })();
