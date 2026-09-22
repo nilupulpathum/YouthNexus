@@ -41,7 +41,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="ledger-search">Search ledger entries</label>
       <input id="ledger-search" type="search" placeholder="Search by reference, description, or category" data-ledger-search>
     </div>
-    
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false">Filters</button>
     <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalledger/export">
       <?= yn_icon('download') ?> Export
