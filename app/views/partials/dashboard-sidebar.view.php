@@ -93,7 +93,7 @@ $navigation = [
         ['label' => 'Approve Void', 'route' => 'divisionalvoidapproval', 'href' => $dashboardRoot . '/divisionalvoidapproval', 'icon' => 'check'],
         ['label' => 'Manage Assets', 'route' => 'divisionalassets', 'href' => $dashboardRoot . '/divisionalassets', 'icon' => 'briefcase'],
         ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
-        ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
+        ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
     ],
     'coordinator' => [
         ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
