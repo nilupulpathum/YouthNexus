@@ -22,7 +22,7 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Division general ledger">
+<section class="dw-page" aria-label="Division general ledger" data-finance-refresh-on-change>
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>
@@ -155,9 +155,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <td>
                   <div class="dw-row-actions">
                     <?php if ($hasReceipt): ?>
-                      <a class="dw-button dw-button--ghost" href="<?= $e(ROOT . $entry->attachment_url) ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?></a>
+                      <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/view/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?></a>
                     <?php endif; ?>
-                    <?php if ($entry->status === 'Approved'): ?>
+                    <?php if ($entry->status === 'Approved' && (int) $entry->has_pending_void !== 1): ?>
                       <button class="dw-button dw-button--ghost" type="button"
                               data-reconcile-entry
                               data-reconciled="<?= $isReconciled ? '1' : '0' ?>"

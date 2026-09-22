@@ -215,8 +215,8 @@ class Divisionalaudits extends Controller {
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         $output = fopen('php://output', 'w');
         fputcsv($output, ['YouthNexus Club Finance Audit']);
-        fputcsv($output, ['Club', $audit->club_name]);
-        fputcsv($output, ['Audit Type', $audit->audit_type]);
+        fputcsv($output, ['Club', CsvSecurity::cell($audit->club_name)]);
+        fputcsv($output, ['Audit Type', CsvSecurity::cell($audit->audit_type)]);
         fputcsv($output, ['Period', $audit->period_start . ' to ' . $audit->period_end]);
         fputcsv($output, ['Status', $audit->audit_status]);
         fputcsv($output, ['Opening Balance', number_format((float) $audit->opening_balance, 2, '.', '')]);
@@ -228,13 +228,13 @@ class Divisionalaudits extends Controller {
         fputcsv($output, ['Date', 'Reference', 'Type', 'Category', 'Description', 'Amount', 'Status', 'Receipt']);
         foreach ($entries as $entry) {
             fputcsv($output, [
-                $entry->date,
-                $entry->reference_no,
-                $entry->type,
-                $entry->category,
-                $entry->description,
+                CsvSecurity::cell($entry->date),
+                CsvSecurity::cell($entry->reference_no),
+                CsvSecurity::cell($entry->type),
+                CsvSecurity::cell($entry->category),
+                CsvSecurity::cell($entry->description),
                 number_format((float) $entry->amount, 2, '.', ''),
-                $entry->status,
+                CsvSecurity::cell($entry->status),
                 $entry->attachment_url ? 'Attached' : 'Missing',
             ]);
         }

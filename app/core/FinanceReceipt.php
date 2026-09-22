@@ -38,13 +38,17 @@ final class FinanceReceipt {
     }
 
     public static function remove(?string $url): void {
-        if (!$url || !preg_match('#^/uploads/ledger-receipts/[a-f0-9]{32}\.(pdf|jpg|png)$#', $url)) {
-            return;
-        }
-
-        $path = dirname(__DIR__, 2) . '/public' . $url;
-        if (is_file($path)) {
+        $path = self::resolvePath($url);
+        if ($path && is_file($path)) {
             unlink($path);
         }
+    }
+
+    public static function resolvePath(?string $url): ?string {
+        if (!$url || !preg_match('#^/uploads/ledger-receipts/[a-f0-9]{32}\.(pdf|jpg|png)$#', $url)) {
+            return null;
+        }
+        $path = dirname(__DIR__, 2) . '/public' . $url;
+        return is_file($path) ? $path : null;
     }
 }

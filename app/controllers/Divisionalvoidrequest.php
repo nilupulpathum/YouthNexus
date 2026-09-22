@@ -19,8 +19,12 @@ class Divisionalvoidrequest extends Controller {
         return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
     }
 
-    private function setFlash(string $type, string $message): void {
-        $_SESSION['divisional_void_request_flash'] = ['type' => $type, 'message' => $message];
+    private function setFlash(string $type, string $message, bool $financeChanged = false): void {
+        $_SESSION['divisional_void_request_flash'] = [
+            'type' => $type,
+            'message' => $message,
+            'finance_changed' => $financeChanged,
+        ];
     }
 
     private function pullFlash(): ?array {
@@ -89,7 +93,7 @@ class Divisionalvoidrequest extends Controller {
                 (int) $recipient->user_id,
                 $reason
             );
-            $this->setFlash('success', 'The void request was submitted to the Zonal Treasurer.');
+            $this->setFlash('success', 'The void request was submitted to the Zonal Treasurer.', true);
         } catch (Throwable $exception) {
             $allowed = [
                 'Select an approved entry from your division ledger.',
@@ -120,7 +124,7 @@ class Divisionalvoidrequest extends Controller {
                 (int) $requestId,
                 (int) $_SESSION['user_id']
             );
-            $this->setFlash('success', 'The pending void request was withdrawn.');
+            $this->setFlash('success', 'The pending void request was withdrawn.', true);
         } catch (Throwable $exception) {
             $allowed = [
                 'Only a pending void request can be withdrawn.',

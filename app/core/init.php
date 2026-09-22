@@ -6,6 +6,7 @@ require 'Database.php';
 require 'Model.php';
 require 'Controller.php';
 require 'FinanceReceipt.php';
+require 'CsvSecurity.php';
 require 'App.php';
 
 // Auto-load all model files

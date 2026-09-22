@@ -144,10 +144,11 @@ class Divisionalledger extends Controller {
         fputcsv($output, ['Date', 'Reference', 'Description', 'Category', 'Type', 'Amount (LKR)', 'Balance (LKR)', 'Status', 'Reconciled']);
         foreach ($entries as $entry) {
             fputcsv($output, [
-                $entry->date, $entry->reference_no, $entry->description, $entry->category,
-                $entry->type, number_format((float) $entry->amount, 2, '.', ''),
+                CsvSecurity::cell($entry->date), CsvSecurity::cell($entry->reference_no),
+                CsvSecurity::cell($entry->description), CsvSecurity::cell($entry->category),
+                CsvSecurity::cell($entry->type), number_format((float) $entry->amount, 2, '.', ''),
                 number_format((float) $entry->running_balance, 2, '.', ''),
-                $entry->status, (int) $entry->reconciled === 1 ? 'Yes' : 'No',
+                CsvSecurity::cell($entry->status), (int) $entry->reconciled === 1 ? 'Yes' : 'No',
             ]);
         }
         fclose($output);

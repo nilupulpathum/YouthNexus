@@ -120,21 +120,17 @@ class Divisionalvoidapproval extends Controller {
         $output = fopen('php://output', 'w');
         fputcsv($output, ['Request ID', 'Club', 'Ledger Entry', 'Amount', 'Type', 'Reason', 'Requested At', 'Status', 'Remarks', 'Decided At']);
         foreach ($requests as $request) {
-            $safe = static function ($value): string {
-                $text = (string) $value;
-                return preg_match('/^[=+\-@]/', $text) ? "'" . $text : $text;
-            };
             fputcsv($output, [
                 'VR-' . str_pad((string) $request->void_request_id, 4, '0', STR_PAD_LEFT),
-                $safe($request->club_name),
-                $safe($request->reference_no),
+                CsvSecurity::cell($request->club_name),
+                CsvSecurity::cell($request->reference_no),
                 number_format((float) $request->amount, 2, '.', ''),
-                $request->type,
-                $safe($request->reason),
-                $request->requested_at,
-                $request->status,
-                $safe($request->remarks ?? ''),
-                $request->decided_at ?? '',
+                CsvSecurity::cell($request->type),
+                CsvSecurity::cell($request->reason),
+                CsvSecurity::cell($request->requested_at),
+                CsvSecurity::cell($request->status),
+                CsvSecurity::cell($request->remarks ?? ''),
+                CsvSecurity::cell($request->decided_at ?? ''),
             ]);
         }
         fclose($output);

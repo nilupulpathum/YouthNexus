@@ -21,9 +21,10 @@ $summaryCards = [
 $reviewEvidenceForView = $reviewEvidence;
 foreach ($reviewEvidenceForView as &$evidenceItem) {
     $evidenceItem['receipt_url'] = !empty($evidenceItem['receipt_path'])
-        ? ROOT . $evidenceItem['receipt_path']
+        ? ROOT . '/financereceipt/view/' . (int) $evidenceItem['receipt_entry_id']
         : null;
     unset($evidenceItem['receipt_path']);
+    unset($evidenceItem['receipt_entry_id']);
 }
 unset($evidenceItem);
 $reviewEvidenceJson = json_encode(

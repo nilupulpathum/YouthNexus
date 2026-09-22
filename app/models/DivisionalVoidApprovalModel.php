@@ -87,6 +87,7 @@ class DivisionalVoidApprovalModel extends Model {
                 'reconciled' => (int) $request->reconciled === 1,
                 'allocation_linked' => !empty($request->allocation_id),
                 'receipt_path' => $request->attachment_url ?: null,
+                'receipt_entry_id' => (int) $request->entry_id,
                 'current_balance' => $balance,
                 'balance_change' => $change,
                 'projected_balance' => $balance + $change,
