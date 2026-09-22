@@ -102,10 +102,9 @@ class Divisionalclubhealth extends Controller {
         $output = fopen('php://output', 'w');
         fputcsv($output, ['Club Code', 'Club', 'Overall Score', 'Status', 'Event Score', 'Finance Score', 'Attendance Score', 'Completed Events', 'Attendance Recorded', 'Approved Ledger Entries', 'Open Flags']);
         foreach ($clubs as $club) {
-            $safe = static fn($value) => preg_match('/^[=+\-@]/', (string) $value) ? "'" . $value : (string) $value;
             fputcsv($output, [
-                $safe($club->club_code), $safe($club->club_name), $club->score['overall_score'],
-                $club->score['health_status'], $club->score['event_score'], $club->score['finance_score'],
+                CsvSecurity::cell($club->club_code), CsvSecurity::cell($club->club_name), $club->score['overall_score'],
+                CsvSecurity::cell($club->score['health_status']), $club->score['event_score'], $club->score['finance_score'],
                 $club->score['attendance_score'], $club->score['completed_events'],
                 $club->score['attendance_recorded'], $club->score['approved_entries'], (int) $club->open_flags,
             ]);
