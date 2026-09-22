@@ -20,7 +20,7 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Division transactions">
+<section class="dw-page" aria-label="Division transactions" data-finance-refresh-on-change>
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>
@@ -133,7 +133,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                data-description="<?= $e($transaction->description) ?>"
                data-category-label="<?= $e($transaction->category) ?>"
                data-type-label="<?= $e($transaction->type) ?>"
-               data-receipt-url="<?= $hasReceipt ? $e(ROOT . $transaction->attachment_url) : '' ?>">
+               data-receipt-url="<?= $hasReceipt ? $e(ROOT . '/financereceipt/view/' . (int) $transaction->entry_id) : '' ?>">
         <header class="dw-record-card__header">
           <div class="dw-record-card__identity">
             <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon($isIncome ? 'download' : 'upload') ?></span>
@@ -153,7 +153,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <span class="dw-record-card__reference"><?= $e($transaction->reference_no) ?></span>
           <div class="dw-record-card__actions">
             <?php if ($hasReceipt): ?>
-              <a class="dw-button dw-button--ghost" href="<?= $e(ROOT . $transaction->attachment_url) ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
+              <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/view/<?= (int) $transaction->entry_id ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
             <?php endif; ?>
             <?php if ($canEdit): ?>
               <button class="dw-button dw-button--ghost" type="button" data-edit-transaction data-modal-open="edit-transaction"><?= yn_icon('pen') ?> Edit</button>

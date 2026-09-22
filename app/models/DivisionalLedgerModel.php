@@ -275,7 +275,11 @@ class DivisionalLedgerModel extends Model {
     public function setReconciled(int $ledgerId, int $entryId, bool $reconciled): bool {
         $statement = $this->query(
             "UPDATE LedgerEntry SET reconciled = ?
-             WHERE entry_id = ? AND ledger_id = ? AND status = 'Approved'",
+             WHERE entry_id = ? AND ledger_id = ? AND status = 'Approved'
+               AND NOT EXISTS (
+                   SELECT 1 FROM VoidRequest vr
+                   WHERE vr.entry_id = LedgerEntry.entry_id AND vr.status = 'Pending'
+               )",
             [$reconciled ? 1 : 0, $entryId, $ledgerId]
         );
         return $statement->rowCount() === 1;
