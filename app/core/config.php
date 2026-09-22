@@ -15,15 +15,15 @@ date_default_timezone_set('Asia/Colombo');
 
 define('APP_ROOT', dirname(dirname(__FILE__))); // Points to /app
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'youthnexus');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST', getenv('YN_DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('YN_DB_NAME') ?: 'youthnexus');
+define('DB_USER', getenv('YN_DB_USER') ?: 'root');
+define('DB_PASS', getenv('YN_DB_PASS') ?: '');
+define('DB_CHARSET', getenv('YN_DB_CHARSET') ?: 'utf8mb4');
 
 // PHPMailer SMTP credentials
-define('MAIL_HOST', 'smtp.gmail.com');
-define('MAIL_USER', 'damikarajithuru@gmail.com');
-define('MAIL_PASS', 'kkidjhebomlvtsvy');
-define('MAIL_FROM', 'noreply@youthnexus.com');
-define('MAIL_FROM_NAME', 'YouthNexus Pulse');
+define('MAIL_HOST', getenv('YN_MAIL_HOST') ?: 'smtp.gmail.com');
+define('MAIL_USER', getenv('YN_MAIL_USER') ?: '');
+define('MAIL_PASS', getenv('YN_MAIL_PASS') ?: '');
+define('MAIL_FROM', getenv('YN_MAIL_FROM') ?: 'noreply@youthnexus.com');
+define('MAIL_FROM_NAME', getenv('YN_MAIL_FROM_NAME') ?: 'YouthNexus');
