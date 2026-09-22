@@ -68,6 +68,7 @@ $navigation = [
         ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval',  'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
+        ['label' => 'Monitor Club Health',  'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
@@ -77,6 +78,7 @@ $navigation = [
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
+        ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
@@ -236,7 +238,7 @@ $icons = [
         <li>
           <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
             <span class="db-nav-icon dashboard-nav__icon" aria-hidden="true"><?= $icons[$item['icon']] ?? $icons['grid'] ?></span>
-            <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+            <span class="dashboard-nav__text"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
             <?php if (!empty($item['badge'])): ?>
               <span class="dashboard-nav__badge" aria-label="<?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?> unread"><?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?></span>
             <?php endif; ?>
