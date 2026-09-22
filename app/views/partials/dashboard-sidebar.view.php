@@ -68,6 +68,7 @@ $navigation = [
         ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval',  'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
+        ['label' => 'Monitor Club Health',  'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Reports',              'route' => 'reports',           'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
@@ -77,17 +78,22 @@ $navigation = [
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
+        ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionaltreasurer' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-        ['label' => 'Fund Ledger', 'route' => 'ledger', 'href' => $dashboardRoot . '/ledger', 'icon' => 'wallet'],
-        ['label' => 'Assets', 'route' => 'assets', 'href' => $dashboardRoot . '/assets', 'icon' => 'briefcase'],
-        ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'chart'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
+        ['label' => 'Dashboard', 'route' => 'divisionaltreasurer', 'href' => $dashboardRoot . '/divisionaltreasurer', 'icon' => 'grid'],
+        ['label' => 'Log Transactions', 'route' => 'divisionaltransactions', 'href' => $dashboardRoot . '/divisionaltransactions', 'icon' => 'transfer'],
+        ['label' => 'Manage Ledger', 'route' => 'divisionalledger', 'href' => $dashboardRoot . '/divisionalledger', 'icon' => 'wallet'],
+        ['label' => 'Allocate Funds', 'route' => 'divisionalallocations', 'href' => $dashboardRoot . '/divisionalallocations', 'icon' => 'chart'],
+        ['label' => 'Audit Club Finance', 'route' => 'divisionalaudits', 'href' => $dashboardRoot . '/divisionalaudits', 'icon' => 'audit'],
+        ['label' => 'Request Void', 'route' => 'divisionalvoidrequest', 'href' => $dashboardRoot . '/divisionalvoidrequest', 'icon' => 'transfer'],
+        ['label' => 'Approve Void', 'route' => 'divisionalvoidapproval', 'href' => $dashboardRoot . '/divisionalvoidapproval', 'icon' => 'check'],
+        ['label' => 'Manage Assets', 'route' => 'divisionalassets', 'href' => $dashboardRoot . '/divisionalassets', 'icon' => 'briefcase'],
+        ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
+        ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
     ],
     'coordinator' => [
         ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
@@ -151,6 +157,7 @@ $roleAliases = [
     'zonal' => 'zonalcoordinator',
     'zonalcoordinator' => 'zonalcoordinator',
     'divisionalsecretary' => 'divisionalsecretary',
+    'divisionaltreasurer' => 'divisionaltreasurer',
     'divisional' => 'divisionalcoordinator',
     'nyscadministrator' => 'nyscadmin',
     'nyscadmin' => 'nyscadmin',
@@ -227,7 +234,7 @@ $icons = [
         <li>
           <a class="db-nav-link dashboard-nav__link<?= $isActive ? ' active is-active' : '' ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
             <span class="db-nav-icon dashboard-nav__icon" aria-hidden="true"><?= $icons[$item['icon']] ?? $icons['grid'] ?></span>
-            <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+            <span class="dashboard-nav__text"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
             <?php if (!empty($item['badge'])): ?>
               <span class="dashboard-nav__badge" aria-label="<?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?> unread"><?= htmlspecialchars((string) $item['badge'], ENT_QUOTES, 'UTF-8') ?></span>
             <?php endif; ?>
