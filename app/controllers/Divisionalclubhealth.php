@@ -55,6 +55,7 @@ class Divisionalclubhealth extends Controller {
             'clubs' => $clubs,
             'summary' => $model->getSummary($clubs),
             'clubDetails' => $details,
+            'flagCategories' => $model->getAllowedFlagCategories((string) $_SESSION['user_role']),
             'csrfToken' => $_SESSION['csrf_token'],
             'flash' => $this->pullFlash(),
             'actorRole' => $_SESSION['user_role'],
@@ -76,12 +77,14 @@ class Divisionalclubhealth extends Controller {
                 (int) $clubId,
                 (int) $_SESSION['user_id'],
                 (string) $_SESSION['user_role'],
+                trim((string) ($_POST['flag_category'] ?? '')),
                 trim((string) ($_POST['reason'] ?? ''))
             );
             $this->setFlash('success', 'The club health concern was recorded for administrative review.');
         } catch (Throwable $exception) {
             $allowed = [
                 'Your role cannot raise a club health concern.',
+                'Select a permitted concern type.',
                 'The selected club is outside your division.',
                 'Provide a clear reason between 10 and 1000 characters.',
             ];
