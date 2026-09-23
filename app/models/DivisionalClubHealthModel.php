@@ -135,13 +135,36 @@ class DivisionalClubHealthModel extends Model {
         ];
     }
 
-    public function raiseFlag(int $divisionId, int $clubId, int $userId, string $role, string $reason): void {
-        $categoryMap = [
-            'DivisionalTreasurer' => 'FinancialConcern',
-            'DivisionalSecretary' => 'EventAttendanceConcern',
-            'DivisionalCoordinator' => 'GovernanceConcern',
+    public function getAllowedFlagCategories(string $role): array {
+        $categoriesByRole = [
+            'DivisionalTreasurer' => ['FinancialConcern'],
+            'DivisionalSecretary' => ['EventAttendanceConcern'],
+            'DivisionalCoordinator' => [
+                'FinancialConcern',
+                'EventAttendanceConcern',
+                'GovernanceConcern',
+            ],
         ];
-        if (!isset($categoryMap[$role])) throw new RuntimeException('Your role cannot raise a club health concern.');
+
+        return $categoriesByRole[$role] ?? [];
+    }
+
+    public function raiseFlag(
+        int $divisionId,
+        int $clubId,
+        int $userId,
+        string $role,
+        string $requestedCategory,
+        string $reason
+    ): void {
+        $allowedCategories = $this->getAllowedFlagCategories($role);
+        if (!$allowedCategories) throw new RuntimeException('Your role cannot raise a club health concern.');
+        if ($requestedCategory === '' && count($allowedCategories) === 1) {
+            $requestedCategory = $allowedCategories[0];
+        }
+        if (!in_array($requestedCategory, $allowedCategories, true)) {
+            throw new RuntimeException('Select a permitted concern type.');
+        }
         $club = $this->single("SELECT club_id, club_name FROM Club WHERE club_id = ? AND division_id = ? AND status IN ('Active','Flagged')", [$clubId, $divisionId]);
         if (!$club) throw new RuntimeException('The selected club is outside your division.');
         $reason = trim($reason);
@@ -155,7 +178,7 @@ class DivisionalClubHealthModel extends Model {
                 "INSERT INTO ClubHealthFlag (club_id, flag_category, source, reason, status, raised_by)
                  VALUES (?, ?, 'Manual', ?, 'Open', ?)"
             );
-            $insert->execute([$clubId, $categoryMap[$role], $reason, $userId]);
+            $insert->execute([$clubId, $requestedCategory, $reason, $userId]);
             $flagId = (int) $pdo->lastInsertId();
             $pdo->prepare("UPDATE Club SET flagged = 1 WHERE club_id = ?")->execute([$clubId]);
 
@@ -168,7 +191,7 @@ class DivisionalClubHealthModel extends Model {
                 $notify->execute([$recipientId, "A club health concern was raised for {$club->club_name}.", $flagId]);
             }
             $pdo->prepare("INSERT INTO AuditLog (actor_user_id, action_type, target_entity, target_id, details) VALUES (?, 'ClubHealthFlagRaised', 'ClubHealthFlag', ?, ?)")
-                ->execute([$userId, $flagId, "{$categoryMap[$role]} raised for club {$clubId}."]);
+                ->execute([$userId, $flagId, "{$requestedCategory} raised for club {$clubId}."]);
             $pdo->commit();
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) $pdo->rollBack();
