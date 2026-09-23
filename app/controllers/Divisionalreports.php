@@ -3,9 +3,12 @@
 require_once __DIR__ . '/../core/DivisionalReportPdf.php';
 
 class Divisionalreports extends Controller {
-    private function requireTreasurer(): void {
+    private function requireDivisionalReportAccess(): void {
         if (empty($_SESSION['user_id'])) $this->redirect('auth/signin');
-        if (($_SESSION['user_role'] ?? '') !== 'DivisionalTreasurer') $this->redirect('home');
+        $allowedRoles = ['DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer'];
+        if (!in_array((string) ($_SESSION['user_role'] ?? ''), $allowedRoles, true)) {
+            $this->redirect('home');
+        }
         if ((int) ($_SESSION['division_id'] ?? 0) < 1) {
             http_response_code(403);
             exit('Your user account is not assigned to a division.');
@@ -28,14 +31,15 @@ class Divisionalreports extends Controller {
     }
 
     public function index(): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $divisionId = (int) $_SESSION['division_id'];
+        $role = (string) $_SESSION['user_role'];
         $model = $this->model('DivisionalReportModel');
         try {
             $division = $model->getDivision($divisionId);
-            $reports = $model->getReports($divisionId);
-            $catalog = $model->getCatalog();
+            $reports = $model->getReports($divisionId, $role);
+            $catalog = $model->getCatalog($role);
         } catch (Throwable $exception) {
             http_response_code(500);
             exit('Report data could not be loaded. Run the divisional reports migration and try again.');
@@ -47,14 +51,14 @@ class Divisionalreports extends Controller {
             'summary' => $model->getSummary($reports),
             'csrfToken' => $_SESSION['csrf_token'],
             'flash' => $this->pullFlash(),
-            'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',
+            'userName' => $_SESSION['user_name'] ?? 'Divisional Officer',
             'userRole' => $_SESSION['user_role'],
             'userEmail' => $_SESSION['user_email'] ?? '',
         ]);
     }
 
     public function generate(): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
             $this->setFlash('error', 'The report request could not be verified. Please try again.');
             $this->redirect('divisionalreports');
@@ -71,7 +75,8 @@ class Divisionalreports extends Controller {
         try {
             $model = $this->model('DivisionalReportModel');
             $reportId = $model->createReport(
-                (int) $_SESSION['division_id'], (int) $_SESSION['user_id'], $typeId, $start, $end, $format
+                (int) $_SESSION['division_id'], (int) $_SESSION['user_id'],
+                (string) $_SESSION['user_role'], $typeId, $start, $end, $format
             );
             if ($format === 'CSV') $this->redirect('divisionalreports/export/' . $reportId);
             if ($format === 'PDF') $this->redirect('divisionalreports/pdf/' . $reportId);
@@ -83,10 +88,12 @@ class Divisionalreports extends Controller {
     }
 
     public function preview($reportId = null): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $model = $this->model('DivisionalReportModel');
-        $report = $model->getReport((int) $_SESSION['division_id'], (int) $reportId);
+        $report = $model->getReport(
+            (int) $_SESSION['division_id'], (int) $reportId, (string) $_SESSION['user_role']
+        );
         if (!$report) {
             $this->setFlash('error', 'The selected report was not found.');
             $this->redirect('divisionalreports');
@@ -97,16 +104,18 @@ class Divisionalreports extends Controller {
             'reportData' => $data,
             'division' => $model->getDivision((int) $_SESSION['division_id']),
             'csrfToken' => $_SESSION['csrf_token'],
-            'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',
+            'userName' => $_SESSION['user_name'] ?? 'Divisional Officer',
             'userRole' => $_SESSION['user_role'],
             'userEmail' => $_SESSION['user_email'] ?? '',
         ]);
     }
 
     public function export($reportId = null): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         $model = $this->model('DivisionalReportModel');
-        $report = $model->getReport((int) $_SESSION['division_id'], (int) $reportId);
+        $report = $model->getReport(
+            (int) $_SESSION['division_id'], (int) $reportId, (string) $_SESSION['user_role']
+        );
         if (!$report) {
             $this->setFlash('error', 'The selected report was not found.');
             $this->redirect('divisionalreports');
@@ -132,10 +141,10 @@ class Divisionalreports extends Controller {
     }
 
     public function pdf($reportId = null): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         $model = $this->model('DivisionalReportModel');
         $divisionId = (int) $_SESSION['division_id'];
-        $report = $model->getReport($divisionId, (int) $reportId);
+        $report = $model->getReport($divisionId, (int) $reportId, (string) $_SESSION['user_role']);
         if (!$report) {
             $this->setFlash('error', 'The selected report was not found.');
             $this->redirect('divisionalreports');
@@ -155,15 +164,31 @@ class Divisionalreports extends Controller {
     }
 
     public function archive($reportId = null): void {
-        $this->requireTreasurer();
+        $this->requireDivisionalReportAccess();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
             $this->setFlash('error', 'The archive request could not be verified.');
             $this->redirect('divisionalreports');
         }
         $changed = $this->model('DivisionalReportModel')->archiveReport(
-            (int) $_SESSION['division_id'], (int) $reportId
+            (int) $_SESSION['division_id'],
+            (int) $reportId,
+            (int) $_SESSION['user_id'],
+            (string) $_SESSION['user_role']
         );
         $this->setFlash($changed ? 'success' : 'error', $changed ? 'The report was archived.' : 'The report could not be archived.');
+        $this->redirect('divisionalreports');
+    }
+
+    public function restore($reportId = null): void {
+        $this->requireDivisionalReportAccess();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
+            $this->setFlash('error', 'The restore request could not be verified.');
+            $this->redirect('divisionalreports');
+        }
+        $changed = $this->model('DivisionalReportModel')->restoreReport(
+            (int) $_SESSION['division_id'], (int) $reportId, (string) $_SESSION['user_role']
+        );
+        $this->setFlash($changed ? 'success' : 'error', $changed ? 'The report was restored.' : 'The report could not be restored.');
         $this->redirect('divisionalreports');
     }
 
