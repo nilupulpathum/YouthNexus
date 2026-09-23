@@ -1,42 +1,59 @@
 <?php
 
 class DivisionalReportModel extends Model {
-    private const TYPES = [
-        'Divisional Financial Summary',
-        'Club Fund Allocation Report',
-        'Void Request Activity',
-        'Club Audit Compliance Report',
-        'Asset Transfer Report',
-        'Club Health Summary',
+    private const ROLE_TYPES = [
+        'DivisionalCoordinator' => [
+            'Club Registration Status',
+            'Event Approval Summary',
+            'Club Health Summary',
+        ],
+        'DivisionalSecretary' => [
+            'Event Status Summary',
+            'Event Attendance Rate',
+            'Club Health Summary',
+        ],
+        'DivisionalTreasurer' => [
+            'Divisional Financial Summary',
+            'Club Fund Allocation Report',
+            'Void Request Activity',
+            'Club Audit Compliance Report',
+            'Asset Transfer Report',
+            'Club Health Summary',
+        ],
     ];
 
     public function getDivision(int $divisionId) {
         return $this->single('SELECT division_id, division_name FROM Division WHERE division_id = ? LIMIT 1', [$divisionId]);
     }
 
-    public function getCatalog(): array {
+    public function getCatalog(string $role): array {
+        $types = $this->allowedTypes($role);
         $rows = $this->resultSet(
             "SELECT report_type_id, category, type_name, description
-             FROM ReportTypeCatalog WHERE type_name IN (" . implode(',', array_fill(0, count(self::TYPES), '?')) . ")
+             FROM ReportTypeCatalog WHERE type_name IN (" . $this->placeholders($types) . ")
              ORDER BY category, sort_order, type_name",
-            self::TYPES
+            $types
         );
         $catalog = [];
         foreach ($rows as $row) $catalog[$row->category][] = $row;
         return $catalog;
     }
 
-    public function getReports(int $divisionId): array {
+    public function getReports(int $divisionId, string $role): array {
+        $types = $this->allowedTypes($role);
         return $this->resultSet(
             "SELECT r.report_id, r.date_range_start, r.date_range_end, r.format, r.generated_at,
-                    rtc.category, rtc.type_name, CONCAT_WS(' ', u.first_name, u.last_name) AS generated_by_name
+                    r.status, r.archived_at, rtc.category, rtc.type_name,
+                    CONCAT_WS(' ', u.first_name, u.last_name) AS generated_by_name,
+                    CONCAT_WS(' ', archived_user.first_name, archived_user.last_name) AS archived_by_name
              FROM Report r
              INNER JOIN ReportTypeCatalog rtc ON rtc.report_type_id = r.report_type_id
              LEFT JOIN User u ON u.user_id = r.generated_by
-             WHERE r.scope_level = 'Divisional' AND r.scope_id = ? AND r.status = 'Active'
-               AND rtc.type_name IN (" . implode(',', array_fill(0, count(self::TYPES), '?')) . ")
+             LEFT JOIN User archived_user ON archived_user.user_id = r.archived_by
+             WHERE r.scope_level = 'Divisional' AND r.scope_id = ? AND r.status IN ('Active','Archived')
+               AND rtc.type_name IN (" . $this->placeholders($types) . ")
              ORDER BY r.generated_at DESC, r.report_id DESC",
-            array_merge([$divisionId], self::TYPES)
+            array_merge([$divisionId], $types)
         );
     }
 
@@ -46,21 +63,24 @@ class DivisionalReportModel extends Model {
         $compliance = 0;
         $thisMonth = 0;
         foreach ($reports as $report) {
+            if (($report->status ?? 'Active') !== 'Active') continue;
             if (substr((string) $report->generated_at, 0, 7) === $month) $thisMonth++;
             if ($report->category === 'Financial') $financial++;
             if (in_array($report->category, ['Club Health', 'Assets'], true) || str_contains($report->type_name, 'Audit')) $compliance++;
         }
-        return ['total' => count($reports), 'month' => $thisMonth, 'financial' => $financial, 'compliance' => $compliance];
+        $activeTotal = count(array_filter($reports, static fn($report) => ($report->status ?? 'Active') === 'Active'));
+        return ['total' => $activeTotal, 'month' => $thisMonth, 'financial' => $financial, 'compliance' => $compliance];
     }
 
-    public function createReport(int $divisionId, int $userId, int $typeId, string $start, string $end, string $format): int {
+    public function createReport(int $divisionId, int $userId, string $role, int $typeId, string $start, string $end, string $format): int {
+        $types = $this->allowedTypes($role);
         $pdo = Database::getInstance()->getConnection();
         $pdo->beginTransaction();
         try {
             $type = $this->single(
                 "SELECT report_type_id, type_name FROM ReportTypeCatalog
-                 WHERE report_type_id = ? AND type_name IN (" . implode(',', array_fill(0, count(self::TYPES), '?')) . ")",
-                array_merge([$typeId], self::TYPES)
+                 WHERE report_type_id = ? AND type_name IN (" . $this->placeholders($types) . ")",
+                array_merge([$typeId], $types)
             );
             if (!$type) throw new InvalidArgumentException('Select a valid divisional report type.');
 
@@ -86,23 +106,44 @@ class DivisionalReportModel extends Model {
         }
     }
 
-    public function getReport(int $divisionId, int $reportId) {
+    public function getReport(int $divisionId, int $reportId, string $role) {
+        $types = $this->allowedTypes($role);
         return $this->single(
             "SELECT r.*, rtc.category, rtc.type_name, rtc.description,
-                    CONCAT_WS(' ', u.first_name, u.last_name) AS generated_by_name
+                    CONCAT_WS(' ', u.first_name, u.last_name) AS generated_by_name,
+                    CONCAT_WS(' ', archived_user.first_name, archived_user.last_name) AS archived_by_name
              FROM Report r INNER JOIN ReportTypeCatalog rtc ON rtc.report_type_id = r.report_type_id
              LEFT JOIN User u ON u.user_id = r.generated_by
+             LEFT JOIN User archived_user ON archived_user.user_id = r.archived_by
              WHERE r.report_id = ? AND r.scope_level = 'Divisional' AND r.scope_id = ?
-               AND r.status = 'Active' LIMIT 1",
-            [$reportId, $divisionId]
+               AND r.status IN ('Active','Archived')
+               AND rtc.type_name IN (" . $this->placeholders($types) . ") LIMIT 1",
+            array_merge([$reportId, $divisionId], $types)
         );
     }
 
-    public function archiveReport(int $divisionId, int $reportId): bool {
+    public function archiveReport(int $divisionId, int $reportId, int $userId, string $role): bool {
+        $types = $this->allowedTypes($role);
         $stmt = $this->query(
-            "UPDATE Report SET status = 'Archived'
-             WHERE report_id = ? AND scope_level = 'Divisional' AND scope_id = ? AND status = 'Active'",
-            [$reportId, $divisionId]
+            "UPDATE Report SET status = 'Archived', archived_at = NOW(), archived_by = ?
+             WHERE report_id = ? AND scope_level = 'Divisional' AND scope_id = ? AND status = 'Active'
+               AND report_type_id IN (
+                   SELECT report_type_id FROM ReportTypeCatalog WHERE type_name IN (" . $this->placeholders($types) . ")
+               )",
+            array_merge([$userId, $reportId, $divisionId], $types)
+        );
+        return $stmt->rowCount() === 1;
+    }
+
+    public function restoreReport(int $divisionId, int $reportId, string $role): bool {
+        $types = $this->allowedTypes($role);
+        $stmt = $this->query(
+            "UPDATE Report SET status = 'Active', archived_at = NULL, archived_by = NULL
+             WHERE report_id = ? AND scope_level = 'Divisional' AND scope_id = ? AND status = 'Archived'
+               AND report_type_id IN (
+                   SELECT report_type_id FROM ReportTypeCatalog WHERE type_name IN (" . $this->placeholders($types) . ")
+               )",
+            array_merge([$reportId, $divisionId], $types)
         );
         return $stmt->rowCount() === 1;
     }
@@ -111,6 +152,10 @@ class DivisionalReportModel extends Model {
         $start = (string) $report->date_range_start;
         $end = (string) $report->date_range_end;
         return match ($report->type_name) {
+            'Club Registration Status' => $this->registrations($divisionId, $start, $end),
+            'Event Approval Summary' => $this->eventApprovals($divisionId, $start, $end),
+            'Event Status Summary' => $this->events($divisionId, $start, $end),
+            'Event Attendance Rate' => $this->attendance($divisionId, $start, $end),
             'Divisional Financial Summary' => $this->financial($divisionId, $start, $end),
             'Club Fund Allocation Report' => $this->allocations($divisionId, $start, $end),
             'Void Request Activity' => $this->voids($divisionId, $start, $end),
@@ -119,6 +164,16 @@ class DivisionalReportModel extends Model {
             'Club Health Summary' => $this->health($divisionId, $start, $end),
             default => ['kpis' => [], 'columns' => [], 'rows' => []],
         };
+    }
+
+    private function allowedTypes(string $role): array {
+        $types = self::ROLE_TYPES[$role] ?? [];
+        if (!$types) throw new InvalidArgumentException('This role cannot access divisional reports.');
+        return $types;
+    }
+
+    private function placeholders(array $values): string {
+        return implode(',', array_fill(0, count($values), '?'));
     }
 
     public function getReportData(int $divisionId, object $report): array {
@@ -136,6 +191,171 @@ class DivisionalReportModel extends Model {
             }
         }
         return $this->buildReport($divisionId, $report);
+    }
+
+    private function registrations(int $divisionId, string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT application_id, club_name, category, no_of_members, status,
+                    COALESCE(submitted_at, created_at) AS submitted_at, reviewed_at
+             FROM ClubApplication
+             WHERE proposed_division_id = ?
+               AND DATE(COALESCE(submitted_at, created_at)) BETWEEN ? AND ?
+             ORDER BY COALESCE(submitted_at, created_at) DESC, application_id DESC",
+            [$divisionId, $start, $end]
+        );
+        $data = []; $pending = 0; $approved = 0; $rejected = 0;
+        foreach ($rows as $row) {
+            if ($row->status === 'Pending') $pending++;
+            elseif ($row->status === 'Approved') $approved++;
+            elseif ($row->status === 'Rejected') $rejected++;
+            $data[] = [
+                'application' => 'APP-' . str_pad((string) $row->application_id, 4, '0', STR_PAD_LEFT),
+                'club' => $row->club_name,
+                'category' => $row->category ?: '-',
+                'members' => (int) $row->no_of_members,
+                'submitted' => substr((string) $row->submitted_at, 0, 10),
+                'reviewed' => $row->reviewed_at ? substr((string) $row->reviewed_at, 0, 10) : '-',
+                'status' => $row->status,
+            ];
+        }
+        return $this->pack([
+            ['label' => 'Applications', 'value' => count($rows)],
+            ['label' => 'Pending', 'value' => $pending],
+            ['label' => 'Approved', 'value' => $approved],
+            ['label' => 'Rejected', 'value' => $rejected],
+        ], [
+            'application' => 'Application', 'club' => 'Proposed club', 'category' => 'Category',
+            'members' => 'Members', 'submitted' => 'Submitted', 'reviewed' => 'Reviewed', 'status' => 'Status',
+        ], $data);
+    }
+
+    private function eventApprovals(int $divisionId, string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT e.event_id, e.title, e.event_type, e.start_datetime, e.status,
+                    COALESCE(c.club_name, d.division_name) AS organiser,
+                    CONCAT_WS(' ', creator.first_name, creator.last_name) AS created_by_name,
+                    CONCAT_WS(' ', approver.first_name, approver.last_name) AS approved_by_name
+             FROM Event e
+             LEFT JOIN Club c ON c.club_id = e.organizer_club_id
+             LEFT JOIN Division d ON d.division_id = e.organizer_division_id
+             LEFT JOIN User creator ON creator.user_id = e.created_by
+             LEFT JOIN User approver ON approver.user_id = e.approved_by
+             WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+               AND e.status IN ('PendingApproval','Approved','Rejected')
+               AND DATE(e.created_at) BETWEEN ? AND ?
+             ORDER BY e.created_at DESC, e.event_id DESC",
+            [$divisionId, $divisionId, $start, $end]
+        );
+        $data = []; $pending = 0; $approved = 0; $rejected = 0;
+        foreach ($rows as $row) {
+            if ($row->status === 'PendingApproval') $pending++;
+            elseif ($row->status === 'Approved') $approved++;
+            elseif ($row->status === 'Rejected') $rejected++;
+            $data[] = [
+                'event' => 'EVT-' . str_pad((string) $row->event_id, 4, '0', STR_PAD_LEFT),
+                'title' => $row->title,
+                'type' => $row->event_type ?: '-',
+                'organiser' => $row->organiser ?: 'Division',
+                'event_date' => substr((string) $row->start_datetime, 0, 10),
+                'created_by' => trim((string) $row->created_by_name) ?: '-',
+                'decided_by' => trim((string) $row->approved_by_name) ?: '-',
+                'status' => $row->status,
+            ];
+        }
+        return $this->pack([
+            ['label' => 'Approval requests', 'value' => count($rows)],
+            ['label' => 'Pending', 'value' => $pending],
+            ['label' => 'Approved', 'value' => $approved],
+            ['label' => 'Rejected', 'value' => $rejected],
+        ], [
+            'event' => 'Event', 'title' => 'Title', 'type' => 'Type', 'organiser' => 'Organiser',
+            'event_date' => 'Event date', 'created_by' => 'Created by', 'decided_by' => 'Decided by', 'status' => 'Status',
+        ], $data);
+    }
+
+    private function events(int $divisionId, string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT e.event_id, e.title, e.event_type, e.start_datetime, e.end_datetime,
+                    e.location, e.max_attendance, e.status, COALESCE(c.club_name, d.division_name) AS organiser
+             FROM Event e
+             LEFT JOIN Club c ON c.club_id = e.organizer_club_id
+             LEFT JOIN Division d ON d.division_id = e.organizer_division_id
+             WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+               AND DATE(e.start_datetime) BETWEEN ? AND ?
+             ORDER BY e.start_datetime DESC, e.event_id DESC",
+            [$divisionId, $divisionId, $start, $end]
+        );
+        $data = []; $approved = 0; $completed = 0; $pending = 0;
+        foreach ($rows as $row) {
+            if ($row->status === 'Approved') $approved++;
+            elseif ($row->status === 'Completed') $completed++;
+            elseif ($row->status === 'PendingApproval') $pending++;
+            $data[] = [
+                'event' => 'EVT-' . str_pad((string) $row->event_id, 4, '0', STR_PAD_LEFT),
+                'title' => $row->title,
+                'type' => $row->event_type ?: '-',
+                'organiser' => $row->organiser ?: 'Division',
+                'date' => substr((string) $row->start_datetime, 0, 10),
+                'location' => $row->location ?: '-',
+                'capacity' => $row->max_attendance ?: '-',
+                'status' => $row->status,
+            ];
+        }
+        return $this->pack([
+            ['label' => 'Events', 'value' => count($rows)],
+            ['label' => 'Approved', 'value' => $approved],
+            ['label' => 'Completed', 'value' => $completed],
+            ['label' => 'Pending approval', 'value' => $pending],
+        ], [
+            'event' => 'Event', 'title' => 'Title', 'type' => 'Type', 'organiser' => 'Organiser',
+            'date' => 'Date', 'location' => 'Location', 'capacity' => 'Capacity', 'status' => 'Status',
+        ], $data);
+    }
+
+    private function attendance(int $divisionId, string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT e.event_id, e.title, e.start_datetime, e.max_attendance,
+                    COALESCE(c.club_name, d.division_name) AS organiser,
+                    COUNT(a.attendance_id) AS recorded,
+                    COALESCE(SUM(a.status = 'Present'), 0) AS present,
+                    COALESCE(SUM(a.status = 'Absent'), 0) AS absent
+             FROM Event e
+             LEFT JOIN Club c ON c.club_id = e.organizer_club_id
+             LEFT JOIN Division d ON d.division_id = e.organizer_division_id
+             LEFT JOIN Attendance a ON a.event_id = e.event_id
+             WHERE (e.organizer_division_id = ? OR c.division_id = ?)
+               AND DATE(e.start_datetime) BETWEEN ? AND ?
+             GROUP BY e.event_id, e.title, e.start_datetime, e.max_attendance, c.club_name, d.division_name
+             ORDER BY e.start_datetime DESC, e.event_id DESC",
+            [$divisionId, $divisionId, $start, $end]
+        );
+        $data = []; $totalPresent = 0; $totalRecorded = 0;
+        foreach ($rows as $row) {
+            $recorded = (int) $row->recorded;
+            $present = (int) $row->present;
+            $rate = $recorded > 0 ? round($present * 100 / $recorded, 1) : 0;
+            $totalPresent += $present; $totalRecorded += $recorded;
+            $data[] = [
+                'event' => 'EVT-' . str_pad((string) $row->event_id, 4, '0', STR_PAD_LEFT),
+                'title' => $row->title,
+                'organiser' => $row->organiser ?: 'Division',
+                'date' => substr((string) $row->start_datetime, 0, 10),
+                'capacity' => $row->max_attendance ?: '-',
+                'recorded' => $recorded,
+                'present' => $present,
+                'absent' => (int) $row->absent,
+                'rate' => $rate . '%',
+            ];
+        }
+        return $this->pack([
+            ['label' => 'Events', 'value' => count($rows)],
+            ['label' => 'Attendance records', 'value' => $totalRecorded],
+            ['label' => 'Present', 'value' => $totalPresent],
+            ['label' => 'Overall attendance', 'value' => $totalRecorded ? round($totalPresent * 100 / $totalRecorded, 1) . '%' : '0%'],
+        ], [
+            'event' => 'Event', 'title' => 'Title', 'organiser' => 'Organiser', 'date' => 'Date',
+            'capacity' => 'Capacity', 'recorded' => 'Recorded', 'present' => 'Present', 'absent' => 'Absent', 'rate' => 'Attendance rate',
+        ], $data);
     }
 
     private function financial(int $divisionId, string $start, string $end): array {
