@@ -24,7 +24,12 @@ $summaryCards = [
 $flagLabels = [
     'DivisionalTreasurer' => 'Raise Financial Concern',
     'DivisionalSecretary' => 'Raise Event or Attendance Concern',
-    'DivisionalCoordinator' => 'Raise Governance Concern',
+    'DivisionalCoordinator' => 'Raise Concern',
+];
+$flagCategoryLabels = [
+    'FinancialConcern' => 'Financial concern',
+    'EventAttendanceConcern' => 'Event or attendance concern',
+    'GovernanceConcern' => 'Governance concern',
 ];
 $detailsJson = json_encode($clubDetails, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES) ?: '{}';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -116,5 +121,41 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <div class="dch-lower-grid"><section class="dch-section"><div class="dw-section-header"><div><h3>Six-Month Health History</h3><p>Monthly calculations used to detect sustained dormancy</p></div></div><div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Month</th><th>Events</th><th>Finance</th><th>Attendance</th><th>Overall</th><th>Status</th></tr></thead><tbody data-detail-history></tbody></table></div></section><section class="dch-section"><div class="dw-section-header"><div><h3>Health Concerns</h3><p>Automatic and officer-raised concerns requiring review</p></div></div><div data-detail-flags></div></section></div>
 </div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Close</button><button class="dw-button dw-button--danger" type="button" data-open-health-flag data-modal-open="club-health-flag"><?= $e($flagLabels[$actorRole] ?? 'Raise Concern') ?></button></footer></div></div>
 
-<div class="dw-modal" id="club-health-flag" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="" method="post" data-health-flag-form data-action-base="<?= ROOT ?>/divisionalclubhealth/flag/"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2><?= $e($flagLabels[$actorRole] ?? 'Raise Club Health Concern') ?></h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-detail-box dw-field--span-2"><span>Club</span><strong data-flag-club-name></strong></div><div class="dw-field dw-field--span-2"><label for="health-flag-reason">Reason for review</label><textarea id="health-flag-reason" name="reason" minlength="10" maxlength="1000" required placeholder="Describe the records or issue that require administrative review"></textarea></div><div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>This records a concern and notifies administrators. It does not change the calculated score or disband the club.</span></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--danger" type="submit">Submit Concern</button></footer></form></div>
+<div class="dw-modal" id="club-health-flag" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+  <div class="dw-modal__backdrop" data-modal-close></div>
+  <form class="dw-modal__dialog" action="" method="post" data-health-flag-form data-action-base="<?= ROOT ?>/divisionalclubhealth/flag/">
+    <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
+    <header class="dw-modal__header">
+      <h2><?= $e($flagLabels[$actorRole] ?? 'Raise Club Health Concern') ?></h2>
+      <button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+    </header>
+    <div class="dw-modal__body">
+      <div class="dw-detail-box dw-field--span-2"><span>Club</span><strong data-flag-club-name></strong></div>
+      <?php if (count($flagCategories) > 1): ?>
+        <div class="dw-field dw-field--span-2">
+          <label for="health-flag-category">Concern type</label>
+          <select id="health-flag-category" name="flag_category" required>
+            <option value="">Select a concern type</option>
+            <?php foreach ($flagCategories as $flagCategory): ?>
+              <option value="<?= $e($flagCategory) ?>"><?= $e($flagCategoryLabels[$flagCategory] ?? $flagCategory) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      <?php elseif ($flagCategories): ?>
+        <?php $flagCategory = $flagCategories[0]; ?>
+        <input type="hidden" name="flag_category" value="<?= $e($flagCategory) ?>">
+        <div class="dw-detail-box dw-field--span-2"><span>Concern type</span><strong><?= $e($flagCategoryLabels[$flagCategory] ?? $flagCategory) ?></strong></div>
+      <?php endif; ?>
+      <div class="dw-field dw-field--span-2">
+        <label for="health-flag-reason">Reason for review</label>
+        <textarea id="health-flag-reason" name="reason" minlength="10" maxlength="1000" required placeholder="Describe the records or issue that require administrative review"></textarea>
+      </div>
+      <div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>This records a concern and notifies administrators. It does not change the calculated score or disband the club.</span></div>
+    </div>
+    <footer class="dw-modal__footer">
+      <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="dw-button dw-button--danger" type="submit">Submit Concern</button>
+    </footer>
+  </form>
+</div>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
