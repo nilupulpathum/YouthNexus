@@ -1,5 +1,5 @@
 <?php
-/** Additive schema and catalog entries for Divisional Treasurer reports. */
+/** Additive schema and catalog entries for shared divisional reports. */
 require_once __DIR__ . '/../app/core/config.php';
 
 try {
@@ -37,7 +37,19 @@ try {
         $pdo->exec("ALTER TABLE `Report` ADD COLUMN `data_snapshot` LONGTEXT NULL AFTER `file_path`");
         echo "Added immutable data snapshots to Report.\n";
     }
+    if (!in_array('archived_at', $reportColumns, true)) {
+        $pdo->exec("ALTER TABLE `Report` ADD COLUMN `archived_at` DATETIME NULL AFTER `status`");
+        echo "Added archive timestamp to Report.\n";
+    }
+    if (!in_array('archived_by', $reportColumns, true)) {
+        $pdo->exec("ALTER TABLE `Report` ADD COLUMN `archived_by` INT NULL AFTER `archived_at`, ADD INDEX `idx_report_archived_by` (`archived_by`)");
+        echo "Added archive actor to Report.\n";
+    }
     $seeds = [
+        ['User Interactions','Club Registration Status','Club registration applications and decisions within the selected period.',1],
+        ['Events','Event Approval Summary','Event approval requests and decisions within the selected period.',1],
+        ['Events','Event Status Summary','Divisional and club events grouped by their current status.',2],
+        ['Events','Event Attendance Rate','Recorded attendance and attendance rates for events in the division.',3],
         ['Financial','Divisional Financial Summary','Income, expenses, net movement, and reconciliation by category.',1],
         ['Financial','Club Fund Allocation Report','Funds allocated from the division to clubs during the selected period.',2],
         ['Financial','Void Request Activity','Club and divisional void requests and their decisions.',3],
