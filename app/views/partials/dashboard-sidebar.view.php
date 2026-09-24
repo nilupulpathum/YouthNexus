@@ -94,6 +94,7 @@ $navigation = [
         ['label' => 'Manage Assets', 'route' => 'divisionalassets', 'href' => $dashboardRoot . '/divisionalassets', 'icon' => 'briefcase'],
         ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
     ],
     'coordinator' => [
         ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
