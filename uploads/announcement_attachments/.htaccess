@@ -1,0 +1,2 @@
+# PHP serves authorized downloads through Announcements::download().
+Require all denied
