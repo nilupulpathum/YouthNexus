@@ -59,7 +59,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- ============================================================
          Stat Cards (Present / Absent / Attendance Rate)
          ============================================================ -->
-    <div class="am-stats" style="max-width:760px; margin-bottom: 24px;">
+    <div class="am-stats">
         <div class="am-stat-card">
             <div class="am-stat-icon present">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -237,6 +237,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     window.currentEventId = <?= (int)$event->event_id ?>;
 </script>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
