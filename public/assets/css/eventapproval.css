@@ -277,7 +277,12 @@
 .ea-modal-header-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ea-back-events {
+    flex: 0 0 auto;
 }
 
 .ea-modal-header h3 {
@@ -583,8 +588,19 @@
     background: #dc2626;
 }
 
+.dashboard .ea-btn-submit-decision.db-confirm-action.is-reject {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
 .ea-btn-submit-decision.is-reject:hover {
     background: #b91c1c;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+.dashboard .ea-btn-submit-decision.db-confirm-action.is-reject:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
 
