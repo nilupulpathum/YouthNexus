@@ -108,13 +108,11 @@ class ClubHealthModel extends Model {
                     c.health_status, c.flagged, c.disband_reason, c.disbanded_at,
                     c.no_of_members,
                     d.division_id, d.division_name, z.zonal_id, z.zonal_name,
-                    ca.club_logo_path,
                     COUNT(DISTINCT CASE WHEN u.status = 'Active' THEN u.user_id END) AS active_members,
                     COUNT(DISTINCT CASE WHEN hf.status IN ('Open','UnderReview') THEN hf.health_flag_id END) AS open_flags
              FROM Club c
              JOIN Division d ON c.division_id = d.division_id
              JOIN Zone z     ON d.zonal_id    = z.zonal_id
-             LEFT JOIN ClubApplication ca ON ca.application_id = c.source_application_id
              LEFT JOIN User u             ON u.club_id = c.club_id
              LEFT JOIN ClubHealthFlag hf  ON hf.club_id = c.club_id
              $where
@@ -144,13 +142,10 @@ class ClubHealthModel extends Model {
     public function getClubDetails(int $clubId): ?array {
         $club = $this->single(
             "SELECT c.*, d.division_name, z.zonal_id, z.zonal_name,
-                    ca.club_logo_path, ca.category AS club_category, ca.city AS club_city,
-                    ca.date_establishment,
                     COUNT(DISTINCT CASE WHEN u.status = 'Active' THEN u.user_id END) AS active_members
              FROM Club c
              JOIN Division d ON c.division_id = d.division_id
              JOIN Zone z     ON d.zonal_id    = z.zonal_id
-             LEFT JOIN ClubApplication ca ON ca.application_id = c.source_application_id
              LEFT JOIN User u             ON u.club_id = c.club_id
              WHERE c.club_id = ?
              GROUP BY c.club_id",
@@ -191,7 +186,8 @@ class ClubHealthModel extends Model {
             'events'       => $events,
             'finance'      => $finance,
             'flags'        => $this->resultSet(
-                "SELECT hf.*, CONCAT_WS(' ', raiser.first_name, raiser.last_name) AS raised_by_name,
+                "SELECT hf.*, hf.flag_category AS flag_type, hf.reason AS description,
+                        CONCAT_WS(' ', raiser.first_name, raiser.last_name) AS raised_by_name,
                         raiser.role AS raised_by_role
                  FROM ClubHealthFlag hf
                  LEFT JOIN User raiser ON raiser.user_id = hf.raised_by
@@ -299,16 +295,31 @@ class ClubHealthModel extends Model {
     private function upsertSnapshot(int $clubId, string $scoreMonth, array $score): void {
         $this->query(
             "INSERT INTO ClubHealthScore
-                (club_id, calculated_date, health_status, overall_score,
-                 governance_score, activity_score, finance_score, reporting_score)
-             VALUES (?, ?, ?, ?, 0, ?, ?, 0)
+                (club_id, event_score, attendance_score, financial_score, total_score, status, calculated_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW())",
+            [$clubId, $score['event_score'], $score['attendance_score'], $score['finance_score'],
+             $score['overall_score'], $score['health_status']]
+        );
+
+        // 2. Shared history table
+        $this->query(
+            "INSERT INTO ClubHealthSnapshot
+                (club_id, score_month, window_start, window_end, event_score, finance_score, attendance_score,
+                 overall_score, health_status, completed_events, attendance_present, attendance_recorded,
+                 approved_entries, expense_entries, receipted_expenses, reconciled_entries)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
-                health_status = VALUES(health_status),
-                overall_score = VALUES(overall_score),
-                activity_score = VALUES(activity_score),
-                finance_score  = VALUES(finance_score)",
-            [$clubId, $scoreMonth, $score['health_status'], $score['overall_score'],
-             $score['attendance_score'], $score['finance_score']]
+                window_start = VALUES(window_start), window_end = VALUES(window_end),
+                event_score = VALUES(event_score), finance_score = VALUES(finance_score),
+                attendance_score = VALUES(attendance_score), overall_score = VALUES(overall_score),
+                health_status = VALUES(health_status), completed_events = VALUES(completed_events),
+                attendance_present = VALUES(attendance_present), attendance_recorded = VALUES(attendance_recorded),
+                approved_entries = VALUES(approved_entries), expense_entries = VALUES(expense_entries),
+                receipted_expenses = VALUES(receipted_expenses), reconciled_entries = VALUES(reconciled_entries)",
+            [$clubId, $scoreMonth, $score['window_start'], $score['window_end'], $score['event_score'],
+             $score['finance_score'], $score['attendance_score'], $score['overall_score'], $score['health_status'],
+             $score['completed_events'], $score['attendance_present'], $score['attendance_recorded'],
+             $score['approved_entries'], $score['expense_entries'], $score['receipted_expenses'], $score['reconciled_entries']]
         );
     }
 
@@ -354,18 +365,18 @@ class ClubHealthModel extends Model {
             [(int)$ledger->ledger_id, $start, $end]
         );
         $audits = $this->resultSet(
-            "SELECT audit_id, audit_type, period_start, period_end, audit_status, math_check_status,
-                    expected_closing_balance, actual_closing_balance, auditor_notes
-             FROM Audit WHERE scope_level = 'Club' AND scope_id = ?
-             ORDER BY period_end DESC, audit_id DESC LIMIT 6",
-            [$clubId]
+            "SELECT audit_id, financial_year AS audit_year, financial_year, audit_status AS status,
+                    expected_closing_balance, actual_closing_balance
+             FROM Audit WHERE (club_id = ? OR (scope_level = 'Club' AND scope_id = ?))
+             ORDER BY audit_id DESC LIMIT 6",
+            [$clubId, $clubId]
         );
         $redFlags = $this->resultSet(
             "SELECT rf.red_flag_id, rf.flag_type, rf.description, rf.status, rf.flagged_at
              FROM RedFlag rf INNER JOIN Audit a ON a.audit_id = rf.audit_id
-             WHERE a.scope_level = 'Club' AND a.scope_id = ?
+             WHERE (a.club_id = ? OR (a.scope_level = 'Club' AND a.scope_id = ?))
              ORDER BY rf.flagged_at DESC LIMIT 10",
-            [$clubId]
+            [$clubId, $clubId]
         );
         return ['ledger' => $ledger, 'totals' => $totals, 'entries' => $entries, 'audits' => $audits, 'red_flags' => $redFlags];
     }
