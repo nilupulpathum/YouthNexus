@@ -52,7 +52,7 @@ $can_log      = !empty($can_log);
 
         <div class="club-filters" role="search" aria-label="Filter transactions">
             <label class="club-search" for="club-ledger-search">
-                <span class="icon"><?= yn_icon('eye') ?></span>
+                <span class="icon"><?= yn_icon('search') ?></span>
                 <span class="sr-only">Search transactions</span>
                 <input id="club-ledger-search" type="search" placeholder="Search description..." autocomplete="off">
             </label>
