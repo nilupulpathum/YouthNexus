@@ -36,7 +36,7 @@ class ClubHealthModel extends Model {
      * Only Active and Flagged clubs are ever included (Disbanded appear when explicitly requested
      * via bucket=dormant with status override — but by default we exclude them).
      */
-    private function buildFilter(array $f, array &$params): string {
+    private function buildFilter(array $f, ?array &$params = []): string {
         $params = [];
         $where  = " WHERE c.status IN ('Active','Flagged') ";
 
@@ -63,8 +63,9 @@ class ClubHealthModel extends Model {
 
     public function getSummary(array $f): array {
         // Strip bucket so we always count all bands
-        $base  = ['zone' => $f['zone'] ?? null, 'division' => $f['division'] ?? null, 'q' => $f['q'] ?? ''];
-        $where = $this->buildFilter($base, $params);
+        $base   = ['zone' => $f['zone'] ?? null, 'division' => $f['division'] ?? null, 'q' => $f['q'] ?? ''];
+        $params = [];
+        $where  = $this->buildFilter($base, $params);
 
         $row = $this->single(
             "SELECT COUNT(*) AS monitored,
@@ -95,6 +96,7 @@ class ClubHealthModel extends Model {
      * ============================================================ */
 
     public function getClubs(array $f, int $limit = 300): array {
+        $params = [];
         $where  = $this->buildFilter($f, $params);
         $order  = ($f['bucket'] ?? '') === 'dormant'
             ? " c.overall_health_score ASC, c.club_name ASC "
