@@ -9,6 +9,8 @@ $title           = $title ?? 'Event Status — YouthNexus';
 $pageTitle       = 'Event Details & Submission Status';
 $pageDescription = 'Track review progress, governance hierarchy, and specifications for this event';
 $currentRoute    = 'manageevents';
+$pageStyles      = [ROOT . '/assets/css/manageevents.css?v=20260924'];
+$pageScripts     = [ROOT . '/assets/js/manageevents.js?v=20260924'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -60,7 +62,7 @@ $isClub       = !empty($event->organizer_club_id);
                             </div>
 
                             <?php if ($can_edit): ?>
-                                <button type="button" class="me-btn-secondary" id="btnOpenEditModal">
+                                <button type="button" class="me-btn-secondary db-secondary-action" id="btnOpenEditModal">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                     Edit Event
                                 </button>
@@ -243,9 +245,6 @@ $isClub       = !empty($event->organizer_club_id);
                 </div>
 
             </div>
-        </main>
-    </div>
-</div>
 
 <?php if ($can_edit): ?>
 <!-- ============ Edit Event Modal ============ -->
@@ -386,6 +385,4 @@ $isClub       = !empty($event->organizer_club_id);
 </div>
 <?php endif; ?>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css">
-<script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

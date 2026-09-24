@@ -62,10 +62,9 @@ $roleLabel = function ($role) {
 
         <button
             type="button"
-            class="ann-btn ann-btn-primary"
+            class="ann-btn ann-btn-primary db-primary-action"
             id="annOpenCreateBtn"
         >
-            <?= $annIcon('plus') ?>
             New Announcement
         </button>
 
@@ -334,10 +333,10 @@ $roleLabel = function ($role) {
 
             <button
                 type="button"
-                class="ann-btn ann-btn-primary"
+                class="ann-btn ann-btn-primary db-primary-action"
                 onclick="document.getElementById('annOpenCreateBtn')?.click()"
             >
-                + New Announcement
+                New Announcement
             </button>
 
         <?php endif; ?>
@@ -622,7 +621,7 @@ $roleLabel = function ($role) {
                         <button
                             type="button"
                             data-ann-edit="<?= (int)$a->announcement_id ?>"
-                            class="ann-card-edit-btn"
+                            class="ann-card-edit-btn db-secondary-action"
                         >
 
                             <?= $annIcon('edit') ?>
@@ -638,12 +637,10 @@ $roleLabel = function ($role) {
 
                     <a
                         href="<?= ROOT ?>/announcements/view/<?= (int)$a->announcement_id ?>"
-                        class="ann-card-link"
+                        class="ann-card-link db-view-button"
                     >
 
                         View Details
-
-                        <?= $annIcon('arrow') ?>
 
                     </a>
 
@@ -1062,7 +1059,7 @@ $roleLabel = function ($role) {
 
                 <button
                     type="button"
-                    class="ann-btn ann-btn-secondary"
+                    class="ann-btn ann-btn-secondary db-close-action"
                     onclick="closeCreateModal()"
                 >
                     Cancel

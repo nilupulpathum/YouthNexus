@@ -35,9 +35,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <footer class="dr-document__footer">
       <div class="dr-document__footer-left">
-        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
+        <a class="dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
         <?php if ($report->status === 'Archived'): ?>
-          <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--primary" type="submit">Restore Report</button></form>
+          <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--primary db-confirm-action" type="submit">Restore Report</button></form>
         <?php else: ?>
           <form method="post" action="<?= ROOT ?>/divisionalreports/archive/<?= (int) $report->report_id ?>" onsubmit="return confirm('Archive this report? It will remain available under the Archived filter.');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--danger" type="submit">Archive Report</button></form>
         <?php endif; ?>

@@ -25,6 +25,8 @@
 
 .dashboard .ann-btn,
 .dashboard .ann-card-edit-btn {
+  box-sizing: border-box;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -37,7 +39,9 @@
   text-decoration: none;
   background: #fff;
   color: var(--db-text-dark);
-  transition: background .15s, box-shadow .15s;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s, transform .15s;
 }
 
 .dashboard .ann-btn-primary {
@@ -50,11 +54,40 @@
 
 .dashboard .ann-btn-primary:hover {
   background: #1d3698;
+  border-color: #1d3698;
+  box-shadow: 0 4px 8px rgba(30, 64, 175, .2);
+  transform: translateY(-1px);
 }
 
 .dashboard .ann-btn-secondary:hover,
 .dashboard .ann-card-edit-btn:hover {
-  background: #f5f6fa;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.dashboard .ann-btn-danger {
+  background: #fff;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.dashboard .ann-btn-danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.dashboard .ann-btn:active,
+.dashboard .ann-card-edit-btn:active,
+.dashboard .ann-card-bottom .ann-card-link:active {
+  transform: translateY(0);
+}
+
+.dashboard .ann-btn:focus-visible,
+.dashboard .ann-card-edit-btn:focus-visible,
+.dashboard .ann-card-bottom .ann-card-link:focus-visible {
+  outline: 2px solid rgba(30, 64, 175, .3);
+  outline-offset: 2px;
 }
 
 .dashboard .ann-btn:disabled {
@@ -377,8 +410,9 @@
 }
 
 .dashboard .ann-card-edit-btn {
-  padding: 7px 10px;
-  font-size: 12px;
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 13px;
 }
 
 .dashboard .ann-card-link {
@@ -393,6 +427,32 @@
 
 .ann-card-bottom .ann-card-link {
   margin-left: auto;
+  box-sizing: border-box;
+  min-height: 38px;
+  justify-content: center;
+  padding: 8px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: var(--db-radius);
+  background: #f8fafc;
+  color: #173db5;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s, box-shadow .15s, transform .15s;
+}
+
+.ann-card-bottom .ann-card-link:hover {
+  background: #eef4ff;
+  border-color: #b9c8ee;
+  color: #173db5;
+  box-shadow: 0 2px 5px rgba(23, 61, 181, .08);
+  transform: translateY(-1px);
+}
+
+.ann-card-bottom .ann-card-edit-btn svg,
+.ann-card-bottom .ann-card-link svg {
+  width: 15px;
+  height: 15px;
 }
 
 .ann-empty {
@@ -656,7 +716,44 @@
 }
 
 .ann-back-link {
+  box-sizing: border-box;
+  min-height: 40px;
+  width: fit-content;
+  justify-content: center;
+  padding: 9px 16px;
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius);
+  background: #fff;
+  color: var(--db-text-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   margin-bottom: 20px;
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .15s;
+}
+
+.ann-back-link svg {
+  width: 15px;
+  height: 15px;
+  transform: rotate(180deg);
+}
+
+.ann-back-link:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: var(--db-text-dark);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, .06);
+  transform: translateY(-1px);
+}
+
+.ann-back-link:active {
+  transform: translateY(0);
+}
+
+.ann-back-link:focus-visible {
+  outline: 2px solid rgba(30, 64, 175, .3);
+  outline-offset: 2px;
 }
 
 .ann-detail-grid {
@@ -744,6 +841,7 @@
 
 .ann-side-card .ann-btn {
   width: 100%;
+  min-height: 42px;
   margin-bottom: 10px;
 }
 
@@ -850,6 +948,12 @@
 
   .ann-modal-footer .ann-btn {
     flex: 1;
+  }
+
+  .ann-card-bottom .ann-card-edit-btn,
+  .ann-card-bottom .ann-card-link {
+    flex: 1 1 0;
+    margin-left: 0;
   }
 
   .ann-modal-card {

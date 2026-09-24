@@ -40,7 +40,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="add-transaction">Add Transaction</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
   </div>
 
   <section class="dw-filter-panel" id="transaction-filters" hidden>
@@ -133,7 +133,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                data-description="<?= $e($transaction->description) ?>"
                data-category-label="<?= $e($transaction->category) ?>"
                data-type-label="<?= $e($transaction->type) ?>"
-               data-receipt-url="<?= $hasReceipt ? $e(ROOT . '/financereceipt/view/' . (int) $transaction->entry_id) : '' ?>">
+               data-receipt-url="<?= $hasReceipt ? $e(ROOT . '/financereceipt/show/' . (int) $transaction->entry_id) : '' ?>">
         <header class="dw-record-card__header">
           <div class="dw-record-card__identity">
             <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon($isIncome ? 'download' : 'upload') ?></span>
@@ -153,10 +153,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <span class="dw-record-card__reference"><?= $e($transaction->reference_no) ?></span>
           <div class="dw-record-card__actions">
             <?php if ($hasReceipt): ?>
-              <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/view/<?= (int) $transaction->entry_id ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
+              <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $transaction->entry_id ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
             <?php endif; ?>
             <?php if ($canEdit): ?>
-              <button class="dw-button dw-button--ghost" type="button" data-edit-transaction data-modal-open="edit-transaction"><?= yn_icon('pen') ?> Edit</button>
+              <button class="dw-button dw-button--ghost db-secondary-action" type="button" data-edit-transaction data-modal-open="edit-transaction"><?= yn_icon('pen') ?> Edit</button>
             <?php endif; ?>
           </div>
         </footer>

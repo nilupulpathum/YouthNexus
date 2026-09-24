@@ -1,6 +1,8 @@
 <?php
 
-final class FinanceReceipt {
+// Keep this helper name distinct from the Financereceipt controller. PHP class
+// names are case-insensitive, so FinanceReceipt would collide with it.
+final class FinanceReceiptStorage {
     private const MAX_SIZE = 5242880;
     private const DIRECTORY = '/public/uploads/ledger-receipts';
 

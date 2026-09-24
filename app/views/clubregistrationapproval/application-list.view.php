@@ -17,13 +17,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <!-- ============ Stat cards ============ -->
     <div class="cr-stats">
-        <button type="button" class="cr-stat-card is-active" data-filter="Pending" id="statPending">
+        <button type="button" class="cr-stat-card" data-filter="Pending" id="statPending">
             <div class="cr-stat-icon pending">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
             <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Pending'] ?></span><span class="cr-stat-label">Pending Applications</span></span>
         </button>
-        <button type="button" class="cr-stat-card" data-filter="Approved" id="statApproved">
+        <button type="button" class="cr-stat-card is-active" data-filter="Approved" id="statApproved">
             <div class="cr-stat-icon approved">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
             </div>
@@ -129,7 +129,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
 
                 <div class="cr-card-footer">
-                    <button type="button" class="cr-btn cr-review-btn" data-id="<?= (int)$app->application_id ?>">Review</button>
+                    <button type="button" class="cr-btn cr-review-btn db-view-button" data-id="<?= (int)$app->application_id ?>">View Details</button>
                 </div>
             </div>
             <?php endforeach; ?>

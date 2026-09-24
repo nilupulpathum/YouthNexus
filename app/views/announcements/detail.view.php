@@ -114,7 +114,8 @@ switch ($announcement->level ?? '') {
     href="<?= ROOT ?>/announcements"
     class="ann-card-link ann-back-link"
 >
-    &larr; Back to Announcements
+    <?= $annIcon('arrow') ?>
+    Back to Announcements
 </a>
 
 
@@ -390,7 +391,7 @@ switch ($announcement->level ?? '') {
             <?php if (!empty($canManage)): ?>
 
                 <a
-                    class="ann-btn ann-btn-primary"
+                    class="ann-btn ann-btn-secondary db-secondary-action"
                     href="<?= ROOT ?>/announcements?edit=<?= (int)$announcement->announcement_id ?>"
                 >
 
@@ -405,7 +406,7 @@ switch ($announcement->level ?? '') {
 
                 <button
                     type="button"
-                    class="ann-btn ann-btn-secondary"
+                    class="ann-btn ann-btn-danger"
                     onclick="deleteAnnouncement(<?= (int)$announcement->announcement_id ?>)"
                 >
                     Delete Announcement
@@ -440,7 +441,7 @@ switch ($announcement->level ?? '') {
 
                 <button
                     type="button"
-                    class="ann-btn ann-btn-primary"
+                    class="ann-btn ann-btn-primary db-confirm-action"
                     id="annMarkReadBtn"
                     onclick="markAsRead(<?= (int)$announcement->announcement_id ?>)"
                 >

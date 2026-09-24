@@ -46,7 +46,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
   </div>
 
   <section class="dw-filter-panel" id="allocation-filters" hidden>
@@ -152,7 +152,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                   <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
                     <input type="hidden" name="decision" value="reject">
-                    <button class="dw-button dw-button--secondary" type="submit">Reject</button>
+                    <button class="dw-button dw-button--danger" type="submit">Reject</button>
                   </form>
                 </div>
               </td>
