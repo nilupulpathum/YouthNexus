@@ -24,22 +24,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="ea-stat-icon pending">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                     </div>
-                    <div class="ea-stat-value"><?= (int)($counts['Pending'] ?? 0) ?></div>
-                    <div class="ea-stat-label">Awaiting Your Review</div>
+                    <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Pending'] ?? 0) ?></span><span class="ea-stat-label">Awaiting Your Review</span></span>
                 </button>
                 <button type="button" class="ea-stat-card" data-filter="Approved" id="statApproved">
                     <div class="ea-stat-icon approved">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
                     </div>
-                    <div class="ea-stat-value"><?= (int)($counts['Approved'] ?? 0) ?></div>
-                    <div class="ea-stat-label">Approved Events</div>
+                    <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Approved'] ?? 0) ?></span><span class="ea-stat-label">Approved Events</span></span>
                 </button>
                 <button type="button" class="ea-stat-card" data-filter="Rejected" id="statRejected">
                     <div class="ea-stat-icon rejected">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </div>
-                    <div class="ea-stat-value"><?= (int)($counts['Rejected'] ?? 0) ?></div>
-                    <div class="ea-stat-label">Rejected Events</div>
+                    <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Rejected'] ?? 0) ?></span><span class="ea-stat-label">Rejected Events</span></span>
                 </button>
             </div>
 
@@ -137,6 +134,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div>
 
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/eventapproval.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script>
     window.ROOT       = "<?= ROOT ?>";
     window.CSRF_TOKEN = <?= json_encode($csrf_token ?? '') ?>;
