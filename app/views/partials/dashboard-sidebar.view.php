@@ -64,7 +64,7 @@ $navigation = [
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionalcoordinator' => [
-        ['label' => 'Overview',             'route' => 'home',              'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
+        ['label' => 'Dashboard',            'route' => 'divisionalcoordinator', 'href' => $dashboardRoot . '/divisionalcoordinator', 'icon' => 'grid'],
         ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval',  'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Clubs in Division',    'route' => 'clubs',             'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
@@ -74,7 +74,7 @@ $navigation = [
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],
     'divisionalsecretary' => [
-        ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
+        ['label' => 'Dashboard', 'route' => 'divisionalsecretary', 'href' => $dashboardRoot . '/divisionalsecretary', 'icon' => 'grid'],
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Clubs in Division', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
