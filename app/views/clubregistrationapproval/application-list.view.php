@@ -21,22 +21,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="cr-stat-icon pending">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
-            <div class="cr-stat-value"><?= (int)$counts['Pending'] ?></div>
-            <div class="cr-stat-label">Pending Applications</div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Pending'] ?></span><span class="cr-stat-label">Pending Applications</span></span>
         </button>
         <button type="button" class="cr-stat-card" data-filter="Approved" id="statApproved">
             <div class="cr-stat-icon approved">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
             </div>
-            <div class="cr-stat-value"><?= (int)$counts['Approved'] ?></div>
-            <div class="cr-stat-label">Approved Applications</div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Approved'] ?></span><span class="cr-stat-label">Approved Applications</span></span>
         </button>
         <button type="button" class="cr-stat-card" data-filter="Rejected" id="statRejected">
             <div class="cr-stat-icon rejected">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </div>
-            <div class="cr-stat-value"><?= (int)$counts['Rejected'] ?></div>
-            <div class="cr-stat-label">Rejected Applications</div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Rejected'] ?></span><span class="cr-stat-label">Rejected Applications</span></span>
         </button>
     </div>
 
@@ -165,6 +162,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
 <script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistrationapproval.css">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/clubregistrationapproval.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
