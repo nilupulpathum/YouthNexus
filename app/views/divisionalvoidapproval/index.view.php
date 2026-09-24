@@ -21,7 +21,7 @@ $summaryCards = [
 $reviewEvidenceForView = $reviewEvidence;
 foreach ($reviewEvidenceForView as &$evidenceItem) {
     $evidenceItem['receipt_url'] = !empty($evidenceItem['receipt_path'])
-        ? ROOT . '/financereceipt/view/' . (int) $evidenceItem['receipt_entry_id']
+        ? ROOT . '/financereceipt/show/' . (int) $evidenceItem['receipt_entry_id']
         : null;
     unset($evidenceItem['receipt_path']);
     unset($evidenceItem['receipt_entry_id']);
@@ -243,7 +243,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <section class="dw-evidence-section dw-field--span-2" aria-labelledby="entry-evidence-title">
         <div class="dw-section-header">
           <div><h3 id="entry-evidence-title">Ledger Entry Evidence</h3><p>Confirm the entry and its supporting record before deciding</p></div>
-          <a class="dw-button dw-button--ghost" href="#" target="_blank" rel="noopener" data-review-receipt hidden><?= yn_icon('eye') ?> View Receipt</a>
+          <a class="dw-button dw-button--ghost db-view-button" href="#" target="_blank" rel="noopener" data-review-receipt hidden><?= yn_icon('eye') ?> View Receipt</a>
         </div>
         <dl class="dw-review-list">
           <div><dt>Category</dt><dd data-evidence-category></dd></div>

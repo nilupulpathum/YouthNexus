@@ -746,6 +746,350 @@ body.dashboard {
   text-decoration: underline;
 }
 
+/* Shared secondary navigation, edit, and text close controls across divisional workflows. */
+.dashboard .db-view-button.db-view-button,
+.dashboard .db-secondary-action.db-secondary-action,
+.dashboard .db-close-action.db-close-action,
+.dashboard .dw-modal__footer button[data-modal-close],
+.dashboard .me-modal-footer .me-btn-cancel,
+.dashboard .am-modal-footer .am-btn-cancel,
+.dashboard .cr-btn-cancel-link,
+.dashboard .ea-btn-cancel-link {
+  min-height: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #173db5 !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.dashboard .db-view-button.db-view-button::after {
+  content: "\2192";
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.dashboard .db-view-button.db-view-button:hover,
+.dashboard .db-secondary-action.db-secondary-action:hover,
+.dashboard .db-close-action.db-close-action:hover,
+.dashboard .dw-modal__footer button[data-modal-close]:hover,
+.dashboard .me-modal-footer .me-btn-cancel:hover,
+.dashboard .am-modal-footer .am-btn-cancel:hover,
+.dashboard .cr-btn-cancel-link:hover,
+.dashboard .ea-btn-cancel-link:hover {
+  border-color: #b9c8ee;
+  background: #eef4ff;
+  color: #12359f !important;
+  box-shadow: 0 3px 8px rgba(30, 64, 175, .10);
+  transform: translateY(-1px);
+}
+
+.dashboard .db-view-button.db-view-button:active,
+.dashboard .db-secondary-action.db-secondary-action:active,
+.dashboard .db-close-action.db-close-action:active,
+.dashboard .dw-modal__footer button[data-modal-close]:active,
+.dashboard .me-modal-footer .me-btn-cancel:active,
+.dashboard .am-modal-footer .am-btn-cancel:active,
+.dashboard .cr-btn-cancel-link:active,
+.dashboard .ea-btn-cancel-link:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.dashboard .db-secondary-action.db-secondary-action:disabled,
+.dashboard .db-view-button.db-view-button:disabled,
+.dashboard .db-view-button.db-view-button.disabled,
+.dashboard .db-close-action.db-close-action:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard .db-view-button.db-view-button:disabled:hover,
+.dashboard .db-view-button.db-view-button.disabled:hover {
+  border-color: #dbe3ef;
+  background: #f8fafc;
+  color: #173db5 !important;
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard .db-view-button.db-view-button--back::before {
+  content: "\2190";
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.dashboard .db-view-button.db-view-button--back::after {
+  content: none;
+}
+
+.dashboard .db-view-button svg,
+.dashboard .db-secondary-action svg,
+.dashboard .db-close-action svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+/* Page-level create actions and neutral confirmation actions share one primary pattern. */
+.dashboard .db-primary-action.db-primary-action,
+.dashboard .db-confirm-action.db-confirm-action,
+.dashboard .dw-modal__footer .dw-button--primary,
+.dashboard .me-modal-footer .me-btn-primary,
+.dashboard .ann-modal-footer .ann-btn-primary,
+.dashboard .am-modal-footer .am-btn-primary {
+  min-height: 40px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--db-sidebar-bg);
+  border-radius: var(--db-radius);
+  background: var(--db-sidebar-bg);
+  color: #fff !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, .15);
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.dashboard .db-primary-action.db-primary-action::before {
+  content: "+";
+  font-size: 20px;
+  font-weight: 400;
+  line-height: .8;
+}
+
+.dashboard .db-primary-action.db-primary-action:hover,
+.dashboard .db-confirm-action.db-confirm-action:hover,
+.dashboard .dw-modal__footer .dw-button--primary:hover,
+.dashboard .me-modal-footer .me-btn-primary:hover,
+.dashboard .ann-modal-footer .ann-btn-primary:hover,
+.dashboard .am-modal-footer .am-btn-primary:hover {
+  border-color: #1d3698;
+  background: #1d3698;
+  color: #fff !important;
+  box-shadow: 0 4px 8px rgba(30, 64, 175, .2);
+  transform: translateY(-1px);
+}
+
+.dashboard .db-primary-action.db-primary-action:active,
+.dashboard .db-confirm-action.db-confirm-action:active,
+.dashboard .dw-modal__footer .dw-button--primary:active,
+.dashboard .me-modal-footer .me-btn-primary:active,
+.dashboard .ann-modal-footer .ann-btn-primary:active,
+.dashboard .am-modal-footer .am-btn-primary:active {
+  box-shadow: 0 2px 4px rgba(30, 64, 175, .15);
+  transform: translateY(0);
+}
+
+.dashboard .db-primary-action.db-primary-action:disabled,
+.dashboard .db-confirm-action.db-confirm-action:disabled,
+.dashboard .dw-modal__footer .dw-button--primary:disabled,
+.dashboard .me-modal-footer .me-btn-primary:disabled,
+.dashboard .ann-modal-footer .ann-btn-primary:disabled,
+.dashboard .am-modal-footer .am-btn-primary:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Standard data-table treatment across all divisional actor workflows. */
+.dashboard table.dw-table,
+.dashboard .am-page-container table.am-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--db-text-dark);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.dashboard table.dw-table th,
+.dashboard table.dw-table td,
+.dashboard .am-page-container table.am-table th,
+.dashboard .am-page-container table.am-table td {
+  border-right: 1px solid #dfe5ee;
+  border-bottom: 1px solid #dfe5ee;
+  vertical-align: middle;
+}
+
+.dashboard table.dw-table th:last-child,
+.dashboard table.dw-table td:last-child,
+.dashboard .am-page-container table.am-table th:last-child,
+.dashboard .am-page-container table.am-table td:last-child {
+  border-right: 0;
+}
+
+.dashboard table.dw-table th,
+.dashboard .am-page-container table.am-table th {
+  padding: 12px 14px;
+  background: #f8fafc;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dashboard table.dw-table td,
+.dashboard .am-page-container table.am-table td {
+  padding: 14px;
+  background: #fff;
+  color: #344054;
+  overflow-wrap: anywhere;
+}
+
+.dashboard table.dw-table tbody tr:nth-child(even) td,
+.dashboard .am-page-container table.am-table tbody tr:nth-child(even) td {
+  background: #fbfcfe;
+}
+
+.dashboard table.dw-table tbody tr:hover td,
+.dashboard .am-page-container table.am-table tbody tr:hover td {
+  background: #eef4ff;
+}
+
+.dashboard table.dw-table tbody tr:last-child td,
+.dashboard .am-page-container table.am-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dashboard table.dw-table .dw-table__reference {
+  color: var(--db-sidebar-bg);
+  font-weight: 700;
+}
+
+.dashboard table.dw-table .dw-table__description {
+  min-width: 180px;
+  max-width: 320px;
+  color: var(--db-text-dark);
+  font-weight: 600;
+}
+
+.dashboard table.dw-table .dw-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard table.dw-table .dw-status {
+  min-height: 24px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.dashboard table.dw-table .dw-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Table actions use one compact outlined family; page-level actions remain unchanged. */
+.dashboard table.dw-table .dw-button,
+.dashboard .am-page-container table.am-table .am-btn {
+  min-height: 34px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #cbd6e5;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--db-sidebar-bg) !important;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none !important;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.dashboard table.dw-table .dw-button:hover,
+.dashboard .am-page-container table.am-table .am-btn:hover {
+  border-color: #b9c8ee;
+  background: #eef4ff;
+  color: #12359f !important;
+  box-shadow: 0 3px 8px rgba(30, 64, 175, .10);
+  transform: translateY(-1px);
+}
+
+.dashboard table.dw-table .dw-button:active,
+.dashboard .am-page-container table.am-table .am-btn:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.dashboard table.dw-table .dw-button--danger,
+.dashboard table.dw-table .dw-button--danger:hover {
+  border-color: #fecaca;
+  background: #fff;
+  color: #c62828 !important;
+}
+
+.dashboard table.dw-table .dw-button--danger:hover {
+  background: #fff1f2;
+  border-color: #fca5a5;
+}
+
+.dashboard table.dw-table .dw-button:disabled,
+.dashboard .am-page-container table.am-table .am-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard table.dw-table .dw-button svg,
+.dashboard .am-page-container table.am-table .am-btn svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+@media print {
+  .dashboard table.dw-table,
+  .dashboard .am-page-container table.am-table {
+    font-size: 9px;
+  }
+
+  .dashboard table.dw-table th,
+  .dashboard table.dw-table td,
+  .dashboard .am-page-container table.am-table th,
+  .dashboard .am-page-container table.am-table td {
+    padding: 6px 8px;
+  }
+}
+
 .dashboard-sidebar-scrim {
   display: none;
   position: fixed;

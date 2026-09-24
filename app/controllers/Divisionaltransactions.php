@@ -97,7 +97,7 @@ class Divisionaltransactions extends Controller {
 
         $attachmentUrl = null;
         try {
-            $attachmentUrl = FinanceReceipt::store($_FILES['receipt'] ?? null);
+            $attachmentUrl = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
             $model = $this->model('DivisionalLedgerModel');
             $ledger = $model->ensureDivisionLedger((int) $_SESSION['division_id']);
             $data['attachment_url'] = $attachmentUrl;
@@ -105,7 +105,7 @@ class Divisionaltransactions extends Controller {
             $model->createEntry((int) $ledger->ledger_id, (int) $_SESSION['user_id'], $data);
             $this->setFlash('success', 'Transaction saved and the division balance was updated.');
         } catch (Throwable $exception) {
-            FinanceReceipt::remove($attachmentUrl);
+            FinanceReceiptStorage::remove($attachmentUrl);
             $this->setFlash('error', $exception instanceof InvalidArgumentException
                 ? $exception->getMessage()
                 : 'The transaction could not be saved.');
@@ -136,17 +136,17 @@ class Divisionaltransactions extends Controller {
                 throw new RuntimeException('This transaction cannot be edited.');
             }
 
-            $newAttachment = FinanceReceipt::store($_FILES['receipt'] ?? null);
+            $newAttachment = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
             $removeReceipt = isset($_POST['remove_receipt']) && $_POST['remove_receipt'] === '1';
             $data['attachment_url'] = $newAttachment ?: ($removeReceipt ? null : $entry->attachment_url);
             $oldAttachment = $model->updateEntry((int) $ledger->ledger_id, (int) $entryId, $data);
 
             if (($newAttachment || $removeReceipt) && $oldAttachment !== $data['attachment_url']) {
-                FinanceReceipt::remove($oldAttachment);
+                FinanceReceiptStorage::remove($oldAttachment);
             }
             $this->setFlash('success', 'Transaction updated and the division balance was recalculated.');
         } catch (Throwable $exception) {
-            FinanceReceipt::remove($newAttachment);
+            FinanceReceiptStorage::remove($newAttachment);
             $message = $exception instanceof InvalidArgumentException
                 ? $exception->getMessage()
                 : ($exception->getMessage() === 'This transaction cannot be edited.'

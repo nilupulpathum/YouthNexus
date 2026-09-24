@@ -34,7 +34,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="asset-filters" aria-expanded="false">Filters</button>
     <button class="dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="add-divisional-asset">Add Asset</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset">Add Asset</button>
   </div>
 
   <section class="dw-filter-panel" id="asset-filters" hidden>

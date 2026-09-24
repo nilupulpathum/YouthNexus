@@ -63,7 +63,7 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
 
         <div class="club-filters" role="search" aria-label="Filter assets">
             <label class="club-search" for="club-asset-search">
-                <span class="icon"><?= yn_icon('eye') ?></span>
+                <span class="icon"><?= yn_icon('search') ?></span>
                 <span class="sr-only">Search inventory</span>
                 <input id="club-asset-search" type="search" placeholder="Search name or serial..." autocomplete="off">
             </label>

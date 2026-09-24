@@ -88,7 +88,7 @@ class Divisionalledger extends Controller {
 
         $attachmentUrl = null;
         try {
-            $attachmentUrl = FinanceReceipt::store($_FILES['receipt'] ?? null);
+            $attachmentUrl = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
             $model = $this->model('DivisionalLedgerModel');
             $ledger = $model->ensureDivisionLedger((int) $_SESSION['division_id']);
             $model->createEntry((int) $ledger->ledger_id, (int) $_SESSION['user_id'], [
@@ -103,7 +103,7 @@ class Divisionalledger extends Controller {
             $this->setFlash('success', 'Ledger entry saved and the running balance was updated.');
         } catch (Throwable $exception) {
             if ($attachmentUrl) {
-                FinanceReceipt::remove($attachmentUrl);
+                FinanceReceiptStorage::remove($attachmentUrl);
             }
             $this->setFlash('error', $exception instanceof InvalidArgumentException
                 ? $exception->getMessage()
