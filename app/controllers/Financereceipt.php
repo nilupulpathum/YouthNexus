@@ -1,7 +1,7 @@
 <?php
 
 class Financereceipt extends Controller {
-    public function view($entryId = null): void {
+    public function show($entryId = null): void {
         if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
         }
@@ -26,7 +26,7 @@ class Financereceipt extends Controller {
         $divisionId = (int) $_SESSION['division_id'];
         $statement->execute([(int) $entryId, $divisionId, $divisionId]);
         $url = $statement->fetchColumn();
-        $path = FinanceReceipt::resolvePath($url !== false ? (string) $url : null);
+        $path = FinanceReceiptStorage::resolvePath($url !== false ? (string) $url : null);
         if (!$path) {
             http_response_code(404);
             exit('The receipt was not found.');

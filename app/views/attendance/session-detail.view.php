@@ -64,21 +64,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="am-stat-icon present">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
-            <div class="am-stat-value"><?= $present ?></div>
+            <div class="am-stat-value" id="amPresentCount"><?= $present ?></div>
             <div class="am-stat-label">Present</div>
         </div>
         <div class="am-stat-card">
             <div class="am-stat-icon absent">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </div>
-            <div class="am-stat-value"><?= $absent ?></div>
+            <div class="am-stat-value" id="amAbsentCount"><?= $absent ?></div>
             <div class="am-stat-label">Absent</div>
         </div>
         <div class="am-stat-card">
             <div class="am-stat-icon rate">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" stroke-width="2"><path d="M5 19V9M12 19V5M19 19v-7" stroke-linecap="round"/><path d="M3 19h18" stroke-linecap="round"/></svg>
             </div>
-            <div class="am-stat-value"><?= $rate ?>%</div>
+            <div class="am-stat-value" id="amAttendanceRate"><?= $rate ?>%</div>
             <div class="am-stat-label">Attendance Rate</div>
         </div>
     </div>
@@ -133,6 +133,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         : '<span class="am-muted">—</span>';
                 ?>
                 <tr class="am-roster-row"
+                    data-member-id="<?= (int)$row->user_id ?>"
                     data-name="<?= htmlspecialchars(strtolower($mName)) ?>"
                     data-email="<?= htmlspecialchars(strtolower($row->email ?? '')) ?>"
                     data-club="<?= htmlspecialchars(strtolower($row->club_name ?? '')) ?>"
@@ -166,7 +167,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <td style="text-align:right;">
                         <button type="button"
                                 class="am-btn am-btn-quick-update"
-                                style="font-size:12px;padding:6px 12px;"
                                 data-member-id="<?= (int)$row->user_id ?>"
                                 data-member-name="<?= htmlspecialchars($mName) ?>"
                                 data-current-status="<?= htmlspecialchars($attStatus) ?>"
@@ -224,7 +224,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <div class="am-modal-footer">
             <button type="button" class="am-btn-cancel" id="amQuickCancel">Cancel</button>
-            <button type="button" class="am-btn am-btn-primary" id="amQuickSaveBtn">Save Update</button>
+            <button type="button" class="am-btn am-btn-primary db-confirm-action" id="amQuickSaveBtn">Save Update</button>
         </div>
     </div>
 </div>
@@ -235,6 +235,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <script>
     window.ROOT = "<?= ROOT ?>";
     window.currentEventId = <?= (int)$event->event_id ?>;
+    window.currentAttendanceUser = {
+        name: <?= json_encode($userName ?? 'Administrator', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+        role: <?= json_encode($userRole ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
+    };
 </script>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
