@@ -48,7 +48,7 @@ $existing_nics = $existing_nics ?? [];
             </div>
             <div class="club-header-actions">
                 <label class="club-search" for="club-member-search">
-                    <span class="icon"><?= yn_icon('eye') ?></span>
+                    <span class="icon"><?= yn_icon('search') ?></span>
                     <span class="sr-only">Search roster</span>
                     <input id="club-member-search" type="search" placeholder="Search name, role, email..." autocomplete="off">
                 </label>

@@ -342,6 +342,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
 </script>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
