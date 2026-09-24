@@ -48,7 +48,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="void-request-search" type="search" placeholder="Search by entry, description, or reason" data-void-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
   </div>
 
   <section class="dw-filter-panel" id="void-request-filters" hidden>
@@ -186,7 +186,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
               <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
               <td>
-                <button class="dw-button dw-button--ghost" type="button"
+                <button class="dw-button dw-button--ghost db-view-button" type="button"
                         data-request-status
                         data-request-id="<?= (int) $request->void_request_id ?>"
                         data-request-reference="<?= $e($requestReference($request->void_request_id)) ?>"

@@ -31,6 +31,7 @@
     // --- Filter Panel Toggle -----------------------------------------
     const filterBtn   = document.getElementById('amFilterBtn');
     const filterPanel = document.getElementById('amFilterPanel');
+    const filterCount = document.getElementById('amFilterCount');
     if (filterBtn && filterPanel) {
         filterBtn.addEventListener('click', () => {
             const open = filterPanel.classList.toggle('open');
@@ -92,32 +93,86 @@
         });
     }
 
-    // --- Client-side search for event cards --------------------------
-    const searchInput = document.getElementById('amSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const q = this.value.toLowerCase().trim();
-            const cards = document.querySelectorAll('#amCardGrid .am-card');
-            let visible = 0;
+    // --- Client-side search and divisional filters -------------------
+    const searchInput  = document.getElementById('amSearchInput');
+    const typeFilter   = document.getElementById('amFilterType');
+    const scopeFilter  = document.getElementById('amFilterScope');
+    const applyFilters = document.getElementById('amApplyFilterBtn');
+    const clearFilters = document.getElementById('amClearFilterBtn');
+    const cardGrid     = document.getElementById('amCardGrid');
 
-            cards.forEach(card => {
-                const title = card.dataset.title || '';
-                const type  = card.dataset.type  || '';
-                const match = !q || title.includes(q) || type.includes(q);
-                card.style.display = match ? '' : 'none';
-                if (match) visible++;
-            });
+    function setFilterCount(count) {
+        if (!filterCount) return;
+        filterCount.textContent = String(count);
+        filterCount.classList.toggle('hidden', count === 0);
+    }
 
-            let emptyMsg = document.getElementById('amFilterEmpty');
-            if (!emptyMsg) {
-                emptyMsg = document.createElement('div');
-                emptyMsg.id = 'amFilterEmpty';
-                emptyMsg.className = 'am-empty-state';
-                emptyMsg.style.gridColumn = '1 / -1';
-                emptyMsg.innerHTML = '<p>No events match your search term.</p>';
-                document.getElementById('amCardGrid')?.appendChild(emptyMsg);
-            }
-            emptyMsg.style.display = (visible === 0) ? '' : 'none';
+    function getClientFilterCount() {
+        let count = 0;
+        if (typeFilter?.value) count++;
+        if (scopeFilter?.value) count++;
+        return count;
+    }
+
+    function getEmptyMessage() {
+        let emptyMessage = document.getElementById('amFilterEmpty');
+        if (emptyMessage || !cardGrid) return emptyMessage;
+
+        emptyMessage = document.createElement('div');
+        emptyMessage.id = 'amFilterEmpty';
+        emptyMessage.className = 'am-empty-state';
+
+        const message = document.createElement('p');
+        message.textContent = 'No events match the current search and filters.';
+        emptyMessage.appendChild(message);
+        cardGrid.appendChild(emptyMessage);
+
+        return emptyMessage;
+    }
+
+    function filterEventCards() {
+        const query = (searchInput?.value || '').toLowerCase().trim();
+        const selectedType = isNYSCAdmin
+            ? ''
+            : (typeFilter?.value || '').toLowerCase();
+        const selectedScope = isNYSCAdmin
+            ? ''
+            : (scopeFilter?.value || '').toLowerCase();
+        const cards = document.querySelectorAll('#amCardGrid .am-card');
+        let visible = 0;
+
+        cards.forEach(card => {
+            const searchableText = card.dataset.search || '';
+            const eventType = card.dataset.type || '';
+            const eventScope = card.dataset.scope || '';
+            const matchesQuery = !query || searchableText.includes(query);
+            const matchesType = !selectedType || eventType === selectedType;
+            const matchesScope = !selectedScope || eventScope === selectedScope;
+            const matches = matchesQuery && matchesType && matchesScope;
+
+            card.style.display = matches ? '' : 'none';
+            if (matches) visible++;
+        });
+
+        const emptyMessage = getEmptyMessage();
+        if (emptyMessage) {
+            emptyMessage.style.display = visible === 0 ? '' : 'none';
+        }
+    }
+
+    searchInput?.addEventListener('input', filterEventCards);
+
+    if (!isNYSCAdmin) {
+        applyFilters?.addEventListener('click', () => {
+            filterEventCards();
+            setFilterCount(getClientFilterCount());
+        });
+
+        clearFilters?.addEventListener('click', () => {
+            if (typeFilter) typeFilter.value = '';
+            if (scopeFilter) scopeFilter.value = '';
+            setFilterCount(0);
+            filterEventCards();
         });
     }
 
@@ -303,6 +358,7 @@
     function closeQuickModal() {
         if (!quickModal) return;
         quickModal.classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     if (quickClose)  quickClose.addEventListener('click', closeQuickModal);
@@ -324,8 +380,94 @@
             document.getElementById('quRemark').value = remark;
 
             quickModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
         });
     });
+
+    quickModal?.addEventListener('click', event => {
+        if (event.target === quickModal) closeQuickModal();
+    });
+
+    function updateDetailSummary() {
+        const rows = Array.from(document.querySelectorAll('.am-roster-row'));
+        if (!rows.length) return;
+
+        const present = rows.filter(row => (row.dataset.status || '').toLowerCase() === 'present').length;
+        const absent = rows.filter(row => (row.dataset.status || '').toLowerCase() === 'absent').length;
+        const rate = Math.round((present / rows.length) * 100);
+
+        const presentCount = document.getElementById('amPresentCount');
+        const absentCount = document.getElementById('amAbsentCount');
+        const attendanceRate = document.getElementById('amAttendanceRate');
+
+        if (presentCount) presentCount.textContent = String(present);
+        if (absentCount) absentCount.textContent = String(absent);
+        if (attendanceRate) attendanceRate.textContent = `${rate}%`;
+    }
+
+    function currentLocalDateTimeValue() {
+        const now = new Date();
+        const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        return localTime.toISOString().slice(0, 16);
+    }
+
+    function updateRosterRow(memberId, status, checkIn, remark) {
+        const row = Array.from(document.querySelectorAll('.am-roster-row'))
+            .find(candidate => candidate.dataset.memberId === String(memberId));
+        if (!row) return;
+
+        row.dataset.status = status;
+
+        const statusCell = row.cells[2];
+        if (statusCell) {
+            const badge = document.createElement('span');
+            const normalizedStatus = status.toLowerCase();
+
+            badge.className = `am-status-badge ${normalizedStatus}`;
+            badge.textContent = normalizedStatus === 'present' ? '● Present' : '✗ Absent';
+            statusCell.replaceChildren(badge);
+        }
+
+        const checkInCell = row.cells[3];
+        if (checkInCell) {
+            const normalizedCheckIn = status === 'Present' ? checkIn : '';
+            checkInCell.textContent = normalizedCheckIn
+                ? normalizedCheckIn.split('T')[1]?.slice(0, 5) || normalizedCheckIn.slice(0, 5)
+                : '—';
+        }
+
+        const remarkCell = row.cells[4];
+        if (remarkCell) remarkCell.textContent = remark.trim() || '—';
+
+        const recordedByCell = row.cells[5];
+        if (recordedByCell) {
+            const user = window.currentAttendanceUser || {};
+            const recorderName = document.createTextNode(user.name || 'Current user');
+            recordedByCell.replaceChildren(recorderName);
+
+            if (user.role) {
+                const role = document.createElement('small');
+                role.className = 'am-recorder-role';
+                role.textContent = ` (${user.role})`;
+                recordedByCell.appendChild(role);
+            }
+
+            const timestamp = document.createElement('div');
+            timestamp.className = 'am-recorded-at';
+            timestamp.textContent = 'Updated just now';
+            recordedByCell.appendChild(timestamp);
+        }
+
+        const updateButton = row.querySelector('.am-btn-quick-update');
+        if (updateButton) {
+            updateButton.dataset.currentStatus = status;
+            updateButton.dataset.currentCheckin = status === 'Present' ? checkIn : '';
+            updateButton.dataset.currentRemark = remark;
+        }
+
+        updateDetailSummary();
+        filterRosterRows();
+    }
 
     if (quickSave) {
         quickSave.addEventListener('click', async function () {
@@ -355,14 +497,17 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    const effectiveCheckIn = status === 'Present'
+                        ? (checkIn || currentLocalDateTimeValue())
+                        : '';
+                    updateRosterRow(memberId, status, effectiveCheckIn, remark);
                     showToast('Member attendance updated successfully.', 'success');
                     closeQuickModal();
-                    setTimeout(() => window.location.reload(), 600);
                 } else {
-                    alert(data.error || 'Failed to update attendance.');
+                    showToast(data.error || 'Failed to update attendance.', 'error');
                 }
             } catch (err) {
-                alert('Network error. Please try again.');
+                showToast('Network error. Please try again.', 'error');
             } finally {
                 quickSave.disabled = false;
                 quickSave.textContent = 'Save Update';
