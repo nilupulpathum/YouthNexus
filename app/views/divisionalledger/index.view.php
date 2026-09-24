@@ -45,7 +45,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalledger/export">
       <?= yn_icon('download') ?> Export
     </a>
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
   </div>
 
   <section class="dw-filter-panel" id="ledger-filters" hidden>
@@ -154,7 +154,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <td>
                   <div class="dw-row-actions">
                     <?php if ($hasReceipt): ?>
-                      <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/view/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?></a>
+                      <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?> View Receipt</a>
                     <?php endif; ?>
                     <?php if ($entry->status === 'Approved' && (int) $entry->has_pending_void !== 1): ?>
                       <button class="dw-button dw-button--ghost" type="button"
