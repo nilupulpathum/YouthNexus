@@ -156,7 +156,7 @@
                         'Proposer: ' + escapeHtml(app.proposer_name || '—') +
                     '</div>' +
                     '<div class="cr-card-footer">' +
-                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                        '<button type="button" class="cr-btn cr-review-btn db-view-button" data-id="' + escapeHtml(app.application_id) + '">View Details</button>' +
                     '</div>' +
                 '</div>';
         });
@@ -200,7 +200,7 @@
                         'Proposer: ' + escapeHtml(app.proposer_name || '—') +
                     '</div>' +
                     '<div class="cr-card-footer">' +
-                        '<button type="button" class="cr-btn cr-review-btn" data-id="' + escapeHtml(app.application_id) + '">View</button>' +
+                        '<button type="button" class="cr-btn cr-review-btn db-view-button" data-id="' + escapeHtml(app.application_id) + '">View Details</button>' +
                     '</div>' +
                 '</div>';
         });
@@ -273,10 +273,12 @@
             fetch(ROOT_URL + '/clubregistrationapproval/approved', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
+                    if (!statApproved.classList.contains('is-active')) return;
                     renderApprovedGrid(data.applications || []);
                     filterCards();
                 })
                 .catch(function () {
+                    if (!statApproved.classList.contains('is-active')) return;
                     grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved applications.</p>';
                 });
         });
@@ -295,10 +297,12 @@
             fetch(ROOT_URL + '/clubregistrationapproval/rejected', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
+                    if (!statRejected.classList.contains('is-active')) return;
                     renderRejectedGrid(data.applications || []);
                     filterCards();
                 })
                 .catch(function () {
+                    if (!statRejected.classList.contains('is-active')) return;
                     grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected applications.</p>';
                 });
         });
@@ -591,15 +595,15 @@
             '<div class="cr-doc-dashed-box">' +
                 iconSvg +
                 '<span class="cr-doc-filename-large">' + escapeHtml(fileName) + '</span>' +
-                '<a href="' + escapeHtml(ROOT_URL + path) + '" target="_blank" class="cr-btn cr-btn-view-doc">VIEW DOCUMENT</a>' +
+                '<a href="' + escapeHtml(ROOT_URL + path) + '" target="_blank" class="cr-btn cr-btn-view-doc db-view-button">VIEW DOCUMENT</a>' +
             '</div>' +
         '</div>';
     }
 
     function renderNicCopyCard(roleLabel, path, nomineeData) {
         var btnHtml = path
-            ? '<button type="button" class="cr-btn cr-btn-view-nic btn-open-nic" data-role="' + escapeHtml(roleLabel) + '" data-path="' + escapeHtml(path) + '">VIEW NIC</button>'
-            : '<button type="button" class="cr-btn cr-btn-view-nic disabled" disabled>VIEW NIC</button>';
+            ? '<button type="button" class="cr-btn cr-btn-view-nic db-view-button btn-open-nic" data-role="' + escapeHtml(roleLabel) + '" data-path="' + escapeHtml(path) + '">VIEW NIC</button>'
+            : '<button type="button" class="cr-btn cr-btn-view-nic db-view-button disabled" disabled>VIEW NIC</button>';
 
         return '<div class="cr-nic-copy-card">' +
             '<div class="cr-nic-placeholder-box">' +
@@ -945,7 +949,7 @@
                                     }
                                     photosStackedHtml += '</div>';
                                     photosStackedHtml += '<div class="cr-photos-count-label">' + photosCount + ' Photos Uploaded</div>';
-                                    photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos" id="btnViewAllActivityPhotos">VIEW ALL PHOTOS</button>';
+                                    photosStackedHtml += '<button type="button" class="cr-btn cr-btn-view-photos db-view-button" id="btnViewAllActivityPhotos">VIEW ALL PHOTOS</button>';
                                 } else {
                                     photosStackedHtml = '<div class="cr-photos-placeholder-text">No activity photos uploaded</div>';
                                 }
@@ -1037,8 +1041,8 @@
                         '</div>' +
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
-                                '<button type="button" class="cr-btn-cancel-link" id="crCancelReviewBtn">Cancel Review</button>' +
-                                '<button type="button" class="cr-btn cr-btn-submit-decision" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
+                                '<button type="button" class="cr-btn-cancel-link db-close-action" id="crCancelReviewBtn">Cancel Review</button>' +
+                                '<button type="button" class="cr-btn cr-btn-submit-decision db-confirm-action" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1071,7 +1075,7 @@
                         '</div>' : '') +
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
-                                '<button type="button" class="cr-btn cr-btn-primary" id="crCloseReadonlyBtn" style="padding: 10px 24px;">Close</button>' +
+                                '<button type="button" class="cr-btn db-close-action" id="crCloseReadonlyBtn">Close</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1160,7 +1164,7 @@
                 '</div>' +
 
                 '<div class="cr-success-actions">' +
-                    '<button type="button" class="cr-btn cr-btn-success-secondary" id="crViewRecordBtn">View Club Record</button>' +
+                    '<button type="button" class="cr-btn cr-btn-success-secondary db-view-button" id="crViewRecordBtn">View Club Record</button>' +
                     '<button type="button" class="cr-btn cr-btn-success-primary" id="crDoneSuccessBtn">Done</button>' +
                 '</div>' +
             '</div>';
@@ -1286,5 +1290,8 @@
                 if (submitBtn) submitBtn.disabled = false;
             });
     }
+
+    // Approved applications are the coordinator's default landing view.
+    if (statApproved) statApproved.click();
 
 })();

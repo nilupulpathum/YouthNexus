@@ -45,7 +45,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-void-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-void-title">Pending Void Requests</h2><p>Club ledger entries requiring a decision</p></div>
-        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalvoidapproval">Review all</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalvoidapproval">Review All</a>
       </header>
       <?php if ($pendingVoidRequests): ?>
         <div class="dw-table-wrap">
@@ -72,7 +72,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-allocation-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-allocation-title">Recent Allocations</h2><p>Latest fund activity for clubs in this division</p></div>
-        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalallocations">View all</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalallocations">View All</a>
       </header>
       <?php if ($recentAllocations): ?>
         <div class="dtd-list">
@@ -92,7 +92,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-health-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-health-title">Club Health Overview</h2><p>Lowest current health scores are shown first</p></div>
-        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalclubhealth">View details</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalclubhealth">View Details</a>
       </header>
       <?php if ($clubHealth): ?>
         <div class="dtd-health-list">
@@ -116,7 +116,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-audit-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-audit-title">Audit Reminders</h2><p>Clubs with audits or findings that need attention</p></div>
-        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalaudits">Open audits</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits">Open Audits</a>
       </header>
       <?php if ($auditReminders): ?>
         <div class="dtd-reminders">

@@ -21,7 +21,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php if ($flash): ?><div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div><?php endif; ?>
 
   <div class="dr-library-actions">
-    <button class="dw-button dw-button--primary" type="button" data-modal-open="generate-report">Generate Report</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="generate-report">Generate Report</button>
   </div>
 
   <div class="dw-toolbar" aria-label="Report tools">
@@ -68,7 +68,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span>Generated <?= $e(date('d M Y', strtotime($report->generated_at))) ?></span>
             <div class="dr-report-card__actions">
               <?php if ($report->format === 'PDF'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as PDF"><?= yn_icon('download') ?> PDF</a><?php elseif ($report->format === 'CSV'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as CSV"><?= yn_icon('download') ?> CSV</a><?php endif; ?>
-              <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View</a>
+              <a class="dw-button dw-button--secondary db-view-button" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View Details</a>
             </div>
           </footer>
         </article>
