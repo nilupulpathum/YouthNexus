@@ -24,9 +24,9 @@ $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 
 $summaryCards = [
-    ['value' => (string) ($eventStats['scheduled'] ?? 0), 'label' => 'Submitted events', 'note' => 'in the zone programme', 'icon' => 'calendar', 'tone' => 'blue'],
-    ['value' => 'LKR ' . number_format((float) ($eventStats['committed'] ?? 0), 0), 'label' => 'Budget committed', 'note' => 'across submitted events', 'icon' => 'file', 'tone' => 'amber'],
-    ['value' => 'LKR ' . number_format((float) ($eventStats['available'] ?? 0), 0), 'label' => 'Available event budget', 'note' => 'zonal balance', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($eventStats['scheduled'] ?? 0), 'label' => 'Pending approval', 'note' => 'awaiting your decision', 'icon' => 'calendar', 'tone' => 'amber'],
+    ['value' => (string) ($eventStats['approved'] ?? 0), 'label' => 'Approved', 'note' => 'in the zone programme', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($eventStats['total'] ?? 0), 'label' => 'Total events', 'note' => 'this zone', 'icon' => 'file', 'tone' => 'blue'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -41,10 +41,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <?php endforeach; ?>
     </div>
 
-    <?php if ($flash): ?>
-        <div class="dw-alert dw-alert--warning" role="status">
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'warning' ?>" role="status">
             <span aria-hidden="true"><?= yn_icon('info') ?></span>
-            <p><?= $e($flash) ?></p>
+            <p><?= $e($flash['message'] ?? '') ?></p>
         </div>
     <?php endif; ?>
 
@@ -95,7 +95,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <h3 class="dw-record-card__title"><?= $e($event['title'] ?? '') ?></h3>
                         <div class="dw-record-card__details">
                             <span><?= $e($event['date'] ?? '') ?>, <?= $e($event['location'] ?? '') ?></span>
-                            <span><?= $e($event['type'] ?? '') ?> · LKR <?= number_format($event['budget'] ?? 0, 2) ?> · <?= $e($event['audience'] ?? '') ?></span>
+                            <span><?= $e($event['type'] ?? '') ?> · <?= $e($event['audience'] ?? '') ?></span>
                         </div>
                         <?php if (!empty($event['coordinator_remark'])): ?>
                             <div class="dw-record-card__footer">
