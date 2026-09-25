@@ -19,7 +19,7 @@ $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/
 
 $summaryCards = [
     ['value' => (string) ($pendingCount ?? 0), 'label' => 'Pending review', 'note' => 'Awaiting zonal decision', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => '3 divisions', 'label' => 'Queue scope', 'note' => 'Gampaha Zone', 'icon' => 'users', 'tone' => 'blue'],
+    ['value' => (string) ($divisionCount ?? 0) . ' divisions', 'label' => 'Queue scope', 'note' => 'Divisions in this zone', 'icon' => 'users', 'tone' => 'blue'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -28,7 +28,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-labelledby="zonal-voids-heading">
     <h1 id="zonal-voids-heading" class="visually-hidden">Division void requests</h1>
 
-    <?php if ($flash): ?><div class="dw-alert dw-alert--success" role="status"><?= $e($flash) ?></div><?php endif; ?>
+    <?php if (!empty($flash)): ?><div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status"><?= $e($flash['message'] ?? '') ?></div><?php endif; ?>
 
     <div class="dw-summary-grid dw-summary-grid--two" aria-label="Void queue summary">
         <?php foreach ($summaryCards as $card): ?>
