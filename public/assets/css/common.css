@@ -205,6 +205,8 @@ textarea:focus {
   z-index: 9999;
 }
 
+.popup-overlay[hidden], .error-overlay[hidden] { display: none; }
+
 .popup-box, .error-box {
   background: #ffffff;
   width: 90%;
