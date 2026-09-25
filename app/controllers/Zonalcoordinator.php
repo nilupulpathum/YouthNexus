@@ -297,30 +297,64 @@ class Zonalcoordinator extends Controller {
     }
 
     public function events() {
-        $this->requireZonalCoordinator(); $state = $this->programmeState();
-        $data = $this->shell('Approve Zonal Events — YouthNexus Pulse', 'Approve Zonal Events', 'Review events submitted by the Zonal Secretary for Gampaha Zone.', 'zonalcoordinator/events');
-        $data += ['events' => array_reverse($state['events']), 'eventStats' => ['scheduled' => count($state['events']), 'committed' => $state['spent'], 'available' => $state['budget']], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $_SESSION['zonal_coordinator_flash'] ?? ''];
-        unset($_SESSION['zonal_coordinator_flash']); $this->view('zonalcoordinator/events', $data);
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $statusMap = [
+            'PendingApproval' => 'Pending approval',
+            'Approved' => 'Approved',
+            'Completed' => 'Completed',
+            'Rejected' => 'Changes requested',
+        ];
+        $events = [];
+        $pending = 0;
+        $approved = 0;
+        foreach ($this->model('EventModel')->getZonalEvents($zonalId) as $ev) {
+            if ($ev->status === 'PendingApproval') {
+                $pending++;
+            } elseif ($ev->status === 'Approved') {
+                $approved++;
+            }
+            $start = strtotime((string) $ev->start_datetime);
+            $events[] = [
+                'id' => (int) $ev->event_id,
+                'title' => $ev->title ?? '',
+                'type' => $ev->event_type ?? '',
+                'date' => $start ? date('M d, Y', $start) : '—',
+                'time' => $start ? date('g:i A', $start) : '',
+                'location' => $ev->location ?? '',
+                'audience' => $ev->target_divisions ?: 'All divisions',
+                'status' => $statusMap[$ev->status] ?? $ev->status,
+                'status_key' => strtolower($ev->status ?? ''),
+                'coordinator_remark' => $ev->rejection_remarks ?? '',
+            ];
+        }
+        $data = $this->shell('Approve Zonal Events — YouthNexus Pulse', 'Approve Zonal Events', 'Review events submitted by the Zonal Secretary.', 'zonalcoordinator/events');
+        $data += ['events' => $events, 'eventStats' => ['scheduled' => $pending, 'approved' => $approved, 'total' => count($events)], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $this->pullFlash()];
+        $this->view('zonalcoordinator/events', $data);
     }
 
-    private function decideEvent($status) {
+    private function decideEvent($decision) {
         $this->requireZonalCoordinator();
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !is_string($_POST['csrf_token'] ?? null) || !hash_equals($this->coordinatorCsrf(), $_POST['csrf_token'])) {
-            $_SESSION['zonal_coordinator_flash'] = 'Refresh the event queue before submitting a decision.'; $this->redirect('zonalcoordinator/events');
+            $this->setFlash('error', 'Refresh the event queue before submitting a decision.'); $this->redirect('zonalcoordinator/events');
         }
-        $id = trim((string)($_POST['event_id'] ?? '')); $remark = trim((string)($_POST['remark'] ?? '')); $state = $this->programmeState(); $found = null;
-        foreach ($state['events'] as $index => $event) if ($event['id'] === $id) { $found = $index; break; }
-        if ($found === null || $state['events'][$found]['status'] !== 'Pending approval' || $remark === '' || mb_strlen($remark) > 1000) {
-            $_SESSION['zonal_coordinator_flash'] = 'A pending event and decision remark are required.';
-        } else {
-            $state['events'][$found]['status'] = $status; $state['events'][$found]['coordinator_remark'] = $remark; $_SESSION['zonal_secretary_demo']['gampaha'] = $state;
-            $_SESSION['zonal_coordinator_flash'] = $status === 'Approved' ? 'Event approved and the Zonal Secretary has been notified.' : 'Event returned to the Zonal Secretary with the requested changes.';
+        $id = (int) ($_POST['event_id'] ?? 0); $remark = trim((string)($_POST['remark'] ?? ''));
+        if ($id < 1 || $remark === '' || mb_strlen($remark) > 1000) {
+            $this->setFlash('error', 'A pending event and decision remark are required.');
+            $this->redirect('zonalcoordinator/events');
         }
+        $rows = $this->model('EventModel')->decideZonalEvent((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $decision, $remark);
+        if ($rows < 1) {
+            $this->setFlash('error', 'Event not found in your zone.');
+            $this->redirect('zonalcoordinator/events');
+        }
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], $decision === 'approve' ? 'APPROVE_EVENT' : 'REJECT_EVENT', 'Event', $id, $remark);
+        $this->setFlash('success', $decision === 'approve' ? 'Event approved and the Zonal Secretary has been notified.' : 'Event returned to the Zonal Secretary with the requested changes.');
         $this->redirect('zonalcoordinator/events');
     }
 
-    public function approveevent() { $this->decideEvent('Approved'); }
-    public function returnevent() { $this->decideEvent('Changes requested'); }
+    public function approveevent() { $this->decideEvent('approve'); }
+    public function returnevent() { $this->decideEvent('request-changes'); }
 
     public function reports() {
         $this->requireZonalCoordinator();
