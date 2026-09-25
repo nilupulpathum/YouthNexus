@@ -215,6 +215,49 @@ class President extends Controller {
         $this->redirect('club/members');
     }
 
+    /**
+     * Decide a pending club event (D2: real DB write scoped to the club).
+     */
+    public function eventDecision() {
+        $this->requirePresident();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/events');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/events');
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        $decision = $_POST['decision'] ?? '';
+        $remarks = trim($_POST['remarks'] ?? '');
+        if ($eventId < 1 || !in_array($decision, ['approve', 'request-changes'], true)) {
+            $this->setFlash('error', 'Invalid decision request.');
+            $this->redirect('club/events');
+        }
+        if ($decision === 'request-changes' && $remarks === '') {
+            $this->setFlash('error', 'Provide the reason for this decision.');
+            $this->redirect('club/events');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $rows = $this->model('EventModel')->decideClubEvent($clubId, $eventId, (int) $_SESSION['user_id'], $decision, $remarks);
+        if ($rows < 1) {
+            $this->setFlash('error', 'Event not found in your club.');
+            $this->redirect('club/events');
+        }
+        $audit = $this->model('AuditLogModel');
+        if ($decision === 'approve') {
+            $audit->log($_SESSION['user_id'], 'APPROVE_EVENT', 'Event', $eventId, 'Approved club event');
+            $this->setFlash('success', 'Event approved and published to the club calendar.');
+        } else {
+            $audit->log($_SESSION['user_id'], 'REJECT_EVENT', 'Event', $eventId, $remarks);
+            $this->setFlash('success', 'Changes requested - the secretary has been notified.');
+        }
+        $this->redirect('club/events');
+    }
+
     private function verifyCsrf(): bool {
         $token = (string) ($_POST['csrf_token'] ?? '');
         return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);

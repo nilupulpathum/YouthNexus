@@ -236,7 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const remarks = document.getElementById('ed-remarks');
         const err = document.getElementById('ed-error');
         const impact = document.getElementById('ed-impact');
-        const confirmBtn = document.getElementById('ed-confirm');
+        const eventIdInput = document.getElementById('ed-event-id');
+        const decisionForm = document.getElementById('event-decision-form');
         let target = null;
 
         const refreshImpact = () => {
@@ -256,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         list.querySelectorAll('[data-action="review"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 target = btn.closest('[data-event-card]');
+                if (eventIdInput) eventIdInput.value = target.getAttribute('data-id') || '';
                 titleEl.textContent = target.getAttribute('data-title') || 'Review event';
                 metaEl.textContent = target.getAttribute('data-meta') || '';
                 const by = target.getAttribute('data-submitter') || '';
@@ -270,29 +272,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        confirmBtn.addEventListener('click', () => {
-            const changes = resultSel.value === 'request-changes';
-            if (changes && !remarks.value.trim()) {
-                err.textContent = 'Please provide remarks explaining the requested changes.';
-                err.hidden = false;
-                remarks.focus();
-                return;
-            }
-            if (target) {
-                const pill = target.querySelector('.dw-status');
-                const btn = target.querySelector('[data-action="review"]');
-                if (!changes) {
-                    target.setAttribute('data-status', 'approved');
-                    if (pill) { pill.textContent = 'Approved'; pill.className = 'dw-status dw-status--approved'; }
-                    if (btn) btn.remove();
-                    showToast('Event approved — published to the club calendar (demo).');
-                } else {
-                    showToast('Change request sent to the secretary (demo).');
+        if (decisionForm) {
+            decisionForm.addEventListener('submit', (e) => {
+                if (resultSel.value === 'request-changes' && !remarks.value.trim()) {
+                    e.preventDefault();
+                    err.textContent = 'Please provide remarks explaining the requested changes.';
+                    err.hidden = false;
+                    remarks.focus();
                 }
-            }
-            close();
-            applyFilters();
-        });
+            });
+        }
     }
 
     // Secretary create-event modal (per owner mock: error banner + red
@@ -329,146 +318,54 @@ document.addEventListener('DOMContentLoaded', () => {
         timeInput.addEventListener('input', clearDateError);
 
         form.addEventListener('submit', (e) => {
-            e.preventDefault();
             const title = document.getElementById('ev-title').value.trim();
             const dateVal = dateInput.value;
             const timeVal = timeInput.value;
             const location = document.getElementById('ev-location').value.trim();
             const type = document.getElementById('ev-type').value;
-            const budgetVal = document.getElementById('ev-budget').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!title || !dateVal || !timeVal || !location || !type || !budgetVal) return fail('All fields are required.');
+            if (!title || !dateVal || !timeVal || !location || !type) return fail('All fields are required.');
             const dt = new Date(dateVal + 'T' + timeVal);
             if (isNaN(dt.getTime())) return fail('Enter a valid date and time.');
             if (dt <= new Date()) {
+                e.preventDefault();
                 banner.hidden = false;
                 dateErr.hidden = false;
                 dateInput.classList.add('is-invalid');
                 dateInput.focus();
-                return;
             }
-            const budgetNum = Number(budgetVal);
-            if (!isFinite(budgetNum) || budgetNum <= 0) return fail('Budget must be a positive amount.');
-            const nice = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
-                dt.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-            const card = document.createElement('article');
-            card.className = 'dw-record-card';
-            card.setAttribute('data-event-card', '');
-            card.setAttribute('data-search', (title + ' ' + location).toLowerCase());
-            card.setAttribute('data-status', 'pending');
-            card.setAttribute('data-type', type.toLowerCase());
-            card.setAttribute('data-title', title);
-            const budgetText = 'Rs. ' + Math.round(budgetNum).toLocaleString('en-US');
-            const header = document.createElement('div');
-            header.className = 'dw-record-card__header';
-            const identity = document.createElement('div');
-            identity.className = 'dw-record-card__identity';
-            const icon = document.createElement('span');
-            icon.className = 'dw-record-card__icon';
-            icon.setAttribute('aria-hidden', 'true');
-            const firstIcon = list.querySelector('.dw-record-card__icon');
-            if (firstIcon) icon.innerHTML = firstIcon.innerHTML;
-            const idMeta = document.createElement('div');
-            idMeta.className = 'dw-record-card__meta';
-            const idSpan = document.createElement('span');
-            idSpan.textContent = type;
-            idMeta.appendChild(idSpan);
-            identity.appendChild(icon);
-            identity.appendChild(idMeta);
-            const pill = document.createElement('span');
-            pill.className = 'dw-status dw-status--pending';
-            pill.textContent = 'Pending Approval';
-            header.appendChild(identity);
-            header.appendChild(pill);
-            const cardTitle = document.createElement('h3');
-            cardTitle.className = 'dw-record-card__title';
-            cardTitle.textContent = title;
-            const details = document.createElement('div');
-            details.className = 'dw-record-card__details';
-            const line = document.createElement('span');
-            line.textContent = nice + ' · ' + location;
-            const meta = document.createElement('span');
-            meta.textContent = type + ' · Budget ' + budgetText + ' · Submitted by you';
-            details.appendChild(line);
-            details.appendChild(meta);
-            card.appendChild(header);
-            card.appendChild(cardTitle);
-            card.appendChild(details);
-            list.prepend(card);
-            close();
-            applyFilters();
-            showToast(title + ' submitted for approval (demo — persists in C13 backend).');
         });
     }
-
-    // Mark-complete + evidence modal (secretary records completion evidence).
+    // Mark-complete + evidence modal (secretary) — fills the real POST form.
     const cpModal = document.getElementById('club-complete-modal');
     if (cpModal && list) {
         const metaEl = document.getElementById('cp-meta');
         const sheet = document.getElementById('cp-sheet');
-        const photos = document.getElementById('cp-photos');
-        const filesNote = document.getElementById('cp-files');
         const err = document.getElementById('cp-error');
-        const confirmBtn = document.getElementById('cp-confirm');
-        let target = null;
-
-        const closeCp = () => { cpModal.hidden = true; cpModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        cpModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', closeCp));
-        cpModal.addEventListener('click', (e) => { if (e.target === cpModal || e.target.classList.contains('dw-modal__backdrop')) closeCp(); });
-
-        const refreshFiles = () => {
-            const names = [];
-            if (sheet.files.length) names.push('Sheet: ' + sheet.files[0].name);
-            if (photos.files.length) names.push(photos.files.length + ' photo' + (photos.files.length === 1 ? '' : 's'));
-            if (names.length) {
-                filesNote.textContent = names.join(' · ');
-                filesNote.hidden = false;
-            } else {
-                filesNote.hidden = true;
-            }
-        };
-        sheet.addEventListener('change', refreshFiles);
-        photos.addEventListener('change', refreshFiles);
+        const eventIdInput = document.getElementById('cp-event-id');
+        const completeForm = document.getElementById('club-complete-form');
 
         list.querySelectorAll('[data-action="complete"]').forEach(btn => {
             btn.addEventListener('click', () => {
-                target = btn.closest('[data-event-card]');
+                const target = btn.closest('[data-event-card]');
+                if (eventIdInput) eventIdInput.value = target.getAttribute('data-id') || '';
                 metaEl.textContent = target.getAttribute('data-title') || '';
                 sheet.value = '';
-                photos.value = '';
-                filesNote.hidden = true;
                 err.hidden = true;
-                cpModal.hidden = false;
-                cpModal.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
             });
         });
 
-        confirmBtn.addEventListener('click', () => {
-            if (!sheet.files.length) {
-                err.textContent = 'Attach the attendance sheet — evidence is required to complete an event.';
-                err.hidden = false;
-                sheet.focus();
-                return;
-            }
-            const who = target ? (target.getAttribute('data-title') || 'Event') : 'Event';
-            if (target) {
-                target.setAttribute('data-status', 'completed');
-                const pill = target.querySelector('.dw-status');
-                if (pill) { pill.textContent = 'Completed'; pill.className = 'dw-status dw-status--completed'; }
-                const btn = target.querySelector('[data-action="complete"]');
-                if (btn) btn.remove();
-                const tiles = document.querySelectorAll('.dw-summary-grid .dw-summary-card__value');
-                if (tiles.length >= 3) {
-                    tiles[1].textContent = String(Math.max(0, (parseInt(tiles[1].textContent, 10) || 0) - 1));
-                    tiles[2].textContent = String((parseInt(tiles[2].textContent, 10) || 0) + 1);
+        if (completeForm) {
+            completeForm.addEventListener('submit', (e) => {
+                if (!sheet.files.length) {
+                    e.preventDefault();
+                    err.textContent = 'Attach the attendance sheet — evidence is required to complete an event.';
+                    err.hidden = false;
+                    sheet.focus();
                 }
-            }
-            closeCp();
-            applyFilters();
-            showToast(who + ' marked complete — evidence saved (demo).');
-        });
+            });
+        }
     }
 });
 

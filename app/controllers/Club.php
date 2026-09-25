@@ -210,28 +210,142 @@ class Club extends Controller {
      * secretary create-event form (title, date/time, location, type,
      * budget + future-date validation). Presentation-only, no DB writes.
      */
+    /**
+     * Club events (D2: real DB data scoped to the member's club).
+     */
     public function events() {
         $this->requireRoles(['president', 'secretary']);
 
-        $clubEvents = [
-            ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026 · 9:00 AM', 'datetime' => '2026-09-15T09:00', 'location' => 'Gampaha Town Hall', 'type' => 'Workshop', 'budget' => 'Rs. 45,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Pending Approval', 'status_key' => 'pending'],
-            ['id' => 2, 'title' => 'Community Green Environment Cleanup',    'date' => 'Sep 28, 2026 · 8:00 AM', 'datetime' => '2026-09-28T08:00', 'location' => 'Gampaha Central Park', 'type' => 'Community Service', 'budget' => 'Rs. 12,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Approved',         'status_key' => 'approved'],
-            ['id' => 3, 'title' => 'Club Monthly Planning Session',          'date' => 'Oct 5, 2026 · 5:00 PM',  'datetime' => '2026-10-05T17:00', 'location' => 'Club Centre, Gampaha', 'type' => 'Meeting', 'budget' => 'Rs. 5,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Approved',         'status_key' => 'approved'],
-            ['id' => 4, 'title' => 'Avurudu Celebration & Fundraiser',       'date' => 'Apr 12, 2026 · 10:00 AM', 'datetime' => '2026-04-12T10:00', 'location' => 'Club Centre, Gampaha', 'type' => 'Fundraiser', 'budget' => 'Rs. 30,000', 'submitted_by' => 'Amal Perera (Secretary)', 'status' => 'Completed',        'status_key' => 'completed'],
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $eventModel = $this->model('EventModel');
+
+        $statusMap = [
+            'PendingApproval' => ['Pending Approval', 'pending'],
+            'Approved'        => ['Approved', 'approved'],
+            'Completed'       => ['Completed', 'completed'],
+            'Rejected'        => ['Changes Requested', 'rejected'],
+            'Draft'           => ['Draft', 'draft'],
         ];
+        $clubEvents = [];
+        foreach ($eventModel->getClubEvents($clubId) as $ev) {
+            [$label, $key] = $statusMap[$ev->status] ?? [$ev->status, 'pending'];
+            $start = strtotime((string) $ev->start_datetime);
+            $clubEvents[] = [
+                'id'           => (int) $ev->event_id,
+                'title'        => $ev->title ?? '',
+                'date'         => $start ? date('M d, Y g:i A', $start) : '—',
+                'location'     => $ev->location ?? '—',
+                'type'         => $ev->event_type ?? '—',
+                'submitted_by' => trim(($ev->creator_name ?? '') . ' (' . ($ev->creator_role ?? '') . ')'),
+                'status'       => $label,
+                'status_key'   => $key,
+            ];
+        }
+
+        $counts = $eventModel->countClubEventsByStatus($clubId);
 
         $data = $this->shell(
-            'Club Events — YouthNexus Pulse',
+            'Club Events - YouthNexus Pulse',
             'Club Events',
             'Events organised by Gampaha Youth Development Club.',
             'club/events'
         );
-        $data['stats'] = ['pending' => 1, 'approved' => 2, 'completed' => 1];
+        $data['stats'] = [
+            'pending'   => $counts['PendingApproval'],
+            'approved'  => $counts['Approved'],
+            'completed' => $counts['Completed'],
+        ];
         $data['clubEvents'] = $clubEvents;
         $data['can_approve'] = ($this->roleKey() === 'president');
         $data['can_create'] = ($this->roleKey() === 'secretary');
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('club/events', $data);
+    }
+
+    /**
+     * Secretary creates an event (enters as PendingApproval).
+     */
+    public function createEvent() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/events');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/events');
+        }
+
+        $title    = trim($_POST['title'] ?? '');
+        $date     = trim($_POST['date'] ?? '');
+        $time     = trim($_POST['time'] ?? '');
+        $location = trim($_POST['location'] ?? '');
+        $type     = trim($_POST['type'] ?? '');
+        if ($title === '' || $date === '' || $time === '' || $location === '' || $type === '') {
+            $this->setFlash('error', 'All fields are required.');
+            $this->redirect('club/events');
+        }
+
+        $start = strtotime($date . ' ' . $time);
+        if (!$start || $start <= time()) {
+            $this->setFlash('error', 'Event date must be in the future.');
+            $this->redirect('club/events');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $club = $this->model('ClubModel')->findById($clubId);
+        $eventId = $this->model('EventModel')->createClubEvent(
+            $clubId, (int) ($club->division_id ?? 0), (int) $_SESSION['user_id'],
+            substr($title, 0, 150), $type, $location,
+            date('Y-m-d H:i:s', $start), date('Y-m-d H:i:s', $start + 7200)
+        );
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'CREATE_EVENT', 'Event', $eventId, "Created '{$title}'");
+        $this->setFlash('success', 'Event submitted for approval.');
+        $this->redirect('club/events');
+    }
+
+    /**
+     * Secretary marks an approved event completed with attendance evidence.
+     */
+    public function completeEvent() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/events');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/events');
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        if ($eventId < 1) {
+            $this->setFlash('error', 'Invalid event.');
+            $this->redirect('club/events');
+        }
+
+        try {
+            $evidenceUrl = EventEvidenceStorage::store($_FILES['sheet'] ?? null);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/events');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $rows = $this->model('EventModel')->completeClubEvent($clubId, $eventId);
+        if ($rows < 1) {
+            $this->setFlash('error', 'Event not found in your club.');
+            $this->redirect('club/events');
+        }
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'COMPLETE_EVENT', 'Event', $eventId, "Completed with evidence {$evidenceUrl}");
+        $this->setFlash('success', 'Event marked complete - evidence saved.');
+        $this->redirect('club/events');
     }
 
     /**
