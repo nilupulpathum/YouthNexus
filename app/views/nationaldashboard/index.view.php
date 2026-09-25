@@ -79,7 +79,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="nd-panel nd-panel-left">
                     <div class="nd-panel-header">
                         <h3>Club Health Score Distribution</h3>
-                        <a href="<?= ROOT ?>/clubs">View all &rsaquo;</a>
+                        <a href="<?= ROOT ?>/clubhealth">View all &rsaquo;</a>
                     </div>
                     <div class="nd-bar-chart">
                         <?php

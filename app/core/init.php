@@ -1,5 +1,9 @@
 <?php
 
+// Load local credential overrides (never committed to git)
+if (file_exists(__DIR__ . '/config.local.php')) {
+    require __DIR__ . '/config.local.php';
+}
 require 'config.php';
 require 'functions.php';
 require 'Database.php';

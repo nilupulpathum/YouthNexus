@@ -1,0 +1,270 @@
+/* NYSC Administrator - Club Health Extension Styles */
+
+.nysc-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: var(--dw-radius-lg, 12px);
+  border: 1px solid var(--dw-border, #e2e8f0);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.nysc-filter-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 1200px) {
+  .nysc-filter-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .nysc-filter-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nysc-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nysc-filter-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dw-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.nysc-filter-group select,
+.nysc-filter-group input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--dw-border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--dw-text, #1e293b);
+  background-color: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nysc-filter-group select:focus,
+.nysc-filter-group input:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.nysc-filter-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.nysc-filter-buttons button {
+  height: 38px;
+  white-space: nowrap;
+}
+
+/* Card Red Flag Ribbon / Badge */
+.dch-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.dch-card__flag-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(185, 28, 28, 0.15);
+  animation: pulse-flag 2.5s infinite;
+}
+
+@keyframes pulse-flag {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.dch-card__zone-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* General Details Highlight Grid in Details Modal */
+.nysc-general-details {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+@media (max-width: 992px) {
+  .nysc-general-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .nysc-general-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nysc-detail-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.nysc-detail-metric span {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nysc-detail-metric strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.nysc-detail-metric--fund strong {
+  color: #047857;
+}
+
+.nysc-detail-metric--warn strong {
+  color: #b91c1c;
+}
+
+/* Disbandment Governance Action Bar */
+.nysc-disband-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.nysc-disband-actions__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.nysc-disband-actions__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+.nysc-disband-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nysc-btn-warning {
+  background: #d97706;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+}
+
+.nysc-btn-warning:hover {
+  background: #b45309;
+}
+
+.nysc-btn-funds {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+}
+
+.nysc-btn-funds:hover {
+  background: #047857;
+}
+
+.nysc-btn-disband {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+}
+
+.nysc-btn-disband:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.nysc-btn-disband:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Disband confirmation modal alert box */
+.nysc-confirm-box {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fff1f2;
+  border-left: 4px solid #e11d48;
+  color: #881337;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.nysc-confirm-box strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #9f1239;
+}
+
+.nysc-confirm-box ul {
+  margin: 8px 0 0 16px;
+  padding: 0;
+}
+
+.nysc-confirm-box li {
+  margin-bottom: 4px;
+}

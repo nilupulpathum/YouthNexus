@@ -430,6 +430,7 @@ class Auth extends Controller {
             $mail->send();
             return true;
         } catch (Exception $e) {
+            error_log('[YouthNexus] sendVerificationEmail SMTP error: ' . $mail->ErrorInfo);
             return false;
         }
     }
@@ -465,6 +466,7 @@ class Auth extends Controller {
             $mail->send();
             return true;
         } catch (Exception $e) {
+            error_log('[YouthNexus] sendResetEmail SMTP error: ' . $mail->ErrorInfo);
             return false;
         }
     }
