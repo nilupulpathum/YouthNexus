@@ -37,9 +37,32 @@ class DivisionalAllocationModel extends Model {
             [$divisionId, $divisionId]
         );
 
+        $year = (int) date('Y');
+        $quarterStartMonth = (((int) ceil(((int) date('n')) / 3) - 1) * 3) + 1;
+        $quarterEndMonth = $quarterStartMonth + 2;
+        $totals = $this->single(
+            "SELECT
+                COALESCE(SUM(CASE
+                    WHEN YEAR(fa.transfer_date) = ? THEN fa.amount ELSE 0
+                END), 0) AS year_total,
+                COALESCE(SUM(CASE
+                    WHEN YEAR(fa.transfer_date) = ?
+                     AND MONTH(fa.transfer_date) BETWEEN ? AND ?
+                    THEN fa.amount ELSE 0
+                END), 0) AS quarter_total
+             FROM FundAllocation fa
+             INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             WHERE fa.from_level = 'Divisional' AND fa.from_id = ?
+               AND c.division_id = ? AND fa.status IN ('Processing', 'Completed')",
+            [$year, $year, $quarterStartMonth, $quarterEndMonth, $divisionId, $divisionId]
+        );
+
         return [
             'balance' => (float) ($ledger->current_balance ?? 0),
             'pending' => (int) ($pending->total ?? 0),
+            'year_total' => (float) ($totals->year_total ?? 0),
+            'quarter_total' => (float) ($totals->quarter_total ?? 0),
+            'quarter_label' => 'Q' . (int) ceil(((int) date('n')) / 3) . ' ' . $year,
         ];
     }
 
@@ -57,13 +80,39 @@ class DivisionalAllocationModel extends Model {
 
     public function getHistory(int $divisionId): array {
         return $this->resultSet(
-            "SELECT fa.*, c.club_name
+            "SELECT fa.*, c.club_name,
+                    ba.bank_name, ba.branch_name, ba.account_number, ba.account_label,
+                    ba.verification_status,
+                    CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
+                    u.role AS authorizer_role
              FROM FundAllocation fa
              INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             LEFT JOIN BankAccount ba ON fa.source_bank_account_id = ba.bank_account_id
+             LEFT JOIN User u ON fa.authorized_by = u.user_id
              WHERE fa.from_level = 'Divisional' AND fa.from_id = ?
                AND c.division_id = ? AND fa.status <> 'PendingApproval'
              ORDER BY fa.transfer_date DESC, fa.allocation_id DESC",
             [$divisionId, $divisionId]
+        );
+    }
+
+    public function findByIdForDivision(int $divisionId, int $allocationId) {
+        return $this->single(
+            "SELECT fa.*, c.club_name, d.division_name,
+                    ba.bank_name, ba.branch_name, ba.account_number, ba.account_label,
+                    ba.gateway_type, ba.verification_status,
+                    CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
+                    u.role AS authorizer_role
+             FROM FundAllocation fa
+             INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             INNER JOIN Division d ON c.division_id = d.division_id
+             LEFT JOIN BankAccount ba ON fa.source_bank_account_id = ba.bank_account_id
+             LEFT JOIN User u ON fa.authorized_by = u.user_id
+             WHERE fa.allocation_id = ?
+               AND fa.from_level = 'Divisional' AND fa.from_id = ?
+               AND c.division_id = ?
+             LIMIT 1",
+            [$allocationId, $divisionId, $divisionId]
         );
     }
 
@@ -80,18 +129,20 @@ class DivisionalAllocationModel extends Model {
         )->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    public function generateReference(): string {
+    public function generateReference(string $method = 'RTGS'): string {
+        $methodCode = $method === 'ChequeSLIPS' ? 'CHQ' : 'TRF';
         $year = date('Y');
+        $prefix = 'DFA-' . $methodCode . '-' . $year . '-';
         $last = $this->single(
             "SELECT reference_no FROM FundAllocation
              WHERE reference_no LIKE ? ORDER BY allocation_id DESC LIMIT 1",
-            ['DFA-' . $year . '-%']
+            [$prefix . '%']
         );
         $sequence = 1;
         if ($last && preg_match('/(\d+)$/', (string) $last->reference_no, $matches)) {
             $sequence = ((int) $matches[1]) + 1;
         }
-        return 'DFA-' . $year . '-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+        return $prefix . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
     }
 
     public function createAllocation(int $divisionId, int $ledgerId, int $userId, array $data): int {
@@ -107,7 +158,7 @@ class DivisionalAllocationModel extends Model {
                 throw new RuntimeException('The division ledger does not have enough funds for this allocation.');
             }
 
-            $reference = $this->generateReference();
+            $reference = $this->generateReference((string) $data['disbursement_method']);
             $insert = $pdo->prepare(
                 "INSERT INTO FundAllocation
                     (from_level, from_id, to_level, to_id, source_bank_account_id, amount,

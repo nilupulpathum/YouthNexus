@@ -7,13 +7,15 @@ $title = 'Allocate Funds - YouthNexus';
 $pageTitle = 'Allocate Funds';
 $pageDescription = 'Review club requests and allocate funds from the division ledger';
 $currentRoute = 'divisionalallocations';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-allocations.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
     ROOT . '/assets/js/divisional-allocations.js',
 ];
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Division Balance', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => $money($summary['quarter_total']), 'label' => $summary['quarter_label'] . ' Allocated', 'note' => 'Completed club transfers', 'icon' => 'reports', 'tone' => 'green'],
+    ['value' => $money($summary['year_total']), 'label' => date('Y') . ' Allocated', 'note' => 'Fiscal year total', 'icon' => 'download', 'tone' => 'green'],
     ['value' => (string) $summary['pending'], 'label' => 'Pending Requests', 'note' => 'Awaiting review', 'icon' => 'clock', 'tone' => 'amber'],
 ];
 
@@ -34,7 +36,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
-  <div class="dw-summary-grid dw-summary-grid--two" aria-label="Allocation summary">
+  <div class="dw-summary-grid" aria-label="Allocation summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
     <?php endforeach; ?>
@@ -46,6 +48,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
+    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalallocations/exportledger"><?= yn_icon('download') ?> Export Ledger</a>
     <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
   </div>
 
@@ -176,7 +179,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </header>
     <div class="dw-table-wrap">
       <table class="dw-table">
-        <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
+        <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th><th>Action</th></tr></thead>
         <tbody data-allocation-rows="history">
           <?php foreach ($history as $allocation): ?>
             <?php $searchText = strtolower(implode(' ', [$allocation->club_name, $allocation->reference_no, $allocation->purpose_description, $allocation->fund_category])); ?>
@@ -195,6 +198,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($allocation->transfer_date))) ?></td>
               <td><?= $allocation->disbursement_method === 'RTGS' ? 'Bank Transfer' : 'Cheque / SLIPS' ?></td>
               <td><?php $status = $allocation->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+              <td><a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalallocations/details/<?= (int) $allocation->allocation_id ?>">View Details</a></td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -211,15 +215,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div class="dw-modal" id="new-allocation" role="dialog" aria-modal="true" aria-labelledby="new-allocation-title" aria-hidden="true" hidden>
   <div class="dw-modal__backdrop" data-modal-close></div>
-  <form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
+  <form class="dw-modal__dialog dw-modal__dialog--wide" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
     <header class="dw-modal__header">
       <h2 id="new-allocation-title">New Fund Allocation</h2>
       <button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
     </header>
     <div class="dw-modal__body">
+      <div class="dw-alert dw-alert--error dw-field--span-2" data-allocation-error role="alert" hidden></div>
       <div class="dw-field dw-field--span-2">
-        <label for="allocation-club">Club</label>
+        <label for="allocation-club">Target Club</label>
         <select id="allocation-club" name="club_id" required>
           <option value="">Select a club</option>
           <?php foreach ($clubs as $club): ?>
@@ -229,15 +234,17 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <div class="dw-field"><label for="allocation-amount">Amount (Rs.)</label><input id="allocation-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
       <div class="dw-field"><label for="allocation-category">Fund Category</label><input id="allocation-category" name="fund_category" type="text" maxlength="100" required></div>
+      <p class="da-amount-words dw-field--span-2" data-allocation-amount-words>Enter the disbursement amount in Sri Lankan Rupees.</p>
       <div class="dw-field"><label for="allocation-date">Allocation Date</label><input id="allocation-date" name="transfer_date" type="date" value="<?= date('Y-m-d') ?>" required></div>
       <div class="dw-field">
         <label for="allocation-method">Disbursement Method</label>
-        <select id="allocation-method" name="disbursement_method" required><option value="RTGS">Bank Transfer</option><option value="ChequeSLIPS">Cheque / SLIPS</option></select>
+        <select id="allocation-method" name="disbursement_method" data-allocation-method required><option value="RTGS">Bank Transfer / RTGS</option><option value="ChequeSLIPS">Cheque / SLIPS</option></select>
       </div>
+      <div class="dw-field dw-field--span-2"><label for="allocation-reference">System Reference</label><input id="allocation-reference" type="text" value="<?= $e($nextReference) ?>" data-allocation-reference readonly><small>The final unique reference is generated when the allocation is authorized.</small></div>
       <div class="dw-field dw-field--span-2"><label for="allocation-purpose">Purpose</label><textarea id="allocation-purpose" name="purpose_description" maxlength="2000" required></textarea></div>
-      <div class="dw-detail-box dw-field--span-2">
-        <span>Source account</span>
-        <strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong>
+      <div class="da-source-account dw-field--span-2">
+        <div><span>Source settlement account</span><strong><?= $sourceAccount ? $e($sourceAccount->account_label) : 'Unavailable' ?></strong></div>
+        <?php if ($sourceAccount): ?><div><span>Bank and branch</span><strong><?= $e($sourceAccount->bank_name . ' - ' . $sourceAccount->branch_name) ?></strong></div><div><span>Account number</span><strong><?= $e($sourceAccount->account_number) ?></strong></div><span class="dw-status dw-status--completed"><?= $e($sourceAccount->verification_status) ?></span><?php endif; ?>
       </div>
     </div>
     <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
