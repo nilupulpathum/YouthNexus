@@ -119,6 +119,9 @@ class UserModel extends Model {
             if (isset($user->status) && $user->status !== 'Active') {
                 return false; // Prevent login if user is suspended or disabled
             }
+            if (($user->role ?? '') === 'ClubMember' && ($user->membership_status ?? 'Active') !== 'Active') {
+                return false; // Prevent login before the membership is approved
+            }
             return $user;
         }
         return false;
@@ -197,12 +200,121 @@ class UserModel extends Model {
         );
     }
 
-    public function emailOrNicTaken($email, $nic) {        return (bool) $this->single(
+    /**
+     * Email/NIC uniqueness check. Pass $excludeUserId when editing an existing
+     * registration so a record never collides with itself.
+     */
+    public function emailOrNicTaken($email, $nic, $excludeUserId = 0) {
+        return (bool) $this->single(
             "SELECT user_id FROM User
-             WHERE email = ? OR (NIC IS NOT NULL AND NIC = ?)
+             WHERE (email = ? OR (NIC IS NOT NULL AND NIC = ?)) AND user_id <> ?
              LIMIT 1",
-            [$email, $nic]
+            [$email, $nic, (int) $excludeUserId]
         );
+    }
+
+    /**
+     * Rejected registrations for one club, newest rejection first, with the
+     * president's rejection reason and date pulled from the audit trail.
+     */
+    public function getClubRejected($clubId) {
+        return $this->resultSet(
+            "SELECT u.user_id, u.username, u.email, u.first_name, u.last_name,
+                    u.phone_number, u.address, u.NIC, u.role,
+                    u.membership_date, u.created_at,
+                    (SELECT l.details FROM AuditLog l
+                      WHERE l.target_entity = 'User' AND l.target_id = u.user_id
+                        AND l.action_type = 'REJECT_MEMBER'
+                      ORDER BY l.log_id DESC LIMIT 1) AS rejection_reason,
+                    (SELECT l.timestamp FROM AuditLog l
+                      WHERE l.target_entity = 'User' AND l.target_id = u.user_id
+                        AND l.action_type = 'REJECT_MEMBER'
+                      ORDER BY l.log_id DESC LIMIT 1) AS rejected_at
+             FROM User u
+             WHERE u.club_id = ? AND u.status = 'Disabled' AND u.membership_status = 'Inactive'
+             ORDER BY rejected_at DESC, u.user_id DESC",
+            [(int) $clubId]
+        );
+    }
+
+    public function countClubRejected($clubId) {
+        $row = $this->single(
+            "SELECT COUNT(*) AS rejected FROM User
+             WHERE club_id = ? AND status = 'Disabled' AND membership_status = 'Inactive'",
+            [(int) $clubId]
+        );
+        return (int) ($row->rejected ?? 0);
+    }
+
+    /**
+     * Edit a rejected registration and send it back to the president queue.
+     * Returns affected rows (0 = wrong club, wrong id, or not rejected).
+     */
+    public function updateRejectedRegistration($clubId, $userId, $name, $email, $phone, $address, $nic) {
+        $parts = preg_split('/\s+/u', trim($name), 2);
+        $firstName = $parts[0] ?? $name;
+        $lastName = $parts[1] ?? $firstName;
+        $stmt = $this->query(
+            "UPDATE User
+             SET first_name = ?, last_name = ?, email = ?, phone_number = ?,
+                 address = ?, NIC = ?, status = 'Active', membership_status = 'Inactive'
+             WHERE user_id = ? AND club_id = ? AND status = 'Disabled' AND membership_status = 'Inactive'",
+            [$firstName, $lastName, $email, $phone, $address, $nic, (int) $userId, (int) $clubId]
+        );
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Child records that would block a hard delete of this user.
+     *
+     * @return array list of ['table' => ..., 'column' => ..., 'count' => ...]
+     */
+    public function findUserDependents($userId) {
+        $keys = $this->resultSet(
+            "SELECT TABLE_NAME, COLUMN_NAME
+             FROM information_schema.KEY_COLUMN_USAGE
+             WHERE REFERENCED_TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'User'"
+        );
+        $blockers = [];
+        foreach ($keys as $key) {
+            $table = $key->TABLE_NAME;
+            $column = $key->COLUMN_NAME;
+            $count = (int) $this->single(
+                "SELECT COUNT(*) AS total FROM `{$table}` WHERE `{$column}` = ?",
+                [(int) $userId]
+            )->total;
+            if ($count > 0) {
+                $blockers[] = ['table' => $table, 'column' => $column, 'count' => $count];
+            }
+        }
+        return $blockers;
+    }
+
+    /**
+     * Delete a rejected registration outright. Refuses when another record
+     * still points at the user, so the secretary is told what is in the way
+     * instead of silently losing data. The audit trail is left intact.
+     *
+     * @return array{deleted: bool, blockers: array}
+     */
+    public function deleteRejectedRegistration($clubId, $userId) {
+        $target = $this->single(
+            "SELECT user_id FROM User
+             WHERE user_id = ? AND club_id = ? AND status = 'Disabled' AND membership_status = 'Inactive'
+             LIMIT 1",
+            [(int) $userId, (int) $clubId]
+        );
+        if (!$target) {
+            return ['deleted' => false, 'blockers' => []];
+        }
+
+        $blockers = $this->findUserDependents($userId);
+        if ($blockers) {
+            return ['deleted' => false, 'blockers' => $blockers];
+        }
+
+        $this->query('DELETE FROM User WHERE user_id = ? AND club_id = ?', [(int) $userId, (int) $clubId]);
+        return ['deleted' => true, 'blockers' => []];
     }
 
     /**
@@ -251,24 +363,37 @@ class UserModel extends Model {
      * Returns the new user_id.
      */
     public function registerClubMember($clubId, $divisionId, $name, $email, $phone, $address, $nic) {
-        $parts = explode(' ', trim($name), 2);
+        $parts = preg_split('/\s+/u', trim($name), 2);
         $firstName = $parts[0] ?? $name;
         $lastName = $parts[1] ?? $firstName;
         $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
-        $username = $base !== '' ? $base : 'member';
-        $suffix = 1;
-        while ($this->single("SELECT user_id FROM User WHERE username = ? LIMIT 1", [$username])) {
-            $username = $base . $suffix;
-            $suffix++;
+        $base = $base !== '' ? $base : 'member';
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $username = $base;
+            $suffix = 1;
+            while ($this->single("SELECT user_id FROM User WHERE username = ? LIMIT 1", [$username])) {
+                $username = $base . $suffix;
+                $suffix++;
+            }
+            try {
+                $this->query(
+                    "INSERT INTO User (username, email, password_hash, first_name, last_name,
+                                       phone_number, NIC, address, role, status,
+                                       membership_status, membership_date, club_id, division_id)
+                     VALUES (?, ?, '', ?, ?, ?, ?, ?, 'ClubMember', 'Active', 'Inactive', CURDATE(), ?, ?)",
+                    [$username, $email, $firstName, $lastName, $phone, $nic, $address, (int) $clubId, (int) $divisionId]
+                );
+                return (int) $this->single("SELECT LAST_INSERT_ID() AS id")->id;
+            } catch (PDOException $exception) {
+                if (($exception->errorInfo[0] ?? $exception->getCode()) !== '23000') {
+                    throw $exception;
+                }
+                if ($this->emailOrNicTaken($email, $nic)) {
+                    return 0;
+                }
+            }
         }
-        $this->query(
-            "INSERT INTO User (username, email, password_hash, first_name, last_name,
-                               phone_number, NIC, address, role, status,
-                               membership_status, membership_date, club_id, division_id)
-             VALUES (?, ?, '', ?, ?, ?, ?, ?, 'ClubMember', 'Active', 'Inactive', CURDATE(), ?, ?)",
-            [$username, $email, $firstName, $lastName, $phone, $nic, $address, (int) $clubId, (int) $divisionId]
-        );
-        return (int) $this->single("SELECT LAST_INSERT_ID() AS id")->id;
+        throw new RuntimeException('Unable to allocate a unique username for this member.');
     }
 
     // ---------------------------------------------------------------
