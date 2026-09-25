@@ -29,9 +29,9 @@ $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 
 $summaryCards = [
-    ['value' => (string) ($eventStats['scheduled'] ?? 0), 'label' => 'Scheduled events', 'note' => 'in the zone programme', 'icon' => 'calendar', 'tone' => 'blue'],
-    ['value' => 'LKR ' . number_format((float) ($eventStats['committed'] ?? 0), 0), 'label' => 'Budget committed', 'note' => 'across scheduled events', 'icon' => 'file', 'tone' => 'amber'],
-    ['value' => 'LKR ' . number_format((float) ($eventStats['available'] ?? 0), 0), 'label' => 'Available event budget', 'note' => 'zonal balance', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($eventStats['scheduled'] ?? 0), 'label' => 'Pending approval', 'note' => 'awaiting coordinator decision', 'icon' => 'calendar', 'tone' => 'amber'],
+    ['value' => (string) ($eventStats['approved'] ?? 0), 'label' => 'Approved', 'note' => 'in the zone programme', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($eventStats['total'] ?? 0), 'label' => 'Total events', 'note' => 'this zone', 'icon' => 'file', 'tone' => 'blue'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -113,7 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <h3 class="dw-record-card__title"><?= $e($event['title'] ?? '') ?></h3>
                         <div class="dw-record-card__details">
                             <span><span class="icon"><?= yn_icon('calendar') ?></span> <?= $e($formatDate($event)) ?> <span class="icon"><?= yn_icon('pin') ?></span> <?= $e($event['location'] ?? '') ?></span>
-                            <span><?= $e($event['type'] ?? '') ?> · Budget LKR <?= number_format((float) ($event['budget'] ?? 0), 2) ?> · <?= $e($event['audience'] ?? '') ?></span>
+                            <span><?= $e($event['type'] ?? '') ?> · <?= $e($event['audience'] ?? '') ?></span>
                         </div>
                         <?php if (!empty($event['coordinator_remark'])): ?>
                             <div class="dw-record-card__footer">
@@ -190,18 +190,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         </select>
                         <?php if (!empty($errors['event_type'])): ?><p><?= $e($errors['event_type']) ?></p><?php endif; ?>
                     </div>
-                    <div class="dw-field">
-                        <label for="zonal-event-budget">Estimated budget (LKR)</label>
-                        <input id="zonal-event-budget" name="budget" type="number" required min="1" step="0.01" placeholder="0.00" value="<?= $e($old['budget'] ?? '') ?>">
-                        <?php if (!empty($errors['budget'])): ?><p><?= $e($errors['budget']) ?></p><?php endif; ?>
-                    </div>
                     <div class="dw-field dw-field--span-2">
                         <label for="zonal-event-audience">Notify</label>
                         <select id="zonal-event-audience" name="audience" required>
                             <option value="All divisions"<?= $selected('All divisions') ?>>All divisions and their clubs</option>
-                            <option value="Gampaha Division"<?= $selected('Gampaha Division') ?>>Gampaha Division and its clubs</option>
-                            <option value="Ja-Ela Division"<?= $selected('Ja-Ela Division') ?>>Ja-Ela Division and its clubs</option>
-                            <option value="Negombo Division"<?= $selected('Negombo Division') ?>>Negombo Division and its clubs</option>
+                            <?php foreach ($divisions as $divisionName): ?>
+                                <option value="<?= $e($divisionName) ?>"<?= $selected($divisionName) ?>><?= $e($divisionName) ?> and its clubs</option>
+                            <?php endforeach; ?>
                         </select>
                         <?php if (!empty($errors['audience'])): ?><p><?= $e($errors['audience']) ?></p><?php endif; ?>
                     </div>

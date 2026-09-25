@@ -137,7 +137,11 @@ class Zonalsecretary extends Controller {
     public function events() {
         $this->requireZonalSecretary();
 
-        $state = $this->demoState();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $eventModel = $this->model('EventModel');
+        $divisions = $eventModel->getZoneDivisions($zonalId);
+        $divisionNames = array_map(static fn($d) => $d->division_name, $divisions);
+
         $errors = [];
         $old = [];
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -151,7 +155,6 @@ class Zonalsecretary extends Controller {
             $time = trim((string)($_POST['event_time'] ?? ''));
             $location = trim((string)($_POST['location'] ?? ''));
             $audience = trim((string)($_POST['audience'] ?? 'All divisions'));
-            $budgetRaw = trim((string)($_POST['budget'] ?? ''));
             $dateValue = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
             if ($title === '' || mb_strlen($title) > 150) $errors['title'] = 'Enter an event title of 150 characters or fewer.';
             if ($type === '' || mb_strlen($type) > 50) $errors['event_type'] = 'Enter an event type of 50 characters or fewer.';
@@ -164,23 +167,60 @@ class Zonalsecretary extends Controller {
                 }
             }
             if ($location === '' || mb_strlen($location) > 255) $errors['location'] = 'Enter a location of 255 characters or fewer.';
-            if (!in_array($audience, ['All divisions', 'Gampaha Division', 'Ja-Ela Division', 'Negombo Division'], true)) $errors['audience'] = 'Select a valid audience.';
-            if (!preg_match('/^\d{1,9}(?:\.\d{1,2})?$/D', str_replace(',', '', $budgetRaw)) || (float)str_replace(',', '', $budgetRaw) <= 0) {
-                $errors['budget'] = 'Enter a positive budget amount.';
+            $targetDivisionId = null;
+            if ($audience !== 'All divisions') {
+                $target = $eventModel->findZoneDivision($zonalId, $audience);
+                if (!$target) {
+                    $errors['audience'] = 'Select a valid audience.';
+                } else {
+                    $targetDivisionId = (int) $target->division_id;
+                }
             }
-            $budget = (float)str_replace(',', '', $budgetRaw);
-            if ($budget > (float)$state['budget']) $errors['budget'] = 'The requested budget exceeds the available zonal balance.';
 
             if (!$errors) {
-                $state['budget'] -= $budget;
-                $state['spent'] += $budget;
-                $state['notifications']++;
-                $state['events'][] = ['id' => 'ZE-' . str_pad((string)(count($state['events']) + 101), 3, '0', STR_PAD_LEFT), 'title' => $title, 'type' => $type, 'date' => $date, 'time' => $time, 'location' => $location, 'budget' => $budget, 'audience' => $audience, 'status' => 'Pending approval'];
-                $this->saveDemoState($state);
+                $start = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
+                $eventId = $eventModel->createZonalEvent($zonalId, (int) $_SESSION['user_id'], [
+                    'title' => substr($title, 0, 150),
+                    'type' => substr($type, 0, 50),
+                    'location' => $location,
+                    'start' => $start->format('Y-m-d H:i:s'),
+                    'end' => $start->modify('+2 hours')->format('Y-m-d H:i:s'),
+                ], $targetDivisionId);
+                $this->model('AuditLogModel')->log($_SESSION['user_id'], 'CREATE_EVENT', 'Event', $eventId, "Created zonal event '{$title}'");
                 $_SESSION['zonal_event_flash'] = 'Event submitted to the Zonal Coordinator for approval.';
                 $_SESSION['zonal_event_csrf'] = bin2hex(random_bytes(32));
                 $this->redirect('zonalsecretary/events');
             }
+        }
+
+        $statusMap = [
+            'PendingApproval' => 'Pending approval',
+            'Approved' => 'Approved',
+            'Completed' => 'Completed',
+            'Rejected' => 'Changes requested',
+        ];
+        $events = [];
+        $pending = 0;
+        $approved = 0;
+        foreach ($eventModel->getZonalEvents($zonalId) as $ev) {
+            if ($ev->status === 'PendingApproval') {
+                $pending++;
+            } elseif ($ev->status === 'Approved') {
+                $approved++;
+            }
+            $start = strtotime((string) $ev->start_datetime);
+            $events[] = [
+                'id' => (int) $ev->event_id,
+                'title' => $ev->title ?? '',
+                'type' => $ev->event_type ?? '',
+                'date' => $start ? date('M d, Y', $start) : '—',
+                'time' => $start ? date('g:i A', $start) : '',
+                'location' => $ev->location ?? '',
+                'audience' => $ev->target_divisions ?: 'All divisions',
+                'status' => $statusMap[$ev->status] ?? $ev->status,
+                'status_key' => strtolower($ev->status ?? ''),
+                'coordinator_remark' => $ev->rejection_remarks ?? '',
+            ];
         }
 
         $data = $this->shell(
@@ -189,12 +229,12 @@ class Zonalsecretary extends Controller {
             'Create zonal events and notify divisions and clubs.',
             'zonalsecretary/events'
         );
-        $data['state'] = $state;
-        $data['events'] = array_reverse($state['events']);
+        $data['events'] = $events;
+        $data['divisions'] = $divisionNames;
         $data['eventStats'] = [
-            'scheduled' => count($state['events']),
-            'committed' => $state['spent'],
-            'available' => $state['budget'],
+            'scheduled' => $pending,
+            'approved' => $approved,
+            'total' => count($events),
         ];
         $data['csrf_token'] = $this->eventCsrf();
         $data['flash'] = $_SESSION['zonal_event_flash'] ?? '';
