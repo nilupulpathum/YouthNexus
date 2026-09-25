@@ -67,26 +67,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return pill;
     };
 
-    // Assign-role modal (president).
+    // Assign-role modal (president) — fills the real POST form.
     const modal = document.getElementById('assign-modal');
     if (modal && body) {
         const memberEl = document.getElementById('assign-member');
         const currentEl = document.getElementById('assign-current');
         const assignRoleSel = document.getElementById('assign-role');
         const warning = document.getElementById('assign-warning');
-        const confirmBtn = document.getElementById('assign-confirm');
-        let targetRow = null;
+        const memberIdInput = document.getElementById('assign-member-id');
 
-        const occupantOf = (role) => {
+        const roleLabel = (value) => value.replace(/^Club/, '') === 'Member' ? 'Member' : value.replace(/^Club/, '');
+        const occupantOf = (label) => {
             const rows = Array.from(body.querySelectorAll('tr'));
-            const hit = rows.find((r) => (r.getAttribute('data-role') || '').toLowerCase() === role.toLowerCase());
+            const hit = rows.find((r) => (r.getAttribute('data-role') || '').toLowerCase() === label.toLowerCase());
             return hit ? hit.getAttribute('data-name') : '';
         };
 
         const refreshWarning = () => {
-            const holder = occupantOf(assignRoleSel.value);
+            const label = roleLabel(assignRoleSel.value);
+            const holder = occupantOf(label);
             if (holder) {
-                warning.textContent = `${assignRoleSel.value} is held by ${holder} — confirming revokes them to General Member first.`;
+                warning.textContent = `${label} is held by ${holder} — confirming revokes them to General Member first.`;
                 warning.hidden = false;
             } else {
                 warning.hidden = true;
@@ -94,25 +95,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const bindAssign = (btn) => btn.addEventListener('click', () => {
-            targetRow = btn.closest('tr');
+            const targetRow = btn.closest('tr');
             memberEl.textContent = targetRow.getAttribute('data-name') || '';
             currentEl.textContent = targetRow.getAttribute('data-role') || '';
+            if (memberIdInput) memberIdInput.value = targetRow.getAttribute('data-id') || '';
             refreshWarning();
         });
         body.querySelectorAll('[data-action="assign"]').forEach(bindAssign);
 
         assignRoleSel.addEventListener('change', refreshWarning);
 
-        confirmBtn.addEventListener('click', () => {
-            if (targetRow) {
-                targetRow.setAttribute('data-role', assignRoleSel.value);
-                targetRow.children[1].textContent = assignRoleSel.value;
-            }
-            closeModal(modal);
-            showToast('Role assignment recorded (demo — persists in C13 backend).');
-        });
-
-        // Member review modal (president: full details, approve or reject with note).
+        // Member review modal (president) — fills the real POST form.
         const mrModal = document.getElementById('member-review-modal');
         if (mrModal) {
             const mrTitle = document.getElementById('mr-title');
@@ -120,16 +113,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const mrResult = document.getElementById('mr-result');
             const mrRemarks = document.getElementById('mr-remarks');
             const mrErr = document.getElementById('mr-error');
-            const mrConfirm = document.getElementById('mr-confirm');
+            const mrMemberId = document.getElementById('mr-member-id');
+            const mrForm = document.getElementById('member-review-form');
             const MR_FIELDS = [
                 ['Email', 'email'], ['Phone', 'phone'], ['Address', 'address'],
                 ['NIC', 'nic'], ['Role', 'role'], ['Joined', 'joined'],
             ];
-            let reviewRow = null;
 
             body.querySelectorAll('[data-action="member-review"]').forEach((btn) => {
                 btn.addEventListener('click', () => {
-                    reviewRow = btn.closest('tr');
+                    const reviewRow = btn.closest('tr');
+                    if (mrMemberId) mrMemberId.value = reviewRow.getAttribute('data-id') || '';
                     mrTitle.textContent = reviewRow.getAttribute('data-name') || 'Review member';
                     mrDetails.textContent = '';
                     MR_FIELDS.forEach(([label, key]) => {
@@ -149,47 +143,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            mrConfirm.addEventListener('click', () => {
-                const reject = mrResult.value === 'reject';
-                if (reject && !mrRemarks.value.trim()) {
-                    mrErr.textContent = 'Please add a note explaining the rejection.';
-                    mrErr.hidden = false;
-                    mrRemarks.focus();
-                    return;
-                }
-                const who = reviewRow ? (reviewRow.getAttribute('data-name') || 'Member') : 'Member';
-                if (reject) {
-                    if (reviewRow) reviewRow.remove();
-                    refreshEmpty();
-                    showToast(`${who}’s application rejected with note (demo).`);
-                } else {
-                    if (reviewRow) {
-                        reviewRow.setAttribute('data-status', 'active');
-                        reviewRow.setAttribute('data-role', 'Member');
-                        reviewRow.children[1].textContent = 'Member';
-                        const pill = reviewRow.querySelector('.dw-status');
-                        if (pill) pill.replaceWith(pillFor('active', 'Active'));
-                        const assignBtn = document.createElement('button');
-                        assignBtn.type = 'button';
-                        assignBtn.className = 'dw-button dw-button--ghost';
-                        assignBtn.setAttribute('data-action', 'assign');
-                        assignBtn.textContent = 'Assign role';
-                        const oldBtn = reviewRow.querySelector('[data-action="member-review"]');
-                        if (oldBtn) oldBtn.replaceWith(assignBtn);
-                        bindAssign(assignBtn);
-                        if (statusSel && statusSel.value && statusSel.value !== 'active') {
-                            reviewRow.style.display = 'none';
-                        }
+            if (mrForm) {
+                mrForm.addEventListener('submit', (e) => {
+                    if (mrResult.value === 'reject' && !mrRemarks.value.trim()) {
+                        e.preventDefault();
+                        mrErr.textContent = 'Please add a note explaining the rejection.';
+                        mrErr.hidden = false;
+                        mrRemarks.focus();
                     }
-                    showToast(`${who} approved as General Member (demo — persists in C13 backend).`);
-                }
-                reviewRow = null;
-                closeModal(mrModal);
-            });
+                });
+            }
         }
     }
 
-    // Register-member modal (secretary).
+    // Register-member modal (secretary) — client checks, then real POST.
     const regModal = document.getElementById('club-register-modal');
     const form = document.getElementById('club-register-form');
     if (regModal && form && body) {
@@ -201,13 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
             existingNics = [];
         }
         form.addEventListener('submit', (e) => {
-            e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
             const nic = document.getElementById('reg-nic').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
             const address = document.getElementById('reg-address').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
             if (!name || !nic || !email || !phone || !address) return fail('All fields are required.');
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Enter a valid email address.');
@@ -215,33 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const dupEmail = Array.from(body.querySelectorAll('tr'))
                 .some((r) => (r.getAttribute('data-email') || '').toLowerCase() === email.toLowerCase());
             if (dupEmail) return fail('This email is already registered — back to the form.');
-            const row = document.createElement('tr');
-            row.setAttribute('data-search', `${name} Member ${email}`.toLowerCase());
-            row.setAttribute('data-name', name);
-            row.setAttribute('data-role', 'Member');
-            row.setAttribute('data-email', email);
-            row.setAttribute('data-phone', phone);
-            row.setAttribute('data-address', address);
-            row.setAttribute('data-nic', nic);
-            row.setAttribute('data-joined', 'Just now');
-            row.setAttribute('data-status', 'pending');
-            const nameTd = document.createElement('td');
-            const strong = document.createElement('strong');
-            strong.textContent = name;
-            nameTd.appendChild(strong);
-            row.appendChild(nameTd);
-            ['Member', email, phone, 'Just now'].forEach((text) => {
-                const td = document.createElement('td');
-                td.textContent = text;
-                row.appendChild(td);
-            });
-            const statusTd = document.createElement('td');
-            statusTd.appendChild(pillFor('pending', 'Pending'));
-            row.appendChild(statusTd);
-            body.prepend(row);
-            form.reset();
-            closeModal(regModal);
-            showToast(`${name} added — awaiting president approval (demo).`);
         });
     }
 });
