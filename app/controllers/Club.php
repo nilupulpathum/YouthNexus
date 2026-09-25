@@ -36,6 +36,10 @@ class Club extends Controller {
         if (!in_array($this->roleKey(), $allowed, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['club_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a club.');
+        }
     }
 
     /**
