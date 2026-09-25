@@ -42,6 +42,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-labelledby="zonal-clubs-heading">
     <h1 id="zonal-clubs-heading" class="visually-hidden">Monitor club health</h1>
 
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
+
     <div class="dw-summary-grid dw-summary-grid--three" aria-label="Club health bands">
         <?php foreach ($summaryCards as $card): ?>
             <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -236,18 +242,22 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <p class="dw-metric"><span>Overall Health Score</span><strong id="cf-score"></strong></p>
                     <p class="dw-metric"><span>Trigger</span><strong id="cf-trigger"></strong></p>
                 </div>
-                <div class="dw-field dw-field--span-2">
-                    <label for="cf-severity">Severity</label>
-                    <select id="cf-severity">
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                    </select>
-                </div>
-                <div class="dw-field dw-field--span-2">
-                    <label for="cf-remarks">Comment (required)</label>
-                    <textarea id="cf-remarks" rows="3" placeholder="Describe the governance concern for NYSC Admin..."></textarea>
-                </div>
+                <form id="club-flag-form" action="<?= ROOT ?>/zonalcoordinator/flagClub" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="cf-club-id" name="club_id" value="">
+                    <div class="dw-field dw-field--span-2">
+                        <label for="cf-category">Concern type</label>
+                        <select id="cf-category" name="category">
+                            <option value="FinancialConcern">Financial concern</option>
+                            <option value="EventAttendanceConcern">Event &amp; attendance concern</option>
+                            <option value="GovernanceConcern">Governance concern</option>
+                        </select>
+                    </div>
+                    <div class="dw-field dw-field--span-2">
+                        <label for="cf-remarks">Comment (required)</label>
+                        <textarea id="cf-remarks" name="remarks" rows="3" placeholder="Describe the concern for NYSC Admin..."></textarea>
+                    </div>
+                </form>
                 <p id="cf-error" class="dw-alert dw-alert--error dw-field--span-2" role="alert" hidden></p>
                 <div class="dw-alert dw-alert--warning dw-field--span-2" role="note">
                     <div><strong>Admin-only disband</strong>
@@ -256,7 +266,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="cf-submit">Submit Flag to NYSC Admin</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-flag-form">Submit Flag to NYSC Admin</button>
             </footer>
         </div>
     </div>
