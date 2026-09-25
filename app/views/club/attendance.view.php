@@ -14,6 +14,7 @@ $e = static function ($value) {
 require __DIR__ . '/../partials/icons.view.php';
 
 $attendanceEvents = $attendanceEvents ?? [];
+$members            = $members ?? [];
 $mySummary        = $mySummary ?? [];
 $can_mark         = !empty($can_mark);
 
@@ -40,6 +41,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="club-attendance-heading" class="visually-hidden">Club attendance</h1>
 
     <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
 
     <?php if ($can_mark): ?>
         <section class="dw-panel" aria-labelledby="club-att-mark-heading">
@@ -54,26 +60,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="dw-field">
                     <label for="att-event">Event</label>
                     <select id="att-event">
-                        <?php foreach ($attendanceEvents as $i => $ev): ?>
-                            <option value="<?= (int) $i ?>"><?= $e(($ev['title'] ?? '') . ' — ' . ($ev['date'] ?? '')) ?></option>
+                        <?php foreach ($attendanceEvents as $ev): ?>
+                            <option value="<?= (int) $ev['id'] ?>"><?= $e(($ev['title'] ?? '') . ' — ' . ($ev['date'] ?? '')) ?></option>
                         <?php endforeach; ?>
                     </select>
-                </div>
-                <div class="dw-field">
-                    <label for="att-start">Start time</label>
-                    <input id="att-start" type="time" required>
-                </div>
-                <div class="dw-field">
-                    <label for="att-end">End time</label>
-                    <input id="att-end" type="time" required>
-                </div>
-                <div class="dw-field">
-                    <label for="att-remarks">Session remarks</label>
-                    <input id="att-remarks" type="text" maxlength="255" autocomplete="off" placeholder="e.g., Outdoor session, registers closed at 10:15 AM">
-                </div>
-                <div class="dw-alert dw-alert--error" id="att-session-error" role="alert" hidden></div>
-                <div class="dw-filter-actions">
-                    <button type="button" class="dw-button dw-button--primary" id="att-save-session">Save session</button>
                 </div>
             </div>
 
@@ -87,29 +77,62 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
 
                 <div id="pane-single" role="tabpanel" aria-labelledby="tab-single">
-                    <form id="att-single-form" novalidate>
+                    <form id="att-single-form" action="<?= ROOT ?>/club/saveAttendance" method="post" novalidate>
+                        <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                        <input type="hidden" id="att-single-event" name="event_id" value="<?= (int) ($attendanceEvents[0]['id'] ?? 0) ?>">
                         <div class="dw-field">
                             <label for="att-member">Member</label>
-                            <select id="att-member"></select>
+                            <select id="att-member" name="single_member" required>
+                                <?php foreach ($members as $member): ?>
+                                    <option value="<?= (int) $member['id'] ?>"><?= $e($member['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="dw-field">
                             <label for="att-status">Status</label>
-                            <select id="att-status">
-                                <option value="present">Present</option>
-                                <option value="absent">Absent</option>
+                            <select id="att-status" name="single_status">
+                                <option value="Present">Present</option>
+                                <option value="Absent">Absent</option>
                             </select>
                         </div>
+                        <div class="dw-field">
+                            <label for="att-in">Check-in time (optional)</label>
+                            <input id="att-in" name="check_in" type="time">
+                        </div>
+                        <div class="dw-field">
+                            <label for="att-out">Check-out time (optional)</label>
+                            <input id="att-out" name="check_out" type="time">
+                        </div>
+                        <div class="dw-field">
+                            <label for="att-remarks">Session remarks (optional)</label>
+                            <input id="att-remarks" name="remark" type="text" maxlength="500" autocomplete="off" placeholder="e.g., Outdoor session, registers closed at 10:15 AM">
+                        </div>
+                        <div class="dw-alert dw-alert--error" id="att-session-error" role="alert" hidden></div>
                         <div class="dw-filter-actions">
-                            <button type="submit" class="dw-button dw-button--primary">Apply entry</button>
+                            <button type="submit" class="dw-button dw-button--primary">Save entry</button>
                         </div>
                     </form>
                 </div>
 
                 <div id="pane-bulk" role="tabpanel" aria-labelledby="tab-bulk" hidden>
-                    <form id="att-bulk-form" novalidate>
+                    <form id="att-bulk-form" action="<?= ROOT ?>/club/saveAttendance" method="post" enctype="multipart/form-data" novalidate>
+                        <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                        <input type="hidden" id="att-bulk-event" name="event_id" value="<?= (int) ($attendanceEvents[0]['id'] ?? 0) ?>">
                         <div class="dw-field">
-                            <label for="att-csv">Attendance CSV (name, status per row)</label>
-                            <input id="att-csv" type="file" accept=".csv,text/csv">
+                            <label for="att-csv">Attendance CSV (name or email, status per row)</label>
+                            <input id="att-csv" name="csv" type="file" accept=".csv,text/csv" required>
+                        </div>
+                        <div class="dw-field">
+                            <label for="att-bulk-in">Check-in time (optional)</label>
+                            <input id="att-bulk-in" name="check_in" type="time">
+                        </div>
+                        <div class="dw-field">
+                            <label for="att-bulk-out">Check-out time (optional)</label>
+                            <input id="att-bulk-out" name="check_out" type="time">
+                        </div>
+                        <div class="dw-field">
+                            <label for="att-bulk-remarks">Session remarks (optional)</label>
+                            <input id="att-bulk-remarks" name="remark" type="text" maxlength="500" autocomplete="off">
                         </div>
                         <p id="att-csv-name" hidden></p>
                         <div class="dw-alert dw-alert--error" id="att-bulk-error" role="alert" hidden></div>
@@ -121,11 +144,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
         </section>
 
-        <section class="dw-panel" aria-labelledby="club-att-roster-heading">
+        <?php foreach ($attendanceEvents as $ei => $ev): ?>
+        <section class="dw-panel" aria-labelledby="club-att-roster-heading-<?= (int) $ev['id'] ?>" data-attendance-panel="<?= (int) $ev['id'] ?>"<?= $ei > 0 ? ' hidden' : '' ?>>
             <header class="dw-panel__header">
                 <div>
-                    <h2 id="club-att-roster-heading">Attendance</h2>
-                    <p id="att-roster-event">Session roster</p>
+                    <h2 id="club-att-roster-heading-<?= (int) $ev['id'] ?>">Attendance</h2>
+                    <p><?= $e(($ev['title'] ?? '') . ' — ' . ($ev['date'] ?? '')) ?></p>
                 </div>
             </header>
 
@@ -135,16 +159,23 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <tr>
                             <th>Member</th>
                             <th>Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="club-att-body" data-attendance-events="<?= $e(json_encode(array_values($attendanceEvents ?? []))) ?>"></tbody>
+                    <tbody>
+                        <?php foreach ($ev['roster'] as $r): ?>
+                            <tr>
+                                <td><strong><?= $e($r['name']) ?></strong></td>
+                                <td><?php $status = $r['status']; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
                 </table>
             </div>
             <div class="dw-panel__body">
-                <p>Members without an entry are marked Absent by default.</p>
+                <p>Members without an entry are unmarked.</p>
             </div>
         </section>
+        <?php endforeach; ?>
     <?php else: ?>
         <div class="dw-summary-grid dw-summary-grid--three" aria-label="My attendance summary">
             <?php foreach ($summaryCards as $card): ?>
