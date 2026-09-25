@@ -246,49 +246,136 @@ class Zonalsecretary extends Controller {
     }
 
     /**
-     * Aggregate reports placeholder (Z5 builds division rollup table).
+     * Report catalog + generated zone reports (D13: real Report rows).
      */
     public function reports() {
         $this->requireZonalSecretary();
-        $catalog = ['Financial' => ['Quarterly financial rollup', 'Division fund allocation summary'], 'Events' => ['Zonal programme activity'], 'Attendance' => ['Division attendance rollup'], 'Club Health' => ['Club health score rollup']];
-        $reports = [
-            ['id' => 'ZR-101', 'category' => 'Financial', 'type' => 'Quarterly financial rollup', 'division' => 'All divisions', 'format' => 'PDF', 'date' => 'Sep 20, 2026'],
-            ['id' => 'ZR-102', 'category' => 'Attendance', 'type' => 'Division attendance rollup', 'division' => 'All divisions', 'format' => 'CSV', 'date' => 'Sep 18, 2026'],
-            ['id' => 'ZR-103', 'category' => 'Events', 'type' => 'Zonal programme activity', 'division' => 'Ja-Ela Division', 'format' => 'On-screen', 'date' => 'Sep 16, 2026'],
-        ];
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneReportModel');
+        $catalog = $model->getCatalog();
+
         $category = trim((string)($_GET['category'] ?? ''));
-        $division = trim((string)($_GET['division'] ?? ''));
         $search = strtolower(trim((string)($_GET['search'] ?? '')));
-        $allowedDivisions = ['Gampaha Division', 'Ja-Ela Division', 'Negombo Division'];
-        if ($division !== '' && !in_array($division, $allowedDivisions, true)) $division = '';
         if ($category !== '' && !isset($catalog[$category])) $category = '';
-        $reports = array_values(array_filter($reports, static function ($report) use ($category, $division, $search) {
+
+        $reports = [];
+        foreach ($model->getReports($zonalId) as $r) {
+            $ts = strtotime((string) $r->generated_at);
+            $reports[] = [
+                'id' => (int) $r->report_id,
+                'category' => $r->category ?? '',
+                'type' => $r->type_name ?? '',
+                'division' => 'All divisions',
+                'format' => $r->format ?? '',
+                'date' => $ts ? date('M d, Y', $ts) : '—',
+                'by' => $r->generated_by_name ?? '',
+            ];
+        }
+        $reports = array_values(array_filter($reports, static function ($report) use ($category, $search) {
             return ($category === '' || $report['category'] === $category)
-                && ($division === '' || $report['division'] === 'All divisions' || $report['division'] === $division)
-                && ($search === '' || str_contains(strtolower($report['type'] . ' ' . $report['division']), $search));
+                && ($search === '' || str_contains(strtolower($report['type']), $search));
         }));
+
         $data = $this->shell(
-            'Aggregate Reports — YouthNexus Pulse',
+            'Aggregate Reports - YouthNexus Pulse',
             'Aggregate Reports',
-            'Division rollups across Gampaha Zone.',
+            'Division rollups across the zone.',
             'zonalsecretary/reports'
         );
-        $data += ['catalog' => $catalog, 'reports' => $reports, 'category' => $category, 'division' => $division, 'search' => $search];
+        $data += ['catalog' => $catalog, 'reports' => $reports, 'category' => $category, 'search' => $search,
+            'zoneName' => $this->zoneName($zonalId), 'flash' => $this->pullSecretaryFlash()];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
         $this->view('zonalsecretary/reports', $data);
+    }
+
+    /**
+     * Generate a zone report from the catalog (secretary).
+     */    public function generateReport() {
+        $this->requireZonalSecretary();
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('zonalsecretary/reports');
+        }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+            $this->setSecretaryFlash('error', 'Refresh the page before generating a report.');
+            $this->redirect('zonalsecretary/reports');
+        }
+        try {
+            $reportId = $this->model('ZoneReportModel')->createReport(
+                (int) ($_SESSION['zonal_id'] ?? 0), (int) $_SESSION['user_id'],
+                (int) ($_POST['report_type_id'] ?? 0),
+                trim($_POST['start'] ?? ''), trim($_POST['end'] ?? ''),
+                trim($_POST['format'] ?? 'OnScreen')
+            );
+        } catch (InvalidArgumentException $e) {
+            $this->setSecretaryFlash('error', $e->getMessage());
+            $this->redirect('zonalsecretary/reports');
+        }
+        $this->setSecretaryFlash('success', "Report generated (ID {$reportId}).");
+        $this->redirect('zonalsecretary/reportpreview/' . $reportId);
+    }
+
+    private function zoneName(int $zonalId): string {
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        return $zone->zonal_name ?? 'Zone';
+    }
+
+    private function setSecretaryFlash(string $type, string $message): void {        $_SESSION['zonal_secretary_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    private function pullSecretaryFlash(): ?array {
+        $flash = $_SESSION['zonal_secretary_flash'] ?? null;
+        unset($_SESSION['zonal_secretary_flash']);
+        return is_array($flash) ? $flash : null;
     }
 
     public function reportpreview($id = null) {
         $this->requireZonalSecretary();
-        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', 'Gampaha Zone aggregate report preview.', 'zonalsecretary/reports');
-        $data['reportId'] = preg_match('/^ZR-10[1-3]$/', (string)$id) ? $id : 'ZR-101';
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalsecretary/reports');
+        }
+        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', $report->type_name ?? 'Report', 'zonalsecretary/reports');
+        $data['report'] = $report;
+        $data['snapshot'] = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        $data['zoneName'] = $this->zoneName($zonalId);
         $this->view('zonalsecretary/reportpreview', $data);
+    }
+
+    public function exportreport($id = null) {
+        $this->requireZonalSecretary();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalsecretary/reports');
+        }
+        $snapshot = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="zone-report-' . (int) $report->report_id . '.csv"');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, $snapshot['columns'] ?? []);
+        foreach ($snapshot['rows'] ?? [] as $row) {
+            fputcsv($out, array_values(is_array($row) ? $row : (array) $row));
+        }
+        fclose($out);
     }
 
     public function exportreports() {
         $this->requireZonalSecretary();
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Aggregate_Reports.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Division', 'Reporting clubs', 'Events', 'Attendance rate', 'Reported balance (LKR)']);
-        fputcsv($out, ['Gampaha Division', 8, 7, '78%', '206000']); fputcsv($out, ['Ja-Ela Division', 6, 6, '79%', '222000']); fputcsv($out, ['Negombo Division', 5, 5, '74%', '142000']); fclose($out);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneReportModel');
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $this->zoneName($zonalId));
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Aggregate_Reports.csv"');
+        $out = fopen('php://output', 'w'); fputcsv($out, ['Report', 'Category', 'Period', 'Format', 'Generated']);
+        foreach ($model->getReports($zonalId) as $r) {
+            fputcsv($out, [$r->type_name, $r->category, $r->date_range_start . ' to ' . $r->date_range_end, $r->format, $r->generated_at]);
+        }
+        fclose($out);
     }
 
     /**

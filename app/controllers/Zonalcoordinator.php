@@ -358,25 +358,71 @@ class Zonalcoordinator extends Controller {
 
     public function reports() {
         $this->requireZonalCoordinator();
-        $reports = [
-            ['id' => 'ZCR-101', 'title' => 'Quarterly financial rollup', 'division' => 'All divisions', 'date' => 'Sep 20, 2026'],
-            ['id' => 'ZCR-102', 'title' => 'Division attendance rollup', 'division' => 'All divisions', 'date' => 'Sep 18, 2026'],
-            ['id' => 'ZCR-103', 'title' => 'Zonal programme activity', 'division' => 'Ja-Ela Division', 'date' => 'Sep 16, 2026'],
-        ];
-        $data = $this->shell('Aggregate Reports — YouthNexus Pulse', 'Aggregate Reports', 'Generate and review Gampaha Zone divisional rollups.', 'zonalcoordinator/reports');
-        $data += ['reports' => $reports]; $this->view('zonalcoordinator/reports', $data);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $reports = [];
+        foreach ($this->model('ZoneReportModel')->getReports($zonalId) as $r) {
+            $ts = strtotime((string) $r->generated_at);
+            $reports[] = [
+                'id' => (int) $r->report_id,
+                'title' => $r->type_name ?? '',
+                'division' => 'All divisions',
+                'date' => $ts ? date('M d, Y', $ts) : '—',
+            ];
+        }
+        $data = $this->shell('Aggregate Reports — YouthNexus Pulse', 'Aggregate Reports', 'Zone-generated rollups.', 'zonalcoordinator/reports');
+        $data += ['reports' => $reports, 'zoneName' => $this->zoneDisplayName($zonalId)]; $this->view('zonalcoordinator/reports', $data);
     }
 
     public function reportpreview($id = null) {
         $this->requireZonalCoordinator();
-        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', 'Gampaha Zone aggregate report preview.', 'zonalcoordinator/reports');
-        $data['reportId'] = preg_match('/^ZCR-10[1-3]$/', (string)$id) ? $id : 'ZCR-101'; $this->view('zonalcoordinator/reportpreview', $data);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalcoordinator/reports');
+        }
+        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', $report->type_name ?? 'Report', 'zonalcoordinator/reports');
+        $data['report'] = $report;
+        $data['snapshot'] = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        $data['zoneName'] = $this->zoneDisplayName($zonalId);
+        $data['backRoute'] = 'zonalcoordinator/reports';
+        $data['exportRoute'] = 'zonalcoordinator/exportreport/' . (int) $report->report_id;
+        $this->view('zonalcoordinator/reportpreview', $data);
+    }
+
+    public function exportreport($id = null) {
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalcoordinator/reports');
+        }
+        $snapshot = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="zone-report-' . (int) $report->report_id . '.csv"');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, $snapshot['columns'] ?? []);
+        foreach ($snapshot['rows'] ?? [] as $row) {
+            fputcsv($out, array_values(is_array($row) ? $row : (array) $row));
+        }
+        fclose($out);
+    }
+
+    private function zoneDisplayName(int $zonalId): string {
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        return $zone->zonal_name ?? 'Zone';
     }
 
     public function exportreports() {
-        $this->requireZonalCoordinator(); header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Coordinator_Reports.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Division', 'Reporting clubs', 'Events', 'Attendance rate', 'Reported balance (LKR)']);
-        fputcsv($out, ['Gampaha Division', 8, 7, '78%', '206000']); fputcsv($out, ['Ja-Ela Division', 6, 6, '79%', '222000']); fputcsv($out, ['Negombo Division', 5, 5, '74%', '142000']); fclose($out);
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneReportModel');
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $this->zoneDisplayName($zonalId));
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Reports.csv"');
+        $out = fopen('php://output', 'w'); fputcsv($out, ['Report', 'Category', 'Period', 'Format', 'Generated']);
+        foreach ($model->getReports($zonalId) as $r) {
+            fputcsv($out, [$r->type_name, $r->category, $r->date_range_start . ' to ' . $r->date_range_end, $r->format, $r->generated_at]);
+        }
+        fclose($out);
     }
 
 }
