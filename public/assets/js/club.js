@@ -503,243 +503,77 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
     };
 
-    const fmtVal = (n) => 'Rs. ' + Math.round(n).toLocaleString('en-US');
-    let nextId = 5;
-    const nextAssetId = () => 'AST-2025-' + String(nextId++).padStart(3, '0');
-
-    // Register-asset modal (secretary → Available + generated ID).
-    const openBtn = document.getElementById('club-asset-open');
+    // Register-asset modal (secretary) — validates, then real POST.
     const assetModal = document.getElementById('club-asset-modal');
     const form = document.getElementById('club-asset-form');
-    if (openBtn && assetModal && form && body) {
+    if (assetModal && form && body) {
         const err = document.getElementById('asset-error');
-        const photo = document.getElementById('asset-photo');
-        const fileName = document.getElementById('asset-file-name');
-
-        const open = () => {
-            form.reset();
-            fileName.hidden = true;
-            err.hidden = true;
-            assetModal.hidden = false;
-            assetModal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        };
-        const close = () => { assetModal.hidden = true; assetModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        openBtn.addEventListener('click', open);
-        assetModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', close));
-        assetModal.addEventListener('click', (e) => { if (e.target === assetModal || (e.target.classList && e.target.classList.contains('dw-modal__backdrop'))) close(); });
-        photo.addEventListener('change', () => {
-            if (photo.files.length) {
-                fileName.textContent = 'Attached: ' + photo.files[0].name;
-                fileName.hidden = false;
-            } else {
-                fileName.hidden = true;
-            }
-        });
 
         form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('asset-name').value.trim();
-            const serial = document.getElementById('asset-serial').value.trim();
-            const category = document.getElementById('asset-category').value;
-            const dateVal = document.getElementById('asset-date').value;
-            const valueVal = document.getElementById('asset-value').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            const item = document.getElementById('asset-item').value;
+            const qtyVal = document.getElementById('asset-qty').value.trim();
+            const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!name || !serial || !category || !dateVal || !valueVal) return fail('All fields except photo are required.');
-            const value = Number(valueVal);
-            if (!isFinite(value) || value <= 0) return fail('Valuation must be a positive amount.');
-            const nice = new Date(dateVal + 'T00:00').toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const assetId = nextAssetId();
-            const row = document.createElement('tr');
-            row.setAttribute('data-search', (name + ' ' + serial + ' ' + category).toLowerCase());
-            row.setAttribute('data-status', 'available');
-            row.setAttribute('data-category', category.toLowerCase());
-            row.setAttribute('data-name', name);
-            const assetCell = document.createElement('td');
-            const wrap = document.createElement('div');
-            const thumb = document.createElement('span');
-            thumb.setAttribute('data-asset-thumb', '');
-            thumb.setAttribute('aria-hidden', 'true');
-            if (photo.files.length) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(photo.files[0]);
-                img.alt = '';
-                thumb.appendChild(img);
-            } else {
-                const firstThumb = body.querySelector('[data-asset-thumb]');
-                if (firstThumb) thumb.innerHTML = firstThumb.innerHTML;
-            }
-            const copy = document.createElement('span');
-            const strong = document.createElement('strong');
-            strong.textContent = name;
-            const idLine = document.createElement('small');
-            idLine.textContent = assetId;
-            copy.appendChild(strong);
-            copy.appendChild(idLine);
-            wrap.appendChild(thumb);
-            wrap.appendChild(copy);
-            assetCell.appendChild(wrap);
-            row.appendChild(assetCell);
-            [category, serial, nice, fmtVal(value), 'Club Centre'].forEach(text => {
-                const td = document.createElement('td');
-                td.textContent = text;
-                row.appendChild(td);
-            });
-            const statusTd = document.createElement('td');
-            const pill = document.createElement('span');
-            pill.className = 'dw-status dw-status--available';
-            pill.textContent = 'Available';
-            statusTd.appendChild(pill);
-            row.appendChild(statusTd);
-            body.prepend(row);
-            close();
-            applyFilters();
-            showToast(name + ' registered as ' + assetId + ' (demo — persists in C13 backend).');
+            if (!item || !qtyVal) return fail('Select an item and enter a quantity.');
+            const qty = Number(qtyVal);
+            if (!isFinite(qty) || qty < 1) return fail('Quantity must be at least 1.');
         });
     }
 
-    // Transfer-custody modal (treasurer: Available-only + custodian + date + history).
+    // Transfer-custody modal (treasurer) — fills the real POST form.
     const transferModal = document.getElementById('club-transfer-modal');
     if (transferModal && body) {
         const assetEl = document.getElementById('transfer-asset');
-        const custodianSel = document.getElementById('transfer-custodian');
         const dateInput = document.getElementById('transfer-date');
         const note = document.getElementById('transfer-note');
         const err = document.getElementById('transfer-error');
-        const confirmBtn = document.getElementById('transfer-confirm');
-        let target = null;
-
-        const close = () => { transferModal.hidden = true; transferModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        transferModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', close));
-        transferModal.addEventListener('click', (e) => { if (e.target === transferModal || (e.target.classList && e.target.classList.contains('dw-modal__backdrop'))) close(); });
+        const itemIdInput = document.getElementById('transfer-item-id');
+        const transferForm = document.getElementById('club-transfer-form');
 
         body.querySelectorAll('[data-action="transfer"]').forEach(btn => {
             btn.addEventListener('click', () => {
-                target = btn.closest('tr');
+                const target = btn.closest('tr');
+                if (itemIdInput) itemIdInput.value = target.getAttribute('data-id') || '';
                 assetEl.textContent = target.getAttribute('data-name') || '';
                 note.value = '';
                 dateInput.value = '';
                 err.hidden = true;
-                transferModal.hidden = false;
-                transferModal.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
             });
         });
 
-        confirmBtn.addEventListener('click', () => {
-            if (!dateInput.value) {
-                err.textContent = 'Choose the transfer date.';
-                err.hidden = false;
-                dateInput.focus();
-                return;
-            }
-            if (!note.value.trim()) {
-                err.textContent = 'A history note is required — it is logged with the transfer.';
-                err.hidden = false;
-                note.focus();
-                return;
-            }
-            if (target) {
-                target.children[5].textContent = custodianSel.value;
-                target.setAttribute('data-status', 'inuse');
-                const statusCell = target.children[6];
-                statusCell.textContent = '';
-                const pill = document.createElement('span');
-                pill.className = 'dw-status dw-status--in-use';
-                pill.textContent = 'In Use';
-                statusCell.appendChild(pill);
-                const btn = target.querySelector('[data-action="transfer"]');
-                if (btn) btn.remove();
-            }
-            close();
-            applyFilters();
-            showToast('Custody transferred to ' + custodianSel.value + ' — history logged (demo).');
-        });
+        if (transferForm) {
+            transferForm.addEventListener('submit', (e) => {
+                if (!dateInput.value) {
+                    e.preventDefault();
+                    err.textContent = 'Choose the transfer date.';
+                    err.hidden = false;
+                    dateInput.focus();
+                    return;
+                }
+                if (!note.value.trim()) {
+                    e.preventDefault();
+                    err.textContent = 'A history note is required — it is logged with the transfer.';
+                    err.hidden = false;
+                    note.focus();
+                }
+            });
+        }
     }
 
-    // Request-from-Division flow (treasurer; division side excluded — intent + outbox only).
-    const reqOpen = document.getElementById('club-request-open');
-    const reqModal = document.getElementById('club-request-modal');
+    // Request-from-Division flow (treasurer) — validates, then real POST.
     const reqForm = document.getElementById('club-request-form');
-    if (reqOpen && reqModal && reqForm) {
-        const CATALOG = {
-            'Sports': ['Cricket bat', 'Cricket ball', 'Volleyball net', 'Volleyball', 'Sports shoes'],
-            'Audio Video Equipments': ['PA system', 'Loudspeakers', 'Microphones'],
-            'Cleaning': ['Mamoty', 'Paint roller set'],
-            'Official Equipments': ['Office chairs', 'Filing cabinet', 'Notice board'],
-        };
-        const catSel = document.getElementById('req-category');
-        const itemSel = document.getElementById('req-item');
+    if (reqForm) {
         const err = document.getElementById('req-error');
-        const reqBody = document.getElementById('club-request-body');
-
-        const open = () => {
-            reqForm.reset();
-            itemSel.textContent = '';
-            const ph = document.createElement('option');
-            ph.value = '';
-            ph.textContent = 'Select a category first...';
-            itemSel.appendChild(ph);
-            err.hidden = true;
-            reqModal.hidden = false;
-            reqModal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        };
-        const closeReq = () => { reqModal.hidden = true; reqModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        reqOpen.addEventListener('click', open);
-        reqModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', closeReq));
-        reqModal.addEventListener('click', (e) => { if (e.target === reqModal || (e.target.classList && e.target.classList.contains('dw-modal__backdrop'))) closeReq(); });
-
-        catSel.addEventListener('change', () => {
-            itemSel.textContent = '';
-            (CATALOG[catSel.value] || []).forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                itemSel.appendChild(opt);
-            });
-            if (!itemSel.children.length) {
-                const ph = document.createElement('option');
-                ph.value = '';
-                ph.textContent = 'Select a category first...';
-                itemSel.appendChild(ph);
-            }
-        });
 
         reqForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const category = catSel.value;
-            const item = itemSel.value;
+            const item = document.getElementById('req-item').value;
             const qtyVal = document.getElementById('req-qty').value.trim();
-            const dateVal = document.getElementById('req-date').value;
             const just = document.getElementById('req-just').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!category || !item || !qtyVal || !dateVal || !just) return fail('All fields are required.');
+            if (!item || !qtyVal || !just) return fail('Item, quantity and reason are required.');
             const qty = Number(qtyVal);
             if (!isFinite(qty) || qty < 1) return fail('Quantity must be at least 1.');
-            const nice = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const row = document.createElement('tr');
-            const itemTd = document.createElement('td');
-            const strong = document.createElement('strong');
-            strong.textContent = item;
-            itemTd.appendChild(strong);
-            row.appendChild(itemTd);
-            [category, String(Math.round(qty)), just, nice].forEach(text => {
-                const td = document.createElement('td');
-                td.textContent = text;
-                row.appendChild(td);
-            });
-            const statusTd = document.createElement('td');
-            const pill = document.createElement('span');
-            pill.className = 'dw-status dw-status--pending';
-            pill.textContent = 'Pending';
-            statusTd.appendChild(pill);
-            row.appendChild(statusTd);
-            reqBody.prepend(row);
-            closeReq();
-            showToast(item + ' requested — sent to the division queue (demo).');
         });
     }
 });
