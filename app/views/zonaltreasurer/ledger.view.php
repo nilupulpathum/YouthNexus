@@ -29,7 +29,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-labelledby="zonal-ledger-heading">
     <h1 id="zonal-ledger-heading" class="visually-hidden">Zonal ledger</h1>
 
-    <?php if ($flash): ?><div class="dw-alert dw-alert--success" role="status"><?= $e($flash) ?></div><?php endif; ?>
+    <?php if (!empty($flash)): ?><div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status"><?= $e($flash['message'] ?? '') ?></div><?php endif; ?>
 
     <div class="dw-summary-grid dw-summary-grid--three" aria-label="Zonal ledger summary">
         <?php foreach ($summaryCards as $card): ?>
@@ -72,7 +72,15 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <?php $moneyTone = ($entry['type_key'] ?? '') === 'income' ? ' dw-money--income' : ((($entry['type_key'] ?? '') === 'expense') ? ' dw-money--expense' : ''); ?>
                             <td class="dw-money<?= $moneyTone ?>">LKR <?= number_format($entry['amount'], 2) ?></td>
                             <td class="dw-money">LKR <?= number_format($entry['balance'], 2) ?></td>
-                            <td><?= $e($entry['receipt']) ?></td>
+                            <td>
+                                <?php if (!empty($entry['has_receipt'])): ?>
+                                    <div class="dw-row-actions">
+                                        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/show/<?= (int) $entry['id'] ?>" target="_blank" rel="noopener" aria-label="View receipt"><?= yn_icon('download') ?></a>
+                                    </div>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
                             <td><?php $status = $entry['status']; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -99,7 +107,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
         </header>
         <div class="dw-modal__body">
-            <form id="log-transaction-form" method="post" action="<?= ROOT ?>/zonaltreasurer/logtransaction">
+                <form id="log-transaction-form" method="post" action="<?= ROOT ?>/zonaltreasurer/logtransaction" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
                 <div class="dw-field">
                     <label for="ledger-type">Transaction type</label>
@@ -114,8 +122,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <input id="ledger-date" name="transaction_date" type="date" required>
                 </div>
                 <div class="dw-field">
-                    <label for="ledger-receipt">Receipt reference</label>
-                    <input id="ledger-receipt" name="receipt" maxlength="100" required>
+                        <label for="ledger-receipt">Receipt (photo or PDF, required)</label>
+                        <input id="ledger-receipt" name="receipt" type="file" accept="image/*,.pdf" required>
                 </div>
                 <div class="dw-field dw-field--span-2">
                     <label for="ledger-description">Description</label>
