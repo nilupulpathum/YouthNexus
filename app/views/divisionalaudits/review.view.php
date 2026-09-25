@@ -1,0 +1,61 @@
+<?php
+require_once __DIR__ . '/../partials/icons.view.php';
+
+$e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
+$title = 'Review Club Audit - YouthNexus';
+$pageTitle = 'Audit Club Finance';
+$pageDescription = 'Review ledger entries and record the audit decision';
+$currentRoute = 'divisionalaudits';
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-audits.js'];
+$openFlags = array_filter($audit->flags, static fn($flag) => $flag->status !== 'Resolved');
+$canComplete = $audit->audit_status !== 'Completed' && abs((float) $audit->difference) < 0.01 && count($openFlags) === 0;
+
+require __DIR__ . '/../layouts/dashboard-start.view.php';
+?>
+<section class="dw-page" aria-label="Club audit review">
+  <?php if ($flash): ?><div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div><?php endif; ?>
+
+  <div class="dw-review-banner">
+    <dl class="dw-review-list">
+      <div><dt>Club</dt><dd><?= $e($audit->club_name) ?></dd></div>
+      <div><dt>Audit Type</dt><dd><?= $e($audit->audit_type === 'BiWeekly' ? 'Bi-weekly' : $audit->audit_type) ?></dd></div>
+      <div><dt>Audit Period</dt><dd><?= $e(date('d M Y', strtotime($audit->period_start))) ?> - <?= $e(date('d M Y', strtotime($audit->period_end))) ?></dd></div>
+      <div><dt>Status</dt><dd><?php $status = $audit->audit_status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></dd></div>
+    </dl>
+    <div class="dw-review-banner__actions"><a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalaudits">Back to Audit Queue</a><a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalaudits/export/<?= (int) $audit->audit_id ?>"><?= yn_icon('download') ?> Export Report</a><?php if ($audit->audit_status !== 'Completed'): ?><form action="<?= ROOT ?>/divisionalaudits/refresh/<?= (int) $audit->audit_id ?>" method="post"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--secondary" type="submit">Refresh Audit</button></form><?php endif; ?></div>
+  </div>
+
+  <div class="dw-audit-tabs" role="tablist" aria-label="Ledger entry type"><button class="is-active" type="button" data-audit-entry-tab="all">All Entries</button><button type="button" data-audit-entry-tab="income">Income</button><button type="button" data-audit-entry-tab="expense">Expenses</button><button type="button" data-audit-entry-tab="flags">Open Findings (<?= count($openFlags) ?>)</button></div>
+
+  <section class="dw-panel" data-audit-ledger-panel>
+    <header class="dw-panel__header"><div><h2>Ledger History</h2><p>Entries within the selected audit period</p></div><span class="dw-count" data-audit-entry-count><?= count($entries) ?> entries</span></header>
+    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Date</th><th>Reference</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Receipt</th><th>Action</th></tr></thead><tbody>
+      <?php foreach ($entries as $entry): ?>
+        <?php $hasReceipt = !empty($entry->attachment_url); ?>
+        <tr data-audit-entry data-entry-type="<?= $e(strtolower($entry->type)) ?>"><td><?= $e(date('d M Y', strtotime($entry->date))) ?></td><td class="dw-table__reference"><?= $e($entry->reference_no) ?></td><td class="dw-table__description"><?= $e($entry->description) ?></td><td><?= $e($entry->category ?: 'Uncategorised') ?></td><td><?php $status = $entry->type; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td class="dw-money <?= $entry->type === 'Income' ? 'dw-money--income' : 'dw-money--expense' ?>"><?= $e($money($entry->amount)) ?></td><td><?= $hasReceipt ? 'Attached' : 'Missing' ?></td><td><div class="dw-row-actions"><?php if ($hasReceipt): ?><a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt"><?= yn_icon('eye') ?> View Receipt</a><?php elseif ($entry->type === 'Expense' && $audit->audit_status !== 'Completed'): ?><button class="dw-button dw-button--ghost" type="button" data-request-receipt data-entry-description="<?= $e($entry->description) ?>" data-modal-open="audit-note">Request Receipt</button><?php endif; ?></div></td></tr>
+      <?php endforeach; ?>
+    </tbody></table></div>
+    <?php $emptyTitle = 'No ledger entries found'; $emptyMessage = 'No entries were recorded during this audit period.'; $emptyVisible = count($entries) === 0; require __DIR__ . '/../partials/divisional/empty-state.view.php'; ?>
+  </section>
+
+  <section class="dw-panel" data-audit-findings-panel hidden>
+    <header class="dw-panel__header"><div><h2>Audit Findings</h2><p>Receipt and ledger issues requiring attention</p></div><span class="dw-count"><?= count($openFlags) ?> open</span></header>
+    <div class="dw-panel__body"><div class="dw-finding-list">
+      <?php foreach ($audit->flags as $flag): ?><article class="dw-finding<?= $flag->status === 'Resolved' ? ' dw-finding--resolved' : '' ?>"><div><strong><?= $e($flag->flag_type === 'MissingReceipt' ? 'Missing Receipt' : $flag->flag_type) ?></strong><p><?= $e($flag->description) ?></p></div><?php $status = $flag->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></article><?php endforeach; ?>
+      <?php if (!$audit->flags): ?><p class="dw-muted-copy">No audit findings were recorded.</p><?php endif; ?>
+    </div></div>
+  </section>
+
+  <section class="dw-audit-totals" aria-label="Audit totals"><div><span>Opening Balance</span><strong><?= $e($money($audit->opening_balance)) ?></strong></div><div><span>Total Income</span><strong class="dw-money--income"><?= $e($money($audit->total_income)) ?></strong></div><div><span>Total Expenses</span><strong class="dw-money--expense"><?= $e($money($audit->total_expenses)) ?></strong></div><div><span>Expected Closing</span><strong><?= $e($money($audit->expected_closing_balance)) ?></strong></div><div><span>Actual Closing</span><strong><?= $e($money($audit->actual_closing_balance)) ?></strong></div><div><span>Difference</span><strong class="<?= abs((float) $audit->difference) < 0.01 ? 'dw-money--income' : 'dw-money--expense' ?>"><?= $e($money($audit->difference)) ?></strong></div></section>
+
+  <?php if ($audit->audit_status !== 'Completed'): ?>
+    <div class="dw-audit-decision"><div><strong><?= $canComplete ? 'Audit ready for completion' : 'Audit requires follow-up' ?></strong><p><?= $canComplete ? 'The ledger is balanced and there are no open findings.' : 'Send an audit note or resolve the open findings before completion.' ?></p></div><div class="dw-row-actions"><button class="dw-button dw-button--secondary" type="button" data-modal-open="audit-note">Add Audit Note</button><button class="dw-button dw-button--primary" type="button" data-modal-open="complete-audit"<?= $canComplete ? '' : ' disabled' ?>>Mark as Audited</button></div></div>
+  <?php endif; ?>
+</section>
+
+<div class="dw-modal" id="audit-note" role="dialog" aria-modal="true" aria-labelledby="audit-note-title" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalaudits/note/<?= (int) $audit->audit_id ?>" method="post" data-audit-note-form><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2 id="audit-note-title">Send Audit Note</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-field dw-field--span-2"><label for="audit-note-reason">Reason</label><select id="audit-note-reason" name="reason" required><option value="">Select a reason</option><option value="Missing Receipt">Missing Receipt</option><option value="Balance Difference">Balance Difference</option><option value="Incorrect Entry">Incorrect Entry</option><option value="Other">Other</option></select></div><div class="dw-field dw-field--span-2"><label for="audit-note-text">Audit Notes</label><textarea id="audit-note-text" name="notes" maxlength="2000" required></textarea></div><div class="dw-detail-box dw-field--span-2"><span>Recipient</span><strong><?= $e($audit->club_name) ?> Club Treasurer</strong></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Send Audit Note</button></footer></form></div>
+
+<div class="dw-modal" id="complete-audit" role="dialog" aria-modal="true" aria-labelledby="complete-audit-title" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalaudits/complete/<?= (int) $audit->audit_id ?>" method="post"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2 id="complete-audit-title">Confirm Club Audit</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-alert dw-alert--success dw-field--span-2"><?= yn_icon('check') ?><span>The ledger is balanced and all findings are resolved.</span></div><div class="dw-field dw-field--span-2"><label for="complete-audit-notes">Audit Notes (optional)</label><textarea id="complete-audit-notes" name="notes" maxlength="2000"></textarea></div><div class="dw-field dw-field--span-2"><label for="complete-audit-export">Export Report</label><select id="complete-audit-export" name="export_report"><option value="none">Do not export</option><option value="csv">Download CSV after completion</option></select></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Mark as Audited</button></footer></form></div>
+<?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
