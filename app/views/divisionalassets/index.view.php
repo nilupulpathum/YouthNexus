@@ -1,0 +1,119 @@
+<?php
+require_once __DIR__ . '/../partials/icons.view.php';
+$e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$requestRef = static fn($id) => 'AR-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
+$title = 'Manage Assets - YouthNexus';
+$pageTitle = 'Manage Assets';
+$pageDescription = 'Manage divisional inventory and club asset requests';
+$currentRoute = 'divisionalassets';
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-assets.js'];
+$summaryCards = [
+    ['value' => $summary['units'], 'label' => 'Units In Division Store', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => $summary['items'], 'label' => 'Asset Types', 'note' => 'With available stock', 'icon' => 'file', 'tone' => 'green'],
+    ['value' => $summary['club_pending'], 'label' => 'Pending Club Requests', 'note' => 'Waiting for your decision', 'icon' => 'clock', 'tone' => 'amber'],
+    ['value' => $summary['zonal_pending'], 'label' => 'Requests To Zonal', 'note' => 'Awaiting zonal response', 'icon' => 'upload', 'tone' => 'blue'],
+];
+require __DIR__ . '/../layouts/dashboard-start.view.php';
+?>
+<section class="dw-page" aria-label="Divisional asset management">
+  <?php if ($flash): ?>
+    <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
+      <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span>
+    </div>
+  <?php endif; ?>
+
+  <div class="dw-summary-grid" aria-label="Asset summary">
+    <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
+  </div>
+
+  <div class="dw-toolbar" aria-label="Asset tools">
+    <div class="dw-toolbar__search dw-search dw-search--plain">
+      <label class="visually-hidden" for="asset-search">Search assets and requests</label>
+      <input id="asset-search" type="search" placeholder="Search by item, category, club, or request" data-asset-search>
+    </div>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="asset-filters" aria-expanded="false">Filters</button>
+    <button class="dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset">Add Asset</button>
+  </div>
+
+  <section class="dw-filter-panel" id="asset-filters" hidden>
+    <h2 class="dw-filter-panel__heading">Advanced Filters for Assets</h2>
+    <div class="dw-filter-grid">
+      <div class="dw-field"><label for="asset-category">Category</label><select id="asset-category" data-asset-category><option value="">All categories</option><?php foreach (array_unique(array_map(fn($i) => $i->category, $catalog)) as $category): ?><option value="<?= $e(strtolower($category)) ?>"><?= $e($category) ?></option><?php endforeach; ?></select></div>
+      <div class="dw-field"><label for="asset-status">Status</label><select id="asset-status" data-asset-status><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option><option value="completed">Completed</option><option value="in-transit">In Transit</option><option value="cancelled">Cancelled</option></select></div>
+      <div class="dw-field"><label for="asset-quantity">Minimum quantity</label><input id="asset-quantity" type="number" min="0" data-asset-quantity></div>
+      <div class="dw-field"><label for="asset-sort">Sort by</label><select id="asset-sort" data-asset-sort><option value="name">Item name</option><option value="quantity-high">Quantity (high to low)</option><option value="quantity-low">Quantity (low to high)</option><option value="newest">Newest first</option></select></div>
+    </div>
+    <div class="dw-filter-actions"><button class="dw-button dw-button--secondary" type="button" data-asset-reset>Reset all</button><button class="dw-button dw-button--primary" type="button" data-asset-apply>Apply filters</button></div>
+  </section>
+
+  <section class="dw-panel" aria-labelledby="club-asset-request-title">
+    <header class="dw-panel__header"><div><h2 id="club-asset-request-title">Pending Club Requests</h2><p>Review requests from active clubs in your division</p></div><span class="dw-count" data-club-request-count><?= count($clubRequests) ?> requests</span></header>
+    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Club</th><th>Item</th><th>Qty</th><th>Available</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead><tbody data-club-request-body>
+      <?php foreach ($clubRequests as $request): ?>
+        <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->club_name, $request->item_name, $request->category, $request->reason])); ?>
+        <tr data-asset-row data-section="club-request" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="pending" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>">
+          <td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td><?= $e($request->club_name) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= (int) $request->available_quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
+          <td><button class="dw-button dw-button--primary" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody></table></div>
+    <div class="dw-empty-state<?= !$clubRequests ? ' is-visible' : '' ?>" data-club-request-empty><span class="dw-empty-state__icon"><?= yn_icon('check') ?></span><strong>No pending club requests</strong><p>New asset requests from clubs appear here.</p></div>
+  </section>
+
+  <section class="dw-panel" aria-labelledby="division-inventory-title">
+    <header class="dw-panel__header"><div><h2 id="division-inventory-title">Division Inventory</h2><p>Assets currently held by the division store</p></div><span class="dw-count" data-inventory-count><?= count($inventory) ?> items</span></header>
+    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Item</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Custodian</th><th>Updated</th><th>Action</th></tr></thead><tbody data-inventory-body>
+      <?php foreach ($inventory as $item): ?>
+        <?php $search = strtolower(implode(' ', [$item->item_name, $item->sku, $item->category, $item->specifications])); ?>
+        <tr data-asset-row data-section="inventory" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($item->category)) ?>" data-status="" data-quantity="<?= (int) $item->quantity ?>" data-date="<?= $e(substr($item->updated_at, 0, 10)) ?>">
+          <td class="dw-table__description"><?= $e($item->item_name) ?></td><td class="dw-table__reference"><?= $e($item->sku) ?></td><td><?= $e($item->category) ?></td><td><?= (int) $item->quantity ?> <?= $e($item->unit) ?></td><td>Division Store</td><td><?= $e(date('d M Y', strtotime($item->updated_at))) ?></td>
+          <td><div class="dw-row-actions"><button class="dw-button dw-button--ghost" type="button" data-adjust-asset data-modal-open="adjust-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-quantity="<?= (int) $item->quantity ?>">Adjust</button><button class="dw-button dw-button--ghost" type="button" data-transfer-asset data-modal-open="transfer-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-available="<?= (int) $item->quantity ?>">Transfer</button></div></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody></table></div>
+    <div class="dw-empty-state<?= !$inventory ? ' is-visible' : '' ?>" data-inventory-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No divisional inventory</strong><p>Add an existing catalog asset or request stock from Zonal.</p></div>
+  </section>
+
+  <section class="dw-panel" aria-labelledby="asset-transfer-history-title">
+    <header class="dw-panel__header"><div><h2 id="asset-transfer-history-title">Transfer History</h2><p>Recorded asset movements from the division store to clubs</p></div><span class="dw-count" data-transfer-count><?= count($transferHistory) ?> transfers</span></header>
+    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Transfer</th><th>Club</th><th>Item</th><th>Quantity</th><th>Transfer Date</th><th>Authorized By</th><th>Status</th><th>Notes</th></tr></thead><tbody data-transfer-body>
+      <?php foreach ($transferHistory as $transfer): ?>
+        <?php
+        $transferReference = 'TRF-' . str_pad((string) $transfer->transfer_id, 4, '0', STR_PAD_LEFT);
+        $search = strtolower(implode(' ', [$transferReference, $transfer->club_name, $transfer->item_name, $transfer->sku, $transfer->category, $transfer->transferred_by_name, $transfer->status, $transfer->notes]));
+        ?>
+        <tr data-asset-row data-section="transfer-history" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($transfer->category)) ?>" data-status="<?= $e(strtolower($transfer->status)) ?>" data-quantity="<?= (int) $transfer->quantity ?>" data-date="<?= $e($transfer->transfer_date) ?>">
+          <td class="dw-table__reference"><?= $e($transferReference) ?></td><td><?= $e($transfer->club_name) ?></td><td class="dw-table__description"><?= $e($transfer->item_name) ?><br><small><?= $e($transfer->sku) ?></small></td><td><?= (int) $transfer->quantity ?> <?= $e($transfer->unit) ?></td><td><?= $e(date('d M Y', strtotime($transfer->transfer_date))) ?></td><td><?= $e(trim((string) $transfer->transferred_by_name) ?: 'Divisional Treasurer') ?></td><td><?php $status = $transfer->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($transfer->notes ?: '-') ?></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody></table></div>
+    <div class="dw-empty-state<?= !$transferHistory ? ' is-visible' : '' ?>" data-transfer-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No club transfers recorded</strong><p>Direct transfers and approved club requests appear here.</p></div>
+  </section>
+
+  <section class="dw-panel" aria-labelledby="zonal-request-title">
+    <header class="dw-panel__header"><div><h2 id="zonal-request-title">Requests to Zonal</h2><p>Track asset requests sent by your division</p></div><span class="dw-count" data-zonal-count><?= count($zonalRequests) ?> requests</span></header>
+    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Item</th><th>Quantity</th><th>Reason</th><th>Requested</th><th>Status</th><th>Remarks</th></tr></thead><tbody data-zonal-body>
+      <?php foreach ($zonalRequests as $request): ?>
+        <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->item_name, $request->category, $request->reason, $request->status, $request->remarks])); ?>
+        <tr data-asset-row data-section="zonal-request" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="<?= $e(strtolower($request->status)) ?>" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>"><td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td><td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($request->remarks ?: '-') ?></td></tr>
+      <?php endforeach; ?>
+    </tbody></table></div>
+    <div class="dw-empty-state<?= !$zonalRequests ? ' is-visible' : '' ?>" data-zonal-empty><span class="dw-empty-state__icon"><?= yn_icon('upload') ?></span><strong>No zonal asset requests</strong><p>Requests you send to Zonal appear here.</p></div>
+  </section>
+</section>
+
+<?php
+$assetOptions = function () use ($catalog, $e): void { foreach ($catalog as $item) echo '<option value="' . (int) $item->catalog_item_id . '">' . $e($item->item_name . ' - ' . $item->sku) . '</option>'; };
+?>
+<div class="dw-modal" id="add-divisional-asset" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalassets/add" method="post"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2>Add Asset to Division Store</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-field dw-field--span-2"><label for="add-asset-item">Catalog item</label><select id="add-asset-item" name="catalog_item_id" required><option value="">Select an asset</option><?php $assetOptions(); ?></select></div><div class="dw-field"><label for="add-asset-quantity">Quantity</label><input id="add-asset-quantity" name="quantity" type="number" min="1" required></div><div class="dw-field"><label for="add-asset-custodian">Custodian</label><input id="add-asset-custodian" value="Division Store" disabled></div><div class="dw-field dw-field--span-2"><label for="add-asset-notes">Record notes</label><textarea id="add-asset-notes" name="notes" maxlength="500" placeholder="Source or reason for recording this stock"></textarea></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Save Asset</button></footer></form></div>
+
+<div class="dw-modal" id="request-zonal-asset" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalassets/requestzonal" method="post"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2>Request Asset from Zonal</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-field dw-field--span-2"><label for="zonal-asset-item">Catalog item</label><select id="zonal-asset-item" name="catalog_item_id" required><option value="">Select an asset</option><?php $assetOptions(); ?></select></div><div class="dw-field"><label for="zonal-asset-quantity">Quantity</label><input id="zonal-asset-quantity" name="quantity" type="number" min="1" required></div><div class="dw-field"><label for="zonal-office">Requested from</label><input id="zonal-office" value="<?= $e($division->zonal_name) ?>" disabled></div><div class="dw-field dw-field--span-2"><label for="zonal-asset-reason">Reason</label><textarea id="zonal-asset-reason" name="reason" minlength="5" maxlength="1000" required></textarea></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Submit Request</button></footer></form></div>
+
+<div class="dw-modal" id="adjust-divisional-asset" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalassets/adjust" method="post" data-adjust-form><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><input type="hidden" name="catalog_item_id" data-adjust-id><header class="dw-modal__header"><h2>Adjust Asset Quantity</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-detail-box dw-field--span-2"><span>Asset</span><strong data-adjust-item></strong></div><div class="dw-field dw-field--span-2"><label for="adjust-quantity">New total quantity</label><input id="adjust-quantity" name="quantity" type="number" min="0" required data-adjust-quantity></div><div class="dw-field dw-field--span-2"><label for="adjust-reason">Adjustment reason</label><textarea id="adjust-reason" name="reason" minlength="5" maxlength="500" required></textarea></div><div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>This records a manual stock correction in the audit log.</span></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Save Adjustment</button></footer></form></div>
+
+<div class="dw-modal" id="transfer-divisional-asset" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalassets/transfer" method="post" data-transfer-form><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><input type="hidden" name="catalog_item_id" data-transfer-id><header class="dw-modal__header"><h2>Transfer Asset to Club</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><div class="dw-detail-box dw-field--span-2"><span>Asset</span><strong data-transfer-item></strong><small data-transfer-available></small></div><div class="dw-field"><label for="transfer-club">Club</label><select id="transfer-club" name="club_id" required><option value="">Select a club</option><?php foreach ($clubs as $club): ?><option value="<?= (int) $club->club_id ?>"><?= $e($club->club_name) ?></option><?php endforeach; ?></select></div><div class="dw-field"><label for="transfer-quantity">Quantity</label><input id="transfer-quantity" name="quantity" type="number" min="1" required data-transfer-quantity></div><div class="dw-field dw-field--span-2"><label for="transfer-notes">Transfer notes</label><textarea id="transfer-notes" name="notes" maxlength="500"></textarea></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Confirm Transfer</button></footer></form></div>
+
+<div class="dw-modal" id="review-club-asset" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><form class="dw-modal__dialog" action="" method="post" data-review-form data-decision-base="<?= ROOT ?>/divisionalassets/decide/"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><header class="dw-modal__header"><h2>Review Club Asset Request</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><dl class="dw-review-list dw-field--span-2"><div><dt>Request</dt><dd data-review-ref></dd></div><div><dt>Club</dt><dd data-review-club></dd></div><div><dt>Item</dt><dd data-review-item></dd></div><div><dt>Quantity</dt><dd data-review-quantity></dd></div><div><dt>Available in division</dt><dd data-review-available></dd></div><div><dt>Reason</dt><dd data-review-reason></dd></div><div><dt>Requested by</dt><dd data-review-requester></dd></div><div><dt>Requested at</dt><dd data-review-date></dd></div></dl><div class="dw-field dw-field--span-2"><label for="asset-decision">Decision</label><select id="asset-decision" name="decision" required data-decision><option value="approve">Allocate from Division Store</option><option value="reject">Reject Request</option></select></div><div class="dw-field dw-field--span-2"><label for="asset-remarks">Remarks <span data-remarks-required hidden>(required when rejecting)</span></label><textarea id="asset-remarks" name="remarks" maxlength="1000" data-remarks></textarea></div><div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>Approval immediately transfers the requested quantity to the club and updates both inventories.</span></div></div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Submit Decision</button></footer></form></div>
+<?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

@@ -36,10 +36,12 @@ class Auth extends Controller {
 
                 if ($user) {
                     // Generate 6-digit 2FA verification code
-                    $code = strval(rand(100000, 999999));
+                    $code = strval(random_int(100000, 999999));
 
                     // Store temporary login state in session
                     $_SESSION['verification_code'] = $code;
+                    $_SESSION['verification_code_created_at'] = time();
+                    $_SESSION['verification_attempts'] = 0;
                     $_SESSION['temp_login'] = [
                         'user_id'      => $user->user_id,
                         'user_name'    => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
@@ -107,10 +109,12 @@ class Auth extends Controller {
                     $data['message'] = ['type' => 'error', 'text' => 'This email is already registered. Please sign in.'];
                 } else {
                     // Generate 6-digit verification code
-                    $code = strval(rand(100000, 999999));
+                    $code = strval(random_int(100000, 999999));
 
                     // Store temp signup data in session
                     $_SESSION['verification_code'] = $code;
+                    $_SESSION['verification_code_created_at'] = time();
+                    $_SESSION['verification_attempts'] = 0;
                     $_SESSION['temp_signup'] = [
                         'fullname' => $fullname,
                         'email'    => $email,
@@ -148,8 +152,10 @@ class Auth extends Controller {
         // Handle resend request
         $resent = false;
         if (isset($_GET['resend']) && $_GET['resend'] == 1) {
-            $code = strval(rand(100000, 999999));
+            $code = strval(random_int(100000, 999999));
             $_SESSION['verification_code'] = $code;
+            $_SESSION['verification_code_created_at'] = time();
+            $_SESSION['verification_attempts'] = 0;
             $this->sendVerificationEmail($targetEmail, $targetName, $code);
             $resent = true;
         }
@@ -168,15 +174,27 @@ class Auth extends Controller {
                 $code .= $_POST['d' . $i] ?? '';
             }
 
-            if (strlen($code) !== 6) {
+            $storedCode = (string) ($_SESSION['verification_code'] ?? '');
+            $createdAt = (int) ($_SESSION['verification_code_created_at'] ?? 0);
+            $attempts = (int) ($_SESSION['verification_attempts'] ?? 0);
+            $expired = $createdAt < 1 || (time() - $createdAt) > 600;
+
+            if (strlen($code) !== 6 || !ctype_digit($code)) {
                 $data['msg'] = 'Please enter all 6 digits.';
-            } elseif ($code === ($_SESSION['verification_code'] ?? '')) {
+            } elseif ($attempts >= 5) {
+                $data['msg'] = 'Too many verification attempts. Request a new code.';
+                $data['error'] = true;
+            } elseif ($expired) {
+                $data['msg'] = 'The verification code has expired. Request a new code.';
+                $data['error'] = true;
+            } elseif ($storedCode !== '' && hash_equals($storedCode, $code)) {
                 $userModel = $this->model('UserModel');
 
                 if (isset($_SESSION['temp_login'])) {
                     // 2FA for Sign In: Log in the user
                     $s = $_SESSION['temp_login'];
                     $userModel->updateLastLogin($s['user_id']);
+                    session_regenerate_id(true);
 
                     $_SESSION['user_id']      = $s['user_id'];
                     $_SESSION['user_name']     = $s['user_name'];
@@ -188,15 +206,20 @@ class Auth extends Controller {
                     $_SESSION['user_initials'] = $s['user_initials'];
 
                     unset($_SESSION['verification_code']);
+                    unset($_SESSION['verification_code_created_at']);
+                    unset($_SESSION['verification_attempts']);
                     unset($_SESSION['temp_login']);
 
                     // Role-based redirect after successful login
                     switch ($s['user_role']) {
                         case 'DivisionalCoordinator':
-                            $this->redirect('clubregistrationapproval/index');
+                            $this->redirect('divisionalcoordinator');
                             break;
                         case 'DivisionalSecretary':
-                            $this->redirect('manageevents');
+                            $this->redirect('divisionalsecretary');
+                            break;
+                        case 'DivisionalTreasurer':
+                            $this->redirect('divisionaltreasurer');
                             break;
                         case 'ClubMember':
                         case 'Member':
@@ -214,11 +237,14 @@ class Auth extends Controller {
                     $userModel->createUser($s['fullname'], $s['email'], $s['password']);
 
                     unset($_SESSION['verification_code']);
+                    unset($_SESSION['verification_code_created_at']);
+                    unset($_SESSION['verification_attempts']);
                     unset($_SESSION['temp_signup']);
 
                     $this->redirect('auth/signin?registered=1');
                 }
             } else {
+                $_SESSION['verification_attempts'] = $attempts + 1;
                 $data['error'] = true;
             }
         }
