@@ -105,12 +105,88 @@
     });
   });
 
-  document.querySelectorAll('[data-allocation-form], [data-review-allocation-form]').forEach(function (form) {
+  document.querySelectorAll('[data-review-allocation-form]').forEach(function (form) {
     form.addEventListener('submit', function () {
       var submit = form.querySelector('[type="submit"]');
       if (submit) submit.disabled = true;
     });
   });
+
+  var allocationForm = document.querySelector('[data-allocation-form]');
+  var method = document.querySelector('[data-allocation-method]');
+  var reference = document.querySelector('[data-allocation-reference]');
+  var amountInput = document.getElementById('allocation-amount');
+  var amountWords = document.querySelector('[data-allocation-amount-words]');
+  var allocationError = document.querySelector('[data-allocation-error]');
+
+  function numberToWords(number) {
+    if (!Number.isFinite(number) || number <= 0) return '';
+    var units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    var tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    function convert(value) {
+      if (value < 20) return units[value];
+      if (value < 100) return tens[Math.floor(value / 10)] + (value % 10 ? ' ' + units[value % 10] : '');
+      if (value < 1000) return units[Math.floor(value / 100)] + ' Hundred' + (value % 100 ? ' ' + convert(value % 100) : '');
+      if (value < 100000) return convert(Math.floor(value / 1000)) + ' Thousand' + (value % 1000 ? ' ' + convert(value % 1000) : '');
+      if (value < 10000000) return convert(Math.floor(value / 100000)) + ' Lakh' + (value % 100000 ? ' ' + convert(value % 100000) : '');
+      return convert(Math.floor(value / 10000000)) + ' Crore' + (value % 10000000 ? ' ' + convert(value % 10000000) : '');
+    }
+    return convert(Math.floor(number)) + ' Sri Lankan Rupees';
+  }
+
+  if (amountInput && amountWords) {
+    amountInput.addEventListener('input', function () {
+      var words = numberToWords(Number(amountInput.value));
+      amountWords.textContent = words || 'Enter the disbursement amount in Sri Lankan Rupees.';
+    });
+  }
+
+  if (allocationForm && method && reference) {
+    method.addEventListener('change', function () {
+      var endpoint = allocationForm.action.replace(/\/create\/?$/, '/getreference');
+      fetch(endpoint + '?method=' + encodeURIComponent(method.value), { headers: { Accept: 'application/json' } })
+        .then(function (response) { return response.json(); })
+        .then(function (payload) { if (payload.success && payload.reference) reference.value = payload.reference; })
+        .catch(function () {});
+    });
+  }
+
+  if (allocationForm) {
+    allocationForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var submit = allocationForm.querySelector('[type="submit"]');
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = 'Authorizing...';
+      }
+      if (allocationError) allocationError.hidden = true;
+
+      fetch(allocationForm.action, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(allocationForm)
+      })
+        .then(function (response) {
+          return response.json().then(function (payload) {
+            if (!response.ok) throw new Error(payload.error || 'The allocation could not be completed.');
+            return payload;
+          });
+        })
+        .then(function (payload) {
+          window.location.assign(payload.redirect || allocationForm.action.replace(/\/create\/?$/, ''));
+        })
+        .catch(function (error) {
+          if (allocationError) {
+            allocationError.textContent = error.message;
+            allocationError.hidden = false;
+          }
+          if (submit) {
+            submit.disabled = false;
+            submit.textContent = 'Confirm Allocation';
+          }
+        });
+    });
+  }
 
   applyFilters();
 })();
