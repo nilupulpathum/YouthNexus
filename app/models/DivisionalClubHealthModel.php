@@ -1,9 +1,9 @@
 <?php
 
 class DivisionalClubHealthModel extends Model {
-    private const WINDOW_MONTHS = 6;
-    private const EVENT_TARGET = 6;
-    private const FINANCE_ENTRY_TARGET = 6;
+    protected const WINDOW_MONTHS = 6;
+    protected const EVENT_TARGET = 6;
+    protected const FINANCE_ENTRY_TARGET = 6;
 
     public function getDivision(int $divisionId) {
         return $this->single(
@@ -60,7 +60,7 @@ class DivisionalClubHealthModel extends Model {
                     COUNT(DISTINCT CASE WHEN hf.status IN ('Open','UnderReview') THEN hf.health_flag_id END) AS open_flags
              FROM Club c
              INNER JOIN Division d ON d.division_id = c.division_id
-             LEFT JOIN ClubApplication ca ON ca.application_id = c.source_application_id
+             LEFT JOIN ClubApplication ca ON ca.club_name COLLATE utf8mb4_unicode_ci = c.club_name COLLATE utf8mb4_unicode_ci
              LEFT JOIN User u ON u.club_id = c.club_id
              LEFT JOIN ClubHealthFlag hf ON hf.club_id = c.club_id
              WHERE c.division_id = ? AND c.status IN ('Active','Flagged')
@@ -93,7 +93,7 @@ class DivisionalClubHealthModel extends Model {
              FROM Club c
              INNER JOIN Division d ON d.division_id = c.division_id
              INNER JOIN Zone z ON z.zonal_id = d.zonal_id
-             LEFT JOIN ClubApplication ca ON ca.application_id = c.source_application_id
+             LEFT JOIN ClubApplication ca ON ca.club_name COLLATE utf8mb4_unicode_ci = c.club_name COLLATE utf8mb4_unicode_ci
              LEFT JOIN User u ON u.club_id = c.club_id
              WHERE c.club_id = ? AND c.division_id = ? AND c.status IN ('Active','Flagged')
              GROUP BY c.club_id",
@@ -199,7 +199,7 @@ class DivisionalClubHealthModel extends Model {
         }
     }
 
-    private function calculateScore(int $clubId, DateTimeImmutable $periodEnd): array {
+    protected function calculateScore(int $clubId, DateTimeImmutable $periodEnd): array {
         $windowEnd = $periodEnd->format('Y-m-d');
         $windowStart = $periodEnd->modify('-6 months')->modify('+1 day')->format('Y-m-d');
 
@@ -266,7 +266,7 @@ class DivisionalClubHealthModel extends Model {
         ];
     }
 
-    private function upsertSnapshot(PDO $pdo, int $clubId, string $scoreMonth, array $score): void {
+    protected function upsertSnapshot(PDO $pdo, int $clubId, string $scoreMonth, array $score): void {
         $stmt = $pdo->prepare(
             "INSERT INTO ClubHealthSnapshot
                 (club_id, score_month, window_start, window_end, event_score, finance_score, attendance_score,
@@ -287,7 +287,7 @@ class DivisionalClubHealthModel extends Model {
             $score['approved_entries'], $score['expense_entries'], $score['receipted_expenses'], $score['reconciled_entries']]);
     }
 
-    private function createAutomaticDormancyFlag(PDO $pdo, int $clubId): void {
+    protected function createAutomaticDormancyFlag(PDO $pdo, int $clubId): void {
         $check = $pdo->prepare(
             "SELECT health_flag_id FROM ClubHealthFlag
              WHERE club_id = ? AND flag_category = 'AutomaticDormancy' AND status IN ('Open','UnderReview') LIMIT 1"
@@ -315,7 +315,7 @@ class DivisionalClubHealthModel extends Model {
         }
     }
 
-    private function getEventDetails(int $clubId, string $start, string $end): array {
+    protected function getEventDetails(int $clubId, string $start, string $end): array {
         return $this->resultSet(
             "SELECT e.event_id, e.title, e.event_type, e.start_datetime, e.end_datetime, e.location,
                     e.status, e.max_attendance,
@@ -329,7 +329,7 @@ class DivisionalClubHealthModel extends Model {
         );
     }
 
-    private function getFinanceDetails(int $clubId, string $start, string $end): array {
+    protected function getFinanceDetails(int $clubId, string $start, string $end): array {
         $ledger = $this->single("SELECT ledger_id, current_balance, status FROM Ledger WHERE owner_type = 'Club' AND owner_id = ? LIMIT 1", [$clubId]);
         if (!$ledger) return ['ledger' => null, 'totals' => null, 'entries' => [], 'audits' => [], 'red_flags' => []];
         $totals = $this->single(
