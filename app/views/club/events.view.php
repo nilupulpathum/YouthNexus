@@ -192,6 +192,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         </select>
                     </div>
                     <div class="dw-field">
+                        <label for="ev-location">Location</label>
+                        <input id="ev-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Community hall, Gampaha">
+                    </div>
+                    <div class="dw-field">
                         <label for="ev-budget">Estimated Budget (LKR)</label>
                         <input id="ev-budget" name="budget" type="number" required min="1" step="0.01" placeholder="0.00">
                     </div>

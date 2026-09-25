@@ -156,33 +156,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Shared member-field rules. The server is authoritative; this only
+    // avoids a round trip for mistakes the secretary can see immediately.
+    const memberFieldError = (v) => {
+        if (!v.name || !v.nic || !v.email || !v.phone || !v.address) return 'All fields are required.';
+        const firstSpace = v.name.search(/\s/);
+        const firstName = firstSpace < 0 ? v.name : v.name.slice(0, firstSpace);
+        const lastName = firstSpace < 0 ? '' : v.name.slice(firstSpace).trim();
+        if (!lastName || firstName.length > 50 || lastName.length > 50) {
+            return 'Enter a first and last name of up to 50 characters each.';
+        }
+        if (v.email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) {
+            return 'Enter a valid email address of up to 100 characters.';
+        }
+        if (!/^[0-9+(). -]{7,20}$/.test(v.phone)) return 'Enter a valid phone number of 7 to 20 characters.';
+        if (v.address.length > 255) return 'Address must be 255 characters or fewer.';
+        if (!/^[A-Za-z0-9-]{5,20}$/.test(v.nic)) return 'Enter a valid NIC of 5 to 20 letters, numbers, or hyphens.';
+        return '';
+    };
+
     // Register-member modal (secretary) — client checks, then real POST.
     const regModal = document.getElementById('club-register-modal');
     const form = document.getElementById('club-register-form');
     if (regModal && form && body) {
         const err = document.getElementById('reg-error');
-        let existingNics = [];
-        try {
-            existingNics = JSON.parse(form.getAttribute('data-existing-nics') || '[]');
-        } catch {
-            existingNics = [];
-        }
         form.addEventListener('submit', (e) => {
-            const name = document.getElementById('reg-name').value.trim();
-            const nic = document.getElementById('reg-nic').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const address = document.getElementById('reg-address').value.trim();
+            const values = {
+                name: document.getElementById('reg-name').value.trim(),
+                nic: document.getElementById('reg-nic').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                phone: document.getElementById('reg-phone').value.trim(),
+                address: document.getElementById('reg-address').value.trim(),
+            };
             const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
-            if (!name || !nic || !email || !phone || !address) return fail('All fields are required.');
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Enter a valid email address.');
-            if (existingNics.includes(nic)) return fail('This NIC is already registered — back to the form.');
+            const problem = memberFieldError(values);
+            if (problem) return fail(problem);
             const dupEmail = Array.from(body.querySelectorAll('tr'))
-                .some((r) => (r.getAttribute('data-email') || '').toLowerCase() === email.toLowerCase());
+                .some((r) => (r.getAttribute('data-email') || '').toLowerCase() === values.email.toLowerCase());
             if (dupEmail) return fail('This email is already registered — back to the form.');
         });
     }
+
+    // Rejected registrations (secretary) — edit + resubmit, and delete.
+    const rejectedBody = document.getElementById('club-rejected-body');
+    const reModal = document.getElementById('rejected-edit-modal');
+    const reForm = document.getElementById('rejected-edit-form');
+    if (rejectedBody && reModal && reForm) {
+        const reErr = document.getElementById('re-error');
+        const reReason = document.getElementById('re-reason');
+        const reMemberId = document.getElementById('re-member-id');
+        const reFields = {
+            name: document.getElementById('re-name'),
+            nic: document.getElementById('re-nic'),
+            email: document.getElementById('re-email'),
+            phone: document.getElementById('re-phone'),
+            address: document.getElementById('re-address'),
+        };
+
+        rejectedBody.querySelectorAll('[data-action="edit-rejected"]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                reMemberId.value = row.getAttribute('data-id') || '';
+                Object.entries(reFields).forEach(([key, input]) => {
+                    input.value = row.getAttribute(`data-${key}`) || '';
+                });
+                reReason.textContent = '';
+                const line = document.createElement('div');
+                line.className = 'dw-metric';
+                const label = document.createElement('span');
+                label.textContent = 'Rejected because';
+                const value = document.createElement('strong');
+                value.textContent = row.getAttribute('data-reason') || '—';
+                line.appendChild(label);
+                line.appendChild(value);
+                reReason.appendChild(line);
+                reErr.hidden = true;
+            });
+        });
+
+        reForm.addEventListener('submit', (e) => {
+            const values = {};
+            Object.entries(reFields).forEach(([key, input]) => { values[key] = input.value.trim(); });
+            reErr.hidden = true;
+            const problem = memberFieldError(values);
+            if (problem) {
+                e.preventDefault();
+                reErr.textContent = problem;
+                reErr.hidden = false;
+            }
+        });
+    }
+
+    document.querySelectorAll('[data-confirm]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+            if (!window.confirm(el.getAttribute('data-confirm'))) e.preventDefault();
+        });
+    });
 });
 
 /* ---- club/events ---- */
