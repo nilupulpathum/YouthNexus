@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cf-club').textContent = esc(current.name || '');
         document.getElementById('cf-score').textContent = esc((current.score || '') + ' / 100');
         document.getElementById('cf-trigger').textContent = esc(current.trigger || '');
-        document.getElementById('cf-severity').value = 'Low';
+        document.getElementById('cf-club-id').value = current.id || '';
         document.getElementById('cf-remarks').value = '';
         document.getElementById('cf-error').hidden = true;
         if (detail) closeOverlay(detail);
@@ -242,20 +242,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const flagSubmit = document.getElementById('cf-submit');
-    if (flagSubmit) {
-        flagSubmit.addEventListener('click', () => {
+    const flagForm = document.getElementById('club-flag-form');
+    if (flagForm) {
+        flagForm.addEventListener('submit', (e) => {
             const remarks = document.getElementById('cf-remarks');
             const err = document.getElementById('cf-error');
             if (!remarks.value.trim()) {
-                err.textContent = 'Please describe the governance concern for NYSC Admin.';
+                e.preventDefault();
+                err.textContent = 'Please describe the concern for NYSC Admin.';
                 err.hidden = false;
                 remarks.focus();
-                return;
             }
-            const who = current.name || 'Club';
-            closeOverlay(flagModal);
-            showToast(who + ' flagged for NYSC Admin (demo).');
         });
     }
 });
