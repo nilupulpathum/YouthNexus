@@ -5,7 +5,7 @@ $announcements = $announcements ?? [];
 
 require __DIR__ . '/../partials/icons.view.php';
 
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/announcements.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -89,6 +89,5 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div id="zonal-announce-toast" class="announce-toast" role="status" hidden></div>
 
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/announcements.css">
 <script src="<?= ROOT ?>/assets/js/announcements.js"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
