@@ -26,6 +26,14 @@ try {
     $catCount = $pdo->query("SELECT COUNT(*) FROM ReportTypeCatalog")->fetchColumn();
     echo "Types: $catCount\n";
 
+    $aggregateType = $pdo->query(
+        "SELECT report_type_id FROM ReportTypeCatalog WHERE type_name = 'Club Activity Aggregate' LIMIT 1"
+    )->fetchColumn();
+    if (!$aggregateType) {
+        throw new RuntimeException('Club Activity Aggregate report type is missing. Run migrate_divisional_reports.php.');
+    }
+    echo "Secretary aggregate report type: ready\n";
+
     echo "\nAll OK - Manage Reports module DB is ready.\n";
 
 } catch (Exception $e) {
