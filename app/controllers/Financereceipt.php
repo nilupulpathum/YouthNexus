@@ -5,27 +5,55 @@ class Financereceipt extends Controller {
         if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
         }
-        if (($_SESSION['user_role'] ?? '') !== 'DivisionalTreasurer'
-            || (int) ($_SESSION['division_id'] ?? 0) < 1
-            || (int) $entryId < 1) {
+        $role = $_SESSION['user_role'] ?? '';
+        $divisionId = (int) ($_SESSION['division_id'] ?? 0);
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $entryId = (int) $entryId;
+        if ($entryId < 1) {
             http_response_code(403);
             exit('You are not permitted to view this receipt.');
         }
 
         $pdo = Database::getInstance()->getConnection();
-        $statement = $pdo->prepare(
-            "SELECT le.attachment_url
-             FROM LedgerEntry le
-             INNER JOIN Ledger l ON l.ledger_id = le.ledger_id
-             LEFT JOIN Club c ON l.owner_type = 'Club' AND c.club_id = l.owner_id
-             WHERE le.entry_id = ?
-               AND ((l.owner_type = 'Division' AND l.owner_id = ?)
-                 OR (l.owner_type = 'Club' AND c.division_id = ?))
-             LIMIT 1"
-        );
-        $divisionId = (int) $_SESSION['division_id'];
-        $statement->execute([(int) $entryId, $divisionId, $divisionId]);
-        $url = $statement->fetchColumn();
+        if ($role === 'DivisionalTreasurer' && $divisionId > 0) {
+            $statement = $pdo->prepare(
+                "SELECT le.attachment_url
+                 FROM LedgerEntry le
+                 INNER JOIN Ledger l ON l.ledger_id = le.ledger_id
+                 LEFT JOIN Club c ON l.owner_type = 'Club' AND c.club_id = l.owner_id
+                 WHERE le.entry_id = ?
+                   AND ((l.owner_type = 'Division' AND l.owner_id = ?)
+                     OR (l.owner_type = 'Club' AND c.division_id = ?))
+                 LIMIT 1"
+            );
+            $statement->execute([$entryId, $divisionId, $divisionId]);
+            $url = $statement->fetchColumn();
+        } elseif (in_array($role, ['ClubPresident', 'ClubTreasurer'], true) && $clubId > 0) {            $statement = $pdo->prepare(
+                "SELECT le.attachment_url
+                 FROM LedgerEntry le
+                 INNER JOIN Ledger l ON l.ledger_id = le.ledger_id
+                 WHERE le.entry_id = ?
+                   AND l.owner_type = 'Club' AND l.owner_id = ?
+                 LIMIT 1"
+            );
+            $statement->execute([$entryId, $clubId]);
+            $url = $statement->fetchColumn();
+        } elseif ($role === 'ZonalTreasurer' && $zonalId > 0) {
+            $statement = $pdo->prepare(
+                "SELECT le.attachment_url
+                 FROM LedgerEntry le
+                 INNER JOIN Ledger l ON l.ledger_id = le.ledger_id
+                 WHERE le.entry_id = ?
+                   AND l.owner_type = 'Zone' AND l.owner_id = ?
+                 LIMIT 1"
+            );
+            $statement->execute([$entryId, $zonalId]);
+            $url = $statement->fetchColumn();
+        } else {
+            http_response_code(403);
+            exit('You are not permitted to view this receipt.');
+        }
         $path = FinanceReceiptStorage::resolvePath($url !== false ? (string) $url : null);
         if (!$path) {
             http_response_code(404);

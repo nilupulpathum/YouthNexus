@@ -11,7 +11,7 @@ class ManageEvents extends Controller {
         }
         $allowed = ['DivisionalSecretary', 'NYSCAdministrator'];
         if (!in_array($_SESSION['user_role'] ?? '', $allowed)) {
-            $this->redirect('auth/signin');
+            $this->redirect('home');
         }
     }
 
