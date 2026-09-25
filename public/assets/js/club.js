@@ -909,25 +909,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 err.hidden = false;
                 return;
             }
+            document.getElementById('hc-successor-id').value = successor.id;
+            document.getElementById('hc-checklist').value = JSON.stringify(
+                Array.from(document.querySelectorAll('#handover-checklist .club-check:checked'))
+                    .map((b) => b.getAttribute('data-item-id'))
+                    .filter(Boolean)
+            );
             document.getElementById('hc-summary').textContent =
-                'Nuwan Bandara (outgoing President) → ' + successor.name + ' (' + successor.id + ') as incoming President. 4/4 assets frozen and verified.';
+                'You (outgoing President) → ' + successor.name + ' (#' + successor.id + ') as incoming President.';
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('dw-modal-open');
             document.body.style.overflow = 'hidden';
-        });
-
-        document.getElementById('hc-confirm').addEventListener('click', () => {
-            close();
-            const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
-                new Date().toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-            document.getElementById('handover-log-title').textContent =
-                'Presidency transferred to ' + successor.name;
-            document.getElementById('handover-log-meta').textContent =
-                successor.id + ' · demote/promote applied atomically · ' + now;
-            document.getElementById('handover-log-panel').hidden = false;
-            document.getElementById('handover-log-panel').scrollIntoView({ block: 'nearest' });
-            showToast('Handover complete — all members notified (demo — persists in C13 backend).');
         });
     }
 });

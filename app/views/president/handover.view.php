@@ -30,6 +30,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="handover-heading" class="visually-hidden">Leadership handover</h1>
 
     <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
 
     <p><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/president"><span aria-hidden="true">‹</span> President overview</a></p>
 
@@ -54,7 +59,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                     <div class="dw-field">
                         <label for="handover-id">Successor member ID</label>
-                        <input id="handover-id" type="text" required autocomplete="off" placeholder="e.g., M-004">
+                        <input id="handover-id" type="text" required autocomplete="off" placeholder="e.g., 12">
                     </div>
                     <div class="dw-field">
                         <span class="dw-field__label" aria-hidden="true">&nbsp;</span>
@@ -93,19 +98,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <table class="dw-table">
                 <thead>
                     <tr>
-                        <th><span class="visually-hidden">Free verified</span></th>
+                        <th><span class="visually-hidden">Verified</span></th>
                         <th>Asset</th>
-                        <th>Serial</th>
-                        <th>Custodian</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
                     </tr>
                 </thead>
                 <tbody id="handover-checklist">
                     <?php foreach ($freezeAssets as $a): ?>
                         <tr>
-                            <td><input type="checkbox" class="club-check" aria-label="Verify <?= $e($a['name'] ?? '') ?>"></td>
+                            <td><input type="checkbox" class="club-check" data-item-id="<?= (int) ($a['id'] ?? 0) ?>" aria-label="Verify <?= $e($a['name'] ?? '') ?>"></td>
                             <td><strong><?= $e($a['name'] ?? '') ?></strong></td>
-                            <td><?= $e($a['serial'] ?? '') ?></td>
-                            <td><?= $e($a['custodian'] ?? '') ?></td>
+                            <td><?= $e($a['sku'] ?? '') ?></td>
+                            <td><?= (int) ($a['quantity'] ?? 0) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -120,26 +125,32 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
     </section>
 
-    <section class="dw-panel" id="handover-log-panel" aria-labelledby="handover-log-heading" hidden>
+    <section class="dw-panel" id="handover-log-panel" aria-labelledby="handover-log-heading">
         <header class="dw-panel__header">
             <div>
                 <p>Handover log</p>
-                <h2 id="handover-log-heading">Handover Complete</h2>
+                <h2 id="handover-log-heading">Past Handovers</h2>
             </div>
+            <span class="dw-count"><?= count($handoverLog ?? []) ?></span>
         </header>
         <div class="dw-panel__body">
-            <article class="dw-record-card">
-                <div class="dw-record-card__header">
-                    <div class="dw-record-card__identity">
-                        <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
-                        <div class="dw-record-card__meta"><span>Handover log</span></div>
-                    </div>
-                    <?php $status = 'Logged'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
-                </div>
-                <h3 class="dw-record-card__title" id="handover-log-title"></h3>
-                <p id="handover-log-meta"></p>
-            </article>
-            <p class="dw-muted-copy">All club members have been notified (demo).</p>
+            <?php if (empty($handoverLog)): ?>
+                <p>No handovers recorded yet.</p>
+            <?php else: ?>
+                <?php foreach ($handoverLog as $h): ?>
+                    <article class="dw-record-card">
+                        <div class="dw-record-card__header">
+                            <div class="dw-record-card__identity">
+                                <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+                                <div class="dw-record-card__meta"><span>Log #<?= (int) $h->handover_id ?></span></div>
+                            </div>
+                            <?php $status = 'Logged'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+                        </div>
+                        <h3 class="dw-record-card__title"><?= $e(($h->outgoing_name ?? '') . ' → ' . ($h->incoming_name ?? '')) ?></h3>
+                        <p><?= $e(date('M d, Y', strtotime((string) $h->created_at))) ?></p>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -155,14 +166,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p id="hc-summary"></p>
+                <form id="handover-confirm-form" action="<?= ROOT ?>/president/confirmHandover" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="hc-successor-id" name="successor_id" value="">
+                    <input type="hidden" id="hc-checklist" name="checklist" value="[]">
+                </form>
                 <div role="note">
-                    <strong>This cannot be undone in demo</strong>
+                    <strong>This changes leadership immediately</strong>
                     <p>Confirming demotes you to General Member and promotes the successor to President in one atomic step, and writes the handover log.</p>
                 </div>
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="hc-confirm">Confirm handover</button>
+                <button type="submit" class="dw-button dw-button--primary" form="handover-confirm-form">Confirm handover</button>
             </footer>
         </div>
     </div>
