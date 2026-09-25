@@ -9,6 +9,7 @@ $pageTitle               = $pageTitle ?? 'Manage Reports';
 $pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports up to the Zonal Secretary';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -37,8 +38,6 @@ $formatColors = [
     'OnScreen' => ['bg' => '#ede9fe', 'text' => '#7c3aed'],
 ];
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css?v=<?= time() ?>">
 
 <div class="rpt-content">
 

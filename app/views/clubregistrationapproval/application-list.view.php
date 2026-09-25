@@ -11,6 +11,10 @@ $pageDescription = 'Review and approve new club applications';
 $currentRoute    = 'clubregistrationapproval';
 
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
+$pageStyles              = [
+    ROOT . '/assets/css/clubregistrationapproval.css',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -161,8 +165,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
 <script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/clubregistrationapproval.css">
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/clubregistrationapproval.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

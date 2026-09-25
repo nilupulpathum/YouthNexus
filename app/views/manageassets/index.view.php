@@ -8,11 +8,10 @@ $pageTitle               = $pageTitle ?? 'National Asset Management & Warehouse 
 $pageDescription         = $pageDescription ?? 'National Youth Services Council — Central Logistics, Zonal Stock Allocation & Deficit Surveillance';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
+$pageStyles              = [ROOT . '/assets/css/manageassets.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageassets.css">
 
 <!-- Flash Message Holders for JS Toast -->
 <?php if (!empty($flashSuccess)): ?>

@@ -9,6 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Analytics';
 $pageDescription         = $pageDescription ?? 'National Youth Services Council — Executive Performance, Health & Financial Oversight';
 $currentRoute            = 'nationalanalytics';
 $unreadNotificationCount = (int)($queueSummary['count'] ?? 0);
+$pageStyles              = [ROOT . '/assets/css/nationalanalytics.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -341,8 +342,6 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                 </div>
             </div>
         </div>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/nationalanalytics.css">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

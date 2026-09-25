@@ -7,6 +7,7 @@ $escape = static function ($value) {
 };
 
 $can_publish = !empty($can_publish);
+$pageStyles = [ROOT . '/assets/css/announcements.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -466,7 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/announcements.css">
 <script src="<?= ROOT ?>/assets/js/announcements.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

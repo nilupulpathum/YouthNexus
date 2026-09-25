@@ -9,6 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Dashboard';
 $pageDescription         = $pageDescription ?? 'National governance overview';
 $currentRoute            = $currentRoute ?? 'nationaldashboard';
 $unreadNotificationCount = (int)($pendingApps ?? 0);
+$pageStyles              = [ROOT . '/assets/css/nationaldashboard.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -152,5 +153,4 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </ul>
             </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/nationaldashboard.css">
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
