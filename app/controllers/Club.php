@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../core/ClubMemberRegistrationValidator.php';
+
 /**
  * Club — shared club-scope pages for club-level executives.
  *
@@ -76,6 +78,12 @@ class Club extends Controller {
 
         $clubId = (int) ($_SESSION['club_id'] ?? 0);
         $userModel = $this->model('UserModel');
+        $club = $this->model('ClubModel')->findById($clubId);
+        if (!$club) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a valid club.');
+        }
+        $clubName = trim((string) ($club->club_name ?? '')) ?: 'Your club';
 
         $roleLabels = [
             'ClubPresident' => 'President',
@@ -125,10 +133,25 @@ class Club extends Controller {
 
         $counts = $userModel->countClubRoster($clubId);
 
+        $rejected = [];
+        foreach ($userModel->getClubRejected($clubId) as $u) {
+            $rejectedAt = $u->rejected_at ? strtotime((string) $u->rejected_at) : null;
+            $rejected[] = [
+                'id'       => (int) $u->user_id,
+                'name'     => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'email'    => $u->email ?? '',
+                'phone'    => $u->phone_number ?? '—',
+                'address'  => $u->address ?? '—',
+                'nic'      => $u->NIC ?? '—',
+                'reason'   => trim((string) ($u->rejection_reason ?? '')) ?: 'No reason recorded.',
+                'rejected' => $rejectedAt ? date('M d, Y g:i A', $rejectedAt) : '—',
+            ];
+        }
+
         $data = $this->shell(
             'Club Members - YouthNexus Pulse',
             'Club Members',
-            'Roster of Gampaha Youth Development Club.',
+            'Roster of ' . $clubName . '.',
             'club/members'
         );
         $data['stats'] = [
@@ -138,9 +161,11 @@ class Club extends Controller {
             'pending'    => $counts['pending'],
         ];
         $data['roster'] = $roster;
+        $data['rejected'] = $rejected;
         $data['can_manage'] = ($this->roleKey() === 'president');
         $data['can_register'] = ($this->roleKey() === 'secretary');
-        $data['existing_nics'] = $userModel->getClubNics($clubId);
+        $data['can_manage_rejected'] = ($this->roleKey() === 'secretary');
+        $data['club_name'] = $clubName;
         $data['csrf_token'] = $_SESSION['csrf_token'];
         $data['flash'] = $this->pullFlash();
 
@@ -161,20 +186,16 @@ class Club extends Controller {
             $this->redirect('club/members');
         }
 
-        $name    = trim($_POST['name'] ?? '');
-        $email   = trim($_POST['email'] ?? '');
-        $phone   = trim($_POST['phone'] ?? '');
-        $address = trim($_POST['address'] ?? '');
-        $nic     = trim($_POST['nic'] ?? '');
-
-        if ($name === '' || $email === '' || $phone === '' || $address === '' || $nic === '') {
-            $this->setFlash('error', 'All fields are required.');
+        $validation = ClubMemberRegistrationValidator::validate($_POST);
+        if (!empty($validation['errors'])) {
+            $this->setFlash('error', reset($validation['errors']));
             $this->redirect('club/members');
         }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->setFlash('error', 'Enter a valid email address.');
-            $this->redirect('club/members');
-        }
+        $name = $validation['values']['name'];
+        $email = $validation['values']['email'];
+        $phone = $validation['values']['phone'];
+        $address = $validation['values']['address'];
+        $nic = $validation['values']['nic'];
 
         $clubId = (int) ($_SESSION['club_id'] ?? 0);
         $userModel = $this->model('UserModel');
@@ -184,14 +205,129 @@ class Club extends Controller {
         }
 
         $club = $this->model('ClubModel')->findById($clubId);
-        $newId = $userModel->registerClubMember($clubId, (int) ($club->division_id ?? 0), $name, $email, $phone, $address, $nic);
-        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'REGISTER_MEMBER', 'User', $newId, "Registered {$name} ({$email})");
+        if (!$club || (int) ($club->division_id ?? 0) < 1) {
+            $this->setFlash('error', 'Your club does not have a valid division assignment.');
+            $this->redirect('club/members');
+        }
+
+        $pdo = Database::getInstance()->getConnection();
+        try {
+            $pdo->beginTransaction();
+            $newId = $userModel->registerClubMember($clubId, (int) $club->division_id, $name, $email, $phone, $address, $nic);
+            if ($newId < 1) {
+                $pdo->rollBack();
+                $this->setFlash('error', 'This email or NIC is already registered.');
+                $this->redirect('club/members');
+            }
+            $this->model('AuditLogModel')->log($_SESSION['user_id'], 'REGISTER_MEMBER', 'User', $newId, 'Registered club member');
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
         $this->setFlash('success', $name . ' added — awaiting president approval.');
         $this->redirect('club/members');
     }
 
-    private function verifyCsrf(): bool {
-        $token = (string) ($_POST['csrf_token'] ?? '');
+    /**
+     * Secretary corrects a rejected registration and sends it back to the
+     * president's approval queue.
+     */
+    public function updateRegistration() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/members');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/members');
+        }
+
+        $memberId = (int) ($_POST['member_id'] ?? 0);
+        if ($memberId < 1) {
+            $this->setFlash('error', 'Invalid registration request.');
+            $this->redirect('club/members');
+        }
+
+        $validation = ClubMemberRegistrationValidator::validate($_POST);
+        if (!empty($validation['errors'])) {
+            $this->setFlash('error', reset($validation['errors']));
+            $this->redirect('club/members');
+        }
+        $values = $validation['values'];
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+        if ($userModel->emailOrNicTaken($values['email'], $values['nic'], $memberId)) {
+            $this->setFlash('error', 'This email or NIC is already registered.');
+            $this->redirect('club/members');
+        }
+
+        $rows = $userModel->updateRejectedRegistration(
+            $clubId,
+            $memberId,
+            $values['name'],
+            $values['email'],
+            $values['phone'],
+            $values['address'],
+            $values['nic']
+        );
+        if ($rows < 1) {
+            $this->setFlash('error', 'Rejected registration not found in your club.');
+            $this->redirect('club/members');
+        }
+
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'RESUBMIT_MEMBER', 'User', $memberId, 'Corrected and resubmitted club registration');
+        $this->setFlash('success', $values['name'] . ' updated and sent back for approval.');
+        $this->redirect('club/members');
+    }
+
+    /**
+     * Secretary deletes a rejected registration outright. Refused when another
+     * record still references the applicant, so nothing is lost silently.
+     */
+    public function deleteRegistration() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/members');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/members');
+        }
+
+        $memberId = (int) ($_POST['member_id'] ?? 0);
+        if ($memberId < 1) {
+            $this->setFlash('error', 'Invalid registration request.');
+            $this->redirect('club/members');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $result = $this->model('UserModel')->deleteRejectedRegistration($clubId, $memberId);
+
+        if (!$result['deleted']) {
+            if (!$result['blockers']) {
+                $this->setFlash('error', 'Rejected registration not found in your club.');
+            } else {
+                $labels = array_map(
+                    static fn($b) => $b['table'] . ' (' . $b['count'] . ')',
+                    $result['blockers']
+                );
+                $this->setFlash('error', 'Cannot delete — this registration is still referenced by ' . implode(', ', $labels) . '.');
+            }
+            $this->redirect('club/members');
+        }
+
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'DELETE_REGISTRATION', 'User', $memberId, 'Deleted rejected club registration');
+        $this->setFlash('success', 'Registration request deleted.');
+        $this->redirect('club/members');
+    }
+
+    private function verifyCsrf(): bool {        $token = (string) ($_POST['csrf_token'] ?? '');
         return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
     }
 
