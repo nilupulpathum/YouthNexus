@@ -55,25 +55,24 @@ class Zonalcoordinator extends Controller {
     public function index() {
         $this->requireZonalCoordinator();
 
-        $mock = $this->model('ZoneHealthMock');
-        $clubs = $mock->zoneClubs();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $built = $this->buildMonitor($zonalId);
 
         $data = $this->shell(
             'Zonal Coordinator Overview — YouthNexus Pulse',
             'Zonal Coordinator Overview',
-            'Zone health of Gampaha Zone.',
+            'Zone health of ' . $built['zone_name'] . '.',
             'zonalcoordinator'
         );
-        $data['zoneHealth'] = $mock->zoneHealth($clubs);
-        $data['divisions'] = $mock->divisionAverages($clubs);
-        $data['announcements'] = [
-            ['title' => 'Quarterly reporting window', 'summary' => 'Division coordinators should complete their zone reports by September 30.', 'age' => '1 day ago', 'is_new' => true],
-            ['title' => 'NYSC leadership forum', 'summary' => 'Zone representatives should confirm attendance with the zonal secretary.', 'age' => '4 days ago', 'is_new' => false],
-        ];
-        $data['upcomingEvents'] = [
-            ['title' => 'Zone Youth Leadership Forum', 'date' => 'Oct 10, 2026', 'location' => 'Gampaha Youth Centre', 'status' => 'Scheduled', 'status_key' => 'attending'],
-            ['title' => 'Digital Skills Workshop', 'date' => 'Oct 22, 2026', 'location' => 'Ja-Ela Community Hall', 'status' => 'Scheduled', 'status_key' => 'attending'],
-        ];
+        $data['zoneHealth'] = $built['zoneHealth'];
+        $data['divisions'] = $built['divisions'];
+        $data['announcements'] = [];
+        $data['upcomingEvents'] = [];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('zonalcoordinator/index', $data);
     }
@@ -86,11 +85,12 @@ class Zonalcoordinator extends Controller {
     public function clubs() {
         $this->requireZonalCoordinator();
 
-        $mock = $this->model('ZoneHealthMock');
-        $clubs = $mock->zoneClubs();
-        usort($clubs, static function ($a, $b) {
-            return $b['score'] <=> $a['score'];
-        });
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $built = $this->buildMonitor($zonalId);
 
         $data = $this->shell(
             'Monitor Club Health — YouthNexus Pulse',
@@ -98,11 +98,187 @@ class Zonalcoordinator extends Controller {
             'Monitor club health scores and identify clubs requiring intervention.',
             'zonalcoordinator/clubs'
         );
-        $data['zoneHealth'] = $mock->zoneHealth($clubs);
-        $data['divisions'] = $mock->divisionAverages($clubs);
-        $data['clubs'] = $clubs;
+        $data['zoneHealth'] = $built['bands'];
+        $data['divisions'] = $built['divisions'];
+        $data['clubs'] = $built['clubs'];
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('zonalcoordinator/clubs', $data);
+    }
+
+    /**
+     * Flag a club for NYSC Admin review (D8).
+     */
+    public function flagClub() {
+        $this->requireZonalCoordinator();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('zonalcoordinator/clubs');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('zonalcoordinator/clubs');
+        }
+
+        $clubId = (int) ($_POST['club_id'] ?? 0);
+        $category = trim($_POST['category'] ?? '');
+        $remarks = trim($_POST['remarks'] ?? '');
+        if ($clubId < 1) {
+            $this->setFlash('error', 'Invalid club.');
+            $this->redirect('zonalcoordinator/clubs');
+        }
+
+        try {
+            $flagId = $this->model('ZoneMonitorModel')->raiseZoneFlag(
+                (int) ($_SESSION['zonal_id'] ?? 0), $clubId, (int) $_SESSION['user_id'], $category, $remarks
+            );
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('zonalcoordinator/clubs');
+        }
+        $this->setFlash('success', "Club flagged for NYSC Admin review (flag #{$flagId}).");
+        $this->redirect('zonalcoordinator/clubs');
+    }
+
+    private function verifyCsrf(): bool {
+        $token = (string) ($_POST['csrf_token'] ?? '');
+        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
+    }
+
+    private function setFlash(string $type, string $message): void {
+        $_SESSION['zonal_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    private function pullFlash(): ?array {
+        $flash = $_SESSION['zonal_flash'] ?? null;
+        unset($_SESSION['zonal_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+
+    /**
+     * Assemble bands, division averages and club cards for a zone.
+     */
+    private function buildMonitor(int $zonalId): array {
+        $monitor = $this->model('ZoneMonitorModel');
+        $healthModel = $this->model('DivisionalClubHealthModel');
+        $zone = $monitor->getZone($zonalId);
+        $zoneName = $zone->zonal_name ?? 'Zone';
+
+        $bandOf = static function ($score) {
+            if ($score >= 85) {
+                return 'healthy';
+            }
+            if ($score >= 50) {
+                return 'atrisk';
+            }
+            return 'dormant';
+        };
+
+        $clubs = [];
+        $divStats = [];
+        foreach ($monitor->getClubs($zonalId) as $c) {
+            $clubId = (int) $c->club_id;
+            $score = $healthModel->scoreClub($clubId);
+            $overall = (float) $score['overall_score'];
+            $band = $bandOf($overall);
+            $execs = [];
+            foreach ($monitor->getExecutives($clubId) as $x) {
+                $execs[] = [
+                    'name' => trim(($x->first_name ?? '') . ' ' . ($x->last_name ?? '')),
+                    'role' => ['ClubPresident' => 'President', 'ClubSecretary' => 'Secretary', 'ClubTreasurer' => 'Treasurer'][$x->role] ?? $x->role,
+                ];
+            }
+            $recent = [];
+            foreach ($monitor->getRecentEvents($clubId) as $ev) {
+                $ts = strtotime((string) $ev->start_datetime);
+                $recent[] = [
+                    'title' => $ev->title ?? '',
+                    'date' => $ts ? date('M d, Y', $ts) : '—',
+                    'status' => $ev->status ?? '',
+                ];
+            }
+            $rate = $monitor->getAttendanceRate($clubId);
+            $openFlags = (int) ($c->open_flags ?? 0);
+            $trigger = $band === 'dormant' ? 'Intervention required' : ($band === 'atrisk' ? 'Watch list' : 'Healthy');
+            if ($openFlags > 0) {
+                $trigger .= " · {$openFlags} open flag(s)";
+            }
+            $clubs[] = [
+                'id' => $clubId,
+                'name' => $c->club_name ?? '',
+                'division' => $c->division_name ?? '',
+                'score' => $overall,
+                'band' => $band,
+                'status' => $score['health_status'],
+                'status_key' => strtolower($score['health_status']),
+                'members' => (int) ($c->active_members ?? 0),
+                'members_note' => (int) ($c->active_members ?? 0) . ' active members',
+                'about' => $c->description ?? '',
+                'category' => '—',
+                'location' => '—',
+                'established' => ($c->registration_date && $c->registration_date !== '0000-00-00') ? date('M Y', strtotime($c->registration_date)) : '—',
+                'avg_attendance' => $rate === null ? '—' : $rate . '%',
+                'attendance_trend' => '—',
+                'trigger' => $trigger,
+                'events' => ['points' => (int) round($score['event_score'] / 100 * 40), 'max' => 40],
+                'finances' => ['points' => (int) round($score['finance_score'] / 100 * 30), 'max' => 30],
+                'attendance' => ['points' => (int) round($score['attendance_score'] / 100 * 30), 'max' => 30],
+                'recent_events' => $recent,
+                'execs' => $execs,
+            ];
+            $divId = (int) $c->division_id;
+            if (!isset($divStats[$divId])) {
+                $divStats[$divId] = ['division' => $c->division_name ?? '', 'scores' => [], 'clubs' => 0];
+            }
+            $divStats[$divId]['scores'][] = $overall;
+            $divStats[$divId]['clubs']++;
+        }
+        usort($clubs, static fn($a, $b) => $b['score'] <=> $a['score']);
+
+        $divisions = [];
+        foreach ($monitor->getDivisions($zonalId) as $d) {
+            $stats = $divStats[(int) $d->division_id] ?? ['scores' => [], 'clubs' => 0];
+            $avg = count($stats['scores']) > 0 ? round(array_sum($stats['scores']) / count($stats['scores']), 1) : 0;
+            $divisions[] = [
+                'division' => $d->division_name ?? '',
+                'average' => $avg,
+                'clubs' => $stats['clubs'],
+                'status' => $avg >= 85 ? 'Healthy' : ($avg >= 50 ? 'At Risk' : 'Dormant'),
+                'status_key' => $bandOf($avg),
+            ];
+        }
+
+        $bands = ['healthy' => 0, 'atrisk' => 0, 'dormant' => 0];
+        foreach ($clubs as $c) {
+            $bands[$c['band']]++;
+        }
+
+        $n = count($clubs);
+        $avgOf = static function ($key) use ($clubs, $n) {
+            if ($n === 0) {
+                return 0;
+            }
+            $sum = 0;
+            foreach ($clubs as $c) {
+                $sum += $c[$key]['points'] / max(1, $c[$key]['max']) * 100;
+            }
+            return round($sum / $n, 1);
+        };
+        $eventScore = $avgOf('events');
+        $financeScore = $avgOf('finances');
+        $attendanceScore = $avgOf('attendance');
+        $overall = $n > 0 ? round(($eventScore * 0.4) + ($financeScore * 0.3) + ($attendanceScore * 0.3), 1) : 0;
+        $zoneHealth = [
+            'score' => $overall,
+            'label' => $overall >= 85 ? 'Healthy' : ($overall >= 50 ? 'At Risk' : 'Dormant'),
+            'state' => $n . ($n === 1 ? ' club' : ' clubs'),
+            'events' => ['points' => (int) round($eventScore / 100 * 40), 'max' => 40],
+            'finances' => ['points' => (int) round($financeScore / 100 * 30), 'max' => 30],
+            'attendance' => ['points' => (int) round($attendanceScore / 100 * 30), 'max' => 30],
+        ];
+
+        return ['zone_name' => $zoneName, 'bands' => $bands, 'zoneHealth' => $zoneHealth, 'divisions' => $divisions, 'clubs' => $clubs];
     }
 
     private function programmeState() {
