@@ -1,0 +1,53 @@
+.da-amount-words {
+  margin: -4px 0 0;
+  color: var(--dw-muted);
+  font-size: 10px;
+}
+
+.da-source-account {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #dbe3ff;
+  border-radius: var(--dw-radius);
+  background: var(--dw-info-bg);
+}
+
+.da-source-account div { display: grid; gap: 4px; }
+.da-source-account span { color: var(--dw-muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.da-source-account strong { color: var(--dw-text); font-size: 11px; overflow-wrap: anywhere; }
+.da-source-account > .dw-status { color: var(--dw-success); }
+
+.da-back-row { display: flex; }
+.da-voucher { overflow: hidden; }
+.da-voucher__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  border-bottom: 1px solid var(--dw-border);
+  background: linear-gradient(135deg, #fff, #f8faff);
+}
+.da-voucher__badges { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.da-reference { padding: 5px 8px; border-radius: 6px; background: var(--dw-info-bg); color: var(--dw-primary-dark); font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+.da-voucher__header h2 { margin: 0; color: var(--dw-text); font-size: 20px; }
+.da-voucher__header p { margin: 6px 0 0; color: var(--dw-muted); font-size: 11px; }
+.da-voucher__amount { min-width: 190px; display: grid; gap: 5px; align-content: center; text-align: right; }
+.da-voucher__amount span { color: var(--dw-muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.da-voucher__amount strong { color: var(--dw-primary-dark); font-size: 24px; }
+.da-voucher__amount small { color: var(--dw-muted); font-size: 10px; }
+.da-voucher__body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 22px; }
+.da-info-card, .da-purpose { padding: 16px; border: 1px solid var(--dw-border); border-radius: var(--dw-radius); }
+.da-info-card h3, .da-purpose h3 { margin: 0 0 12px; color: var(--dw-text); font-size: 12px; }
+.da-purpose { grid-column: 1 / -1; }
+.da-purpose p { margin: 0; padding: 13px; border-radius: 7px; background: #f8fafc; color: #374151; font-size: 11px; line-height: 1.6; }
+.da-voucher__footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px; border-top: 1px solid var(--dw-border); background: #fafbff; }
+
+@media (max-width: 760px) {
+  .da-source-account, .da-voucher__body { grid-template-columns: 1fr; }
+  .da-voucher__header { flex-direction: column; }
+  .da-voucher__amount { text-align: left; }
+  .da-purpose { grid-column: auto; }
+}

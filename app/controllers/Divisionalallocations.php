@@ -29,6 +29,12 @@ class Divisionalallocations extends Controller {
         return is_array($flash) ? $flash : null;
     }
 
+    private function isJsonRequest(): bool {
+        $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+        $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+        return strpos($accept, 'application/json') !== false || $requestedWith === 'xmlhttprequest';
+    }
+
     public function index(): void {
         $this->requireTreasurer();
         if (empty($_SESSION['csrf_token'])) {
@@ -53,6 +59,7 @@ class Divisionalallocations extends Controller {
             'pendingRequests' => $allocationModel->getPendingRequests($divisionId),
             'history' => $allocationModel->getHistory($divisionId),
             'categories' => $allocationModel->getCategories($divisionId),
+            'nextReference' => $allocationModel->generateReference('RTGS'),
             'csrfToken' => $_SESSION['csrf_token'],
             'flash' => $this->pullFlash(),
             'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',
@@ -64,12 +71,18 @@ class Divisionalallocations extends Controller {
     public function create(): void {
         $this->requireTreasurer();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
+            if ($this->isJsonRequest()) {
+                $this->json(['success' => false, 'error' => 'The request could not be verified. Refresh the page and try again.'], 400);
+            }
             $this->setFlash('error', 'The request could not be verified. Please try again.');
             $this->redirect('divisionalallocations');
         }
 
         $data = $this->validatedAllocation();
         if (!$data) {
+            if ($this->isJsonRequest()) {
+                $this->json(['success' => false, 'error' => 'Enter a valid club, amount, category, date, method, and purpose.'], 422);
+            }
             $this->setFlash('error', 'Enter a valid club, amount, category, date, method, and purpose.');
             $this->redirect('divisionalallocations');
         }
@@ -83,12 +96,21 @@ class Divisionalallocations extends Controller {
                 throw new RuntimeException('The division bank account is not available.');
             }
             $data['bank_account_id'] = (int) $account->bank_account_id;
-            $model->createAllocation(
+            $allocationId = $model->createAllocation(
                 $divisionId,
                 (int) $ledger->ledger_id,
                 (int) $_SESSION['user_id'],
                 $data
             );
+            if ($this->isJsonRequest()) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                $this->json([
+                    'success' => true,
+                    'allocation_id' => $allocationId,
+                    'message' => 'Funds allocated and both ledgers were updated.',
+                    'redirect' => ROOT . '/divisionalallocations/details/' . $allocationId,
+                ]);
+            }
             $this->setFlash('success', 'Funds allocated and both ledgers were updated.');
         } catch (Throwable $exception) {
             $allowed = [
@@ -99,10 +121,75 @@ class Divisionalallocations extends Controller {
             $message = in_array($exception->getMessage(), $allowed, true)
                 ? $exception->getMessage()
                 : 'The allocation could not be completed.';
+            if ($this->isJsonRequest()) {
+                $this->json(['success' => false, 'error' => $message], 422);
+            }
             $this->setFlash('error', $message);
         }
 
         $this->redirect('divisionalallocations');
+    }
+
+    public function details($allocationId = null): void {
+        $this->requireTreasurer();
+        $allocation = $this->getScopedAllocation((int) $allocationId);
+        $this->view('divisionalallocations/details', [
+            'allocation' => $allocation,
+            'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',
+            'userRole' => $_SESSION['user_role'],
+            'userEmail' => $_SESSION['user_email'] ?? '',
+        ]);
+    }
+
+    public function receipt($allocationId = null): void {
+        $this->requireTreasurer();
+        $this->view('divisionalallocations/receipt', [
+            'allocation' => $this->getScopedAllocation((int) $allocationId),
+        ]);
+    }
+
+    public function getreference(): void {
+        $this->requireTreasurer();
+        $method = (string) ($_GET['method'] ?? 'RTGS');
+        if (!in_array($method, ['RTGS', 'ChequeSLIPS'], true)) {
+            $method = 'RTGS';
+        }
+        $this->json([
+            'success' => true,
+            'reference' => $this->model('DivisionalAllocationModel')->generateReference($method),
+        ]);
+    }
+
+    public function exportledger(): void {
+        $this->requireTreasurer();
+        $divisionId = (int) $_SESSION['division_id'];
+        $rows = $this->model('DivisionalAllocationModel')->getHistory($divisionId);
+        $filename = 'Divisional_Fund_Allocations_' . date('Ymd_His') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $output = fopen('php://output', 'w');
+        if ($output === false) {
+            http_response_code(500);
+            exit('The allocation ledger could not be exported.');
+        }
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        fputcsv($output, ['Reference', 'Club', 'Amount (LKR)', 'Category', 'Transfer Date', 'Method', 'Status', 'Purpose', 'Authorized By']);
+        foreach ($rows as $row) {
+            fputcsv($output, [
+                $row->reference_no,
+                $row->club_name,
+                number_format((float) $row->amount, 2, '.', ''),
+                $row->fund_category ?: 'Uncategorised',
+                $row->transfer_date,
+                $row->disbursement_method === 'RTGS' ? 'Bank Transfer / RTGS' : 'Cheque / SLIPS',
+                $row->status,
+                $row->purpose_description,
+                trim((string) ($row->authorized_by_name ?? '')) ?: 'Divisional Treasurer',
+            ]);
+        }
+        fclose($output);
+        exit();
     }
 
     public function decide($requestId = null): void {
@@ -176,5 +263,27 @@ class Divisionalallocations extends Controller {
             'transfer_date' => $date,
             'disbursement_method' => $method,
         ];
+    }
+
+    private function getScopedAllocation(int $allocationId) {
+        if ($allocationId < 1) {
+            $this->redirect('divisionalallocations');
+        }
+        $allocation = $this->model('DivisionalAllocationModel')->findByIdForDivision(
+            (int) $_SESSION['division_id'],
+            $allocationId
+        );
+        if (!$allocation) {
+            http_response_code(404);
+            exit('Fund allocation not found in your division.');
+        }
+        return $allocation;
+    }
+
+    private function json(array $payload, int $status = 200): void {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload);
+        exit();
     }
 }
