@@ -136,9 +136,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 <td>
                                     <div class="dw-row-actions">
                                         <?php if (($m['status_key'] ?? '') === 'pending'): ?>
-                                            <button type="button" class="dw-button dw-button--ghost" data-action="member-review">Review</button>
+                                            <button type="button" class="dw-button dw-button--ghost" data-action="member-review" data-modal-open="member-review-modal">Review</button>
                                         <?php else: ?>
-                                            <button type="button" class="dw-button dw-button--ghost" data-action="assign">Assign role</button>
+                                            <button type="button" class="dw-button dw-button--ghost" data-action="assign" data-modal-open="assign-modal">Assign role</button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
