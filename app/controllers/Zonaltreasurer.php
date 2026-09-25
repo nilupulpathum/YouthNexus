@@ -61,7 +61,7 @@ class Zonaltreasurer extends Controller {
             'zonaltreasurer'
         );
 
-        $data['fundStats'] = $this->model('ZoneFundTransferMock')->stats();
+        $data['fundStats'] = $this->model('ZoneFundModel')->getStats((int) ($_SESSION['zonal_id'] ?? 0));
         $this->view('zonaltreasurer/index', $data);
     }
 
@@ -78,14 +78,19 @@ class Zonaltreasurer extends Controller {
             'zonaltreasurer/allocate'
         );
 
-        $mock = $this->model('ZoneFundTransferMock');
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneFundModel');
         $filters = $this->fundFilters();
         $_SESSION['zonal_fund_csrf'] = $_SESSION['zonal_fund_csrf'] ?? bin2hex(random_bytes(32));
+        $divisions = [];
+        foreach ($model->getDivisions($zonalId) as $d) {
+            $divisions[] = (object) ['zonal_id' => (int) $d->division_id, 'zonal_name' => $d->division_name, 'province' => '', 'hub_name' => ''];
+        }
         $data += [
-            'transferRoute' => 'zonaltreasurer', 'listRoute' => 'zonaltreasurer/allocate', 'isZonalDemo' => true,
-            'transfers' => $mock->transfers($filters), 'stats' => $mock->stats(),
-            'zones' => $mock->divisions(), 'bankAccounts' => [$mock->account()],
-            'filters' => $filters, 'nextReference' => $mock->reference(),
+            'transferRoute' => 'zonaltreasurer', 'listRoute' => 'zonaltreasurer/allocate', 'isZonalMode' => true,
+            'transfers' => $model->getTransfers($zonalId, $filters), 'stats' => $model->getStats($zonalId),
+            'zones' => $divisions, 'bankAccounts' => $model->getBankAccounts($zonalId),
+            'filters' => $filters, 'nextReference' => $model->generateReferenceNumber(),
             'csrf_token' => $_SESSION['zonal_fund_csrf'],
         ];
         $this->view('zonaltreasurer/allocate', $data);
@@ -118,11 +123,23 @@ class Zonaltreasurer extends Controller {
             foreach ($_POST as $value) {
                 if (!is_string($value)) throw new InvalidArgumentException('Invalid form input.');
             }
-            $transfer = $this->model('ZoneFundTransferMock')->create($_POST);
+            $model = $this->model('ZoneFundModel');
+            $allocationId = $model->createAllocation((int) ($_SESSION['zonal_id'] ?? 0), (int) $_SESSION['user_id'], [
+                'division_id' => $_POST['zone_id'] ?? 0,
+                'bank_account_id' => $_POST['bank_account_id'] ?? 0,
+                'amount' => str_replace([',', ' '], '', trim($_POST['amount'] ?? '')),
+                'transfer_date' => $_POST['transfer_date'] ?? '',
+                'method' => $_POST['disbursement_method'] ?? 'RTGS',
+                'reference' => $_POST['reference'] ?? '',
+                'purpose' => $_POST['purpose'] ?? '',
+            ]);
             $_SESSION['zonal_fund_csrf'] = bin2hex(random_bytes(32));
-            echo json_encode(['success' => true, 'transfer_id' => $transfer->allocation_id,
+            echo json_encode(['success' => true, 'transfer_id' => $allocationId,
                 'redirect' => ROOT . '/zonaltreasurer/allocate']);
         } catch (InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (RuntimeException $e) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
@@ -132,16 +149,19 @@ class Zonaltreasurer extends Controller {
         $this->requireZonalTreasurer();
         $method = is_string($_GET['method'] ?? null) ? $_GET['method'] : 'RTGS';
         header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'reference' => $this->model('ZoneFundTransferMock')->reference($method)]);
+        echo json_encode(['success' => true, 'reference' => $this->model('ZoneFundModel')->generateReferenceNumber($method)]);
     }
 
     public function exportledger() {
         $this->requireZonalTreasurer();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="Demo_Zone_Division_Transfers.csv"');
+        header('Content-Disposition: attachment; filename="' . $zoneName . '_Division_Transfers.csv"');
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Demo reference', 'Division', 'Date', 'Amount (LKR)', 'Status', 'Purpose']);
-        foreach ($this->model('ZoneFundTransferMock')->transfers($this->fundFilters()) as $t) {
+        fputcsv($out, ['Reference', 'Division', 'Date', 'Amount (LKR)', 'Status', 'Purpose']);
+        foreach ($this->model('ZoneFundModel')->getTransfers($zonalId, $this->fundFilters()) as $t) {
             $purpose = preg_match('/^[=+@\-\t\r\n]/', $t->purpose_description) ? "'" . $t->purpose_description : $t->purpose_description;
             fputcsv($out, [$t->reference_no, $t->target_zone_name, $t->transfer_date, number_format($t->amount, 2, '.', ''), $t->status, $purpose]);
         }
@@ -150,14 +170,14 @@ class Zonaltreasurer extends Controller {
 
     public function receipt($id = null) {
         $this->requireZonalTreasurer();
-        $transfer = $this->model('ZoneFundTransferMock')->find($id);
+        $transfer = $this->model('ZoneFundModel')->find((int) ($_SESSION['zonal_id'] ?? 0), (int) $id);
         if (!$transfer) {
             http_response_code(404);
-            echo 'Demo transfer not found.';
+            echo 'Transfer not found in your zone.';
             return;
         }
-        $this->view('zonaltreasurer/receipt', ['transfer' => $transfer, 'isZonalDemo' => true,
-            'receiptSubtitle' => 'Gampaha Zone — DEMO division allocation; no money transferred']);
+        $this->view('zonaltreasurer/receipt', ['transfer' => $transfer, 'isZonalMode' => true,
+            'receiptSubtitle' => ($transfer->from_zone_name ?? 'Zone') . ' - division allocation']);
     }
 
     private function auditState() {
