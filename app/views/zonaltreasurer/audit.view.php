@@ -2,6 +2,7 @@
 $escape = static function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 $totalBalance = max(0, (float)$income - (float)$expenses);
 require __DIR__ . '/../partials/icons.view.php';
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/annualaudit.css">
@@ -52,13 +53,5 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div class="audit-overlay" id="escalate-modal"><div class="audit-modal audit-clarify-modal"><div class="audit-modal-head"><div><h1>Escalate to NYSC</h1><p>NYSC provides final authority; this does not lock a division ledger.</p></div><button type="button" class="audit-close-x" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></div><form method="post" action="<?= ROOT ?>/zonaltreasurer/escalate"><input type="hidden" name="csrf_token" value="<?= $escape($csrf_token) ?>"><input type="hidden" name="flag_id"><div class="audit-modal-body"><label class="audit-field-label">Escalation reason</label><textarea class="audit-textarea" name="escalation_reason" required maxlength="1000"></textarea></div><div class="audit-modal-foot-clarify"><button type="button" class="audit-btn-cancel-border" data-modal-close>Cancel</button><button type="submit" class="audit-btn-send">Escalate flag</button></div></form></div></div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const close = (modal) => { modal.classList.remove('show'); document.body.style.overflow = ''; };
-    document.querySelectorAll('[data-modal-open]').forEach((button) => button.addEventListener('click', () => { const modal = document.getElementById(button.dataset.modalOpen); modal.querySelectorAll('input[name="flag_id"]').forEach((input) => { input.value = button.dataset.flagId || ''; }); modal.classList.add('show'); document.body.style.overflow = 'hidden'; }));
-    document.querySelectorAll('[data-modal-close]').forEach((button) => button.addEventListener('click', () => close(button.closest('.audit-overlay'))));
-    document.querySelectorAll('.audit-overlay').forEach((modal) => modal.addEventListener('click', (event) => { if (event.target === modal) close(modal); }));
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') document.querySelectorAll('.audit-overlay.show').forEach(close); });
-});
-</script>
+
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

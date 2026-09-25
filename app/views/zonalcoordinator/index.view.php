@@ -4,54 +4,56 @@
  * Zone-health tiles (computed zone averages) + per-division average club
  * health. Club cards live on clubs().
  * Presentation-only: no DB writes; backend contract lands in Z12.
+ * UI follows the divisional standard (dw-* classes + shared partials).
  */
-$escape = static function ($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$e = static function ($value) {
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
 
 require __DIR__ . '/../partials/icons.view.php';
-require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $zoneHealth = $zoneHealth ?? [];
 $divisions  = $divisions ?? [];
 $announcements = $announcements ?? [];
 $upcomingEvents = $upcomingEvents ?? [];
+
+$title = 'Zonal Overview - YouthNexus';
+$pageTitle = 'Zonal Overview';
+$pageDescription = 'Zone health and average club health per division';
+$currentRoute = 'zonalcoordinator';
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
+
+$summaryCards = [
+    ['value' => (string) ($zoneHealth['score'] ?? 0) . '/100', 'label' => 'Zone health score', 'note' => (string) (($zoneHealth['label'] ?? '') . ' · ' . ($zoneHealth['state'] ?? '')), 'icon' => 'reports', 'tone' => 'blue'],
+    ['value' => (string) (($zoneHealth['events']['points'] ?? 0) . '/' . ($zoneHealth['events']['max'] ?? 40)), 'label' => 'Events (40%)', 'note' => 'event performance', 'icon' => 'calendar', 'tone' => 'blue'],
+    ['value' => (string) (($zoneHealth['finances']['points'] ?? 0) . '/' . ($zoneHealth['finances']['max'] ?? 30)), 'label' => 'Finances (30%)', 'note' => 'finance performance', 'icon' => 'file', 'tone' => 'green'],
+    ['value' => (string) (($zoneHealth['attendance']['points'] ?? 0) . '/' . ($zoneHealth['attendance']['max'] ?? 30)), 'label' => 'Attendance (30%)', 'note' => 'attendance performance', 'icon' => 'users', 'tone' => 'green'],
+];
+
+require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-<section class="club-page" aria-labelledby="zonalcoordinator-overview-heading">
-    <h1 id="zonalcoordinator-overview-heading" class="sr-only">Zonal coordinator overview</h1>
+<section class="dw-page" aria-labelledby="zonalcoordinator-overview-heading">
+    <h1 id="zonalcoordinator-overview-heading" class="visually-hidden">Zonal coordinator overview</h1>
 
-    <div class="club-stat-grid" aria-label="Zone health">
-        <article class="club-stat-card">
-            <p class="club-stat-label">Zone health score</p>
-            <p class="club-stat-value"><?= $escape($zoneHealth['score'] ?? 0) ?><span class="club-stat-unit">/100</span></p>
-            <p><span class="club-pill club-pill--pending"><?= $escape(($zoneHealth['label'] ?? '') . ' · ' . ($zoneHealth['state'] ?? '')) ?></span></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">Events (40%)</p>
-            <p class="club-stat-value"><?= $escape(($zoneHealth['events']['points'] ?? 0) . '/' . ($zoneHealth['events']['max'] ?? 40)) ?></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">Finances (30%)</p>
-            <p class="club-stat-value"><?= $escape(($zoneHealth['finances']['points'] ?? 0) . '/' . ($zoneHealth['finances']['max'] ?? 30)) ?></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">Attendance (30%)</p>
-            <p class="club-stat-value"><?= $escape(($zoneHealth['attendance']['points'] ?? 0) . '/' . ($zoneHealth['attendance']['max'] ?? 30)) ?></p>
-        </article>
+    <div class="dw-summary-grid" aria-label="Zone health">
+        <?php foreach ($summaryCards as $card): ?>
+            <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
+        <?php endforeach; ?>
     </div>
 
-    <section class="club-panel" aria-labelledby="zonal-divisions-heading">
-        <div class="club-panel-header">
+    <section class="dw-panel" aria-labelledby="zonal-divisions-heading">
+        <header class="dw-panel__header">
             <div>
-                <p class="club-eyebrow">Gampaha Zone · <?= count($divisions) ?> divisions</p>
+                <p>Gampaha Zone · <?= count($divisions) ?> divisions</p>
                 <h2 id="zonal-divisions-heading">Average club health per division</h2>
             </div>
-            <a class="club-btn-secondary" href="<?= ROOT ?>/zonalcoordinator/clubs">Monitor club health</a>
-        </div>
+            <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/zonalcoordinator/clubs">Monitor club health</a>
+        </header>
 
-        <div class="club-table-wrap">
-            <table class="club-table">
+        <div class="dw-table-wrap">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Division</th>
@@ -63,15 +65,21 @@ $upcomingEvents = $upcomingEvents ?? [];
                 <tbody>
                     <?php foreach ($divisions as $d): ?>
                         <tr>
-                            <td><strong><?= $escape($d['division'] ?? '') ?></strong></td>
-                            <td><?= $escape($d['clubs'] ?? 0) ?></td>
-                            <td><?= $escape($d['average'] ?? 0) ?>/100</td>
-                            <td><span class="club-pill club-pill--<?= $escape($d['status_key'] ?? 'pending') ?>"><?= $escape($d['status'] ?? '') ?></span></td>
+                            <td><strong><?= $e($d['division'] ?? '') ?></strong></td>
+                            <td><?= $e($d['clubs'] ?? 0) ?></td>
+                            <td><?= $e($d['average'] ?? 0) ?>/100</td>
+                            <td><?php $status = $d['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+        <?php
+        $emptyTitle = 'No division health data';
+        $emptyMessage = 'Division averages will appear here once calculated.';
+        $emptyVisible = count($divisions) === 0;
+        require __DIR__ . '/../partials/divisional/empty-state.view.php';
+        ?>
     </section>
 
     <section class="member-panel" aria-labelledby="zonalcoordinator-announcements-heading">
@@ -83,7 +91,7 @@ $upcomingEvents = $upcomingEvents ?? [];
             <?php foreach ($announcements as $announcement): ?>
                 <article class="member-announcement-item<?= !empty($announcement['is_new']) ? ' is-new' : '' ?>">
                     <span class="member-list-dot" aria-hidden="true"></span>
-                    <div class="member-list-copy"><div class="member-list-meta"><span><?= $escape($announcement['age']) ?></span><?php if (!empty($announcement['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?></div><h3><?= $escape($announcement['title']) ?></h3><p><?= $escape($announcement['summary']) ?></p><span class="member-scope-tag">Zonal</span></div>
+                    <div class="member-list-copy"><div class="member-list-meta"><span><?= $e($announcement['age']) ?></span><?php if (!empty($announcement['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?></div><h3><?= $e($announcement['title']) ?></h3><p><?= $e($announcement['summary']) ?></p><span class="member-scope-tag">Zonal</span></div>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -93,14 +101,13 @@ $upcomingEvents = $upcomingEvents ?? [];
         <div class="member-panel-header"><div><p class="member-eyebrow">Plan ahead</p><h2 id="zonalcoordinator-events-heading">Upcoming zonal programmes</h2></div></div>
         <div class="member-event-list">
             <?php foreach ($upcomingEvents as $event): ?>
-                <article class="member-event-item"><div class="member-event-icon" aria-hidden="true"><?= yn_icon('calendar') ?></div><div class="member-event-copy"><div class="member-event-heading"><h3><?= $escape($event['title']) ?></h3><span class="member-scope-text">Zonal</span></div><p><?= $escape($event['date']) ?>, <?= $escape($event['location']) ?></p></div><span class="member-status member-status--<?= $escape($event['status_key']) ?>"><?= $escape($event['status']) ?></span></article>
+                <article class="member-event-item"><div class="member-event-icon" aria-hidden="true"><?= yn_icon('calendar') ?></div><div class="member-event-copy"><div class="member-event-heading"><h3><?= $e($event['title']) ?></h3><span class="member-scope-text">Zonal</span></div><p><?= $e($event['date']) ?>, <?= $e($event['location']) ?></p></div><span class="member-status member-status--<?= $e($event['status_key']) ?>"><?= $e($event['status']) ?></span></article>
             <?php endforeach; ?>
         </div>
     </section>
 
 </section>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
 <link rel="stylesheet" href="<?= ROOT ?>/assets/css/member-dashboard.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
