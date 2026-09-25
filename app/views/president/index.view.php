@@ -72,7 +72,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <h3 class="dw-record-card__title"><?= $e($pending['title'] ?? '') ?></h3>
                         <div class="dw-record-card__details">
                             <span><?= yn_icon('calendar') ?> <?= $e($pending['date'] ?? '') ?> · <?= yn_icon('pin') ?> <?= $e($pending['location'] ?? '') ?></span>
-                            <span>Budget <?= $e($pending['budget'] ?? '') ?> · Submitted by <?= $e($pending['submitted_by'] ?? '') ?></span>
+                            <span><?= $e($pending['type'] ?? '') ?> · Submitted by <?= $e($pending['submitted_by'] ?? '') ?></span>
                         </div>
                         <div class="dw-record-card__footer">
                             <span class="dw-record-card__reference">Review on Club Events</span>

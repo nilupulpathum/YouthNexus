@@ -52,6 +52,16 @@ class ClubLedgerModel extends Model {
         ];
     }
 
+    public function getPendingVoidCount(int $ledgerId): int {
+        $row = $this->single(
+            "SELECT COUNT(*) AS open_voids FROM VoidRequest vr
+             INNER JOIN LedgerEntry le ON le.entry_id = vr.entry_id
+             WHERE le.ledger_id = ? AND vr.status = 'Pending'",
+            [$ledgerId]
+        );
+        return (int) ($row->open_voids ?? 0);
+    }
+
     public function getEntries(int $ledgerId): array {
         return $this->resultSet(
             "SELECT le.*,
