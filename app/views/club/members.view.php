@@ -15,7 +15,9 @@ $stats  = $stats ?? [];
 $roster = $roster ?? [];
 $can_manage = !empty($can_manage);
 $can_register = !empty($can_register);
-$existing_nics = $existing_nics ?? [];
+$can_manage_rejected = !empty($can_manage_rejected);
+$rejected = $rejected ?? [];
+$club_name = trim((string) ($club_name ?? '')) ?: 'Your club';
 
 $title = 'Club Members - YouthNexus';
 $pageTitle = 'Club Members';
@@ -28,7 +30,7 @@ $pageScripts = [
 ];
 
 $summaryCards = [
-    ['value' => (string) ($stats['total'] ?? 0), 'label' => 'Total members', 'note' => 'Gampaha Youth Development Club', 'icon' => 'users', 'tone' => 'blue'],
+    ['value' => (string) ($stats['total'] ?? 0), 'label' => 'Total members', 'note' => $club_name, 'icon' => 'users', 'tone' => 'blue'],
     ['value' => (string) ($stats['executives'] ?? 0), 'label' => 'Executives', 'note' => 'President, secretary, treasurer', 'icon' => 'award', 'tone' => 'green'],
     ['value' => (string) ($stats['members'] ?? 0), 'label' => 'General members', 'note' => 'Active roster', 'icon' => 'user', 'tone' => 'blue'],
     ['value' => (string) ($stats['pending'] ?? 0), 'label' => 'Pending approvals', 'note' => 'Awaiting president decision', 'icon' => 'clock', 'tone' => 'amber'],
@@ -95,7 +97,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <header class="dw-panel__header">
             <div>
                 <h2 id="club-roster-heading">Member Roster</h2>
-                <p>Gampaha Youth Development Club members</p>
+                <p><?= $e($club_name) ?> members</p>
             </div>
             <span class="dw-count"><?= count($roster) ?> <?= count($roster) === 1 ? 'member' : 'members' ?></span>
         </header>
@@ -123,7 +125,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             data-email="<?= $e($m['email'] ?? '') ?>"
                             data-phone="<?= $e($m['phone'] ?? '') ?>"
                             data-address="<?= $e($m['address'] ?? '') ?>"
-                            data-nic="<?= $e($m['nic'] ?? '') ?>"
+                            data-nic="<?= $can_manage ? $e($m['nic'] ?? '') : '' ?>"
                             data-joined="<?= $e($m['joined'] ?? '') ?>"
                             data-status="<?= $e($m['status_key'] ?? 'active') ?>">
                             <td><strong><?= $e($m['name'] ?? '') ?></strong></td>
@@ -155,6 +157,70 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         require __DIR__ . '/../partials/divisional/empty-state.view.php';
         ?>
     </section>
+
+    <section class="dw-panel" aria-labelledby="club-rejected-heading">
+        <header class="dw-panel__header">
+            <div>
+                <h2 id="club-rejected-heading">Rejected registrations</h2>
+                <p>Applications the president did not approve</p>
+            </div>
+            <span class="dw-count"><?= count($rejected) ?> <?= count($rejected) === 1 ? 'request' : 'requests' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+            <table class="dw-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>President's reason</th>
+                        <th>Rejected</th>
+                        <?php if ($can_manage_rejected): ?>
+                            <th>Action</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody id="club-rejected-body">
+                    <?php foreach ($rejected as $r): ?>
+                        <tr data-id="<?= (int) $r['id'] ?>"
+                            data-name="<?= $e($r['name'] ?? '') ?>"
+                            data-email="<?= $e($r['email'] ?? '') ?>"
+                            data-phone="<?= $e($r['phone'] ?? '') ?>"
+                            data-address="<?= $e($r['address'] ?? '') ?>"
+                            data-nic="<?= $e($r['nic'] ?? '') ?>"
+                            data-reason="<?= $e($r['reason'] ?? '') ?>">
+                            <td><strong><?= $e($r['name'] ?? '') ?></strong></td>
+                            <td><?= $e($r['email'] ?? '') ?></td>
+                            <td><?= $e($r['phone'] ?? '') ?></td>
+                            <td><?= $e($r['reason'] ?? '') ?></td>
+                            <td><?= $e($r['rejected'] ?? '—') ?></td>
+                            <?php if ($can_manage_rejected): ?>
+                                <td>
+                                    <div class="dw-row-actions">
+                                        <button type="button" class="dw-button dw-button--ghost" data-action="edit-rejected" data-modal-open="rejected-edit-modal">Edit &amp; resubmit</button>
+                                        <form action="<?= ROOT ?>/club/deleteRegistration" method="post">
+                                            <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                                            <input type="hidden" name="member_id" value="<?= (int) $r['id'] ?>">
+                                            <button type="submit" class="dw-button dw-button--ghost"
+                                                data-confirm="Delete the registration request for <?= $e($r['name'] ?? 'this applicant') ?>? This cannot be undone.">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+        $emptyTitle = 'No rejected registrations';
+        $emptyMessage = 'Applications the president rejects will appear here so you can correct and resubmit them.';
+        $emptyVisible = count($rejected) === 0;
+        require __DIR__ . '/../partials/divisional/empty-state.view.php';
+        ?>
+    </section>
 </section>
 
 <?php if ($can_register): ?>
@@ -170,27 +236,27 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p>New members join as General Member once the president approves. NIC and email must be unique.</p>
-                <form id="club-register-form" action="<?= ROOT ?>/club/register" method="post" data-existing-nics="<?= $e(json_encode(array_values($existing_nics))) ?>" novalidate>
+                <form id="club-register-form" action="<?= ROOT ?>/club/register" method="post" novalidate>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div class="dw-field">
                         <label for="reg-name">Full name</label>
-                        <input id="reg-name" name="name" type="text" required autocomplete="off">
+                        <input id="reg-name" name="name" type="text" maxlength="101" required autocomplete="off">
                     </div>
                     <div class="dw-field">
                         <label for="reg-nic">NIC</label>
-                        <input id="reg-nic" name="nic" type="text" required autocomplete="off">
+                        <input id="reg-nic" name="nic" type="text" maxlength="20" required autocomplete="off">
                     </div>
                     <div class="dw-field">
                         <label for="reg-email">Email</label>
-                        <input id="reg-email" name="email" type="email" required autocomplete="off">
+                        <input id="reg-email" name="email" type="email" maxlength="100" required autocomplete="off">
                     </div>
                     <div class="dw-field">
                         <label for="reg-phone">Phone</label>
-                        <input id="reg-phone" name="phone" type="tel" required autocomplete="off">
+                        <input id="reg-phone" name="phone" type="tel" maxlength="20" required autocomplete="off">
                     </div>
                     <div class="dw-field dw-field--span-2">
                         <label for="reg-address">Address</label>
-                        <input id="reg-address" name="address" type="text" required autocomplete="off">
+                        <input id="reg-address" name="address" type="text" maxlength="255" required autocomplete="off">
                     </div>
                     <div class="dw-alert dw-alert--error" id="reg-error" role="alert" hidden></div>
                 </form>
@@ -273,6 +339,58 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
                 <button type="submit" class="dw-button dw-button--primary" form="member-review-form">Confirm &amp; submit decision</button>
+            </footer>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($can_manage_rejected): ?>
+    <div id="rejected-edit-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="re-title" aria-hidden="true" hidden>
+        <div class="dw-modal__backdrop" data-modal-close></div>
+        <div class="dw-modal__dialog">
+            <header class="dw-modal__header">
+                <div>
+                    <p>Secretary action</p>
+                    <h2 id="re-title">Edit &amp; resubmit registration</h2>
+                </div>
+                <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+            </header>
+            <div class="dw-modal__body">
+                <div id="re-reason" class="dw-metric-list"></div>
+                <p>Correct the details and resubmit. The application returns to the president's approval queue.</p>
+                <form id="rejected-edit-form" action="<?= ROOT ?>/club/updateRegistration" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="re-member-id" name="member_id" value="">
+                    <div class="dw-field">
+                        <label for="re-name">Full name</label>
+                        <input id="re-name" name="name" type="text" maxlength="101" required autocomplete="off">
+                    </div>
+                    <div class="dw-field">
+                        <label for="re-nic">NIC</label>
+                        <input id="re-nic" name="nic" type="text" maxlength="20" required autocomplete="off">
+                    </div>
+                    <div class="dw-field">
+                        <label for="re-email">Email</label>
+                        <input id="re-email" name="email" type="email" maxlength="100" required autocomplete="off">
+                    </div>
+                    <div class="dw-field">
+                        <label for="re-phone">Phone</label>
+                        <input id="re-phone" name="phone" type="tel" maxlength="20" required autocomplete="off">
+                    </div>
+                    <div class="dw-field dw-field--span-2">
+                        <label for="re-address">Address</label>
+                        <input id="re-address" name="address" type="text" maxlength="255" required autocomplete="off">
+                    </div>
+                    <div class="dw-alert dw-alert--error" id="re-error" role="alert" hidden></div>
+                </form>
+                <div role="note">
+                    <strong>What happens next</strong>
+                    <p>The registration leaves the rejected list and the president reviews it again. The earlier decision stays in the audit trail.</p>
+                </div>
+            </div>
+            <footer class="dw-modal__footer">
+                <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="dw-button dw-button--primary" form="rejected-edit-form">Resubmit for approval</button>
             </footer>
         </div>
     </div>
