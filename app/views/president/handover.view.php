@@ -36,6 +36,7 @@ $freezeAssets = $freezeAssets ?? [];
                     <div class="club-field club-field--full">
                         <label for="handover-search">Find member in roster (name or ID)</label>
                         <div class="club-combo">
+                            <span class="club-combo-search-icon" aria-hidden="true"><?= yn_icon('search') ?></span>
                             <input id="handover-search" type="text" autocomplete="off" placeholder="Type to filter, or pick from the full list...">
                             <div id="handover-roster-list" class="club-dropdown" role="listbox" hidden></div>
                         </div>

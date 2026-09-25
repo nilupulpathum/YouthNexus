@@ -104,6 +104,15 @@ echo "All required base tables found.\n";
                 NOT NULL DEFAULT 'PendingApproval'");
     echo "FundAllocation.status ENUM extended with PendingApproval / Rejected.\n";
 
+    $allocationCols = $pdo->query("SHOW COLUMNS FROM `FundAllocation`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('fund_category', $allocationCols, true)) {
+        $pdo->exec("ALTER TABLE `FundAllocation`
+                    ADD COLUMN `fund_category` VARCHAR(100) NULL AFTER `amount`");
+        echo "Added `fund_category` column to FundAllocation.\n";
+    } else {
+        echo "FundAllocation.fund_category already present, skipping.\n";
+    }
+
     // -------------------------------------------------------------
     // 3. SEED BANKACCOUNT — one mock account per Zone and per Division
     //    (owner_level already supports 'Zonal'/'Divisional' — additive only)
