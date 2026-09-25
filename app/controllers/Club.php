@@ -65,34 +65,144 @@ class Club extends Controller {
     }
 
     /**
-     * Club roster. Full role-assignment + registration flows land in C3.
+     * Club roster (D1: real DB data scoped to the member's club).
      */
     public function members() {
         $this->requireRoles(['president', 'secretary']);
 
-        $roster = [
-            ['name' => 'Nuwan Bandara',  'role' => 'President', 'email' => 'nuwan@example.test',  'phone' => '+94 77 556 6778', 'address' => '45 Main Street, Gampaha',  'nic' => '199012345678', 'joined' => 'Jan 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Amal Perera',    'role' => 'Secretary', 'email' => 'amal@example.test',   'phone' => '+94 71 223 4455', 'address' => '78 Station Road, Gampaha', 'nic' => '199512345678', 'joined' => 'Feb 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Kasun Fernando', 'role' => 'Treasurer', 'email' => 'kasun@example.test',  'phone' => '+94 76 889 0011', 'address' => '7 Hill Street, Gampaha',   'nic' => '199812345678', 'joined' => 'Mar 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Dilini Jayasuriya', 'role' => 'Member', 'email' => 'dilini@example.test', 'phone' => '+94 72 334 5566', 'address' => '9 Park Avenue, Gampaha',   'nic' => '200112345679', 'joined' => 'Jun 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Ruwan Silva',    'role' => 'Member',    'email' => 'ruwan@example.test',  'phone' => '+94 75 667 8899', 'address' => '33 Temple Road, Gampaha', 'nic' => '200212345678', 'joined' => 'Aug 2024', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Sanduni Wickrama', 'role' => 'Member',  'email' => 'sanduni@example.test','phone' => '+94 78 112 3344', 'address' => '12 Lake Road, Gampaha',   'nic' => '200512345678', 'joined' => 'Jan 2025', 'status' => 'Pending', 'status_key' => 'pending'],
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+
+        $roleLabels = [
+            'ClubPresident' => 'President',
+            'ClubSecretary' => 'Secretary',
+            'ClubTreasurer' => 'Treasurer',
+            'ClubMember'    => 'Member',
+            'Member'        => 'Member',
         ];
+        $formatJoined = static function ($row) {
+            $raw = $row->membership_date ?? $row->created_at ?? null;
+            if (empty($raw)) {
+                return '—';
+            }
+            $ts = strtotime((string) $raw);
+            return $ts ? date('M Y', $ts) : '—';
+        };
+
+        $roster = [];
+        foreach ($userModel->getClubRoster($clubId) as $u) {
+            $roster[] = [
+                'id'         => (int) $u->user_id,
+                'name'       => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'role'       => $roleLabels[$u->role] ?? $u->role,
+                'email'      => $u->email ?? '',
+                'phone'      => $u->phone_number ?? '—',
+                'address'    => $u->address ?? '—',
+                'nic'        => $u->NIC ?? '—',
+                'joined'     => $formatJoined($u),
+                'status'     => 'Active',
+                'status_key' => 'active',
+            ];
+        }
+        foreach ($userModel->getClubPending($clubId) as $u) {
+            $roster[] = [
+                'id'         => (int) $u->user_id,
+                'name'       => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'role'       => 'Member',
+                'email'      => $u->email ?? '',
+                'phone'      => $u->phone_number ?? '—',
+                'address'    => $u->address ?? '—',
+                'nic'        => $u->NIC ?? '—',
+                'joined'     => $formatJoined($u),
+                'status'     => 'Pending',
+                'status_key' => 'pending',
+            ];
+        }
+
+        $counts = $userModel->countClubRoster($clubId);
 
         $data = $this->shell(
-            'Club Members — YouthNexus Pulse',
+            'Club Members - YouthNexus Pulse',
             'Club Members',
             'Roster of Gampaha Youth Development Club.',
             'club/members'
         );
-        $data['stats'] = ['total' => 45, 'executives' => 3, 'members' => 41, 'pending' => 1];
+        $data['stats'] = [
+            'total'      => $counts['total'] + $counts['pending'],
+            'executives' => $counts['executives'],
+            'members'    => $counts['total'] - $counts['executives'],
+            'pending'    => $counts['pending'],
+        ];
         $data['roster'] = $roster;
         $data['can_manage'] = ($this->roleKey() === 'president');
         $data['can_register'] = ($this->roleKey() === 'secretary');
-        // Mock NIC registry for the duplicate check (C3 demo; backend validates in C13).
-        $data['existing_nics'] = ['200112345678', '199912345678', '200012345678'];
+        $data['existing_nics'] = $userModel->getClubNics($clubId);
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('club/members', $data);
+    }
+
+    /**
+     * Secretary registers a member into the president's approval queue.
+     */
+    public function register() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/members');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/members');
+        }
+
+        $name    = trim($_POST['name'] ?? '');
+        $email   = trim($_POST['email'] ?? '');
+        $phone   = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+        $nic     = trim($_POST['nic'] ?? '');
+
+        if ($name === '' || $email === '' || $phone === '' || $address === '' || $nic === '') {
+            $this->setFlash('error', 'All fields are required.');
+            $this->redirect('club/members');
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->setFlash('error', 'Enter a valid email address.');
+            $this->redirect('club/members');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+        if ($userModel->emailOrNicTaken($email, $nic)) {
+            $this->setFlash('error', 'This email or NIC is already registered.');
+            $this->redirect('club/members');
+        }
+
+        $club = $this->model('ClubModel')->findById($clubId);
+        $newId = $userModel->registerClubMember($clubId, (int) ($club->division_id ?? 0), $name, $email, $phone, $address, $nic);
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'REGISTER_MEMBER', 'User', $newId, "Registered {$name} ({$email})");
+        $this->setFlash('success', $name . ' added — awaiting president approval.');
+        $this->redirect('club/members');
+    }
+
+    private function verifyCsrf(): bool {
+        $token = (string) ($_POST['csrf_token'] ?? '');
+        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
+    }
+
+    private function setFlash(string $type, string $message): void {
+        $_SESSION['club_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    private function pullFlash(): ?array {
+        $flash = $_SESSION['club_flash'] ?? null;
+        unset($_SESSION['club_flash']);
+        return is_array($flash) ? $flash : null;
     }
 
     /**

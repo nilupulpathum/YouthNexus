@@ -9,6 +9,8 @@
  *
  * Routes:
  *   president -> index()  (president only)
+ *   president/review  -> review()  [POST] approve/reject a pending member
+ *   president/assign  -> assign()  [POST] assign an executive role
  */
 class President extends Controller {
 
@@ -131,6 +133,95 @@ class President extends Controller {
         $data['socialCv'] = $socialCv;
 
         $this->view('president/index', $data);
+    }
+
+    /**
+     * Decide a pending member (D1: real DB write scoped to the club).
+     */
+    public function review() {
+        $this->requirePresident();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/members');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/members');
+        }
+
+        $memberId = (int) ($_POST['member_id'] ?? 0);
+        $result = $_POST['result'] ?? '';
+        $remarks = trim($_POST['remarks'] ?? '');
+        if ($memberId < 1 || !in_array($result, ['approve', 'reject'], true)) {
+            $this->setFlash('error', 'Invalid review request.');
+            $this->redirect('club/members');
+        }
+        if ($result === 'reject' && $remarks === '') {
+            $this->setFlash('error', 'Please add a note explaining the rejection.');
+            $this->redirect('club/members');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+        if ($result === 'approve') {
+            $rows = $userModel->approveClubMember($clubId, $memberId);
+            if ($rows < 1) {
+                $this->setFlash('error', 'Member not found in your club.');
+                $this->redirect('club/members');
+            }
+            $this->model('AuditLogModel')->log($_SESSION['user_id'], 'APPROVE_MEMBER', 'User', $memberId, 'Approved club member');
+            $this->setFlash('success', 'Member approved as General Member.');
+        } else {
+            $rows = $userModel->rejectClubMember($clubId, $memberId);
+            if ($rows < 1) {
+                $this->setFlash('error', 'Member not found in your club.');
+                $this->redirect('club/members');
+            }
+            $this->model('AuditLogModel')->log($_SESSION['user_id'], 'REJECT_MEMBER', 'User', $memberId, $remarks);
+            $this->setFlash('success', 'Application rejected with note.');
+        }
+        $this->redirect('club/members');
+    }
+
+    /**
+     * Assign an executive role to a roster member.
+     */
+    public function assign() {
+        $this->requirePresident();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/members');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/members');
+        }
+
+        $memberId = (int) ($_POST['member_id'] ?? 0);
+        $role = $_POST['role'] ?? '';
+        if ($memberId < 1 || !in_array($role, ['ClubSecretary', 'ClubTreasurer', 'ClubMember'], true)) {
+            $this->setFlash('error', 'Invalid assignment request.');
+            $this->redirect('club/members');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $rows = $this->model('UserModel')->assignClubRole($clubId, $memberId, $role);
+        if ($rows < 1) {
+            $this->setFlash('error', 'Member not found in your club.');
+            $this->redirect('club/members');
+        }
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'ASSIGN_ROLE', 'User', $memberId, "Assigned {$role}");
+        $this->setFlash('success', 'Role assignment recorded.');
+        $this->redirect('club/members');
+    }
+
+    private function verifyCsrf(): bool {
+        $token = (string) ($_POST['csrf_token'] ?? '');
+        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
+    }
+
+    private function setFlash(string $type, string $message): void {
+        $_SESSION['club_flash'] = ['type' => $type, 'message' => $message];
     }
 
     /**
