@@ -84,6 +84,13 @@ class DivisionalClubHealthModel extends Model {
         return $summary;
     }
 
+    /**
+     * Read-only current score for one club (no snapshot writes).
+     */
+    public function scoreClub(int $clubId): array {
+        return $this->calculateScore($clubId, new DateTimeImmutable('today'));
+    }
+
     public function getClubDetails(int $divisionId, int $clubId): ?array {
         $club = $this->single(
             "SELECT c.*, d.division_name, z.zonal_name, ca.club_logo_path,
