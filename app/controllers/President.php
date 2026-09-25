@@ -273,34 +273,96 @@ class President extends Controller {
      * confirm → atomic demote/promote + handover log + member notify.
      * Presentation-only: no DB writes.
      */
+    /**
+     * Leadership handover (D6: real atomic demote/promote + log).
+     */
     public function handover() {
         $this->requirePresident();
 
-        $members = [
-            ['id' => 'M-001', 'name' => 'Nuwan Bandara',    'role' => 'President', 'status' => 'Active',  'current' => true],
-            ['id' => 'M-002', 'name' => 'Amal Perera',      'role' => 'Secretary', 'status' => 'Active',  'current' => false],
-            ['id' => 'M-003', 'name' => 'Kasun Fernando',   'role' => 'Treasurer', 'status' => 'Active',  'current' => false],
-            ['id' => 'M-004', 'name' => 'Dilini Jayasuriya','role' => 'Member',    'status' => 'Active',  'current' => false],
-            ['id' => 'M-005', 'name' => 'Ruwan Silva',      'role' => 'Member',    'status' => 'Active',  'current' => false],
-            ['id' => 'M-006', 'name' => 'Sanduni Wickrama', 'role' => 'Member',    'status' => 'Pending', 'current' => false],
-        ];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
 
-        $freezeAssets = [
-            ['serial' => 'AST-2024-001', 'name' => 'Sound System (Portable PA)', 'custodian' => 'Club Centre'],
-            ['serial' => 'AST-2024-002', 'name' => 'Multimedia Projector',       'custodian' => 'Club Centre'],
-            ['serial' => 'AST-2025-003', 'name' => 'Cricket Gear Set',           'custodian' => 'Ruwan Silva'],
-            ['serial' => 'AST-2025-004', 'name' => 'First-Aid Kit',              'custodian' => 'Club Centre'],
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $roleLabels = [
+            'ClubPresident' => 'President',
+            'ClubSecretary' => 'Secretary',
+            'ClubTreasurer' => 'Treasurer',
+            'ClubMember'    => 'Member',
+            'Member'        => 'Member',
         ];
+        $members = [];
+        foreach ($this->model('UserModel')->getClubRoster($clubId) as $u) {
+            $members[] = [
+                'id'      => (int) $u->user_id,
+                'name'    => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'role'    => $roleLabels[$u->role] ?? $u->role,
+                'status'  => 'Active',
+                'current' => (int) $u->user_id === (int) ($_SESSION['user_id'] ?? 0),
+            ];
+        }
+
+        $freezeAssets = [];
+        foreach ($this->model('ClubAssetModel')->getInventory($clubId) as $s) {
+            $freezeAssets[] = [
+                'id'       => (int) $s->catalog_item_id,
+                'name'     => $s->item_name ?? '',
+                'sku'      => $s->sku ?? '',
+                'quantity' => (int) $s->quantity,
+            ];
+        }
 
         $data = $this->shell(
-            'Leadership Handover — YouthNexus Pulse',
+            'Leadership Handover - YouthNexus Pulse',
             'Leadership Handover',
             'Transfer the presidency of Gampaha Youth Development Club.',
             'president/handover'
         );
         $data['members'] = $members;
         $data['freezeAssets'] = $freezeAssets;
+        $data['handoverLog'] = $this->model('ClubHandoverModel')->getLog($clubId);
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('president/handover', $data);
+    }
+
+    /**
+     * Confirm the handover (atomic demote + promote + log).
+     */
+    public function confirmHandover() {
+        $this->requirePresident();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('president/handover');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('president/handover');
+        }
+
+        $successorId = (int) ($_POST['successor_id'] ?? 0);
+        $checked = json_decode($_POST['checklist'] ?? '[]', true);
+        if (!is_array($checked)) {
+            $checked = [];
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        try {
+            $handoverId = $this->model('ClubHandoverModel')->confirm($clubId, (int) $_SESSION['user_id'], $successorId, $checked);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('president/handover');
+        }
+
+        $_SESSION['user_role'] = 'ClubMember';
+        $this->setFlash('success', "Handover complete (log #{$handoverId}). You are now a General Member.");
+        $this->redirect('member');
+    }
+
+    private function pullFlash(): ?array {
+        $flash = $_SESSION['club_flash'] ?? null;
+        unset($_SESSION['club_flash']);
+        return is_array($flash) ? $flash : null;
     }
 }
