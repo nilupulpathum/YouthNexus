@@ -50,6 +50,7 @@ class Auth extends Controller {
                         'user_role'    => $user->role ?? 'UnassignedUser',
                         'division_id'  => $user->division_id ?? null,
                         'zonal_id'     => $user->zonal_id ?? null,
+                        'club_id'      => $user->club_id ?? null,
                         'user_initials'=> strtoupper(
                             substr($user->first_name ?? 'U', 0, 1) .
                             substr($user->last_name  ?? 'U', 0, 1)
@@ -203,6 +204,7 @@ class Auth extends Controller {
                     $_SESSION['user_role']     = $s['user_role'];
                     $_SESSION['division_id']   = $s['division_id'];
                     $_SESSION['zonal_id']      = $s['zonal_id'];
+                    $_SESSION['club_id']       = $s['club_id'] ?? null;
                     $_SESSION['user_initials'] = $s['user_initials'];
 
                     unset($_SESSION['verification_code']);
@@ -220,6 +222,24 @@ class Auth extends Controller {
                             break;
                         case 'DivisionalTreasurer':
                             $this->redirect('divisionaltreasurer');
+                            break;
+                        case 'ZonalCoordinator':
+                            $this->redirect('zonalcoordinator');
+                            break;
+                        case 'ZonalSecretary':
+                            $this->redirect('zonalsecretary');
+                            break;
+                        case 'ZonalTreasurer':
+                            $this->redirect('zonaltreasurer');
+                            break;
+                        case 'ClubPresident':
+                            $this->redirect('president');
+                            break;
+                        case 'ClubSecretary':
+                            $this->redirect('secretary');
+                            break;
+                        case 'ClubTreasurer':
+                            $this->redirect('treasurer');
                             break;
                         case 'ClubMember':
                         case 'Member':
