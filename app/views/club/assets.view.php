@@ -8,13 +8,13 @@
  * generated ID, Available). Treasurer-only: per-Available-row "Transfer"
  * action + custody modal (custodian + date + history note → In Use).
  * Presentation-only: no DB writes; backend contract lands in C13.
+ * UI follows the divisional standard (dw-* classes + shared partials).
  */
-$escape = static function ($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$e = static function ($value) {
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
 
 require __DIR__ . '/../partials/icons.view.php';
-require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $stats         = $stats ?? [];
 $assets        = $assets ?? [];
@@ -23,52 +23,57 @@ $can_transfer  = !empty($can_transfer);
 $can_register  = !empty($can_register);
 $can_request   = !empty($can_request);
 $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jayasuriya', 'Ruwan Silva'];
+
+$title = 'Club Assets - YouthNexus';
+$pageTitle = 'Club Assets';
+$pageDescription = 'Inventory, custody and division requests';
+$currentRoute = 'club/assets';
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [
+    ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/club.js',
+];
+
+$summaryCards = [
+    ['value' => (string) ($stats['total'] ?? 0), 'label' => 'Total assets', 'note' => 'Gampaha Youth Development Club', 'icon' => 'briefcase', 'tone' => 'blue'],
+    ['value' => (string) ($stats['available'] ?? 0), 'label' => 'Available', 'note' => 'Ready for custody', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($stats['in_use'] ?? 0), 'label' => 'In use', 'note' => 'Currently assigned', 'icon' => 'clock', 'tone' => 'amber'],
+    ['value' => (string) ($stats['valuation'] ?? ''), 'label' => 'Total valuation', 'note' => 'Estimated LKR value', 'icon' => 'wallet', 'tone' => 'blue'],
+];
+
+require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-<section class="club-page" aria-labelledby="club-assets-heading">
-    <h1 id="club-assets-heading" class="sr-only">Club assets</h1>
+<section class="dw-page" aria-labelledby="club-assets-heading">
+    <h1 id="club-assets-heading" class="visually-hidden">Club assets</h1>
 
-    <div class="club-stat-grid" aria-label="Asset summary">
-        <article class="club-stat-card">
-            <p class="club-stat-label">Total assets</p>
-            <p class="club-stat-value"><?= $escape($stats['total'] ?? 0) ?></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">Available</p>
-            <p class="club-stat-value"><?= $escape($stats['available'] ?? 0) ?></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">In use</p>
-            <p class="club-stat-value"><?= $escape($stats['in_use'] ?? 0) ?></p>
-        </article>
-        <article class="club-stat-card">
-            <p class="club-stat-label">Total valuation</p>
-            <p class="club-stat-value club-stat-value--small"><?= $escape($stats['valuation'] ?? '') ?></p>
-        </article>
+    <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
+
+    <div class="dw-summary-grid" aria-label="Asset summary">
+        <?php foreach ($summaryCards as $card): ?>
+            <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
+        <?php endforeach; ?>
     </div>
 
-    <section class="club-panel" aria-labelledby="club-assets-list-heading">
-        <div class="club-panel-header">
-            <div>
-                <p class="club-eyebrow">Gampaha Youth Development Club</p>
-                <h2 id="club-assets-list-heading">Inventory</h2>
-            </div>
-            <?php if ($can_register): ?>
-                <button type="button" class="club-btn-primary" id="club-asset-open">Register Asset</button>
-            <?php endif; ?>
-            <?php if ($can_request): ?>
-                <button type="button" class="club-btn-secondary" id="club-request-open">Request from Division</button>
-            <?php endif; ?>
+    <div class="dw-toolbar" aria-label="Inventory tools">
+        <div class="dw-toolbar__search dw-search dw-search--plain">
+            <label class="visually-hidden" for="club-asset-search">Search inventory</label>
+            <input id="club-asset-search" type="search" placeholder="Search name or serial..." autocomplete="off">
         </div>
+        <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="club-asset-filters" aria-expanded="false">Filters</button>
+        <?php if ($can_register): ?>
+            <button type="button" class="dw-button dw-button--primary" id="club-asset-open" data-modal-open="club-asset-modal">Register Asset</button>
+        <?php endif; ?>
+        <?php if ($can_request): ?>
+            <button type="button" class="dw-button dw-button--secondary" id="club-request-open" data-modal-open="club-request-modal">Request from Division</button>
+        <?php endif; ?>
+    </div>
 
-        <div class="club-filters" role="search" aria-label="Filter assets">
-            <label class="club-search" for="club-asset-search">
-                <span class="icon"><?= yn_icon('search') ?></span>
-                <span class="sr-only">Search inventory</span>
-                <input id="club-asset-search" type="search" placeholder="Search name or serial..." autocomplete="off">
-            </label>
-            <label class="club-filter-field">
-                <span class="sr-only">Filter by category</span>
+    <section class="dw-filter-panel" id="club-asset-filters" hidden>
+        <h2 class="dw-filter-panel__heading">Filter Inventory</h2>
+        <div class="dw-filter-grid">
+            <div class="dw-field">
+                <label for="club-asset-category">Filter by category</label>
                 <select id="club-asset-category">
                     <option value="">All categories</option>
                     <option value="sports">Sports</option>
@@ -76,19 +81,28 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                     <option value="cleaning">Cleaning</option>
                     <option value="official equipments">Official Equipments</option>
                 </select>
-            </label>
-            <label class="club-filter-field">
-                <span class="sr-only">Filter by status</span>
+            </div>
+            <div class="dw-field">
+                <label for="club-asset-status">Filter by status</label>
                 <select id="club-asset-status">
                     <option value="">All statuses</option>
                     <option value="available">Available</option>
                     <option value="inuse">In Use</option>
                 </select>
-            </label>
+            </div>
         </div>
+    </section>
 
-        <div class="club-table-wrap">
-            <table class="club-table">
+    <section class="dw-panel" aria-labelledby="club-assets-list-heading">
+        <header class="dw-panel__header">
+            <div>
+                <h2 id="club-assets-list-heading">Inventory</h2>
+                <p>Gampaha Youth Development Club</p>
+            </div>
+            <span class="dw-count"><?= count($assets) ?> <?= count($assets) === 1 ? 'asset' : 'assets' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Asset</th>
@@ -105,76 +119,30 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                 </thead>
                 <tbody id="club-asset-body">
                     <?php foreach ($assets as $a): ?>
-                        <tr data-search="<?= $escape(strtolower(($a['name'] ?? '') . ' ' . ($a['serial'] ?? '') . ' ' . ($a['category'] ?? ''))) ?>"
-                            data-status="<?= $escape($a['status_key'] ?? 'available') ?>"
-                            data-category="<?= $escape(strtolower($a['category'] ?? '')) ?>"
-                            data-name="<?= $escape($a['name'] ?? '') ?>">
+                        <tr data-search="<?= $e(strtolower(($a['name'] ?? '') . ' ' . ($a['serial'] ?? '') . ' ' . ($a['category'] ?? ''))) ?>"
+                            data-status="<?= $e($a['status_key'] ?? 'available') ?>"
+                            data-category="<?= $e(strtolower($a['category'] ?? '')) ?>"
+                            data-name="<?= $e($a['name'] ?? '') ?>">
                             <td>
-                                <div class="club-asset-cell">
-                                    <span class="club-thumb" aria-hidden="true"><?= yn_icon('file') ?></span>
-                                    <span><strong><?= $escape($a['name'] ?? '') ?></strong>
-                                    <span class="club-asset-id"><?= $escape($a['serial'] ?? '') ?></span></span>
+                                <div>
+                                    <span data-asset-thumb aria-hidden="true"><?= yn_icon('file') ?></span>
+                                    <span><strong><?= $e($a['name'] ?? '') ?></strong>
+                                    <small><?= $e($a['serial'] ?? '') ?></small></span>
                                 </div>
                             </td>
-                            <td><?= $escape($a['category'] ?? '') ?></td>
-                            <td><?= $escape($a['serial'] ?? '') ?></td>
-                            <td><?= $escape($a['purchase_date'] ?? '') ?></td>
-                            <td><?= $escape($a['valuation'] ?? '') ?></td>
-                            <td><?= $escape($a['custodian'] ?? '') ?></td>
-                            <td><span class="club-pill club-pill--<?= $escape($a['status_key'] ?? 'available') ?>"><?= $escape($a['status'] ?? '') ?></span></td>
-<?php if ($can_request): ?>
-    <div id="club-request-modal" class="popup-overlay" hidden>
-        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="req-modal-title">
-            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
-            <p class="club-eyebrow">Treasurer action</p>
-            <h2 id="req-modal-title">Request from Division</h2>
-            <p class="club-sub-note">Requests land in the division queue as Pending. The division side is built separately.</p>
-            <form id="club-request-form" class="club-form" novalidate>
-                <div class="club-form-grid">
-                    <div class="club-field">
-                        <label for="req-category">Category</label>
-                        <select id="req-category" required>
-                            <option value="">Select category...</option>
-                            <option value="Sports">Sports</option>
-                            <option value="Audio Video Equipments">Audio Video Equipments</option>
-                            <option value="Cleaning">Cleaning</option>
-                            <option value="Official Equipments">Official Equipments</option>
-                        </select>
-                    </div>
-                    <div class="club-field">
-                        <label for="req-item">Item</label>
-                        <select id="req-item" required>
-                            <option value="">Select a category first...</option>
-                        </select>
-                    </div>
-                    <div class="club-field">
-                        <label for="req-qty">Quantity</label>
-                        <input id="req-qty" type="number" required min="1" step="1" placeholder="e.g., 2">
-                    </div>
-                    <div class="club-field">
-                        <label for="req-date">Needed by</label>
-                        <input id="req-date" type="date" required>
-                    </div>
-                    <div class="club-field club-field--full">
-                        <label for="req-just">Justification / event</label>
-                        <textarea id="req-just" rows="3" required maxlength="500" placeholder="Why does the club need this, and for which event?"></textarea>
-                    </div>
-                </div>
-                <p id="req-error" class="club-form-error" hidden></p>
-                <div class="club-modal-footer">
-                    <button type="button" class="club-btn-secondary" data-close>Cancel</button>
-                    <button type="submit" class="club-btn-primary">Submit Request</button>
-                </div>
-            </form>
-        </div>
-    </div>
-<?php endif; ?>
-
-<?php if ($can_transfer): ?>
+                            <td><?= $e($a['category'] ?? '') ?></td>
+                            <td><?= $e($a['serial'] ?? '') ?></td>
+                            <td><?= $e($a['purchase_date'] ?? '') ?></td>
+                            <td class="dw-money"><?= $e($a['valuation'] ?? '') ?></td>
+                            <td><?= $e($a['custodian'] ?? '') ?></td>
+                            <td><?php $status = $a['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                            <?php if ($can_transfer): ?>
                                 <td>
-                                    <?php if (($a['status_key'] ?? '') === 'available'): ?>
-                                        <button type="button" class="club-btn-small" data-action="transfer">Transfer</button>
-                                    <?php endif; ?>
+                                    <div class="dw-row-actions">
+                                        <?php if (($a['status_key'] ?? '') === 'available'): ?>
+                                            <button type="button" class="dw-button dw-button--ghost" data-action="transfer">Transfer</button>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             <?php endif; ?>
                         </tr>
@@ -182,20 +150,26 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                 </tbody>
             </table>
         </div>
-        <p id="club-asset-empty" class="club-note" hidden>No assets match these filters.</p>
+        <?php
+        $emptyTitle = 'No assets match these filters';
+        $emptyMessage = 'Try changing the current search or filters.';
+        $emptyVisible = count($assets) === 0;
+        require __DIR__ . '/../partials/divisional/empty-state.view.php';
+        ?>
     </section>
 
     <?php if ($can_request): ?>
-        <section class="club-panel" aria-labelledby="club-requests-heading">
-            <div class="club-panel-header">
+        <section class="dw-panel" aria-labelledby="club-requests-heading">
+            <header class="dw-panel__header">
                 <div>
-                    <p class="club-eyebrow">Division queue (read-only copy)</p>
                     <h2 id="club-requests-heading">My Requests</h2>
+                    <p>Division queue (read-only copy)</p>
                 </div>
-            </div>
+                <span class="dw-count"><?= count($divisionRequests) ?> <?= count($divisionRequests) === 1 ? 'request' : 'requests' ?></span>
+            </header>
 
-            <div class="club-table-wrap">
-                <table class="club-table">
+            <div class="dw-table-wrap">
+                <table class="dw-table">
                     <thead>
                         <tr>
                             <th>Item</th>
@@ -209,40 +183,98 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                     <tbody id="club-request-body">
                         <?php foreach ($divisionRequests as $r): ?>
                             <tr>
-                                <td><strong><?= $escape($r['item'] ?? '') ?></strong></td>
-                                <td><?= $escape($r['category'] ?? '') ?></td>
-                                <td><?= $escape($r['quantity'] ?? '') ?></td>
-                                <td><?= $escape($r['justification'] ?? '') ?></td>
-                                <td><?= $escape($r['date'] ?? '') ?></td>
-                                <td><span class="club-pill club-pill--<?= $escape($r['status_key'] ?? 'pending') ?>"><?= $escape($r['status'] ?? '') ?></span></td>
+                                <td><strong><?= $e($r['item'] ?? '') ?></strong></td>
+                                <td><?= $e($r['category'] ?? '') ?></td>
+                                <td><?= $e($r['quantity'] ?? '') ?></td>
+                                <td><?= $e($r['justification'] ?? '') ?></td>
+                                <td><?= $e($r['date'] ?? '') ?></td>
+                                <td><?php $status = $r['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
-            <p class="club-note">Requests are decided in the division queue, which is built by the division developer.</p>
+            <p>Requests are decided in the division queue, which is built by the division developer.</p>
         </section>
     <?php endif; ?>
 </section>
 
+<?php if ($can_request): ?>
+    <div id="club-request-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="req-modal-title" aria-hidden="true" hidden>
+        <div class="dw-modal__backdrop" data-modal-close></div>
+        <div class="dw-modal__dialog">
+            <header class="dw-modal__header">
+                <div>
+                    <p>Treasurer action</p>
+                    <h2 id="req-modal-title">Request from Division</h2>
+                </div>
+                <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+            </header>
+            <div class="dw-modal__body">
+                <p>Requests land in the division queue as Pending. The division side is built separately.</p>
+                <form id="club-request-form" novalidate>
+                    <div class="dw-field">
+                        <label for="req-category">Category</label>
+                        <select id="req-category" required>
+                            <option value="">Select category...</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Audio Video Equipments">Audio Video Equipments</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="Official Equipments">Official Equipments</option>
+                        </select>
+                    </div>
+                    <div class="dw-field">
+                        <label for="req-item">Item</label>
+                        <select id="req-item" required>
+                            <option value="">Select a category first...</option>
+                        </select>
+                    </div>
+                    <div class="dw-field">
+                        <label for="req-qty">Quantity</label>
+                        <input id="req-qty" type="number" required min="1" step="1" placeholder="e.g., 2">
+                    </div>
+                    <div class="dw-field">
+                        <label for="req-date">Needed by</label>
+                        <input id="req-date" type="date" required>
+                    </div>
+                    <div class="dw-field dw-field--span-2">
+                        <label for="req-just">Justification / event</label>
+                        <textarea id="req-just" rows="3" required maxlength="500" placeholder="Why does the club need this, and for which event?"></textarea>
+                    </div>
+                    <div class="dw-alert dw-alert--error" id="req-error" role="alert" hidden></div>
+                </form>
+            </div>
+            <footer class="dw-modal__footer">
+                <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-request-form">Submit Request</button>
+            </footer>
+        </div>
+    </div>
+<?php endif; ?>
+
 <?php if ($can_register): ?>
-    <div id="club-asset-modal" class="popup-overlay" hidden>
-        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="asset-modal-title">
-            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
-            <p class="club-eyebrow">Secretary action</p>
-            <h2 id="asset-modal-title">Register Asset</h2>
-            <p class="club-sub-note">New assets enter as Available. A generated asset ID is assigned on save.</p>
-            <form id="club-asset-form" class="club-form" novalidate>
-                <div class="club-form-grid">
-                    <div class="club-field club-field--full">
+    <div id="club-asset-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="asset-modal-title" aria-hidden="true" hidden>
+        <div class="dw-modal__backdrop" data-modal-close></div>
+        <div class="dw-modal__dialog">
+            <header class="dw-modal__header">
+                <div>
+                    <p>Secretary action</p>
+                    <h2 id="asset-modal-title">Register Asset</h2>
+                </div>
+                <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+            </header>
+            <div class="dw-modal__body">
+                <p>New assets enter as Available. A generated asset ID is assigned on save.</p>
+                <form id="club-asset-form" novalidate>
+                    <div class="dw-field dw-field--span-2">
                         <label for="asset-name">Asset name</label>
                         <input id="asset-name" name="name" type="text" required maxlength="150" autocomplete="off" placeholder="e.g., Camping Tent Set">
                     </div>
-                    <div class="club-field">
+                    <div class="dw-field">
                         <label for="asset-serial">Serial number</label>
                         <input id="asset-serial" name="serial" type="text" required maxlength="50" autocomplete="off" placeholder="e.g., TENT-2026-001">
                     </div>
-                    <div class="club-field">
+                    <div class="dw-field">
                         <label for="asset-category">Category</label>
                         <select id="asset-category" name="category" required>
                             <option value="">Select category...</option>
@@ -252,344 +284,69 @@ $custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jaya
                             <option value="Official Equipments">Official Equipments</option>
                         </select>
                     </div>
-                    <div class="club-field">
+                    <div class="dw-field">
                         <label for="asset-date">Purchase date</label>
                         <input id="asset-date" name="purchase_date" type="date" required>
                     </div>
-                    <div class="club-field">
+                    <div class="dw-field">
                         <label for="asset-value">Valuation (LKR)</label>
                         <input id="asset-value" name="valuation" type="number" required min="1" step="0.01" placeholder="0.00">
                     </div>
-                    <div class="club-field club-field--full">
+                    <div class="dw-field dw-field--span-2">
                         <label for="asset-photo">Photo (optional)</label>
                         <input id="asset-photo" name="photo" type="file" accept="image/*">
                     </div>
-                </div>
-                <p id="asset-file-name" class="club-sub-note" hidden></p>
-                <p id="asset-error" class="club-form-error" hidden></p>
-                <div class="club-modal-footer">
-                    <button type="button" class="club-btn-secondary" data-close>Cancel</button>
-                    <button type="submit" class="club-btn-primary">Register Asset</button>
-                </div>
-            </form>
+                    <p id="asset-file-name" hidden></p>
+                    <div class="dw-alert dw-alert--error" id="asset-error" role="alert" hidden></div>
+                </form>
+            </div>
+            <footer class="dw-modal__footer">
+                <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-asset-form">Register Asset</button>
+            </footer>
         </div>
     </div>
 <?php endif; ?>
 
 <?php if ($can_transfer): ?>
-    <div id="club-transfer-modal" class="popup-overlay" hidden>
-        <div class="popup-content club-modal" role="dialog" aria-modal="true" aria-labelledby="transfer-title">
-            <button type="button" class="popup-close" data-close aria-label="Close"><?= yn_icon('close') ?></button>
-            <p class="club-eyebrow">Treasurer action</p>
-            <h2 id="transfer-title">Transfer Custody</h2>
-            <p id="transfer-asset" class="club-sub-note"></p>
-            <div class="club-field">
-                <label for="transfer-custodian">Custodian (Available members)</label>
-                <select id="transfer-custodian">
-                    <?php foreach ($custodians as $c): ?>
-                        <option value="<?= $escape($c) ?>"><?= $escape($c) ?></option>
-                    <?php endforeach; ?>
-                </select>
+    <div id="club-transfer-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="transfer-title" aria-hidden="true" hidden>
+        <div class="dw-modal__backdrop" data-modal-close></div>
+        <div class="dw-modal__dialog">
+            <header class="dw-modal__header">
+                <div>
+                    <p>Treasurer action</p>
+                    <h2 id="transfer-title">Transfer Custody</h2>
+                </div>
+                <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+            </header>
+            <div class="dw-modal__body">
+                <p id="transfer-asset"></p>
+                <div class="dw-field">
+                    <label for="transfer-custodian">Custodian (Available members)</label>
+                    <select id="transfer-custodian">
+                        <?php foreach ($custodians as $c): ?>
+                            <option value="<?= $e($c) ?>"><?= $e($c) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="dw-field">
+                    <label for="transfer-date">Transfer date</label>
+                    <input id="transfer-date" type="date" required>
+                </div>
+                <div class="dw-field">
+                    <label for="transfer-note">History note (required)</label>
+                    <textarea id="transfer-note" rows="3" placeholder="Condition, purpose, expected return..."></textarea>
+                </div>
+                <div class="dw-alert dw-alert--error" id="transfer-error" role="alert" hidden></div>
             </div>
-            <div class="club-field">
-                <label for="transfer-date">Transfer date</label>
-                <input id="transfer-date" type="date" required>
-            </div>
-            <div class="club-field">
-                <label for="transfer-note">History note (required)</label>
-                <textarea id="transfer-note" rows="3" placeholder="Condition, purpose, expected return..."></textarea>
-            </div>
-            <p id="transfer-error" class="club-form-error" hidden></p>
-            <div class="club-modal-footer">
-                <button type="button" class="club-btn-secondary" data-close>Cancel</button>
-                <button type="button" class="club-btn-primary" id="transfer-confirm">Confirm transfer</button>
-            </div>
+            <footer class="dw-modal__footer">
+                <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+                <button type="button" class="dw-button dw-button--primary" id="transfer-confirm">Confirm transfer</button>
+            </footer>
         </div>
     </div>
 <?php endif; ?>
 
-<div id="club-toast" class="club-toast" role="status" hidden></div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const body = document.getElementById('club-asset-body');
-    const search = document.getElementById('club-asset-search');
-    const categorySel = document.getElementById('club-asset-category');
-    const statusSel = document.getElementById('club-asset-status');
-    const empty = document.getElementById('club-asset-empty');
-
-    const applyFilters = () => {
-        if (!body) return;
-        const q = (search ? search.value.trim().toLowerCase() : '');
-        const c = categorySel ? categorySel.value.toLowerCase() : '';
-        const s = statusSel ? statusSel.value : '';
-        let visible = 0;
-        body.querySelectorAll('tr').forEach(row => {
-            const okQ = !q || (row.getAttribute('data-search') || '').includes(q);
-            const okC = !c || (row.getAttribute('data-category') || '') === c;
-            const okS = !s || (row.getAttribute('data-status') || '') === s;
-            const show = okQ && okC && okS;
-            row.style.display = show ? '' : 'none';
-            if (show) visible += 1;
-        });
-        if (empty) empty.hidden = visible !== 0;
-    };
-    [search, categorySel, statusSel].forEach(el => {
-        if (el) el.addEventListener('input', applyFilters);
-        if (el) el.addEventListener('change', applyFilters);
-    });
-
-    const toast = document.getElementById('club-toast');
-    let toastTimer = null;
-    const showToast = (msg) => {
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.hidden = false;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
-    };
-
-    const fmtVal = (n) => 'Rs. ' + Math.round(n).toLocaleString('en-US');
-    let nextId = 5;
-    const nextAssetId = () => 'AST-2025-' + String(nextId++).padStart(3, '0');
-
-    // Register-asset modal (secretary → Available + generated ID).
-    const openBtn = document.getElementById('club-asset-open');
-    const assetModal = document.getElementById('club-asset-modal');
-    const form = document.getElementById('club-asset-form');
-    if (openBtn && assetModal && form && body) {
-        const err = document.getElementById('asset-error');
-        const photo = document.getElementById('asset-photo');
-        const fileName = document.getElementById('asset-file-name');
-
-        const open = () => {
-            form.reset();
-            fileName.hidden = true;
-            err.hidden = true;
-            assetModal.hidden = false;
-            document.body.style.overflow = 'hidden';
-        };
-        const close = () => { assetModal.hidden = true; document.body.style.overflow = ''; };
-        openBtn.addEventListener('click', open);
-        assetModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
-        assetModal.addEventListener('click', (e) => { if (e.target === assetModal) close(); });
-        photo.addEventListener('change', () => {
-            if (photo.files.length) {
-                fileName.textContent = 'Attached: ' + photo.files[0].name;
-                fileName.hidden = false;
-            } else {
-                fileName.hidden = true;
-            }
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('asset-name').value.trim();
-            const serial = document.getElementById('asset-serial').value.trim();
-            const category = document.getElementById('asset-category').value;
-            const dateVal = document.getElementById('asset-date').value;
-            const valueVal = document.getElementById('asset-value').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
-            err.hidden = true;
-            if (!name || !serial || !category || !dateVal || !valueVal) return fail('All fields except photo are required.');
-            const value = Number(valueVal);
-            if (!isFinite(value) || value <= 0) return fail('Valuation must be a positive amount.');
-            const nice = new Date(dateVal + 'T00:00').toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const assetId = nextAssetId();
-            const row = document.createElement('tr');
-            row.setAttribute('data-search', (name + ' ' + serial + ' ' + category).toLowerCase());
-            row.setAttribute('data-status', 'available');
-            row.setAttribute('data-category', category.toLowerCase());
-            row.setAttribute('data-name', name);
-            const assetCell = document.createElement('td');
-            const wrap = document.createElement('div');
-            wrap.className = 'club-asset-cell';
-            const thumb = document.createElement('span');
-            thumb.className = 'club-thumb';
-            thumb.setAttribute('aria-hidden', 'true');
-            if (photo.files.length) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(photo.files[0]);
-                img.alt = '';
-                thumb.appendChild(img);
-            } else {
-                const firstThumb = body.querySelector('.club-thumb');
-                if (firstThumb) thumb.innerHTML = firstThumb.innerHTML;
-            }
-            const copy = document.createElement('span');
-            const strong = document.createElement('strong');
-            strong.textContent = name;
-            const idLine = document.createElement('span');
-            idLine.className = 'club-asset-id';
-            idLine.textContent = assetId;
-            copy.appendChild(strong);
-            copy.appendChild(idLine);
-            wrap.appendChild(thumb);
-            wrap.appendChild(copy);
-            assetCell.appendChild(wrap);
-            row.appendChild(assetCell);
-            [category, serial, nice, fmtVal(value), 'Club Centre'].forEach(text => {
-                const td = document.createElement('td');
-                td.textContent = text;
-                row.appendChild(td);
-            });
-            const statusTd = document.createElement('td');
-            const pill = document.createElement('span');
-            pill.className = 'club-pill club-pill--available';
-            pill.textContent = 'Available';
-            statusTd.appendChild(pill);
-            row.appendChild(statusTd);
-            body.prepend(row);
-            close();
-            applyFilters();
-            showToast(name + ' registered as ' + assetId + ' (demo — persists in C13 backend).');
-        });
-    }
-
-    // Transfer-custody modal (treasurer: Available-only + custodian + date + history).
-    const transferModal = document.getElementById('club-transfer-modal');
-    if (transferModal && body) {
-        const assetEl = document.getElementById('transfer-asset');
-        const custodianSel = document.getElementById('transfer-custodian');
-        const dateInput = document.getElementById('transfer-date');
-        const note = document.getElementById('transfer-note');
-        const err = document.getElementById('transfer-error');
-        const confirmBtn = document.getElementById('transfer-confirm');
-        let target = null;
-
-        const close = () => { transferModal.hidden = true; document.body.style.overflow = ''; };
-        transferModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
-        transferModal.addEventListener('click', (e) => { if (e.target === transferModal) close(); });
-
-        body.querySelectorAll('[data-action="transfer"]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                target = btn.closest('tr');
-                assetEl.textContent = target.getAttribute('data-name') || '';
-                note.value = '';
-                dateInput.value = '';
-                err.hidden = true;
-                transferModal.hidden = false;
-                document.body.style.overflow = 'hidden';
-            });
-        });
-
-        confirmBtn.addEventListener('click', () => {
-            if (!dateInput.value) {
-                err.textContent = 'Choose the transfer date.';
-                err.hidden = false;
-                dateInput.focus();
-                return;
-            }
-            if (!note.value.trim()) {
-                err.textContent = 'A history note is required — it is logged with the transfer.';
-                err.hidden = false;
-                note.focus();
-                return;
-            }
-            if (target) {
-                target.children[5].textContent = custodianSel.value;
-                target.setAttribute('data-status', 'inuse');
-                const statusCell = target.children[6];
-                statusCell.textContent = '';
-                const pill = document.createElement('span');
-                pill.className = 'club-pill club-pill--inuse';
-                pill.textContent = 'In Use';
-                statusCell.appendChild(pill);
-                const btn = target.querySelector('[data-action="transfer"]');
-                if (btn) btn.remove();
-            }
-            close();
-            applyFilters();
-            showToast('Custody transferred to ' + custodianSel.value + ' — history logged (demo).');
-        });
-    }
-
-    // Request-from-Division flow (treasurer; division side excluded — intent + outbox only).
-    const reqOpen = document.getElementById('club-request-open');
-    const reqModal = document.getElementById('club-request-modal');
-    const reqForm = document.getElementById('club-request-form');
-    if (reqOpen && reqModal && reqForm) {
-        const CATALOG = {
-            'Sports': ['Cricket bat', 'Cricket ball', 'Volleyball net', 'Volleyball', 'Sports shoes'],
-            'Audio Video Equipments': ['PA system', 'Loudspeakers', 'Microphones'],
-            'Cleaning': ['Mamoty', 'Paint roller set'],
-            'Official Equipments': ['Office chairs', 'Filing cabinet', 'Notice board'],
-        };
-        const catSel = document.getElementById('req-category');
-        const itemSel = document.getElementById('req-item');
-        const err = document.getElementById('req-error');
-        const reqBody = document.getElementById('club-request-body');
-
-        const open = () => {
-            reqForm.reset();
-            itemSel.textContent = '';
-            const ph = document.createElement('option');
-            ph.value = '';
-            ph.textContent = 'Select a category first...';
-            itemSel.appendChild(ph);
-            err.hidden = true;
-            reqModal.hidden = false;
-            document.body.style.overflow = 'hidden';
-        };
-        const closeReq = () => { reqModal.hidden = true; document.body.style.overflow = ''; };
-        reqOpen.addEventListener('click', open);
-        reqModal.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeReq));
-        reqModal.addEventListener('click', (e) => { if (e.target === reqModal) closeReq(); });
-
-        catSel.addEventListener('change', () => {
-            itemSel.textContent = '';
-            (CATALOG[catSel.value] || []).forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                itemSel.appendChild(opt);
-            });
-            if (!itemSel.children.length) {
-                const ph = document.createElement('option');
-                ph.value = '';
-                ph.textContent = 'Select a category first...';
-                itemSel.appendChild(ph);
-            }
-        });
-
-        reqForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const category = catSel.value;
-            const item = itemSel.value;
-            const qtyVal = document.getElementById('req-qty').value.trim();
-            const dateVal = document.getElementById('req-date').value;
-            const just = document.getElementById('req-just').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
-            err.hidden = true;
-            if (!category || !item || !qtyVal || !dateVal || !just) return fail('All fields are required.');
-            const qty = Number(qtyVal);
-            if (!isFinite(qty) || qty < 1) return fail('Quantity must be at least 1.');
-            const nice = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const row = document.createElement('tr');
-            const itemTd = document.createElement('td');
-            const strong = document.createElement('strong');
-            strong.textContent = item;
-            itemTd.appendChild(strong);
-            row.appendChild(itemTd);
-            [category, String(Math.round(qty)), just, nice].forEach(text => {
-                const td = document.createElement('td');
-                td.textContent = text;
-                row.appendChild(td);
-            });
-            const statusTd = document.createElement('td');
-            const pill = document.createElement('span');
-            pill.className = 'club-pill club-pill--pending';
-            pill.textContent = 'Pending';
-            statusTd.appendChild(pill);
-            row.appendChild(statusTd);
-            reqBody.prepend(row);
-            closeReq();
-            showToast(item + ' requested — sent to the division queue (demo).');
-        });
-    }
-});
-</script>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
