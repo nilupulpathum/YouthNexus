@@ -42,6 +42,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-labelledby="club-events-heading">
     <h1 id="club-events-heading" class="visually-hidden">Club events</h1>
 
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
+
     <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
 
     <div class="dw-summary-grid dw-summary-grid--three" aria-label="Event summary">
@@ -97,6 +103,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="dw-record-grid" id="club-event-list">
             <?php foreach ($clubEvents as $ev): ?>
                 <article class="dw-record-card" data-event-card
+                    data-id="<?= (int) ($ev['id'] ?? 0) ?>"
                     data-search="<?= $e(strtolower(($ev['title'] ?? '') . ' ' . ($ev['location'] ?? ''))) ?>"
                     data-status="<?= $e($ev['status_key'] ?? 'pending') ?>"
                     data-type="<?= $e(strtolower($ev['type'] ?? '')) ?>"
@@ -113,15 +120,15 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <h3 class="dw-record-card__title"><?= $e($ev['title'] ?? '') ?></h3>
                     <div class="dw-record-card__details">
                         <span><span class="icon"><?= yn_icon('calendar') ?></span> <?= $e($ev['date'] ?? '') ?> · <span class="icon"><?= yn_icon('pin') ?></span> <?= $e($ev['location'] ?? '') ?></span>
-                        <span><?= $e($ev['type'] ?? '') ?> · Budget <?= $e($ev['budget'] ?? '') ?> · Submitted by <?= $e($ev['submitted_by'] ?? '') ?></span>
+                        <span><?= $e($ev['type'] ?? '') ?> · Submitted by <?= $e($ev['submitted_by'] ?? '') ?></span>
                     </div>
                     <div class="dw-record-card__footer">
                         <div class="dw-record-card__actions">
                             <?php if ($can_approve && (($ev['status_key'] ?? '') === 'pending')): ?>
-                                <button type="button" class="dw-button dw-button--ghost" data-action="review">Review</button>
+                                <button type="button" class="dw-button dw-button--ghost" data-action="review" data-modal-open="event-decision-modal">Review</button>
                             <?php endif; ?>
                             <?php if ($can_create && (($ev['status_key'] ?? '') === 'approved')): ?>
-                                <button type="button" class="dw-button dw-button--ghost" data-action="complete">Mark complete</button>
+                                <button type="button" class="dw-button dw-button--ghost" data-action="complete" data-modal-open="club-complete-modal">Mark complete</button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -152,7 +159,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p>New events enter as Pending Approval for the president.</p>
-                <form id="club-event-form" novalidate>
+                <form id="club-event-form" action="<?= ROOT ?>/club/createEvent" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div class="dw-alert dw-alert--error" id="ev-banner" role="alert" hidden>
                         <span aria-hidden="true"><?= yn_icon('info') ?></span>
                         <div>
@@ -172,10 +180,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="dw-field">
                         <label for="ev-time">Time</label>
                         <input id="ev-time" name="time" type="time" required>
-                    </div>
-                    <div class="dw-field">
-                        <label for="ev-location">Location</label>
-                        <input id="ev-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Venue or coordinates">
                     </div>
                     <div class="dw-field">
                         <label for="ev-type">Event Type</label>
@@ -215,15 +219,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p id="cp-meta"></p>
-                <div class="dw-field">
-                    <label for="cp-sheet">Attendance sheet (required)</label>
-                    <input id="cp-sheet" type="file" accept=".csv,.xls,.xlsx,.pdf,image/*">
-                </div>
-                <div class="dw-field">
-                    <label for="cp-photos">Event photos (optional)</label>
-                    <input id="cp-photos" type="file" accept="image/*" multiple>
-                </div>
-                <p id="cp-files" hidden></p>
+                <form id="club-complete-form" action="<?= ROOT ?>/club/completeEvent" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="cp-event-id" name="event_id" value="">
+                    <div class="dw-field">
+                        <label for="cp-sheet">Attendance sheet (required)</label>
+                        <input id="cp-sheet" name="sheet" type="file" accept=".csv,.xls,.xlsx,.pdf,image/*" required>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--error" id="cp-error" role="alert" hidden></div>
                 <div role="note">
                     <strong>What happens next</strong>
@@ -232,7 +235,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="cp-confirm">Mark completed</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-complete-form">Mark completed</button>
             </footer>
         </div>
     </div>
@@ -252,17 +255,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="dw-modal__body">
                 <p id="ed-meta"></p>
                 <p id="ed-submitter"></p>
-                <div class="dw-field">
-                    <label for="ed-result">Review result</label>
-                    <select id="ed-result">
-                        <option value="approve">Approve event</option>
-                        <option value="request-changes">Request changes</option>
-                    </select>
-                </div>
-                <div class="dw-field">
-                    <label for="ed-remarks">Official review remarks (required if requesting changes)</label>
-                    <textarea id="ed-remarks" rows="3" placeholder="Provide the reason for this decision..."></textarea>
-                </div>
+                <form id="event-decision-form" action="<?= ROOT ?>/president/eventDecision" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="ed-event-id" name="event_id" value="">
+                    <div class="dw-field">
+                        <label for="ed-result">Review result</label>
+                        <select id="ed-result" name="decision">
+                            <option value="approve">Approve event</option>
+                            <option value="request-changes">Request changes</option>
+                        </select>
+                    </div>
+                    <div class="dw-field">
+                        <label for="ed-remarks">Official review remarks (required if requesting changes)</label>
+                        <textarea id="ed-remarks" name="remarks" rows="3" placeholder="Provide the reason for this decision..."></textarea>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--error" id="ed-error" role="alert" hidden></div>
                 <div id="ed-impact" role="note">
                     <strong>Impact of approval</strong>
@@ -271,7 +278,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="ed-confirm">Confirm &amp; submit decision</button>
+                <button type="submit" class="dw-button dw-button--primary" form="event-decision-form">Confirm &amp; submit decision</button>
             </footer>
         </div>
     </div>
