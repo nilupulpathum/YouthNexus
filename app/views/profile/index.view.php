@@ -5,6 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
+$pageStyles = [ROOT . '/assets/css/profile.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -149,6 +150,5 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/profile.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

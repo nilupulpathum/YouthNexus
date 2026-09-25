@@ -10,6 +10,7 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit';
 $pageDescription         = $pageDescription ?? 'National Youth Services Council — Statutory ledger reconciliation & fiscal compliance review';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -50,8 +51,6 @@ $steps = [
 $displayActual   = $isKandyScope ? "LKR 5, 500, 000" : $fmtExact($audit->actual_closing_balance);
 $displayVariance = "LKR 0.00";
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/annualaudit.css?v=<?= time() ?>">
 
 <div class="audit-content">
 

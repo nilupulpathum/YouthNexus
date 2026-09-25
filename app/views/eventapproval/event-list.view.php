@@ -12,6 +12,10 @@ $pageTitle               = 'Approve Events';
 $pageDescription         = 'Review club-level events submitted within your division';
 $currentRoute            = 'eventapproval';
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
+$pageStyles              = [
+    ROOT . '/assets/css/eventapproval.css?v=' . time(),
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -136,8 +140,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/eventapproval.css?v=<?= time() ?>">
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script>
     window.ROOT       = "<?= ROOT ?>";
     window.CSRF_TOKEN = <?= json_encode($csrf_token ?? '') ?>;
