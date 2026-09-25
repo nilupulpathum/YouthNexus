@@ -549,19 +549,58 @@ class Club extends Controller {
     }
 
     /**
-     * Club asset inventory. C7: secretary register-asset modal +
-     * treasurer transfer-custody flow (Available-only + custodian + date
-     * + history note). Presentation-only, no DB writes.
+     * Club asset inventory (D4: real stock/request data, Club scope).
      */
     public function assets() {
         $this->requireRoles(['president', 'treasurer', 'secretary']);
 
-        $assets = [
-            ['id' => 1, 'name' => 'Sound System (Portable PA)', 'serial' => 'AST-2024-001', 'category' => 'Audio Video Equipments', 'purchase_date' => 'Jan 12, 2024', 'valuation' => 'Rs. 85,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
-            ['id' => 2, 'name' => 'Multimedia Projector',       'serial' => 'AST-2024-002', 'category' => 'Audio Video Equipments', 'purchase_date' => 'Mar 3, 2024',  'valuation' => 'Rs. 120,000', 'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
-            ['id' => 3, 'name' => 'Cricket Gear Set',           'serial' => 'AST-2025-003', 'category' => 'Sports',                 'purchase_date' => 'Jun 20, 2025', 'valuation' => 'Rs. 45,000',  'status' => 'In Use',    'status_key' => 'inuse',     'custodian' => 'Ruwan Silva'],
-            ['id' => 4, 'name' => 'First-Aid Kit',              'serial' => 'AST-2025-004', 'category' => 'Official Equipments',    'purchase_date' => 'Feb 8, 2025',  'valuation' => 'Rs. 12,000',  'status' => 'Available', 'status_key' => 'available', 'custodian' => 'Club Centre'],
-        ];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $assetModel = $this->model('ClubAssetModel');
+
+        $assets = [];
+        foreach ($assetModel->getInventory($clubId) as $s) {
+            $assets[] = [
+                'id'       => (int) $s->catalog_item_id,
+                'name'     => $s->item_name ?? '',
+                'category' => $s->category ?? '',
+                'sku'      => $s->sku ?? '',
+                'unit'     => $s->unit ?? '',
+                'quantity' => (int) $s->quantity,
+                'status'   => 'Available',
+                'status_key' => 'available',
+            ];
+        }
+
+        $requests = [];
+        foreach ($assetModel->getRequests($clubId) as $r) {
+            $ts = strtotime((string) $r->requested_at);
+            $requests[] = [
+                'item'       => $r->item_name ?? '',
+                'category'   => $r->category ?? '',
+                'quantity'   => (int) $r->quantity,
+                'reason'     => $r->reason ?? '',
+                'date'       => $ts ? date('M d, Y', $ts) : '—',
+                'status'     => $r->status ?? '',
+                'status_key' => strtolower($r->status ?? ''),
+            ];
+        }
+
+        $catalog = $assetModel->getCatalog();
+        $categories = [];
+        foreach ($catalog as $item) {
+            $categories[$item->category] = true;
+        }
+
+        $custodians = [];
+        foreach ($this->model('UserModel')->getClubRoster($clubId) as $u) {
+            $custodians[] = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
+        }
+
+        $summary = $assetModel->getSummary($clubId);
 
         $data = $this->shell(
             'Club Assets — YouthNexus Pulse',
@@ -569,19 +608,114 @@ class Club extends Controller {
             'Inventory held by Gampaha Youth Development Club.',
             'club/assets'
         );
-        $data['stats'] = ['total' => 4, 'available' => 3, 'in_use' => 1, 'valuation' => 'Rs. 262,000'];
+        $data['stats'] = [
+            'units'         => $summary['units'],
+            'items'         => $summary['items'],
+            'open_requests' => $summary['open_requests'],
+        ];
         $data['assets'] = $assets;
         $data['can_transfer'] = ($this->roleKey() === 'treasurer');
         $data['can_register'] = ($this->roleKey() === 'secretary');
         $data['can_request'] = ($this->roleKey() === 'treasurer');
-        // Outbox for division requests (C18). Payload shape is the contract
-        // the division developer consumes later (see C13): item, category,
-        // quantity, justification, club, requested_by, date, status.
-        $data['divisionRequests'] = [
-            ['item' => 'Volleyball net', 'category' => 'Sports', 'quantity' => 2, 'justification' => 'Inter-club tournament, Sep 2026', 'date' => 'Sep 5, 2026', 'status' => 'Pending', 'status_key' => 'pending'],
-        ];
+        $data['divisionRequests'] = $requests;
+        $data['catalog'] = $catalog;
+        $data['categories'] = array_keys($categories);
+        $data['custodians'] = $custodians;
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('club/assets', $data);
+    }
+
+    /**
+     * Secretary records stock into the club inventory.
+     */
+    public function registerAsset() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/assets');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/assets');
+        }
+
+        $itemId = (int) ($_POST['catalog_item_id'] ?? 0);
+        $quantity = (int) ($_POST['quantity'] ?? 0);
+        $note = substr(trim($_POST['note'] ?? ''), 0, 500);
+
+        try {
+            $this->model('ClubAssetModel')->addStock((int) ($_SESSION['club_id'] ?? 0), $itemId, $quantity, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/assets');
+        }
+        $this->setFlash('success', 'Stock recorded in the club inventory.');
+        $this->redirect('club/assets');
+    }
+
+    /**
+     * Treasurer records a custody transfer inside the club.
+     */
+    public function transferAsset() {
+        $this->requireRoles(['treasurer']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/assets');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/assets');
+        }
+
+        $itemId = (int) ($_POST['catalog_item_id'] ?? 0);
+        $custodian = trim($_POST['custodian'] ?? '');
+        $date = trim($_POST['transfer_date'] ?? '');
+        $note = substr(trim($_POST['note'] ?? ''), 0, 500);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $this->setFlash('error', 'Enter a valid transfer date.');
+            $this->redirect('club/assets');
+        }
+
+        try {
+            $this->model('ClubAssetModel')->transferCustody((int) ($_SESSION['club_id'] ?? 0), $itemId, $custodian, $date, $note, (int) $_SESSION['user_id']);
+        } catch (InvalidArgumentException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/assets');
+        }
+        $this->setFlash('success', 'Custody transfer recorded.');
+        $this->redirect('club/assets');
+    }
+
+    /**
+     * Treasurer requests stock from the division queue.
+     */
+    public function requestAsset() {
+        $this->requireRoles(['treasurer']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/assets');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/assets');
+        }
+
+        $itemId = (int) ($_POST['catalog_item_id'] ?? 0);
+        $quantity = (int) ($_POST['quantity'] ?? 0);
+        $reason = substr(trim($_POST['reason'] ?? ''), 0, 500);
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $club = $this->model('ClubModel')->findById($clubId);
+        try {
+            $this->model('ClubAssetModel')->requestFromDivision($clubId, (int) ($club->division_id ?? 0), $itemId, $quantity, (int) $_SESSION['user_id'], $reason);
+        } catch (InvalidArgumentException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/assets');
+        }
+        $this->setFlash('success', 'Request sent to the division queue.');
+        $this->redirect('club/assets');
     }
 
     /**

@@ -19,10 +19,12 @@ require __DIR__ . '/../partials/icons.view.php';
 $stats         = $stats ?? [];
 $assets        = $assets ?? [];
 $divisionRequests = $divisionRequests ?? [];
+$catalog       = $catalog ?? [];
+$categories    = $categories ?? [];
+$custodians    = $custodians ?? [];
 $can_transfer  = !empty($can_transfer);
 $can_register  = !empty($can_register);
 $can_request   = !empty($can_request);
-$custodians    = ['Nuwan Bandara', 'Amal Perera', 'Kasun Fernando', 'Dilini Jayasuriya', 'Ruwan Silva'];
 
 $title = 'Club Assets - YouthNexus';
 $pageTitle = 'Club Assets';
@@ -35,10 +37,9 @@ $pageScripts = [
 ];
 
 $summaryCards = [
-    ['value' => (string) ($stats['total'] ?? 0), 'label' => 'Total assets', 'note' => 'Gampaha Youth Development Club', 'icon' => 'briefcase', 'tone' => 'blue'],
-    ['value' => (string) ($stats['available'] ?? 0), 'label' => 'Available', 'note' => 'Ready for custody', 'icon' => 'check', 'tone' => 'green'],
-    ['value' => (string) ($stats['in_use'] ?? 0), 'label' => 'In use', 'note' => 'Currently assigned', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => (string) ($stats['valuation'] ?? ''), 'label' => 'Total valuation', 'note' => 'Estimated LKR value', 'icon' => 'wallet', 'tone' => 'blue'],
+    ['value' => (string) ($stats['units'] ?? 0), 'label' => 'Units on hand', 'note' => 'Gampaha Youth Development Club', 'icon' => 'briefcase', 'tone' => 'blue'],
+    ['value' => (string) ($stats['items'] ?? 0), 'label' => 'Item types', 'note' => 'Catalog items stocked', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) ($stats['open_requests'] ?? 0), 'label' => 'Open requests', 'note' => 'Awaiting division decision', 'icon' => 'clock', 'tone' => 'amber'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -48,6 +49,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="club-assets-heading" class="visually-hidden">Club assets</h1>
 
     <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
 
     <div class="dw-summary-grid" aria-label="Asset summary">
         <?php foreach ($summaryCards as $card): ?>
@@ -58,7 +64,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dw-toolbar" aria-label="Inventory tools">
         <div class="dw-toolbar__search dw-search dw-search--plain">
             <label class="visually-hidden" for="club-asset-search">Search inventory</label>
-            <input id="club-asset-search" type="search" placeholder="Search name or serial..." autocomplete="off">
+            <input id="club-asset-search" type="search" placeholder="Search name or SKU..." autocomplete="off">
         </div>
         <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="club-asset-filters" aria-expanded="false">Filters</button>
         <?php if ($can_register): ?>
@@ -76,10 +82,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <label for="club-asset-category">Filter by category</label>
                 <select id="club-asset-category">
                     <option value="">All categories</option>
-                    <option value="sports">Sports</option>
-                    <option value="audio video equipments">Audio Video Equipments</option>
-                    <option value="cleaning">Cleaning</option>
-                    <option value="official equipments">Official Equipments</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= $e(strtolower($cat)) ?>"><?= $e($cat) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="dw-field">
@@ -107,10 +112,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <tr>
                         <th>Asset</th>
                         <th>Category</th>
-                        <th>Serial</th>
-                        <th>Purchase date</th>
-                        <th>Valuation</th>
-                        <th>Custodian</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
                         <th>Status</th>
                         <?php if ($can_transfer): ?>
                             <th>Action</th>
@@ -119,29 +123,26 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </thead>
                 <tbody id="club-asset-body">
                     <?php foreach ($assets as $a): ?>
-                        <tr data-search="<?= $e(strtolower(($a['name'] ?? '') . ' ' . ($a['serial'] ?? '') . ' ' . ($a['category'] ?? ''))) ?>"
+                        <tr data-search="<?= $e(strtolower(($a['name'] ?? '') . ' ' . ($a['sku'] ?? '') . ' ' . ($a['category'] ?? ''))) ?>"
                             data-status="<?= $e($a['status_key'] ?? 'available') ?>"
                             data-category="<?= $e(strtolower($a['category'] ?? '')) ?>"
+                            data-id="<?= (int) ($a['id'] ?? 0) ?>"
                             data-name="<?= $e($a['name'] ?? '') ?>">
                             <td>
                                 <div>
                                     <span data-asset-thumb aria-hidden="true"><?= yn_icon('file') ?></span>
-                                    <span><strong><?= $e($a['name'] ?? '') ?></strong>
-                                    <small><?= $e($a['serial'] ?? '') ?></small></span>
+                                    <span><strong><?= $e($a['name'] ?? '') ?></strong></span>
                                 </div>
                             </td>
                             <td><?= $e($a['category'] ?? '') ?></td>
-                            <td><?= $e($a['serial'] ?? '') ?></td>
-                            <td><?= $e($a['purchase_date'] ?? '') ?></td>
-                            <td class="dw-money"><?= $e($a['valuation'] ?? '') ?></td>
-                            <td><?= $e($a['custodian'] ?? '') ?></td>
+                            <td><?= $e($a['sku'] ?? '') ?></td>
+                            <td><?= (int) ($a['quantity'] ?? 0) ?></td>
+                            <td><?= $e($a['unit'] ?? '') ?></td>
                             <td><?php $status = $a['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                             <?php if ($can_transfer): ?>
                                 <td>
                                     <div class="dw-row-actions">
-                                        <?php if (($a['status_key'] ?? '') === 'available'): ?>
-                                            <button type="button" class="dw-button dw-button--ghost" data-action="transfer">Transfer</button>
-                                        <?php endif; ?>
+                                        <button type="button" class="dw-button dw-button--ghost" data-action="transfer" data-modal-open="club-transfer-modal">Transfer</button>
                                     </div>
                                 </td>
                             <?php endif; ?>
@@ -175,7 +176,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <th>Item</th>
                             <th>Category</th>
                             <th>Qty</th>
-                            <th>Justification</th>
+                            <th>Reason</th>
                             <th>Date</th>
                             <th>Status</th>
                         </tr>
@@ -185,8 +186,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <tr>
                                 <td><strong><?= $e($r['item'] ?? '') ?></strong></td>
                                 <td><?= $e($r['category'] ?? '') ?></td>
-                                <td><?= $e($r['quantity'] ?? '') ?></td>
-                                <td><?= $e($r['justification'] ?? '') ?></td>
+                                <td><?= (int) ($r['quantity'] ?? 0) ?></td>
+                                <td><?= $e($r['reason'] ?? '') ?></td>
                                 <td><?= $e($r['date'] ?? '') ?></td>
                                 <td><?php $status = $r['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                             </tr>
@@ -211,35 +212,25 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p>Requests land in the division queue as Pending. The division side is built separately.</p>
-                <form id="club-request-form" novalidate>
-                    <div class="dw-field">
-                        <label for="req-category">Category</label>
-                        <select id="req-category" required>
-                            <option value="">Select category...</option>
-                            <option value="Sports">Sports</option>
-                            <option value="Audio Video Equipments">Audio Video Equipments</option>
-                            <option value="Cleaning">Cleaning</option>
-                            <option value="Official Equipments">Official Equipments</option>
-                        </select>
-                    </div>
+                <p>Requests land in the division queue as Pending and are decided there.</p>
+                <form id="club-request-form" action="<?= ROOT ?>/club/requestAsset" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div class="dw-field">
                         <label for="req-item">Item</label>
-                        <select id="req-item" required>
-                            <option value="">Select a category first...</option>
+                        <select id="req-item" name="catalog_item_id" required>
+                            <option value="">Select item...</option>
+                            <?php foreach ($catalog as $item): ?>
+                                <option value="<?= (int) $item->catalog_item_id ?>"><?= $e($item->item_name . ' (' . $item->category . ')') ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="dw-field">
                         <label for="req-qty">Quantity</label>
-                        <input id="req-qty" type="number" required min="1" step="1" placeholder="e.g., 2">
-                    </div>
-                    <div class="dw-field">
-                        <label for="req-date">Needed by</label>
-                        <input id="req-date" type="date" required>
+                        <input id="req-qty" name="quantity" type="number" required min="1" step="1" placeholder="e.g., 2">
                     </div>
                     <div class="dw-field dw-field--span-2">
-                        <label for="req-just">Justification / event</label>
-                        <textarea id="req-just" rows="3" required maxlength="500" placeholder="Why does the club need this, and for which event?"></textarea>
+                        <label for="req-just">Reason</label>
+                        <textarea id="req-just" name="reason" rows="3" required maxlength="500" placeholder="Why does the club need this, and for which event?"></textarea>
                     </div>
                     <div class="dw-alert dw-alert--error" id="req-error" role="alert" hidden></div>
                 </form>
@@ -264,39 +255,26 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p>New assets enter as Available. A generated asset ID is assigned on save.</p>
-                <form id="club-asset-form" novalidate>
+                <p>New stock enters as Available in the club inventory.</p>
+                <form id="club-asset-form" action="<?= ROOT ?>/club/registerAsset" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div class="dw-field dw-field--span-2">
-                        <label for="asset-name">Asset name</label>
-                        <input id="asset-name" name="name" type="text" required maxlength="150" autocomplete="off" placeholder="e.g., Camping Tent Set">
-                    </div>
-                    <div class="dw-field">
-                        <label for="asset-serial">Serial number</label>
-                        <input id="asset-serial" name="serial" type="text" required maxlength="50" autocomplete="off" placeholder="e.g., TENT-2026-001">
-                    </div>
-                    <div class="dw-field">
-                        <label for="asset-category">Category</label>
-                        <select id="asset-category" name="category" required>
-                            <option value="">Select category...</option>
-                            <option value="Sports">Sports</option>
-                            <option value="Audio Video Equipments">Audio Video Equipments</option>
-                            <option value="Cleaning">Cleaning</option>
-                            <option value="Official Equipments">Official Equipments</option>
+                        <label for="asset-item">Catalog item</label>
+                        <select id="asset-item" name="catalog_item_id" required>
+                            <option value="">Select item...</option>
+                            <?php foreach ($catalog as $item): ?>
+                                <option value="<?= (int) $item->catalog_item_id ?>"><?= $e($item->item_name . ' (' . $item->category . ')') ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="dw-field">
-                        <label for="asset-date">Purchase date</label>
-                        <input id="asset-date" name="purchase_date" type="date" required>
-                    </div>
-                    <div class="dw-field">
-                        <label for="asset-value">Valuation (LKR)</label>
-                        <input id="asset-value" name="valuation" type="number" required min="1" step="0.01" placeholder="0.00">
+                        <label for="asset-qty">Quantity</label>
+                        <input id="asset-qty" name="quantity" type="number" required min="1" step="1" placeholder="e.g., 2">
                     </div>
                     <div class="dw-field dw-field--span-2">
-                        <label for="asset-photo">Photo (optional)</label>
-                        <input id="asset-photo" name="photo" type="file" accept="image/*">
+                        <label for="asset-note">Note (optional)</label>
+                        <input id="asset-note" name="note" type="text" maxlength="500" autocomplete="off" placeholder="e.g., Donated for the tournament">
                     </div>
-                    <p id="asset-file-name" hidden></p>
                     <div class="dw-alert dw-alert--error" id="asset-error" role="alert" hidden></div>
                 </form>
             </div>
@@ -321,27 +299,31 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p id="transfer-asset"></p>
-                <div class="dw-field">
-                    <label for="transfer-custodian">Custodian (Available members)</label>
-                    <select id="transfer-custodian">
-                        <?php foreach ($custodians as $c): ?>
-                            <option value="<?= $e($c) ?>"><?= $e($c) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="dw-field">
-                    <label for="transfer-date">Transfer date</label>
-                    <input id="transfer-date" type="date" required>
-                </div>
-                <div class="dw-field">
-                    <label for="transfer-note">History note (required)</label>
-                    <textarea id="transfer-note" rows="3" placeholder="Condition, purpose, expected return..."></textarea>
-                </div>
+                <form id="club-transfer-form" action="<?= ROOT ?>/club/transferAsset" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="transfer-item-id" name="catalog_item_id" value="">
+                    <div class="dw-field">
+                        <label for="transfer-custodian">Custodian</label>
+                        <select id="transfer-custodian" name="custodian">
+                            <?php foreach ($custodians as $c): ?>
+                                <option value="<?= $e($c) ?>"><?= $e($c) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="dw-field">
+                        <label for="transfer-date">Transfer date</label>
+                        <input id="transfer-date" name="transfer_date" type="date" required>
+                    </div>
+                    <div class="dw-field">
+                        <label for="transfer-note">History note (required)</label>
+                        <textarea id="transfer-note" name="note" rows="3" placeholder="Condition, purpose, expected return..."></textarea>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--error" id="transfer-error" role="alert" hidden></div>
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="transfer-confirm">Confirm transfer</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-transfer-form">Confirm transfer</button>
             </footer>
         </div>
     </div>
