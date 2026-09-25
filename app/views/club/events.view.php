@@ -52,7 +52,7 @@ $can_create  = !empty($can_create);
 
         <div class="club-filters" role="search" aria-label="Filter events">
             <label class="club-search" for="club-event-search">
-                <span class="icon"><?= yn_icon('eye') ?></span>
+                <span class="icon"><?= yn_icon('search') ?></span>
                 <span class="sr-only">Search events</span>
                 <input id="club-event-search" type="search" placeholder="Search title or location..." autocomplete="off">
             </label>
