@@ -10,6 +10,10 @@ class Zonalannouncements extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $roles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['zonal_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a zone.');
+        }
     }
 
     public function index() {

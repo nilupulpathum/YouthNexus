@@ -16,6 +16,10 @@ class Member extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['club_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a club.');
+        }
     }
 
     /**
