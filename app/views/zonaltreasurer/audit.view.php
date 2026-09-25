@@ -2,10 +2,10 @@
 $escape = static function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); };
 $totalBalance = max(0, (float)$income - (float)$expenses);
 require __DIR__ . '/../partials/icons.view.php';
+$pageStyles = [ROOT . '/assets/css/annualaudit.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/annualaudit.css">
 
 <section class="audit-content" aria-labelledby="zonal-audit-heading">
     <div class="audit-page-head">

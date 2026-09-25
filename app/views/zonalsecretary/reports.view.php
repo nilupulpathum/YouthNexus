@@ -4,10 +4,9 @@ $escape = static function ($value) {
 };
 
 require __DIR__ . '/../partials/icons.view.php';
+$pageStyles = [ROOT . '/assets/css/managereports.css'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css">
 
 <section class="rpt-content" aria-labelledby="zonal-reports-heading">
     <div class="rpt-header-bar">

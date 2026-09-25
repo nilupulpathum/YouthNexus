@@ -1,9 +1,9 @@
 <?php
 $escape = static function ($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); };
 require __DIR__ . '/../partials/icons.view.php';
+$pageStyles = [ROOT . '/assets/css/managereports.css'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css">
 <section class="rpt-content" aria-labelledby="coordinator-reports-heading">
     <div class="rpt-header-bar"><div><h1 id="coordinator-reports-heading" class="rpt-section-title">Aggregate Divisional Reports</h1><p class="rpt-section-desc">Zone-generated rollups for <?= $escape($zoneName ?? 'the zone') ?> divisions.</p></div><div class="rpt-header-actions"><a class="rpt-btn rpt-btn--outline" href="<?= ROOT ?>/zonalcoordinator/exportreports"><?= yn_icon('download') ?> Export list</a></div></div>
     <div class="rpt-section-head"><h2 class="rpt-section-head__title">Available reports <span class="rpt-count-note">(<?= count($reports) ?> shown)</span></h2></div>

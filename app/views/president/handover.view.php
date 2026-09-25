@@ -20,7 +20,7 @@ $title = 'Leadership Handover - YouthNexus';
 $pageTitle = 'Leadership Handover';
 $pageDescription = 'Nominate a successor and freeze assets';
 $currentRoute = 'president/handover';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/club.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/club.js'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -186,6 +186,5 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
