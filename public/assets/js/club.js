@@ -630,29 +630,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return s;
     };
 
-    // Log-transaction modal (treasurer; receipt is mandatory).
-    const openBtn = document.getElementById('club-log-open');
+    // Log-transaction modal (treasurer) — validates, then real POST.
     const logModal = document.getElementById('club-log-modal');
     const form = document.getElementById('club-log-form');
-    if (openBtn && logModal && form && body) {
+    if (logModal && form && body) {
         const banner = document.getElementById('log-banner');
         const err = document.getElementById('log-error');
         const receipt = document.getElementById('log-receipt');
         const fileName = document.getElementById('log-file-name');
 
-        const open = () => {
-            form.reset();
-            fileName.hidden = true;
-            err.hidden = true;
-            banner.hidden = true;
-            logModal.hidden = false;
-            logModal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        };
-        const close = () => { logModal.hidden = true; logModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        openBtn.addEventListener('click', open);
-        logModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', close));
-        logModal.addEventListener('click', (e) => { if (e.target === logModal || (e.target.classList && e.target.classList.contains('dw-modal__backdrop'))) close(); });
         receipt.addEventListener('change', () => {
             if (receipt.files.length) {
                 fileName.textContent = 'Attached: ' + receipt.files[0].name;
@@ -664,147 +650,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const type = document.getElementById('log-type').value;
             const amountVal = document.getElementById('log-amount').value.trim();
             const dateVal = document.getElementById('log-date').value;
             const desc = document.getElementById('log-desc').value.trim();
-            const fail = (m) => { err.textContent = m; err.hidden = false; };
+            const fail = (m) => { e.preventDefault(); err.textContent = m; err.hidden = false; };
             err.hidden = true;
             if (!amountVal || !dateVal || !desc) return fail('All fields are required.');
             const amount = Number(amountVal);
             if (!isFinite(amount) || amount <= 0) return fail('Amount must be a positive number.');
             if (!receipt.files.length) {
+                e.preventDefault();
                 banner.hidden = false;
                 receipt.focus();
-                return;
             }
-            const nice = new Date(dateVal + 'T00:00').toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const firstRow = body.querySelector('tr');
-            const current = firstRow ? parseRs(firstRow.children[4].textContent) : 0;
-            const next = type === 'Income' ? current + amount : current - amount;
-            const row = document.createElement('tr');
-            row.setAttribute('data-search', desc.toLowerCase());
-            row.setAttribute('data-type', type.toLowerCase());
-            row.setAttribute('data-status', 'verified');
-            row.setAttribute('data-desc', desc);
-            const cells = [nice, desc];
-            const c0 = document.createElement('td'); c0.textContent = cells[0]; row.appendChild(c0);
-            const c1 = document.createElement('td'); c1.textContent = cells[1]; row.appendChild(c1);
-            const c2 = document.createElement('td'); c2.appendChild(pillFor(type.toLowerCase(), type)); row.appendChild(c2);
-            const c3 = document.createElement('td');
-            c3.className = 'dw-money dw-money--' + type.toLowerCase();
-            c3.textContent = fmtRs(amount);
-            row.appendChild(c3);
-            const c4 = document.createElement('td'); c4.className = 'dw-money'; c4.textContent = fmtRs(next); row.appendChild(c4);
-            const c4b = document.createElement('td');
-            const dlBtn = document.createElement('button');
-            dlBtn.type = 'button';
-            dlBtn.className = 'dw-button dw-button--ghost';
-            dlBtn.setAttribute('title', 'Download ' + receipt.files[0].name);
-            dlBtn.setAttribute('aria-label', 'Download receipt');
-            const firstDl = body.querySelector('[data-action="receipt"]');
-            if (firstDl) dlBtn.innerHTML = firstDl.innerHTML;
-            else dlBtn.textContent = 'Download';
-            const fileUrl = URL.createObjectURL(receipt.files[0]);
-            const fileName = receipt.files[0].name;
-            dlBtn.addEventListener('click', () => {
-                const a = document.createElement('a');
-                a.href = fileUrl;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                showToast(fileName + ' downloaded (demo).');
-            });
-            c4b.appendChild(dlBtn);
-            row.appendChild(c4b);
-            const c5 = document.createElement('td'); c5.appendChild(pillFor('verified', 'Verified')); row.appendChild(c5);
-            const c6 = document.createElement('td');
-            const voidBtn = document.createElement('button');
-            voidBtn.type = 'button';
-            voidBtn.className = 'dw-button dw-button--ghost';
-            voidBtn.setAttribute('data-action', 'void');
-            voidBtn.textContent = 'Request void';
-            c6.appendChild(voidBtn);
-            row.appendChild(c6);
-            bindVoidButton(voidBtn);
-            body.prepend(row);
-            close();
-            applyFilters();
-            showToast(desc + ' logged — balance updated (demo — persists in C13 backend).');
         });
     }
 
-    // Demo receipt downloads (mock rows serve a generated demo file;
-    // real files land with the C13 backend).
-    body.querySelectorAll('[data-action="receipt"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lines = [
-                'YouthNexus — demo receipt',
-                'Transaction: ' + (btn.getAttribute('data-desc') || ''),
-                'Amount: ' + (btn.getAttribute('data-amount') || ''),
-                'Date: ' + (btn.getAttribute('data-date') || ''),
-                'Status: ' + (btn.getAttribute('data-status') || ''),
-                '',
-                '(Demo file — real receipts land in C13 backend.)',
-            ];
-            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = btn.getAttribute('data-file') || 'receipt.txt';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            showToast((btn.getAttribute('data-file') || 'Receipt') + ' downloaded (demo).');
-        });
-    });
-
-    // Request-void modal (treasurer → Divisional Treasurer).
+    // Request-void modal (treasurer) — fills the real POST form.
     const voidModal = document.getElementById('club-void-modal');
     if (voidModal && body) {
         const descEl = document.getElementById('void-desc');
         const reason = document.getElementById('void-reason');
         const err = document.getElementById('void-error');
-        const confirmBtn = document.getElementById('void-confirm');
-        let target = null;
+        const entryIdInput = document.getElementById('void-entry-id');
+        const voidForm = document.getElementById('club-void-form');
 
-        const close = () => { voidModal.hidden = true; voidModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
-        voidModal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', close));
-        voidModal.addEventListener('click', (e) => { if (e.target === voidModal || (e.target.classList && e.target.classList.contains('dw-modal__backdrop'))) close(); });
-
-        const bindVoidButton = (btn) => {
+        body.querySelectorAll('[data-action="void"]').forEach(btn => {
             btn.addEventListener('click', () => {
-                target = btn.closest('tr');
+                const target = btn.closest('tr');
+                if (entryIdInput) entryIdInput.value = target.getAttribute('data-id') || '';
                 descEl.textContent = target.getAttribute('data-desc') || '';
                 reason.value = '';
                 err.hidden = true;
-                voidModal.hidden = false;
-                voidModal.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
             });
-        };
-        body.querySelectorAll('[data-action="void"]').forEach(bindVoidButton);
-
-        confirmBtn.addEventListener('click', () => {
-            if (!reason.value.trim()) {
-                err.textContent = 'Please give a reason — the Divisional Treasurer needs it to decide.';
-                err.hidden = false;
-                reason.focus();
-                return;
-            }
-            if (target) {
-                target.setAttribute('data-status', 'pending-void');
-                const statusCell = target.children[6];
-                statusCell.textContent = '';
-                statusCell.appendChild(pillFor('pending-void', 'Pending Void'));
-                const btn = target.querySelector('[data-action="void"]');
-                if (btn) btn.remove();
-            }
-            close();
-            applyFilters();
-            showToast('Void request sent to the Divisional Treasurer (demo).');
         });
+
+        if (voidForm) {
+            voidForm.addEventListener('submit', (e) => {
+                if (!reason.value.trim()) {
+                    e.preventDefault();
+                    err.textContent = 'Please give a reason — the Divisional Treasurer needs it to decide.';
+                    err.hidden = false;
+                    reason.focus();
+                }
+            });
+        }
     }
 });
 

@@ -719,28 +719,145 @@ class Club extends Controller {
     }
 
     /**
-     * Club fund ledger (read-only summary). Log + void flows land in C8.
+     * Club fund ledger (D5: real ledger scoped to the member's club).
      */
     public function ledger() {
         $this->requireRoles(['president', 'treasurer']);
 
-        $transactions = [
-            ['id' => 1, 'date' => 'Sep 2, 2026',  'description' => 'Membership drive collections', 'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 24,500',  'balance' => 'Rs. 132,400', 'receipt' => 'receipt-sep-drive.txt',  'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 2, 'date' => 'Aug 28, 2026', 'description' => 'Sports equipment purchase',    'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 18,000',  'balance' => 'Rs. 107,900', 'receipt' => 'receipt-sports-gear.txt', 'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 3, 'date' => 'Aug 15, 2026', 'description' => 'Divisional grant received',    'type' => 'Income',  'type_key' => 'income',  'amount' => 'Rs. 50,000',  'balance' => 'Rs. 125,900', 'receipt' => 'receipt-div-grant.txt',   'status' => 'Verified', 'status_key' => 'verified'],
-            ['id' => 4, 'date' => 'Aug 9, 2026',  'description' => 'Venue hire for seminar',       'type' => 'Expense', 'type_key' => 'expense', 'amount' => 'Rs. 7,500',   'balance' => 'Rs. 75,900',  'receipt' => 'venue-quote-aug.txt',     'status' => 'Pending Void',  'status_key' => 'pending-void'],
-        ];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
 
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $ledgerModel = $this->model('ClubLedgerModel');
+        $ledger = $ledgerModel->ensureClubLedger($clubId);
+        $summary = $ledgerModel->getSummary((int) $ledger->ledger_id);
+
+        $running = 0.0;
+        $transactions = [];
+        foreach ($ledgerModel->getEntries((int) $ledger->ledger_id) as $entry) {
+            $amount = (float) $entry->amount;
+            $running += $entry->type === 'Income' ? $amount : -$amount;
+            $ts = strtotime((string) $entry->date);
+            $pendingVoid = !empty($entry->has_pending_void);
+            $transactions[] = [
+                'id'          => (int) $entry->entry_id,
+                'date'        => $ts ? date('M d, Y', $ts) : '—',
+                'description' => $entry->description ?? '',
+                'type'        => $entry->type ?? '',
+                'type_key'    => strtolower($entry->type ?? ''),
+                'amount'      => 'Rs. ' . number_format($amount, 2),
+                'balance'     => 'Rs. ' . number_format($running, 2),
+                'has_receipt' => !empty($entry->attachment_url),
+                'status'      => $pendingVoid ? 'Void Requested' : ($entry->status ?? ''),
+                'status_key'  => $pendingVoid ? 'void-requested' : strtolower($entry->status ?? ''),
+                'voidable'    => $entry->status === 'Approved' && !$pendingVoid,
+            ];
+        }
+        $transactions = array_reverse($transactions);
+
+        $money = static fn($v) => 'Rs. ' . number_format((float) $v, 2);
         $data = $this->shell(
             'Club Ledger — YouthNexus Pulse',
             'Club Ledger',
             'Fund position of Gampaha Youth Development Club.',
             'club/ledger'
         );
-        $data['stats'] = ['balance' => 'Rs. 132,400', 'income' => 'Rs. 74,500', 'expenses' => 'Rs. 25,500'];
+        $data['stats'] = [
+            'balance'  => $money($summary['balance']),
+            'income'   => $money($summary['income']),
+            'expenses' => $money($summary['expenses']),
+        ];
         $data['transactions'] = $transactions;
         $data['can_log'] = ($this->roleKey() === 'treasurer');
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('club/ledger', $data);
+    }
+
+    /**
+     * Treasurer logs a transaction (receipt mandatory).
+     */
+    public function logTransaction() {
+        $this->requireRoles(['treasurer']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/ledger');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/ledger');
+        }
+
+        try {
+            $receiptUrl = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/ledger');
+        }
+        if ($receiptUrl === null) {
+            $this->setFlash('error', 'A receipt upload is mandatory.');
+            $this->redirect('club/ledger');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $ledgerModel = $this->model('ClubLedgerModel');
+        $ledger = $ledgerModel->ensureClubLedger($clubId);
+        try {
+            $ledgerModel->createEntry((int) $ledger->ledger_id, (int) $_SESSION['user_id'], [
+                'amount'         => $_POST['amount'] ?? 0,
+                'type'           => $_POST['type'] ?? '',
+                'category'       => trim($_POST['category'] ?? '') !== '' ? trim($_POST['category']) : 'General',
+                'description'    => trim($_POST['description'] ?? ''),
+                'attachment_url' => $receiptUrl,
+                'date'           => trim($_POST['date'] ?? ''),
+            ]);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/ledger');
+        }
+        $this->setFlash('success', 'Transaction logged and balance recalculated.');
+        $this->redirect('club/ledger');
+    }
+
+    /**
+     * Treasurer requests a void; decided by the division treasurer.
+     */
+    public function requestVoid() {
+        $this->requireRoles(['treasurer']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/ledger');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/ledger');
+        }
+
+        $entryId = (int) ($_POST['entry_id'] ?? 0);
+        $reason = substr(trim($_POST['reason'] ?? ''), 0, 500);
+        if ($entryId < 1) {
+            $this->setFlash('error', 'Invalid entry.');
+            $this->redirect('club/ledger');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $club = $this->model('ClubModel')->findById($clubId);
+        $divisionId = (int) ($club->division_id ?? 0);
+        $treasurer = $this->model('UserModel')->findDivisionTreasurer($divisionId);
+        if (!$treasurer) {
+            $this->setFlash('error', 'No division treasurer is assigned to decide void requests.');
+            $this->redirect('club/ledger');
+        }
+
+        try {
+            $this->model('ClubLedgerModel')->requestVoid($clubId, $entryId, (int) $_SESSION['user_id'], (int) $treasurer->user_id, $reason);
+        } catch (InvalidArgumentException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('club/ledger');
+        }
+        $this->setFlash('success', 'Void request sent to the Divisional Treasurer.');
+        $this->redirect('club/ledger');
     }
 }

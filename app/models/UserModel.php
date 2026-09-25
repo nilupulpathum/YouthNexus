@@ -186,8 +186,18 @@ class UserModel extends Model {
         );
     }
 
-    public function emailOrNicTaken($email, $nic) {
-        return (bool) $this->single(
+    /**
+     * Active divisional treasurer for void-request routing (or false).
+     */
+    public function findDivisionTreasurer($divisionId) {
+        return $this->single(
+            "SELECT user_id FROM User WHERE role = 'DivisionalTreasurer'
+             AND division_id = ? AND status = 'Active' LIMIT 1",
+            [(int) $divisionId]
+        );
+    }
+
+    public function emailOrNicTaken($email, $nic) {        return (bool) $this->single(
             "SELECT user_id FROM User
              WHERE email = ? OR (NIC IS NOT NULL AND NIC = ?)
              LIMIT 1",
