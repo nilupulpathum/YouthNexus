@@ -226,79 +226,133 @@ class Zonaltreasurer extends Controller {
      */
     public function audit() {
         $this->requireZonalTreasurer();
-        $state = $this->auditState();
-        $income = array_sum(array_column($state['reports'], 'income'));
-        $expenses = array_sum(array_column($state['reports'], 'expenses'));
-        $unresolved = array_values(array_filter($state['flags'], static fn($flag) => !in_array($flag['status'], ['Resolved', 'Escalated to NYSC'], true)));
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneAuditModel');
+        $reports = $model->getDivisionReports($zonalId);
+        $income = array_sum(array_column($reports, 'income'));
+        $expenses = array_sum(array_column($reports, 'expenses'));
+
+        $flags = [];
+        foreach ($model->getZoneFlags($zonalId) as $f) {
+            $flags[] = $this->mapFlag($f);
+        }
+        $unresolved = array_values(array_filter($flags, static fn($flag) => !in_array($flag['status'], ['Resolved', 'Escalated to NYSC'], true)));
         $data = $this->shell(
             'Audit Finance — YouthNexus Pulse',
             'Audit Finance',
             'Review own-zone divisional finance and escalate material issues to NYSC.',
             'zonaltreasurer/audit'
         );
-        $data += ['reports' => $state['reports'], 'flags' => $state['flags'], 'income' => $income, 'expenses' => $expenses,
+        $data += ['reports' => $reports, 'flags' => $flags, 'income' => $income, 'expenses' => $expenses,
             'unresolvedCount' => count($unresolved), 'reviewReady' => empty($unresolved), 'csrf_token' => $this->auditCsrf(),
-            'flash' => $_SESSION['zonal_audit_flash'] ?? ''];
-        unset($_SESSION['zonal_audit_flash']);
+            'flash' => $this->pullAuditFlash()];
         $this->view('zonaltreasurer/audit', $data);
     }
 
-    public function flag() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState();
-        $division = trim((string)($_POST['division'] ?? '')); $type = trim((string)($_POST['type'] ?? ''));
-        $reference = trim((string)($_POST['reference'] ?? '')); $reason = trim((string)($_POST['reason'] ?? ''));
-        $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? ''));
-        $validDivisions = array_column($state['reports'], 'division');
-        if (!in_array($division, $validDivisions, true) || $type === '' || $reference === '' || $reason === '' || mb_strlen($reason) > 1000 || $amount <= 0) {
-            $_SESSION['zonal_audit_flash'] = 'Provide an own-zone division, issue details, positive amount and a discrepancy reason.';
+    private function mapFlag($f): array {
+        if (!empty($f->escalated_at)) {
+            $status = 'Escalated to NYSC';
+        } elseif (($f->status ?? '') === 'ClarificationRequested') {
+            $status = 'Clarification requested';
         } else {
-            $state['flags'][] = ['id' => 'ZA-' . (100 + count($state['flags']) + 1), 'division' => $division, 'type' => $type, 'reference' => $reference, 'amount' => $amount, 'reason' => $reason, 'status' => 'Open', 'note' => ''];
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Discrepancy flagged for divisional finance review.';
+            $status = $f->status ?? 'Open';
         }
+        $typeLabels = ['MissingReceipt' => 'Missing receipt', 'FundHoarding' => 'Fund hoarding', 'HighVoidRate' => 'High void rate'];
+        return [
+            'id' => 'RF-' . (int) $f->red_flag_id,
+            'flag_id' => (int) $f->red_flag_id,
+            'division' => $f->division_name ?? '—',
+            'type' => $typeLabels[$f->flag_type] ?? $f->flag_type,
+            'reference' => $f->reference ?? '—',
+            'amount' => (float) ($f->amount ?? 0),
+            'reason' => $f->description ?? '',
+            'status' => $status,
+            'note' => $f->note ?? '',
+        ];
+    }
+
+    private function pullAuditFlash(): ?array {
+        $flash = $_SESSION['zonal_audit_flash'] ?? null;
+        unset($_SESSION['zonal_audit_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+
+    private function auditFlash(string $type, string $message): void {
+        $_SESSION['zonal_audit_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    public function flag() {
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $divisionId = (int) ($_POST['division_id'] ?? 0);
+        $type = trim((string)($_POST['type'] ?? ''));
+        $reference = trim((string)($_POST['reference'] ?? ''));
+        $reason = trim((string)($_POST['reason'] ?? ''));
+        $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? ''));
+        try {
+            $flagId = $this->model('ZoneAuditModel')->raiseFlag($zonalId, (int) $_SESSION['user_id'], $divisionId, $type, $reference, $amount, $reason);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
+        }
+        $this->auditFlash('success', "Discrepancy flagged for divisional finance review (RF-{$flagId}).");
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function clarify() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $query = trim((string)($_POST['query'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || $query === '' || mb_strlen($query) > 1000 || in_array($state['flags'][$index]['status'], ['Resolved', 'Escalated to NYSC'], true)) {
-            $_SESSION['zonal_audit_flash'] = 'Enter a clarification request for an open flag.';
-        } else {
-            $state['flags'][$index]['status'] = 'Clarification requested'; $state['flags'][$index]['note'] = $query;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Clarification requested from the Divisional Treasurer; the Divisional Coordinator is notified.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $query = trim((string)($_POST['query'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->clarifyFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $query);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Clarification requested from the Divisional Treasurer; the Divisional Coordinator is notified.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function resolve() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $note = trim((string)($_POST['resolution_note'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || $state['flags'][$index]['status'] !== 'Response received' || $note === '' || mb_strlen($note) > 1000) {
-            $_SESSION['zonal_audit_flash'] = 'Only a received divisional response can be resolved, and a resolution note is required.';
-        } else {
-            $state['flags'][$index]['status'] = 'Resolved'; $state['flags'][$index]['note'] = $note;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Flag resolved in the zonal review. This is not NYSC final sign-off.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $note = trim((string)($_POST['resolution_note'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->resolveFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Flag resolved in the zonal review. This is not NYSC final sign-off.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function escalate() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $note = trim((string)($_POST['escalation_reason'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || in_array($state['flags'][$index]['status'], ['Resolved', 'Escalated to NYSC'], true) || $note === '' || mb_strlen($note) > 1000) {
-            $_SESSION['zonal_audit_flash'] = 'Provide an escalation reason for an unresolved flag.';
-        } else {
-            $state['flags'][$index]['status'] = 'Escalated to NYSC'; $state['flags'][$index]['note'] = $note;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Flag escalated to NYSC for final authority.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $note = trim((string)($_POST['escalation_reason'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->escalateFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Flag escalated to NYSC for final authority.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function exportaudit() {
-        $this->requireZonalTreasurer(); $state = $this->auditState();
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Audit_Summary.csv"');
+        $this->requireZonalTreasurer();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneAuditModel');
+        $zone = $model->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Audit_Summary.csv"');
         $out = fopen('php://output', 'w'); fputcsv($out, ['Flag', 'Division', 'Type', 'Reference', 'Amount (LKR)', 'Status', 'Reason / latest note']);
-        foreach ($state['flags'] as $flag) fputcsv($out, [$flag['id'], $flag['division'], $flag['type'], $flag['reference'], number_format((float)$flag['amount'], 2, '.', ''), $flag['status'], $flag['note'] ?: $flag['reason']]);
+        foreach ($model->getZoneFlags($zonalId) as $f) {
+            $m = $this->mapFlag($f);
+            fputcsv($out, [$m['id'], $m['division'], $m['type'], $m['reference'], number_format($m['amount'], 2, '.', ''), $m['status'], $m['note'] ?: $m['reason']]);
+        }
         fclose($out);
     }
 
