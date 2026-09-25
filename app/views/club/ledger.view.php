@@ -43,6 +43,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="club-ledger-heading" class="visually-hidden">Club ledger</h1>
 
     <div class="dw-alert dw-alert--success" id="club-toast" role="status" hidden></div>
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
 
     <div class="dw-summary-grid" aria-label="Fund summary">
         <?php foreach ($summaryCards as $card): ?>
@@ -113,7 +118,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <?php foreach ($transactions as $t): ?>
                         <tr data-search="<?= $e(strtolower($t['description'] ?? '')) ?>"
                             data-type="<?= $e($t['type_key'] ?? 'income') ?>"
-                            data-status="<?= $e($t['status_key'] ?? 'verified') ?>"
+                            data-status="<?= $e($t['status_key'] ?? 'approved') ?>"
+                            data-id="<?= (int) ($t['id'] ?? 0) ?>"
                             data-desc="<?= $e($t['description'] ?? '') ?>">
                             <td><?= $e($t['date'] ?? '') ?></td>
                             <td><?= $e($t['description'] ?? '') ?></td>
@@ -121,15 +127,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <td class="dw-money dw-money--<?= $e($t['type_key'] ?? 'income') ?>"><?= $e($t['amount'] ?? '') ?></td>
                             <td class="dw-money"><?= $e($t['balance'] ?? '') ?></td>
                             <td>
-                                <?php if (!empty($t['receipt'])): ?>
+                                <?php if (!empty($t['has_receipt'])): ?>
                                     <div class="dw-row-actions">
-                                        <button type="button" class="dw-button dw-button--ghost" data-action="receipt"
-                                            data-file="<?= $e($t['receipt']) ?>"
-                                            data-desc="<?= $e($t['description'] ?? '') ?>"
-                                            data-amount="<?= $e($t['amount'] ?? '') ?>"
-                                            data-date="<?= $e($t['date'] ?? '') ?>"
-                                            data-status="<?= $e($t['status'] ?? '') ?>"
-                                            title="Download <?= $e($t['receipt']) ?>" aria-label="Download receipt"><?= yn_icon('download') ?></button>
+                                        <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/financereceipt/show/<?= (int) $t['id'] ?>" target="_blank" rel="noopener" aria-label="View receipt"><?= yn_icon('download') ?></a>
                                     </div>
                                 <?php else: ?>
                                     —
@@ -139,8 +139,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <?php if ($can_log): ?>
                                 <td>
                                     <div class="dw-row-actions">
-                                        <?php if (($t['status_key'] ?? '') === 'verified'): ?>
-                                            <button type="button" class="dw-button dw-button--ghost" data-action="void">Request void</button>
+                                        <?php if (!empty($t['voidable'])): ?>
+                                            <button type="button" class="dw-button dw-button--ghost" data-action="void" data-modal-open="club-void-modal">Request void</button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -172,7 +172,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p>New entries post as Active and the balance is recalculated. A receipt upload is mandatory.</p>
-                <form id="club-log-form" novalidate>
+                <form id="club-log-form" action="<?= ROOT ?>/club/logTransaction" method="post" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div id="log-banner" class="dw-alert dw-alert--warning" hidden>
                         <span aria-hidden="true"><?= yn_icon('info') ?></span>
                         <div>
@@ -226,10 +227,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p id="void-desc"></p>
-                <div class="dw-field">
-                    <label for="void-reason">Reason for voiding (required)</label>
-                    <textarea id="void-reason" rows="3" placeholder="Explain why this transaction should be voided..."></textarea>
-                </div>
+                <form id="club-void-form" action="<?= ROOT ?>/club/requestVoid" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="void-entry-id" name="entry_id" value="">
+                    <div class="dw-field">
+                        <label for="void-reason">Reason for voiding (required)</label>
+                        <textarea id="void-reason" name="reason" rows="3" placeholder="Explain why this transaction should be voided..."></textarea>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--error" id="void-error" role="alert" hidden></div>
                 <div role="note">
                     <strong>Where this goes</strong>
@@ -238,7 +243,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="void-confirm">Send void request</button>
+                <button type="submit" class="dw-button dw-button--primary" form="club-void-form">Send void request</button>
             </footer>
         </div>
     </div>
