@@ -18,10 +18,8 @@ $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 
 $summaryCards = [
-    ['value' => (string) ($stats['total'] ?? 0), 'label' => 'Total assets', 'note' => 'Gampaha Zone', 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => (string) ($stats['available'] ?? 0), 'label' => 'Available', 'note' => 'Ready for assignment', 'icon' => 'award', 'tone' => 'green'],
-    ['value' => (string) ($stats['in_use'] ?? 0), 'label' => 'In use', 'note' => 'Under custody', 'icon' => 'user', 'tone' => 'amber'],
-    ['value' => 'LKR ' . number_format($stats['valuation'] ?? 0, 2), 'label' => 'Total valuation', 'note' => 'Current inventory value', 'icon' => 'clock', 'tone' => 'blue'],
+    ['value' => (string) ($stats['units'] ?? 0), 'label' => 'Units on hand', 'note' => 'Zone inventory', 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => (string) ($stats['items'] ?? 0), 'label' => 'Item types', 'note' => 'Catalog items stocked', 'icon' => 'award', 'tone' => 'green'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -30,7 +28,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-labelledby="zonal-assets-heading">
     <h1 id="zonal-assets-heading" class="visually-hidden">Zonal assets</h1>
 
-    <?php if ($flash): ?><div class="dw-alert dw-alert--success" role="status"><?= $e($flash) ?></div><?php endif; ?>
+    <?php if (!empty($flash)): ?><div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status"><?= $e($flash['message'] ?? '') ?></div><?php endif; ?>
 
     <div class="dw-summary-grid" aria-label="Zonal asset summary">
         <?php foreach ($summaryCards as $card): ?>
@@ -78,10 +76,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <tr>
                         <th>Asset</th>
                         <th>Category</th>
-                        <th>Serial</th>
-                        <th>Purchase date</th>
-                        <th>Valuation</th>
-                        <th>Custodian</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
+                        <th>Unit</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -89,16 +86,15 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <tbody>
                     <?php foreach ($assets as $asset): ?>
                         <tr>
-                            <td><strong><?= $e($asset['name']) ?></strong><br><span class="dw-table__reference"><?= $e($asset['id']) ?></span></td>
+                            <td><strong><?= $e($asset['name']) ?></strong></td>
                             <td><?= $e($asset['category']) ?></td>
-                            <td><?= $e($asset['serial']) ?></td>
-                            <td><?= $e($asset['purchase_date']) ?></td>
-                            <td class="dw-money">LKR <?= number_format($asset['valuation'], 2) ?></td>
-                            <td><?= $e($asset['custodian']) ?></td>
+                            <td><?= $e($asset['sku']) ?></td>
+                            <td><?= (int) $asset['quantity'] ?></td>
+                            <td><?= $e($asset['unit']) ?></td>
                             <td><?php $status = $asset['status']; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
                             <td>
                                 <div class="dw-row-actions">
-                                    <button type="button" class="dw-button dw-button--ghost" data-transfer="<?= $e($asset['id']) ?>" data-name="<?= $e($asset['name']) ?>">Transfer custody</button>
+                                    <button type="button" class="dw-button dw-button--ghost" data-transfer="<?= (int) $asset['id'] ?>" data-name="<?= $e($asset['name']) ?>">Transfer custody</button>
                                 </div>
                             </td>
                         </tr>
@@ -129,24 +125,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <form id="asset-register-form" method="post" action="<?= ROOT ?>/zonaltreasurer/addasset">
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
                 <div class="dw-field dw-field--span-2">
-                    <label for="asset-name">Asset name</label>
-                    <input id="asset-name" name="name" maxlength="150" required>
+                    <label for="asset-item">Catalog item</label>
+                    <select id="asset-item" name="catalog_item_id" required><option value="">Select item</option><?php foreach ($catalog as $item): ?><option value="<?= (int) $item->catalog_item_id ?>"><?= $e($item->item_name . ' (' . $item->category . ')') ?></option><?php endforeach; ?></select>
                 </div>
                 <div class="dw-field">
-                    <label for="asset-serial">Serial number</label>
-                    <input id="asset-serial" name="serial" maxlength="80" required>
+                    <label for="asset-qty">Quantity</label>
+                    <input id="asset-qty" name="quantity" type="number" min="1" step="1" required>
                 </div>
-                <div class="dw-field">
-                    <label for="asset-category">Category</label>
-                    <select id="asset-category" name="category" required><option value="">Select category</option><?php foreach ($categories as $item): ?><option value="<?= $e($item) ?>"><?= $e($item) ?></option><?php endforeach; ?></select>
-                </div>
-                <div class="dw-field">
-                    <label for="asset-date">Purchase date</label>
-                    <input id="asset-date" name="purchase_date" type="date" required>
-                </div>
-                <div class="dw-field">
-                    <label for="asset-value">Valuation (LKR)</label>
-                    <input id="asset-value" name="valuation" type="number" min="0.01" step="0.01" required>
+                <div class="dw-field dw-field--span-2">
+                    <label for="asset-note">Note (optional)</label>
+                    <input id="asset-note" name="note" type="text" maxlength="500" autocomplete="off">
                 </div>
             </form>
         </div>
@@ -171,10 +159,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <p id="transfer-asset-name"></p>
             <form id="asset-transfer-form" method="post" action="<?= ROOT ?>/zonaltreasurer/transferasset">
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
-                <input id="transfer-asset-id" type="hidden" name="asset_id">
+                <input id="transfer-asset-id" type="hidden" name="catalog_item_id">
                 <div class="dw-field">
                     <label for="asset-custodian">Custodian</label>
-                    <select id="asset-custodian" name="custodian"><option>Gampaha Zone Store</option><option>Gampaha Division</option><option>Ja-Ela Division</option><option>Negombo Division</option></select>
+                    <select id="asset-custodian" name="custodian"><option>Zone Store</option><?php foreach ($divisions as $divisionName): ?><option><?= $e($divisionName) ?></option><?php endforeach; ?></select>
                 </div>
                 <div class="dw-field">
                     <label for="asset-note">Transfer note</label>
