@@ -354,50 +354,198 @@ class Club extends Controller {
      * unlisted members default to absent); members see their own summary.
      * Presentation-only, no DB writes. Divisional Attendance untouched.
      */
+    /**
+     * Club attendance (D3: real DB data scoped to the member's club).
+     */
     public function attendance() {
         $this->requireRoles(['secretary', 'member']);
 
-        $attendanceEvents = [
-            ['id' => 4, 'title' => 'Avurudu Celebration & Fundraiser', 'date' => 'Apr 12, 2026',
-                'roster' => [
-                    ['name' => 'Nuwan Bandara',    'status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Amal Perera',      'status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Kasun Fernando',   'status' => 'Absent',  'status_key' => 'absent'],
-                    ['name' => 'Dilini Jayasuriya','status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Ruwan Silva',      'status' => 'Absent',  'status_key' => 'absent'],
-                ]],
-            ['id' => 2, 'title' => 'Community Green Environment Cleanup', 'date' => 'Sep 28, 2026',
-                'roster' => [
-                    ['name' => 'Nuwan Bandara',    'status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Amal Perera',      'status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Kasun Fernando',   'status' => 'Present', 'status_key' => 'present'],
-                    ['name' => 'Dilini Jayasuriya','status' => 'Absent',  'status_key' => 'absent'],
-                    ['name' => 'Ruwan Silva',      'status' => 'Present', 'status_key' => 'present'],
-                ]],
-        ];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
 
-        $mySummary = [
-            'sessions' => 8,
-            'rate'     => '89%',
-            'absent'   => 1,
-            'history'  => [
-                ['title' => 'Avurudu Celebration & Fundraiser', 'date' => 'Apr 12, 2026', 'status' => 'Present', 'status_key' => 'present'],
-                ['title' => 'Community Green Environment Cleanup', 'date' => 'Sep 28, 2026', 'status' => 'Present', 'status_key' => 'present'],
-                ['title' => 'Club Monthly Planning Session', 'date' => 'Oct 5, 2026', 'status' => 'Absent', 'status_key' => 'absent'],
-            ],
-        ];
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $attModel = $this->model('AttendanceModel');
 
         $data = $this->shell(
-            'Club Attendance — YouthNexus Pulse',
+            'Club Attendance - YouthNexus Pulse',
             'Club Attendance',
             'Attendance records of Gampaha Youth Development Club.',
             'club/attendance'
         );
-        $data['attendanceEvents'] = $attendanceEvents;
-        $data['mySummary'] = $mySummary;
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
         $data['can_mark'] = ($this->roleKey() === 'secretary');
 
+        if ($data['can_mark']) {
+            $events = [];
+            foreach ($attModel->getClubMarkableEvents($clubId) as $ev) {
+                $start = strtotime((string) $ev->start_datetime);
+                $roster = [];
+                foreach ($attModel->getClubEventRoster($clubId, (int) $ev->event_id) as $r) {
+                    $present = ($r->att_status ?? null) === 'Present';
+                    $roster[] = [
+                        'id'         => (int) $r->user_id,
+                        'name'       => trim(($r->first_name ?? '') . ' ' . ($r->last_name ?? '')),
+                        'status'     => $r->att_status === null ? 'Unmarked' : ($present ? 'Present' : 'Absent'),
+                        'status_key' => $r->att_status === null ? 'unmarked' : ($present ? 'present' : 'absent'),
+                    ];
+                }
+                $events[] = [
+                    'id'     => (int) $ev->event_id,
+                    'title'  => $ev->title ?? '',
+                    'date'   => $start ? date('M d, Y', $start) : '—',
+                    'status' => $ev->status ?? '',
+                    'roster' => $roster,
+                ];
+            }
+            $data['attendanceEvents'] = $events;
+            $members = [];
+            foreach ($this->model('UserModel')->getClubRoster($clubId) as $u) {
+                $members[] = [
+                    'id'   => (int) $u->user_id,
+                    'name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                ];
+            }
+            $data['members'] = $members;
+        } else {
+            $summary = $attModel->getClubMemberSummary($clubId, (int) $_SESSION['user_id']);
+            $history = [];
+            foreach ($summary['history'] as $h) {
+                $ts = strtotime((string) $h->start_datetime);
+                $present = ($h->status ?? '') === 'Present';
+                $history[] = [
+                    'title'      => $h->title ?? '',
+                    'date'       => $ts ? date('M d, Y', $ts) : '—',
+                    'status'     => $present ? 'Present' : 'Absent',
+                    'status_key' => $present ? 'present' : 'absent',
+                ];
+            }
+            $data['mySummary'] = [
+                'sessions' => $summary['sessions'],
+                'rate'     => $summary['rate'],
+                'absent'   => $summary['absent'],
+                'history'  => $history,
+            ];
+        }
+
         $this->view('club/attendance', $data);
+    }
+
+    /**
+     * Secretary saves attendance (single entry or bulk CSV).
+     */
+    public function saveAttendance() {
+        $this->requireRoles(['secretary']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('club/attendance');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('club/attendance');
+        }
+
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        $attModel = $this->model('AttendanceModel');
+        $event = $attModel->getClubEventInScope($clubId, $eventId);
+        if (!$event) {
+            $this->setFlash('error', 'Event not found in your club.');
+            $this->redirect('club/attendance');
+        }
+
+        $in = $this->combineEventTime($event->start_datetime, trim($_POST['check_in'] ?? ''));
+        $out = $this->combineEventTime($event->start_datetime, trim($_POST['check_out'] ?? ''));
+        if ($in === false || $out === false || ($in && $out && $out <= $in)) {
+            $this->setFlash('error', 'End time must be after start time.');
+            $this->redirect('club/attendance');
+        }
+        $remark = substr(trim($_POST['remark'] ?? ''), 0, 500);
+
+        $entries = [];
+        if (!empty($_FILES['csv']['tmp_name']) && $_FILES['csv']['error'] === UPLOAD_ERR_OK) {
+            $entries = $this->parseAttendanceCsv($_FILES['csv']['tmp_name'], $clubId);
+            if ($entries === null) {
+                $this->setFlash('error', 'Could not read the CSV file.');
+                $this->redirect('club/attendance');
+            }
+        } else {
+            $memberId = (int) ($_POST['single_member'] ?? 0);
+            $status = $_POST['single_status'] ?? '';
+            if ($memberId < 1 || !in_array($status, ['Present', 'Absent'], true)) {
+                $this->setFlash('error', 'Choose a member and a status.');
+                $this->redirect('club/attendance');
+            }
+            $entries[] = ['id' => $memberId, 'status' => $status];
+        }
+
+        $saved = 0;
+        $skipped = 0;
+        foreach ($entries as $entry) {
+            if ($attModel->saveClubAttendance($clubId, $eventId, (int) $entry['id'], $entry['status'], $in, $out, $remark ?: null, (int) $_SESSION['user_id'])) {
+                $saved++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'SAVE_ATTENDANCE', 'Event', $eventId, "Saved {$saved} record(s), skipped {$skipped}");
+        $msg = "Saved {$saved} attendance record(s).";
+        if ($skipped > 0) {
+            $msg .= " {$skipped} unmatched.";
+        }
+        $this->setFlash($saved > 0 ? 'success' : 'error', $msg);
+        $this->redirect('club/attendance');
+    }
+
+    private function combineEventTime($eventStart, $hhmm) {
+        if ($hhmm === '' || $hhmm === null) {
+            return null;
+        }
+        if (!preg_match('/^\d{2}:\d{2}$/', (string) $hhmm)) {
+            return false;
+        }
+        $day = date('Y-m-d', strtotime((string) $eventStart));
+        return $day . ' ' . $hhmm . ':00';
+    }
+
+    private function parseAttendanceCsv($path, $clubId) {
+        $handle = fopen($path, 'r');
+        if (!$handle) {
+            return null;
+        }
+        $roster = [];
+        foreach ($this->model('UserModel')->getClubRoster($clubId) as $u) {
+            $roster[strtolower(trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')))] = (int) $u->user_id;
+            $roster[strtolower(trim($u->email ?? ''))] = (int) $u->user_id;
+        }
+        $entries = [];
+        $first = true;
+        while (($row = fgetcsv($handle)) !== false) {
+            $name = strtolower(trim($row[0] ?? ''));
+            $statusRaw = strtolower(trim($row[1] ?? ''));
+            if ($first && ($name === 'name' || $name === 'email' || $name === '')) {
+                $first = false;
+                if ($name === 'name' || $name === 'email') {
+                    continue;
+                }
+            }
+            $first = false;
+            if ($name === '' || !isset($roster[$name])) {
+                continue;
+            }
+            if (in_array($statusRaw, ['present', 'p'], true)) {
+                $status = 'Present';
+            } elseif (in_array($statusRaw, ['absent', 'a'], true)) {
+                $status = 'Absent';
+            } else {
+                continue;
+            }
+            $entries[] = ['id' => $roster[$name], 'status' => $status];
+        }
+        fclose($handle);
+        return $entries;
     }
 
     /**

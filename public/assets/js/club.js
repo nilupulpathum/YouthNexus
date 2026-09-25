@@ -372,85 +372,31 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 /* ---- club/attendance ---- */
-if (document.getElementById('club-att-body')) {
+if (document.getElementById('att-event')) {
 
 document.addEventListener('DOMContentLoaded', () => {
-    const toast = document.getElementById('club-toast');
-    let toastTimer = null;
-    const showToast = (msg) => {
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.hidden = false;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
-    };
-
-    const DATA = JSON.parse(document.getElementById('club-att-body')?.getAttribute('data-attendance-events') || '[]');
-    const pillFor = (key, label) => {
-        const s = document.createElement('span');
-        s.className = 'dw-status dw-status--' + key;
-        s.textContent = label;
-        return s;
-    };
-
-    // Secretary marking UI.
+    // Secretary marking UI — rosters are server-rendered per event;
+    // forms POST to club/saveAttendance natively after client checks.
     const eventSel = document.getElementById('att-event');
-    const body = document.getElementById('club-att-body');
-    if (eventSel && body) {
-        const rosterEvent = document.getElementById('att-roster-event');
-        const memberSel = document.getElementById('att-member');
-        let current = 0;
-
-        const renderRoster = () => {
-            const ev = DATA[current];
-            if (rosterEvent && ev) rosterEvent.textContent = ev.title + ' — ' + ev.date;
-            body.textContent = '';
-            memberSel.textContent = '';
-            (ev ? ev.roster : []).forEach(m => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-name', m.name);
-                const nameTd = document.createElement('td');
-                const strong = document.createElement('strong');
-                strong.textContent = m.name;
-                nameTd.appendChild(strong);
-                tr.appendChild(nameTd);
-                const statusTd = document.createElement('td');
-                statusTd.appendChild(pillFor(m.status_key, m.status));
-                tr.appendChild(statusTd);
-                const actionTd = document.createElement('td');
-                const toggle = document.createElement('button');
-                toggle.type = 'button';
-                toggle.className = 'dw-button dw-button--ghost';
-                toggle.textContent = m.status_key === 'present' ? 'Mark absent' : 'Mark present';
-                toggle.addEventListener('click', () => {
-                    const nowPresent = statusTd.querySelector('.dw-status').className.includes('present');
-                    statusTd.textContent = '';
-                    statusTd.appendChild(pillFor(nowPresent ? 'absent' : 'present', nowPresent ? 'Absent' : 'Present'));
-                    toggle.textContent = nowPresent ? 'Mark present' : 'Mark absent';
-                    showToast(m.name + ' marked ' + (nowPresent ? 'Absent' : 'Present') + ' (demo).');
-                });
-                actionTd.appendChild(toggle);
-                tr.appendChild(actionTd);
-                body.appendChild(tr);
-
-                const opt = document.createElement('option');
-                opt.value = m.name;
-                opt.textContent = m.name;
-                memberSel.appendChild(opt);
-            });
-        };
-
+    const singleEvent = document.getElementById('att-single-event');
+    const bulkEvent = document.getElementById('att-bulk-event');
+    if (eventSel) {
         eventSel.addEventListener('change', () => {
-            current = parseInt(eventSel.value, 10) || 0;
-            renderRoster();
+            const id = eventSel.value;
+            if (singleEvent) singleEvent.value = id;
+            if (bulkEvent) bulkEvent.value = id;
+            document.querySelectorAll('[data-attendance-panel]').forEach((panel) => {
+                panel.hidden = panel.getAttribute('data-attendance-panel') !== id;
+            });
         });
-        renderRoster();
+    }
 
-        // Tabs.
-        const tabSingle = document.getElementById('tab-single');
-        const tabBulk = document.getElementById('tab-bulk');
-        const paneSingle = document.getElementById('pane-single');
-        const paneBulk = document.getElementById('pane-bulk');
+    // Tabs.
+    const tabSingle = document.getElementById('tab-single');
+    const tabBulk = document.getElementById('tab-bulk');
+    const paneSingle = document.getElementById('pane-single');
+    const paneBulk = document.getElementById('pane-bulk');
+    if (tabSingle && tabBulk) {
         const selectTab = (single) => {
             tabSingle.classList.toggle('is-active', single);
             tabBulk.classList.toggle('is-active', !single);
@@ -461,79 +407,56 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         tabSingle.addEventListener('click', () => selectTab(true));
         tabBulk.addEventListener('click', () => selectTab(false));
+    }
 
-        // Save session (times + remarks).
-        const saveBtn = document.getElementById('att-save-session');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                const err = document.getElementById('att-session-error');
-                const start = document.getElementById('att-start').value;
-                const end = document.getElementById('att-end').value;
-                err.hidden = true;
-                if (!start || !end) {
-                    err.textContent = 'Set both start and end time.';
-                    err.hidden = false;
-                    return;
-                }
-                if (end <= start) {
-                    err.textContent = 'End time must be after start time.';
-                    err.hidden = false;
-                    return;
-                }
-                showToast('Session saved for ' + DATA[current].title + ' (demo — persists in C13 backend).');
-            });
+    // Time-range check shared by both forms (empty times allowed).
+    const checkRange = (inEl, outEl, errEl) => {
+        errEl.hidden = true;
+        if (inEl.value && outEl.value && outEl.value <= inEl.value) {
+            errEl.textContent = 'End time must be after start time.';
+            errEl.hidden = false;
+            return false;
         }
+        return true;
+    };
 
-        // Single entry.
-        const singleForm = document.getElementById('att-single-form');
-        if (singleForm) {
-            singleForm.addEventListener('submit', (e) => {
+    // Single entry.
+    const singleForm = document.getElementById('att-single-form');
+    if (singleForm) {
+        singleForm.addEventListener('submit', (e) => {
+            const err = document.getElementById('att-session-error');
+            if (!checkRange(document.getElementById('att-in'), document.getElementById('att-out'), err)) {
                 e.preventDefault();
-                const who = memberSel.value;
-                const present = document.getElementById('att-status').value === 'present';
-                body.querySelectorAll('tr').forEach(tr => {
-                    if (tr.getAttribute('data-name') === who) {
-                        const cell = tr.children[1];
-                        cell.textContent = '';
-                        cell.appendChild(pillFor(present ? 'present' : 'absent', present ? 'Present' : 'Absent'));
-                        tr.querySelector('button').textContent = present ? 'Mark absent' : 'Mark present';
-                    }
-                });
-                showToast(who + ' marked ' + (present ? 'Present' : 'Absent') + ' (demo).');
-            });
-        }
+            }
+        });
+    }
 
-        // Bulk CSV.
-        const bulkForm = document.getElementById('att-bulk-form');
-        if (bulkForm) {
-            const csv = document.getElementById('att-csv');
-            const csvName = document.getElementById('att-csv-name');
-            const bulkErr = document.getElementById('att-bulk-error');
-            csv.addEventListener('change', () => {
-                if (csv.files.length) {
-                    csvName.textContent = 'Selected: ' + csv.files[0].name;
-                    csvName.hidden = false;
-                } else {
-                    csvName.hidden = true;
-                }
-            });
-            bulkForm.addEventListener('submit', (e) => {
+    // Bulk CSV.
+    const bulkForm = document.getElementById('att-bulk-form');
+    if (bulkForm) {
+        const csv = document.getElementById('att-csv');
+        const csvName = document.getElementById('att-csv-name');
+        const bulkErr = document.getElementById('att-bulk-error');
+        csv.addEventListener('change', () => {
+            if (csv.files.length) {
+                csvName.textContent = 'Selected: ' + csv.files[0].name;
+                csvName.hidden = false;
+            } else {
+                csvName.hidden = true;
+            }
+        });
+        bulkForm.addEventListener('submit', (e) => {
+            bulkErr.hidden = true;
+            if (!csv.files.length) {
                 e.preventDefault();
-                bulkErr.hidden = true;
-                if (!csv.files.length) {
-                    bulkErr.textContent = 'Choose a CSV file first.';
-                    bulkErr.hidden = false;
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const lines = String(reader.result).split(/\r?\n/).filter(l => l.trim() !== '');
-                    const count = Math.max(0, lines.length - 1);
-                    showToast(count + ' record' + (count === 1 ? '' : 's') + ' parsed from CSV (demo — no database writes).');
-                };
-                reader.readAsText(csv.files[0]);
-            });
-        }
+                bulkErr.textContent = 'Choose a CSV file first.';
+                bulkErr.hidden = false;
+                return;
+            }
+            if (!checkRange(document.getElementById('att-bulk-in'), document.getElementById('att-bulk-out'), bulkErr)) {
+                e.preventDefault();
+            }
+        });
     }
 });
 
