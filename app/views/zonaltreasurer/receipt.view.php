@@ -99,7 +99,7 @@ $hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_na
             <div class="grid-2">
                 <div class="info-card">
                     <h3>Recipient &amp; Account</h3>
-                    <div class="data-row"><span class="k"><?= !empty($isZonalDemo) ? 'Target Division:' : 'Target Zone:' ?></span><span class="v"><?= htmlspecialchars($transfer->target_zone_name) ?></span></div>
+                    <div class="data-row"><span class="k"><?= !empty($isZonalMode) ? 'Target Division:' : 'Target Zone:' ?></span><span class="v"><?= htmlspecialchars($transfer->target_zone_name) ?></span></div>
                     <div class="data-row"><span class="k">Province / Hub:</span><span class="v"><?= htmlspecialchars($hubDetail ?: 'General Hub') ?></span></div>
                     <div class="data-row"><span class="k">Bank Name:</span><span class="v"><?= htmlspecialchars($transfer->bank_name) ?></span></div>
                     <div class="data-row"><span class="k">Branch:</span><span class="v"><?= htmlspecialchars($transfer->branch_name) ?></span></div>

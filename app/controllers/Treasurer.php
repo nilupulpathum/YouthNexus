@@ -20,6 +20,10 @@ class Treasurer extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['club_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a club.');
+        }
     }
 
     /**
@@ -48,58 +52,33 @@ class Treasurer extends Controller {
     public function index() {
         $this->requireTreasurer();
 
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $ledgerModel = $this->model('ClubLedgerModel');
+        $ledger = $ledgerModel->ensureClubLedger($clubId);
+        $summary = $ledgerModel->getSummary((int) $ledger->ledger_id);
+        $pendingVoids = $ledgerModel->getPendingVoidCount((int) $ledger->ledger_id);
+
+        $money = static fn($v) => 'Rs. ' . number_format((float) $v, 2);
         $funds = [
-            'balance'  => 'Rs. 132,400',
-            'income'   => 'Rs. 74,500',
-            'expenses' => 'Rs. 25,500',
-            'pending_voids' => 1,
+            'balance'  => $money($summary['balance']),
+            'income'   => $money($summary['income']),
+            'expenses' => $money($summary['expenses']),
+            'pending_voids' => $pendingVoids,
         ];
 
         $shortcuts = [
             ['title' => 'Log Transaction', 'desc' => 'Income or expense with mandatory receipt', 'href' => 'club/ledger', 'icon' => 'file'],
             ['title' => 'Transfer Custody', 'desc' => 'Hand an Available asset to a custodian', 'href' => 'club/assets', 'icon' => 'user'],
-            ['title' => 'Review Pending Voids', 'desc' => '1 void request awaiting the Divisional Treasurer', 'href' => 'club/ledger', 'icon' => 'eye'],
+            ['title' => 'Review Pending Voids', 'desc' => $pendingVoids . ' void request(s) awaiting the Divisional Treasurer', 'href' => 'club/ledger', 'icon' => 'eye'],
         ];
 
-        $announcements = [
-            [
-                'title'   => 'Divisional Leadership Summit 2025',
-                'summary' => 'Confirm your attendance for the upcoming leadership summit by this Friday.',
-                'scope'   => 'Divisional',
-                'age'     => '2 days ago',
-                'is_new'  => true,
-            ],
-            [
-                'title'   => 'New Volunteer Hour Submission Policy',
-                'summary' => 'Volunteer hours should be submitted within seven days of the activity.',
-                'scope'   => 'National',
-                'age'     => '1 week ago',
-                'is_new'  => false,
-            ],
-        ];
-
-        $upcomingEvents = [
-            [
-                'title'    => 'Gampaha Youth Leadership Workshop 2026',
-                'date'     => 'Sep 15, 2026',
-                'location' => 'Gampaha Town Hall',
-                'scope'    => 'Divisional',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-            [
-                'title'    => 'Club Planning Session',
-                'date'     => 'Sep 28, 2026',
-                'location' => 'Club Centre',
-                'scope'    => 'Club',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-        ];
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubTreasurer', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
         $socialCv = [
-            'volunteer_hours' => 96,
-            'events_count'    => 12,
+            'volunteer_hours' => '—',
+            'events_count'    => ClubOverview::completedCount($this, $clubId),
             'leadership'      => 'Club Treasurer',
         ];
 
