@@ -40,6 +40,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="club-members-heading" class="visually-hidden">Club members</h1>
 
     <div class="dw-alert dw-alert--success" id="roster-toast" role="status" hidden></div>
+    <?php if (!empty($flash)): ?>
+        <div class="dw-alert dw-alert--<?= ($flash['type'] ?? '') === 'success' ? 'success' : 'error' ?>" role="status">
+            <?= $e($flash['message'] ?? '') ?>
+        </div>
+    <?php endif; ?>
 
     <div class="dw-summary-grid" aria-label="Membership summary">
         <?php foreach ($summaryCards as $card): ?>
@@ -112,6 +117,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <tbody id="club-roster-body">
                     <?php foreach ($roster as $m): ?>
                         <tr data-search="<?= $e(strtolower(($m['name'] ?? '') . ' ' . ($m['role'] ?? '') . ' ' . ($m['email'] ?? ''))) ?>"
+                            data-id="<?= (int) ($m['id'] ?? 0) ?>"
                             data-name="<?= $e($m['name'] ?? '') ?>"
                             data-role="<?= $e($m['role'] ?? '') ?>"
                             data-email="<?= $e($m['email'] ?? '') ?>"
@@ -164,7 +170,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p>New members join as General Member once the president approves. NIC and email must be unique.</p>
-                <form id="club-register-form" data-existing-nics="<?= $e(json_encode(array_values($existing_nics))) ?>" novalidate>
+                <form id="club-register-form" action="<?= ROOT ?>/club/register" method="post" data-existing-nics="<?= $e(json_encode(array_values($existing_nics))) ?>" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <div class="dw-field">
                         <label for="reg-name">Full name</label>
                         <input id="reg-name" name="name" type="text" required autocomplete="off">
@@ -209,19 +216,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <p>Member: <strong id="assign-member"></strong> (<span id="assign-current"></span>)</p>
-                <div class="dw-field">
-                    <label for="assign-role">Target role</label>
-                    <select id="assign-role">
-                        <option value="Secretary">Secretary</option>
-                        <option value="Treasurer">Treasurer</option>
-                    </select>
-                </div>
+                <form id="assign-form" action="<?= ROOT ?>/president/assign" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="assign-member-id" name="member_id" value="">
+                    <div class="dw-field">
+                        <label for="assign-role">Target role</label>
+                        <select id="assign-role" name="role">
+                            <option value="ClubSecretary">Secretary</option>
+                            <option value="ClubTreasurer">Treasurer</option>
+                            <option value="ClubMember">General Member</option>
+                        </select>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--warning" id="assign-warning" hidden></div>
-                <p>An audit record is logged on confirm (backend, C13).</p>
+                <p>An audit record is logged on confirm.</p>
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="assign-confirm">Confirm assignment</button>
+                <button type="submit" class="dw-button dw-button--primary" form="assign-form">Confirm assignment</button>
             </footer>
         </div>
     </div>
@@ -237,17 +249,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
             <div class="dw-modal__body">
                 <div id="mr-details" class="dw-metric-list"></div>
-                <div class="dw-field">
-                    <label for="mr-result">Review result</label>
-                    <select id="mr-result">
-                        <option value="approve">Approve member</option>
-                        <option value="reject">Reject application</option>
-                    </select>
-                </div>
-                <div class="dw-field">
-                    <label for="mr-remarks">Decision note (required if rejecting)</label>
-                    <textarea id="mr-remarks" rows="3" placeholder="Reason for this decision..."></textarea>
-                </div>
+                <form id="member-review-form" action="<?= ROOT ?>/president/review" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
+                    <input type="hidden" id="mr-member-id" name="member_id" value="">
+                    <div class="dw-field">
+                        <label for="mr-result">Review result</label>
+                        <select id="mr-result" name="result">
+                            <option value="approve">Approve member</option>
+                            <option value="reject">Reject application</option>
+                        </select>
+                    </div>
+                    <div class="dw-field">
+                        <label for="mr-remarks">Decision note (required if rejecting)</label>
+                        <textarea id="mr-remarks" name="remarks" rows="3" placeholder="Reason for this decision..."></textarea>
+                    </div>
+                </form>
                 <div class="dw-alert dw-alert--error" id="mr-error" role="alert" hidden></div>
                 <div role="note">
                     <strong>What happens next</strong>
@@ -256,7 +272,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <footer class="dw-modal__footer">
                 <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
-                <button type="button" class="dw-button dw-button--primary" id="mr-confirm">Confirm &amp; submit decision</button>
+                <button type="submit" class="dw-button dw-button--primary" form="member-review-form">Confirm &amp; submit decision</button>
             </footer>
         </div>
     </div>
