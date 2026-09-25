@@ -12,14 +12,18 @@ $pageDescription         = $isNyscAdmin
     : 'Track divisional events and club activities across ' . htmlspecialchars($division->division_name ?? 'your division');
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
+$pageStyles              = [
+    ROOT . '/assets/css/manageevents.css?v=20260924',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+];
+$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260924'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
             <!-- Action Row -->
-            <div class="me-header-row" style="justify-content: flex-end;">
-                <button type="button" class="me-btn-primary" id="btnOpenCreateModal">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <div class="me-header-row me-header-row-actions">
+                <button type="button" class="me-btn-primary db-primary-action" id="btnOpenCreateModal">
                     <?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?>
                 </button>
             </div>
@@ -92,7 +96,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, type..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                         </div>
                     </div>
-                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>">
+                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
                         Filters
                         <?php if ($activeFilters > 0): ?>
@@ -216,8 +220,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                     <h3>No events found</h3>
                     <p><?= $isNyscAdmin ? 'No events match your current filter criteria or no events have been created yet.' : 'No events match your current filter criteria or no events have been scheduled yet in this division.' ?></p>
-                    <button type="button" class="me-btn-primary" onclick="document.getElementById('btnOpenCreateModal').click()">
-                        + <?= $isNyscAdmin ? 'Create National Event' : 'Create Your First Event' ?>
+                    <button type="button" class="me-btn-primary db-primary-action" onclick="document.getElementById('btnOpenCreateModal').click()">
+                        <?= $isNyscAdmin ? 'Create National Event' : 'Create Your First Event' ?>
                     </button>
                 </div>
             <?php else: ?>
@@ -297,19 +301,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                             <div class="me-card-footer">
                                 <span class="me-card-author">By <?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Admin' : 'Secretary')) ?></span>
-                                <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>" class="me-btn-view">
+                                <a href="<?= ROOT ?>/manageevents/status/<?= (int)$event->event_id ?>" class="me-btn-view db-view-button">
                                     View Details
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                 </a>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
-
-        </main>
-    </div>
-</div>
 
 <!-- ============ Create Event Modal (National / Divisional) ============ -->
 <div class="me-modal-backdrop" id="createEventModal">
@@ -439,6 +438,4 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/manageevents.css">
-<script src="<?= ROOT ?>/assets/js/manageevents.js?v=<?= time() ?>"></script>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

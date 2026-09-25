@@ -1,0 +1,371 @@
+.dr-library-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dr-library {
+  display: grid;
+  gap: 14px;
+}
+
+.dr-library__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dr-library__header h2 {
+  margin: 0;
+  color: var(--dw-text);
+  font-size: 14px;
+}
+
+.dr-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dr-report-card {
+  display: flex;
+  min-width: 0;
+  min-height: 250px;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--dw-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.05);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dr-report-card[hidden] { display: none; }
+
+.dr-report-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09);
+  transform: translateY(-2px);
+}
+
+.dr-report-card__top,
+.dr-report-card__footer,
+.dr-report-card__actions {
+  display: flex;
+  align-items: center;
+}
+
+.dr-report-card__top,
+.dr-report-card__footer { justify-content: space-between; }
+
+.dr-report-card__icon {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+}
+
+.dr-report-card__icon svg { width: 21px; height: 21px; }
+.dr-report-card__icon--blue { color: #2563eb; background: #dbeafe; }
+.dr-report-card__icon--amber { color: #d97706; background: #fef3c7; }
+.dr-report-card__icon--red { color: #dc2626; background: #fee2e2; }
+.dr-report-card__icon--purple { color: #7c3aed; background: #ede9fe; }
+.dr-report-card__icon--green { color: #15803d; background: #dcfce7; }
+.dr-report-card__icon--slate { color: #475569; background: #f1f5f9; }
+
+.dr-format-pill,
+.dr-active-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dr-format-pill--pdf { color: #1d4ed8; background: #dbeafe; }
+.dr-format-pill--csv { color: #15803d; background: #dcfce7; }
+.dr-format-pill--onscreen { color: #6d28d9; background: #ede9fe; }
+.dr-active-pill { color: #15803d; background: #dcfce7; }
+
+.dr-report-card__category {
+  margin-top: 16px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dr-report-card h3 {
+  margin: 5px 0 0;
+  color: var(--dw-text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.dr-report-card__scope {
+  margin: 4px 0 0;
+  color: var(--dw-muted);
+  font-size: 12px;
+}
+
+.dr-report-card__meta {
+  display: grid;
+  gap: 8px;
+  margin: 15px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid #eef2f7;
+}
+
+.dr-report-card__meta div {
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.dr-report-card__meta dt,
+.dr-report-card__meta dd { margin: 0; font-size: 10px; }
+.dr-report-card__meta dt { color: var(--dw-muted); }
+.dr-report-card__meta dd { overflow-wrap: anywhere; color: var(--dw-text); font-weight: 700; }
+
+.dr-report-card__footer {
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.dr-report-card__footer > span { color: #94a3b8; font-size: 10px; }
+
+.dr-report-card__actions {
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.dr-report-card__actions .dw-button {
+  min-height: 34px;
+  padding: 7px 12px;
+}
+
+.dr-preview {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.dr-document {
+  overflow: hidden;
+  border-radius: 15px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.dr-document__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--dw-border);
+}
+
+.dr-document__badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.dr-document__header h2 {
+  margin: 0;
+  color: var(--dw-text);
+  font-size: 20px;
+}
+
+.dr-document__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 8px 0 0;
+  color: var(--dw-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.dr-document__meta strong { color: var(--dw-text); }
+
+.dr-document__reference {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 6px;
+  text-align: right;
+}
+
+.dr-document__reference strong { color: var(--dw-primary); font-size: 12px; }
+.dr-document__reference span { color: var(--dw-muted); font-size: 10px; }
+
+.dr-document__body {
+  display: grid;
+  gap: 22px;
+  padding: 22px 28px 26px;
+}
+
+.dr-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dr-kpi {
+  display: grid;
+  min-height: 90px;
+  align-content: center;
+  gap: 9px;
+  padding: 16px;
+  border: 1px solid var(--dw-border);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.dr-kpi span {
+  color: var(--dw-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dr-kpi strong {
+  color: var(--dw-text);
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dr-results { display: grid; gap: 13px; }
+
+.dr-results__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dr-results__heading h3 { margin: 0; color: var(--dw-text); font-size: 13px; }
+.dr-results__heading p { margin: 4px 0 0; color: var(--dw-muted); font-size: 10px; }
+
+.dr-results .dw-table-wrap {
+  border: 1px solid var(--dw-border);
+  border-radius: 11px;
+}
+
+.dr-verification-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.dr-verification-note svg { flex: 0 0 auto; margin-top: 1px; }
+.dr-verification-note p { margin: 0; color: #334155; font-size: 10px; line-height: 1.5; }
+
+.dr-document__footer,
+.dr-document__footer-left,
+.dr-document__footer-right {
+  display: flex;
+  align-items: center;
+}
+
+.dr-document__footer {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 28px;
+  border-top: 1px solid var(--dw-border);
+  background: #fff;
+}
+
+.dr-document__footer-left,
+.dr-document__footer-right { gap: 8px; }
+.dr-document__footer form { margin: 0; }
+
+@media (max-width: 1100px) {
+  .dr-report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .dr-document__header,
+  .dr-document__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dr-report-grid,
+  .dr-kpi-grid { grid-template-columns: 1fr; }
+  .dr-document__reference { text-align: left; }
+  .dr-document__footer-left,
+  .dr-document__footer-right { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+  .dr-report-card__footer { align-items: flex-start; flex-direction: column; }
+  .dr-report-card__actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .dr-document__header,
+  .dr-document__body,
+  .dr-document__footer { padding-right: 18px; padding-left: 18px; }
+}
+
+@media print {
+  .dashboard-sidebar,
+  .dashboard-header,
+  .dashboard-footer,
+  .dr-document__footer { display: none !important; }
+  .dashboard-main,
+  .dashboard-content,
+  .dashboard-main__inner { display: block; overflow: visible; padding: 0; }
+  .dr-document { border: 0; box-shadow: none; }
+  .dw-table { font-size: 9px; }
+  @page { margin: 12mm; }
+}
+.dr-report-card__pills {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dr-report-card--archived {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.dr-archive-pill {
+  background: #e2e8f0;
+  border-radius: 999px;
+  color: #475569;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.dr-archive-note {
+  align-items: flex-start;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.dr-archive-note p {
+  margin: 0;
+}

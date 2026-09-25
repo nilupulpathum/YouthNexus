@@ -7,11 +7,13 @@
     const modalBody        = document.getElementById('eaModalBody');
     const modalTitle       = document.getElementById('eaModalEventTitle');
     const closeBtn         = document.getElementById('eaModalClose');
+    const backBtn          = document.getElementById('eaBackToEventsBtn');
     const cancelBtn        = document.getElementById('eaCancelReviewBtn');
     const resultSelect     = document.getElementById('eaReviewResultSelect');
     const remarksField     = document.getElementById('eaRemarks');
     const impactAlert      = document.getElementById('eaImpactAlert');
     const confirmBtn       = document.getElementById('eaConfirmSubmitBtn');
+    const decisionPanel    = modal.querySelector('.ea-decision-panel');
 
     let activeEventId = null;
 
@@ -73,6 +75,7 @@
         activeEventId = eventId;
         modalTitle.textContent = 'Loading Event Details...';
         modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#6b7280;"><p>Loading event information...</p></div>';
+        decisionPanel.hidden = true;
         modal.classList.add('open');
         
         fetch((window.ROOT || '') + '/eventapproval/review/' + eventId)
@@ -84,8 +87,10 @@
                 if (data.error) throw new Error(data.error);
                 const ev = data.event;
                 const targets = data.targets;
+                const isPending = ev.status === 'PendingApproval';
                 
                 modalTitle.textContent = ev.title || 'Event Review';
+                decisionPanel.hidden = !isPending;
                 
                 const isDivisionalEvent = Boolean(ev.organizer_division_id);
                 const organizerLabel    = isDivisionalEvent ? 'Organizing Body' : 'Organizing Club';
@@ -193,6 +198,7 @@
 
     attachReviewButtons();
     closeBtn.addEventListener('click', closeReview);
+    backBtn.addEventListener('click', closeReview);
     cancelBtn.addEventListener('click', closeReview);
 
     // Filter Tabs
@@ -259,6 +265,7 @@
                     </div>
                     <div class="ea-card-footer">
                         <span class="ea-card-submitter">Submitted by ${escapeHtml(ev.creator_name || '—')} &bull; <strong style="color:#4b5563;">${extraNote}</strong></span>
+                        <button type="button" class="ea-btn ea-btn-review db-view-button" data-event-id="${ev.event_id}">View Details</button>
                     </div>
                 </div>
             `;
@@ -285,9 +292,12 @@
             fetch((window.ROOT || '') + '/eventapproval/approved')
                 .then(r => r.json())
                 .then(data => {
+                    if (!statApproved.classList.contains('is-active')) return;
                     renderEventGrid(data.events || [], 'Approved');
+                    attachReviewButtons();
                 })
                 .catch(err => {
+                    if (!statApproved.classList.contains('is-active')) return;
                     if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load approved events.</p></div>';
                 });
         });
@@ -303,9 +313,12 @@
             fetch((window.ROOT || '') + '/eventapproval/rejected')
                 .then(r => r.json())
                 .then(data => {
+                    if (!statRejected.classList.contains('is-active')) return;
                     renderEventGrid(data.events || [], 'Rejected');
+                    attachReviewButtons();
                 })
                 .catch(err => {
+                    if (!statRejected.classList.contains('is-active')) return;
                     if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load rejected events.</p></div>';
                 });
         });
@@ -356,4 +369,7 @@
             alert('Error: ' + err.message);
         });
     });
+
+    // Approved events are the coordinator's default landing view.
+    if (statApproved) statApproved.click();
 })();

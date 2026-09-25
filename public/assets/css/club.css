@@ -626,6 +626,28 @@ a.club-btn-secondary { text-decoration: none; }
 /* C6 searchable roster dropdown */
 .club-combo { position: relative; }
 
+.club-combo-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    z-index: 1;
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.club-combo-search-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.club-combo > input {
+    padding-left: 38px;
+}
+
 .club-dropdown {
     position: absolute;
     top: calc(100% + 6px);

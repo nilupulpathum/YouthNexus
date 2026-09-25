@@ -1,0 +1,178 @@
+.dtd-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.dtd-panel { min-width: 0; }
+.dtd-panel .dw-panel__header { align-items: center; }
+.dtd-muted { color: var(--dw-muted); font-size: 9px; }
+
+.dtd-list,
+.dtd-health-list,
+.dtd-reminders { display: grid; padding: 0 17px 12px; }
+
+.dtd-list__item,
+.dtd-health,
+.dtd-reminder {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 0;
+  border-top: 1px solid #eef0f4;
+}
+
+.dtd-list__item { grid-template-columns: minmax(0, 1fr) auto auto; }
+.dtd-list__item:first-child,
+.dtd-health:first-child,
+.dtd-reminder:first-child { border-top: 0; }
+.dtd-list__item strong,
+.dtd-reminder strong { display: block; color: var(--dw-text); font-size: 11px; }
+.dtd-list__item span:not(.dw-status),
+.dtd-reminder span:not(.dw-status):not(.dtd-reminder__icon) { display: block; margin-top: 4px; color: var(--dw-muted); font-size: 9px; }
+.dtd-list__value { text-align: right; }
+.dtd-list__value strong { font-variant-numeric: tabular-nums; }
+
+/* Quick Actions are links semantically, but should read as clear controls. */
+a.dtd-list__item {
+  grid-template-columns: minmax(0, 1fr) 38px;
+  min-height: 62px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  background: #fff;
+  color: var(--dw-text);
+  text-decoration: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+a.dtd-list__item + a.dtd-list__item { margin-top: 8px; }
+
+a.dtd-list__item strong {
+  color: var(--dw-text);
+  font-size: 12px;
+  line-height: 1.35;
+  text-decoration: none !important;
+}
+
+a.dtd-list__item span:not(.dw-status) {
+  margin-top: 5px;
+  color: var(--dw-muted);
+  font-size: 10px;
+  line-height: 1.45;
+  text-decoration: none !important;
+}
+
+a.dtd-list__item > svg {
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  padding: 10px;
+  border-radius: 9px;
+  background: var(--dw-info-bg);
+  color: var(--dw-primary);
+}
+
+a.dtd-list__item:hover {
+  background: #f8faff;
+  border-color: #c7d2fe;
+  box-shadow: 0 5px 12px rgba(49, 84, 216, .09);
+  transform: translateY(-1px);
+  text-decoration: none !important;
+}
+
+a.dtd-list__item:hover strong { color: var(--dw-primary-dark); }
+
+a.dtd-list__item:active {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+  transform: translateY(0);
+}
+
+a.dtd-list__item:focus-visible {
+  outline: 3px solid rgba(49, 84, 216, .18);
+  outline-offset: 2px;
+  border-color: var(--dw-primary);
+  text-decoration: none !important;
+}
+
+.dtd-health { grid-template-columns: auto minmax(0, 1fr) auto; }
+.dtd-health__score {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 12px;
+  border-radius: 50%;
+  background: var(--dw-info-bg);
+  color: var(--dw-primary);
+  font-variant-numeric: tabular-nums;
+}
+.dtd-health__score strong { font-size: 16px; line-height: 1; }
+.dtd-health__score span { font-size: 8px; }
+.dtd-health__score--green { color: var(--dw-success); background: var(--dw-success-bg); }
+.dtd-health__score--yellow { color: var(--dw-warning); background: var(--dw-warning-bg); }
+.dtd-health__score--red { color: var(--dw-danger); background: var(--dw-danger-bg); }
+.dtd-health__body { min-width: 0; }
+.dtd-health__body > div:first-child { display: flex; justify-content: space-between; gap: 10px; }
+.dtd-health__body strong { overflow: hidden; color: var(--dw-text); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.dtd-health__body > div:first-child span { color: var(--dw-muted); font-size: 9px; white-space: nowrap; }
+.dtd-health__bar { height: 6px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: #eef2f7; }
+.dtd-health__bar span { display: block; height: 100%; border-radius: inherit; }
+.dtd-health__fill--green { background: var(--dw-success); }
+.dtd-health__fill--yellow { background: #f59e0b; }
+.dtd-health__fill--red { background: var(--dw-danger); }
+.dtd-health__label {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dtd-health__label--green { color: var(--dw-success); background: var(--dw-success-bg); }
+.dtd-health__label--yellow { color: var(--dw-warning); background: var(--dw-warning-bg); }
+.dtd-health__label--red { color: var(--dw-danger); background: var(--dw-danger-bg); }
+
+.dtd-reminder { grid-template-columns: auto minmax(0, 1fr) auto; }
+.dtd-reminder__icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--dw-warning-bg);
+  color: var(--dw-warning);
+}
+
+.dtd-empty { padding: 30px 18px 34px; color: var(--dw-muted); text-align: center; }
+.dtd-empty > span {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+.dtd-empty strong { display: block; margin-top: 9px; color: var(--dw-text); font-size: 12px; }
+.dtd-empty p { margin: 4px 0 0; font-size: 10px; }
+
+@media (max-width: 1100px) {
+  .dtd-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .dtd-list__item { grid-template-columns: minmax(0, 1fr) auto; }
+  .dtd-list__item .dw-status { grid-column: 1 / -1; justify-self: start; }
+  .dtd-health { grid-template-columns: auto minmax(0, 1fr); }
+  .dtd-health__label { grid-column: 2; justify-self: start; }
+  .dtd-reminder { grid-template-columns: auto minmax(0, 1fr); }
+  .dtd-reminder .dw-status { grid-column: 2; justify-self: start; }
+}
