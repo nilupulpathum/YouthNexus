@@ -125,6 +125,153 @@ class UserModel extends Model {
     }
 
     // ---------------------------------------------------------------
+    // CLUB ROSTER (D1: scoped reads/writes for club dashboards)
+    // ---------------------------------------------------------------
+
+    /**
+     * Active roster for one club. Pending and disabled accounts excluded.
+     */
+    public function getClubRoster($clubId) {
+        return $this->resultSet(
+            "SELECT user_id, username, email, first_name, last_name, phone_number,
+                    address, NIC, role, membership_status, membership_date, created_at
+             FROM User
+             WHERE club_id = ? AND status = 'Active' AND COALESCE(membership_status, 'Active') = 'Active'
+             ORDER BY FIELD(role, 'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember', 'Member'), first_name, last_name",
+            [(int) $clubId]
+        );
+    }
+
+    /**
+     * Membership queue: active accounts awaiting president approval.
+     */
+    public function getClubPending($clubId) {
+        return $this->resultSet(
+            "SELECT user_id, username, email, first_name, last_name, phone_number,
+                    address, NIC, role, membership_date, created_at
+             FROM User
+             WHERE club_id = ? AND status = 'Active' AND membership_status = 'Inactive'
+             ORDER BY created_at ASC",
+            [(int) $clubId]
+        );
+    }
+
+    public function countClubRoster($clubId) {
+        $row = $this->single(
+            "SELECT COUNT(*) AS total,
+                    SUM(role IN ('ClubPresident', 'ClubSecretary', 'ClubTreasurer')) AS executives
+             FROM User
+             WHERE club_id = ? AND status = 'Active' AND COALESCE(membership_status, 'Active') = 'Active'",
+            [(int) $clubId]
+        );
+        $pending = $this->single(
+            "SELECT COUNT(*) AS pending FROM User
+             WHERE club_id = ? AND status = 'Active' AND membership_status = 'Inactive'",
+            [(int) $clubId]
+        );
+        return [
+            'total'      => (int) ($row->total ?? 0),
+            'executives' => (int) ($row->executives ?? 0),
+            'pending'    => (int) ($pending->pending ?? 0),
+        ];
+    }
+
+    public function getClubNics($clubId) {
+        return array_map(
+            fn($r) => $r->NIC,
+            $this->resultSet(
+                "SELECT NIC FROM User WHERE club_id = ? AND NIC IS NOT NULL",
+                [(int) $clubId]
+            )
+        );
+    }
+
+    /**
+     * Active divisional treasurer for void-request routing (or false).
+     */
+    public function findDivisionTreasurer($divisionId) {
+        return $this->single(
+            "SELECT user_id FROM User WHERE role = 'DivisionalTreasurer'
+             AND division_id = ? AND status = 'Active' LIMIT 1",
+            [(int) $divisionId]
+        );
+    }
+
+    public function emailOrNicTaken($email, $nic) {        return (bool) $this->single(
+            "SELECT user_id FROM User
+             WHERE email = ? OR (NIC IS NOT NULL AND NIC = ?)
+             LIMIT 1",
+            [$email, $nic]
+        );
+    }
+
+    /**
+     * Approve a pending member. Returns affected rows (0 = wrong scope/id).
+     */
+    public function approveClubMember($clubId, $userId) {
+        $stmt = $this->query(
+            "UPDATE User SET membership_status = 'Active'
+             WHERE user_id = ? AND club_id = ? AND status = 'Active' AND membership_status = 'Inactive'",
+            [(int) $userId, (int) $clubId]
+        );
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Reject a pending member (kept as Disabled for audit trail).
+     */
+    public function rejectClubMember($clubId, $userId) {
+        $stmt = $this->query(
+            "UPDATE User SET status = 'Disabled'
+             WHERE user_id = ? AND club_id = ? AND status = 'Active' AND membership_status = 'Inactive'",
+            [(int) $userId, (int) $clubId]
+        );
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Assign an executive role to an active roster member.
+     */
+    public function assignClubRole($clubId, $userId, $role) {
+        $allowed = ['ClubSecretary', 'ClubTreasurer', 'ClubMember'];
+        if (!in_array($role, $allowed, true)) {
+            return 0;
+        }
+        $stmt = $this->query(
+            "UPDATE User SET role = ?
+             WHERE user_id = ? AND club_id = ? AND status = 'Active'
+               AND COALESCE(membership_status, 'Active') = 'Active' AND role <> 'ClubPresident'",
+            [$role, (int) $userId, (int) $clubId]
+        );
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Register a member into the approval queue (secretary flow).
+     * Returns the new user_id.
+     */
+    public function registerClubMember($clubId, $divisionId, $name, $email, $phone, $address, $nic) {
+        $parts = explode(' ', trim($name), 2);
+        $firstName = $parts[0] ?? $name;
+        $lastName = $parts[1] ?? $firstName;
+        $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
+        $username = $base !== '' ? $base : 'member';
+        $suffix = 1;
+        while ($this->single("SELECT user_id FROM User WHERE username = ? LIMIT 1", [$username])) {
+            $username = $base . $suffix;
+            $suffix++;
+        }
+        $this->query(
+            "INSERT INTO User (username, email, password_hash, first_name, last_name,
+                               phone_number, NIC, address, role, status,
+                               membership_status, membership_date, club_id, division_id)
+             VALUES (?, ?, '', ?, ?, ?, ?, ?, 'ClubMember', 'Active', 'Inactive', CURDATE(), ?, ?)",
+            [$username, $email, $firstName, $lastName, $phone, $nic, $address, (int) $clubId, (int) $divisionId]
+        );
+        return (int) $this->single("SELECT LAST_INSERT_ID() AS id")->id;
+    }
+
+    // ---------------------------------------------------------------
     // PASSWORD RESET DB HELPERS
     // ---------------------------------------------------------------
 

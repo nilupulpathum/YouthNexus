@@ -24,6 +24,10 @@ class Zonaltreasurer extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['zonal_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a zone.');
+        }
     }
 
     /**
@@ -57,7 +61,7 @@ class Zonaltreasurer extends Controller {
             'zonaltreasurer'
         );
 
-        $data['fundStats'] = $this->model('ZoneFundTransferMock')->stats();
+        $data['fundStats'] = $this->model('ZoneFundModel')->getStats((int) ($_SESSION['zonal_id'] ?? 0));
         $this->view('zonaltreasurer/index', $data);
     }
 
@@ -74,14 +78,19 @@ class Zonaltreasurer extends Controller {
             'zonaltreasurer/allocate'
         );
 
-        $mock = $this->model('ZoneFundTransferMock');
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneFundModel');
         $filters = $this->fundFilters();
         $_SESSION['zonal_fund_csrf'] = $_SESSION['zonal_fund_csrf'] ?? bin2hex(random_bytes(32));
+        $divisions = [];
+        foreach ($model->getDivisions($zonalId) as $d) {
+            $divisions[] = (object) ['zonal_id' => (int) $d->division_id, 'zonal_name' => $d->division_name, 'province' => '', 'hub_name' => ''];
+        }
         $data += [
-            'transferRoute' => 'zonaltreasurer', 'listRoute' => 'zonaltreasurer/allocate', 'isZonalDemo' => true,
-            'transfers' => $mock->transfers($filters), 'stats' => $mock->stats(),
-            'zones' => $mock->divisions(), 'bankAccounts' => [$mock->account()],
-            'filters' => $filters, 'nextReference' => $mock->reference(),
+            'transferRoute' => 'zonaltreasurer', 'listRoute' => 'zonaltreasurer/allocate', 'isZonalMode' => true,
+            'transfers' => $model->getTransfers($zonalId, $filters), 'stats' => $model->getStats($zonalId),
+            'zones' => $divisions, 'bankAccounts' => $model->getBankAccounts($zonalId),
+            'filters' => $filters, 'nextReference' => $model->generateReferenceNumber(),
             'csrf_token' => $_SESSION['zonal_fund_csrf'],
         ];
         $this->view('zonaltreasurer/allocate', $data);
@@ -114,11 +123,23 @@ class Zonaltreasurer extends Controller {
             foreach ($_POST as $value) {
                 if (!is_string($value)) throw new InvalidArgumentException('Invalid form input.');
             }
-            $transfer = $this->model('ZoneFundTransferMock')->create($_POST);
+            $model = $this->model('ZoneFundModel');
+            $allocationId = $model->createAllocation((int) ($_SESSION['zonal_id'] ?? 0), (int) $_SESSION['user_id'], [
+                'division_id' => $_POST['zone_id'] ?? 0,
+                'bank_account_id' => $_POST['bank_account_id'] ?? 0,
+                'amount' => str_replace([',', ' '], '', trim($_POST['amount'] ?? '')),
+                'transfer_date' => $_POST['transfer_date'] ?? '',
+                'method' => $_POST['disbursement_method'] ?? 'RTGS',
+                'reference' => $_POST['reference'] ?? '',
+                'purpose' => $_POST['purpose'] ?? '',
+            ]);
             $_SESSION['zonal_fund_csrf'] = bin2hex(random_bytes(32));
-            echo json_encode(['success' => true, 'transfer_id' => $transfer->allocation_id,
+            echo json_encode(['success' => true, 'transfer_id' => $allocationId,
                 'redirect' => ROOT . '/zonaltreasurer/allocate']);
         } catch (InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        } catch (RuntimeException $e) {
             http_response_code(422);
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
@@ -128,16 +149,19 @@ class Zonaltreasurer extends Controller {
         $this->requireZonalTreasurer();
         $method = is_string($_GET['method'] ?? null) ? $_GET['method'] : 'RTGS';
         header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'reference' => $this->model('ZoneFundTransferMock')->reference($method)]);
+        echo json_encode(['success' => true, 'reference' => $this->model('ZoneFundModel')->generateReferenceNumber($method)]);
     }
 
     public function exportledger() {
         $this->requireZonalTreasurer();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="Demo_Zone_Division_Transfers.csv"');
+        header('Content-Disposition: attachment; filename="' . $zoneName . '_Division_Transfers.csv"');
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Demo reference', 'Division', 'Date', 'Amount (LKR)', 'Status', 'Purpose']);
-        foreach ($this->model('ZoneFundTransferMock')->transfers($this->fundFilters()) as $t) {
+        fputcsv($out, ['Reference', 'Division', 'Date', 'Amount (LKR)', 'Status', 'Purpose']);
+        foreach ($this->model('ZoneFundModel')->getTransfers($zonalId, $this->fundFilters()) as $t) {
             $purpose = preg_match('/^[=+@\-\t\r\n]/', $t->purpose_description) ? "'" . $t->purpose_description : $t->purpose_description;
             fputcsv($out, [$t->reference_no, $t->target_zone_name, $t->transfer_date, number_format($t->amount, 2, '.', ''), $t->status, $purpose]);
         }
@@ -146,37 +170,14 @@ class Zonaltreasurer extends Controller {
 
     public function receipt($id = null) {
         $this->requireZonalTreasurer();
-        $transfer = $this->model('ZoneFundTransferMock')->find($id);
+        $transfer = $this->model('ZoneFundModel')->find((int) ($_SESSION['zonal_id'] ?? 0), (int) $id);
         if (!$transfer) {
             http_response_code(404);
-            echo 'Demo transfer not found.';
+            echo 'Transfer not found in your zone.';
             return;
         }
-        $this->view('zonaltreasurer/receipt', ['transfer' => $transfer, 'isZonalDemo' => true,
-            'receiptSubtitle' => 'Gampaha Zone — DEMO division allocation; no money transferred']);
-    }
-
-    private function auditState() {
-        $key = (string)($_SESSION['user_id'] ?? 'demo');
-        if (!isset($_SESSION['zonal_audit_demo'][$key])) {
-            $_SESSION['zonal_audit_demo'][$key] = [
-                'reports' => [
-                    ['id' => 'DIV-01', 'division' => 'Gampaha Division', 'income' => 820000, 'expenses' => 614000, 'balance' => 206000, 'status' => 'Review complete'],
-                    ['id' => 'DIV-02', 'division' => 'Ja-Ela Division', 'income' => 650000, 'expenses' => 428000, 'balance' => 222000, 'status' => 'Attention needed'],
-                    ['id' => 'DIV-03', 'division' => 'Negombo Division', 'income' => 540000, 'expenses' => 398000, 'balance' => 142000, 'status' => 'Review complete'],
-                ],
-                'flags' => [
-                    ['id' => 'ZA-101', 'division' => 'Ja-Ela Division', 'type' => 'Missing receipt', 'reference' => 'JAE-2026-EXP-041', 'amount' => 28500, 'reason' => 'Expense report has no supporting receipt.', 'status' => 'Open', 'note' => ''],
-                    ['id' => 'ZA-102', 'division' => 'Gampaha Division', 'type' => 'Unspent allocation', 'reference' => 'GAM-GRANT-2026-04', 'amount' => 98000, 'reason' => 'Quarterly allocation remains materially unspent.', 'status' => 'Response received', 'note' => 'Division provided a reallocation schedule for the next programme cycle.'],
-                ],
-            ];
-        }
-        return $_SESSION['zonal_audit_demo'][$key];
-    }
-
-    private function saveAuditState(array $state) {
-        $key = (string)($_SESSION['user_id'] ?? 'demo');
-        $_SESSION['zonal_audit_demo'][$key] = $state;
+        $this->view('zonaltreasurer/receipt', ['transfer' => $transfer, 'isZonalMode' => true,
+            'receiptSubtitle' => ($transfer->from_zone_name ?? 'Zone') . ' - division allocation']);
     }
 
     private function auditCsrf() {
@@ -187,14 +188,9 @@ class Zonaltreasurer extends Controller {
     private function auditPost() {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !is_string($_POST['csrf_token'] ?? null)
             || !hash_equals($this->auditCsrf(), $_POST['csrf_token'])) {
-            $_SESSION['zonal_audit_flash'] = 'Refresh the audit page before submitting this action.';
+            $this->auditFlash('error', 'Refresh the audit page before submitting this action.');
             $this->redirect('zonaltreasurer/audit');
         }
-    }
-
-    private function auditFlagIndex(array $flags, $id) {
-        foreach ($flags as $index => $flag) if (($flag['id'] ?? '') === $id) return $index;
-        return null;
     }
 
     /**
@@ -202,97 +198,134 @@ class Zonaltreasurer extends Controller {
      */
     public function audit() {
         $this->requireZonalTreasurer();
-        $state = $this->auditState();
-        $income = array_sum(array_column($state['reports'], 'income'));
-        $expenses = array_sum(array_column($state['reports'], 'expenses'));
-        $unresolved = array_values(array_filter($state['flags'], static fn($flag) => !in_array($flag['status'], ['Resolved', 'Escalated to NYSC'], true)));
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneAuditModel');
+        $reports = $model->getDivisionReports($zonalId);
+        $income = array_sum(array_column($reports, 'income'));
+        $expenses = array_sum(array_column($reports, 'expenses'));
+
+        $flags = [];
+        foreach ($model->getZoneFlags($zonalId) as $f) {
+            $flags[] = $this->mapFlag($f);
+        }
+        $unresolved = array_values(array_filter($flags, static fn($flag) => !in_array($flag['status'], ['Resolved', 'Escalated to NYSC'], true)));
         $data = $this->shell(
             'Audit Finance — YouthNexus Pulse',
             'Audit Finance',
             'Review own-zone divisional finance and escalate material issues to NYSC.',
             'zonaltreasurer/audit'
         );
-        $data += ['reports' => $state['reports'], 'flags' => $state['flags'], 'income' => $income, 'expenses' => $expenses,
+        $data += ['reports' => $reports, 'flags' => $flags, 'income' => $income, 'expenses' => $expenses,
             'unresolvedCount' => count($unresolved), 'reviewReady' => empty($unresolved), 'csrf_token' => $this->auditCsrf(),
-            'flash' => $_SESSION['zonal_audit_flash'] ?? ''];
-        unset($_SESSION['zonal_audit_flash']);
+            'flash' => $this->pullAuditFlash()];
         $this->view('zonaltreasurer/audit', $data);
     }
 
-    public function flag() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState();
-        $division = trim((string)($_POST['division'] ?? '')); $type = trim((string)($_POST['type'] ?? ''));
-        $reference = trim((string)($_POST['reference'] ?? '')); $reason = trim((string)($_POST['reason'] ?? ''));
-        $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? ''));
-        $validDivisions = array_column($state['reports'], 'division');
-        if (!in_array($division, $validDivisions, true) || $type === '' || $reference === '' || $reason === '' || mb_strlen($reason) > 1000 || $amount <= 0) {
-            $_SESSION['zonal_audit_flash'] = 'Provide an own-zone division, issue details, positive amount and a discrepancy reason.';
+    private function mapFlag($f): array {
+        if (!empty($f->escalated_at)) {
+            $status = 'Escalated to NYSC';
+        } elseif (($f->status ?? '') === 'ClarificationRequested') {
+            $status = 'Clarification requested';
         } else {
-            $state['flags'][] = ['id' => 'ZA-' . (100 + count($state['flags']) + 1), 'division' => $division, 'type' => $type, 'reference' => $reference, 'amount' => $amount, 'reason' => $reason, 'status' => 'Open', 'note' => ''];
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Discrepancy flagged for divisional finance review.';
+            $status = $f->status ?? 'Open';
         }
+        $typeLabels = ['MissingReceipt' => 'Missing receipt', 'FundHoarding' => 'Fund hoarding', 'HighVoidRate' => 'High void rate'];
+        return [
+            'id' => 'RF-' . (int) $f->red_flag_id,
+            'flag_id' => (int) $f->red_flag_id,
+            'division' => $f->division_name ?? '—',
+            'type' => $typeLabels[$f->flag_type] ?? $f->flag_type,
+            'reference' => $f->reference ?? '—',
+            'amount' => (float) ($f->amount ?? 0),
+            'reason' => $f->description ?? '',
+            'status' => $status,
+            'note' => $f->note ?? '',
+        ];
+    }
+
+    private function pullAuditFlash(): ?array {
+        $flash = $_SESSION['zonal_audit_flash'] ?? null;
+        unset($_SESSION['zonal_audit_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+
+    private function auditFlash(string $type, string $message): void {
+        $_SESSION['zonal_audit_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    public function flag() {
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $divisionId = (int) ($_POST['division_id'] ?? 0);
+        $type = trim((string)($_POST['type'] ?? ''));
+        $reference = trim((string)($_POST['reference'] ?? ''));
+        $reason = trim((string)($_POST['reason'] ?? ''));
+        $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? ''));
+        try {
+            $flagId = $this->model('ZoneAuditModel')->raiseFlag($zonalId, (int) $_SESSION['user_id'], $divisionId, $type, $reference, $amount, $reason);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
+        }
+        $this->auditFlash('success', "Discrepancy flagged for divisional finance review (RF-{$flagId}).");
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function clarify() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $query = trim((string)($_POST['query'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || $query === '' || mb_strlen($query) > 1000 || in_array($state['flags'][$index]['status'], ['Resolved', 'Escalated to NYSC'], true)) {
-            $_SESSION['zonal_audit_flash'] = 'Enter a clarification request for an open flag.';
-        } else {
-            $state['flags'][$index]['status'] = 'Clarification requested'; $state['flags'][$index]['note'] = $query;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Clarification requested from the Divisional Treasurer; the Divisional Coordinator is notified.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $query = trim((string)($_POST['query'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->clarifyFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $query);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Clarification requested from the Divisional Treasurer; the Divisional Coordinator is notified.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function resolve() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $note = trim((string)($_POST['resolution_note'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || $state['flags'][$index]['status'] !== 'Response received' || $note === '' || mb_strlen($note) > 1000) {
-            $_SESSION['zonal_audit_flash'] = 'Only a received divisional response can be resolved, and a resolution note is required.';
-        } else {
-            $state['flags'][$index]['status'] = 'Resolved'; $state['flags'][$index]['note'] = $note;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Flag resolved in the zonal review. This is not NYSC final sign-off.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $note = trim((string)($_POST['resolution_note'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->resolveFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Flag resolved in the zonal review. This is not NYSC final sign-off.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function escalate() {
-        $this->requireZonalTreasurer(); $this->auditPost(); $state = $this->auditState(); $id = trim((string)($_POST['flag_id'] ?? ''));
-        $note = trim((string)($_POST['escalation_reason'] ?? '')); $index = $this->auditFlagIndex($state['flags'], $id);
-        if ($index === null || in_array($state['flags'][$index]['status'], ['Resolved', 'Escalated to NYSC'], true) || $note === '' || mb_strlen($note) > 1000) {
-            $_SESSION['zonal_audit_flash'] = 'Provide an escalation reason for an unresolved flag.';
-        } else {
-            $state['flags'][$index]['status'] = 'Escalated to NYSC'; $state['flags'][$index]['note'] = $note;
-            $this->saveAuditState($state); $_SESSION['zonal_audit_flash'] = 'Flag escalated to NYSC for final authority.';
+        $this->requireZonalTreasurer(); $this->auditPost();
+        $id = (int) ($_POST['flag_id'] ?? 0);
+        $note = trim((string)($_POST['escalation_reason'] ?? ''));
+        try {
+            $this->model('ZoneAuditModel')->escalateFlag((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->auditFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/audit');
         }
+        $this->auditFlash('success', 'Flag escalated to NYSC for final authority.');
         $this->redirect('zonaltreasurer/audit');
     }
 
     public function exportaudit() {
-        $this->requireZonalTreasurer(); $state = $this->auditState();
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Audit_Summary.csv"');
+        $this->requireZonalTreasurer();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneAuditModel');
+        $zone = $model->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Audit_Summary.csv"');
         $out = fopen('php://output', 'w'); fputcsv($out, ['Flag', 'Division', 'Type', 'Reference', 'Amount (LKR)', 'Status', 'Reason / latest note']);
-        foreach ($state['flags'] as $flag) fputcsv($out, [$flag['id'], $flag['division'], $flag['type'], $flag['reference'], number_format((float)$flag['amount'], 2, '.', ''), $flag['status'], $flag['note'] ?: $flag['reason']]);
-        fclose($out);
-    }
-
-    private function assetState() {
-        $key = (string)($_SESSION['user_id'] ?? 'demo');
-        if (!isset($_SESSION['zonal_asset_demo'][$key])) {
-            $_SESSION['zonal_asset_demo'][$key] = [
-                ['id' => 'ZA-201', 'name' => 'Portable PA System', 'category' => 'Audio Video Equipment', 'serial' => 'GZ-PA-2026-01', 'purchase_date' => 'Sep 4, 2026', 'valuation' => 185000, 'custodian' => 'Gampaha Zone Store', 'status' => 'Available', 'status_key' => 'available'],
-                ['id' => 'ZA-202', 'name' => 'Programme Tent Set', 'category' => 'Events Equipment', 'serial' => 'GZ-TENT-2026-02', 'purchase_date' => 'Aug 18, 2026', 'valuation' => 96000, 'custodian' => 'Ja-Ela Division', 'status' => 'In use', 'status_key' => 'inuse'],
-                ['id' => 'ZA-203', 'name' => 'Youth Sports Kit', 'category' => 'Sports', 'serial' => 'GZ-SPORT-2026-03', 'purchase_date' => 'Jul 29, 2026', 'valuation' => 72500, 'custodian' => 'Gampaha Zone Store', 'status' => 'Available', 'status_key' => 'available'],
-                ['id' => 'ZA-204', 'name' => 'Projector', 'category' => 'Official Equipment', 'serial' => 'GZ-PROJ-2026-04', 'purchase_date' => 'Jun 10, 2026', 'valuation' => 132000, 'custodian' => 'Negombo Division', 'status' => 'In use', 'status_key' => 'inuse'],
-            ];
+        foreach ($model->getZoneFlags($zonalId) as $f) {
+            $m = $this->mapFlag($f);
+            fputcsv($out, [$m['id'], $m['division'], $m['type'], $m['reference'], number_format($m['amount'], 2, '.', ''), $m['status'], $m['note'] ?: $m['reason']]);
         }
-        return $_SESSION['zonal_asset_demo'][$key];
-    }
-
-    private function saveAssetState(array $assets) {
-        $_SESSION['zonal_asset_demo'][(string)($_SESSION['user_id'] ?? 'demo')] = $assets;
+        fclose($out);
     }
 
     private function zonalCsrf() {
@@ -300,10 +333,20 @@ class Zonaltreasurer extends Controller {
         return $_SESSION['zonal_treasurer_csrf'];
     }
 
+    private function treasurerFlash(string $type, string $message): void {
+        $_SESSION['zonal_treasurer_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    private function pullTreasurerFlash(): ?array {
+        $flash = $_SESSION['zonal_treasurer_flash'] ?? null;
+        unset($_SESSION['zonal_treasurer_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+
     private function validZonalPost($redirect) {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !is_string($_POST['csrf_token'] ?? null)
             || !hash_equals($this->zonalCsrf(), $_POST['csrf_token'])) {
-            $_SESSION['zonal_treasurer_flash'] = 'Refresh the page before submitting this action.';
+            $this->treasurerFlash('error', 'Refresh the page before submitting this action.');
             $this->redirect($redirect);
         }
     }
@@ -313,155 +356,222 @@ class Zonaltreasurer extends Controller {
      */
     public function assets() {
         $this->requireZonalTreasurer();
-        $assets = $this->assetState();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
+
         $category = trim((string)($_GET['category'] ?? ''));
         $status = trim((string)($_GET['status'] ?? ''));
         $search = strtolower(trim((string)($_GET['search'] ?? '')));
-        $categories = ['Audio Video Equipment', 'Events Equipment', 'Sports', 'Official Equipment'];
-        if ($category !== '' && !in_array($category, $categories, true)) $category = '';
-        if (!in_array($status, ['', 'available', 'inuse'], true)) $status = '';
+
+        $assets = [];
+        foreach ($model->getInventory($zonalId) as $s) {
+            $assets[] = [
+                'id' => (int) $s->catalog_item_id,
+                'name' => $s->item_name ?? '',
+                'category' => $s->category ?? '',
+                'sku' => $s->sku ?? '',
+                'quantity' => (int) $s->quantity,
+                'unit' => $s->unit ?? '',
+                'status' => 'Available',
+                'status_key' => 'available',
+            ];
+        }
         $visible = array_values(array_filter($assets, static function ($asset) use ($category, $status, $search) {
             return ($category === '' || $asset['category'] === $category)
                 && ($status === '' || $asset['status_key'] === $status)
-                && ($search === '' || str_contains(strtolower($asset['name'] . ' ' . $asset['serial'] . ' ' . $asset['custodian']), $search));
+                && ($search === '' || str_contains(strtolower($asset['name'] . ' ' . $asset['sku']), $search));
         }));
+
+        $catalog = $model->getCatalog();
+        $categories = [];
+        foreach ($catalog as $item) {
+            $categories[$item->category] = true;
+        }
+        $divisions = [];
+        foreach ($model->getDivisions($zonalId) as $d) {
+            $divisions[] = $d->division_name;
+        }
+        $custodians = ['Zone Store'];
+        foreach ($divisions as $divisionName) {
+            $custodians[] = $divisionName;
+        }
+
         $data = $this->shell(
             'Zonal Assets — YouthNexus Pulse',
             'Zonal Assets',
-            'Manage zonal assets and custodians across Gampaha Zone.',
+            'Manage zonal assets and custodians.',
             'zonaltreasurer/assets'
         );
-        $data += ['assets' => $visible, 'categories' => $categories, 'category' => $category, 'status' => $status, 'search' => $search,
-            'stats' => ['total' => count($assets), 'available' => count(array_filter($assets, static fn($asset) => $asset['status_key'] === 'available')),
-                'in_use' => count(array_filter($assets, static fn($asset) => $asset['status_key'] === 'inuse')),
-                'valuation' => array_sum(array_column($assets, 'valuation'))],
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $_SESSION['zonal_treasurer_flash'] ?? ''];
-        unset($_SESSION['zonal_treasurer_flash']);
+        $summary = $model->getAssetSummary($zonalId);
+        $data += ['assets' => $visible, 'categories' => array_keys($categories), 'category' => $category, 'status' => $status, 'search' => $search,
+            'stats' => ['units' => $summary['units'], 'items' => $summary['items']],
+            'catalog' => $catalog, 'custodians' => $custodians, 'divisions' => $divisions,
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
         $this->view('zonaltreasurer/assets', $data);
     }
 
     public function addasset() {
         $this->requireZonalTreasurer(); $this->validZonalPost('zonaltreasurer/assets');
-        $name = trim((string)($_POST['name'] ?? '')); $serial = trim((string)($_POST['serial'] ?? ''));
-        $category = trim((string)($_POST['category'] ?? '')); $date = trim((string)($_POST['purchase_date'] ?? ''));
-        $valuation = (float)str_replace(',', '', (string)($_POST['valuation'] ?? ''));
-        $categories = ['Audio Video Equipment', 'Events Equipment', 'Sports', 'Official Equipment'];
-        $dateValue = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
-        if ($name === '' || mb_strlen($name) > 150 || $serial === '' || mb_strlen($serial) > 80 || !in_array($category, $categories, true)
-            || !$dateValue || $dateValue->format('Y-m-d') !== $date || $valuation <= 0) {
-            $_SESSION['zonal_treasurer_flash'] = 'Provide an asset name, serial, category, valid purchase date and positive valuation.';
-        } else {
-            $assets = $this->assetState();
-            foreach ($assets as $asset) if (strcasecmp($asset['serial'], $serial) === 0) { $_SESSION['zonal_treasurer_flash'] = 'That asset serial already exists in the zonal inventory.'; $this->redirect('zonaltreasurer/assets'); }
-            $assets[] = ['id' => 'ZA-' . (201 + count($assets)), 'name' => $name, 'category' => $category, 'serial' => $serial,
-                'purchase_date' => $dateValue->format('M j, Y'), 'valuation' => $valuation, 'custodian' => 'Gampaha Zone Store', 'status' => 'Available', 'status_key' => 'available'];
-            $this->saveAssetState($assets); $_SESSION['zonal_treasurer_flash'] = 'Asset registered in the Gampaha Zone inventory.';
+        $itemId = (int) ($_POST['catalog_item_id'] ?? 0);
+        $quantity = (int) ($_POST['quantity'] ?? 0);
+        $note = substr(trim((string)($_POST['note'] ?? '')), 0, 500);
+        try {
+            $this->model('ZoneTreasuryModel')->addStock((int) ($_SESSION['zonal_id'] ?? 0), $itemId, $quantity, (int) $_SESSION['user_id'], $note);
+        } catch (InvalidArgumentException $e) {
+            $this->treasurerFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/assets');
         }
+        $this->treasurerFlash('success', 'Stock recorded in the zonal inventory.');
         $this->redirect('zonaltreasurer/assets');
     }
 
     public function transferasset() {
         $this->requireZonalTreasurer(); $this->validZonalPost('zonaltreasurer/assets');
-        $id = trim((string)($_POST['asset_id'] ?? '')); $custodian = trim((string)($_POST['custodian'] ?? ''));
-        $note = trim((string)($_POST['note'] ?? '')); $allowed = ['Gampaha Division', 'Ja-Ela Division', 'Negombo Division', 'Gampaha Zone Store'];
-        $assets = $this->assetState(); $found = null;
-        foreach ($assets as $index => $asset) if ($asset['id'] === $id) { $found = $index; break; }
-        if ($found === null || !in_array($custodian, $allowed, true) || $note === '' || mb_strlen($note) > 500) {
-            $_SESSION['zonal_treasurer_flash'] = 'Choose a zonal custodian and provide a transfer note.';
-        } else {
-            $assets[$found]['custodian'] = $custodian; $assets[$found]['status'] = $custodian === 'Gampaha Zone Store' ? 'Available' : 'In use';
-            $assets[$found]['status_key'] = $custodian === 'Gampaha Zone Store' ? 'available' : 'inuse';
-            $this->saveAssetState($assets); $_SESSION['zonal_treasurer_flash'] = 'Custody transfer recorded for the zonal asset.';
+        $itemId = (int) ($_POST['catalog_item_id'] ?? 0);
+        $custodian = trim((string)($_POST['custodian'] ?? ''));
+        $note = substr(trim((string)($_POST['note'] ?? '')), 0, 500);
+        try {
+            $this->model('ZoneTreasuryModel')->transferCustody((int) ($_SESSION['zonal_id'] ?? 0), $itemId, $custodian, $note, (int) $_SESSION['user_id']);
+        } catch (InvalidArgumentException $e) {
+            $this->treasurerFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/assets');
         }
+        $this->treasurerFlash('success', 'Custody transfer recorded for the zonal asset.');
         $this->redirect('zonaltreasurer/assets');
     }
 
     public function exportassets() {
         $this->requireZonalTreasurer();
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Assets.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Asset ID', 'Asset', 'Category', 'Serial', 'Purchase date', 'Valuation (LKR)', 'Custodian', 'Status']);
-        foreach ($this->assetState() as $asset) fputcsv($out, [$asset['id'], $asset['name'], $asset['category'], $asset['serial'], $asset['purchase_date'], number_format($asset['valuation'], 2, '.', ''), $asset['custodian'], $asset['status']]);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Assets.csv"');
+        $out = fopen('php://output', 'w'); fputcsv($out, ['Asset', 'Category', 'SKU', 'Quantity', 'Unit', 'Status']);
+        foreach ($this->model('ZoneTreasuryModel')->getInventory($zonalId) as $s) {
+            fputcsv($out, [$s->item_name, $s->category, $s->sku, $s->quantity, $s->unit, 'Available']);
+        }
         fclose($out);
     }
 
     /**
-     * Record and view Gampaha Zone income and expenses with a running balance.
+     * Zone income and expenses with a running balance (D12: real ledger).
      */
     public function ledger() {
         $this->requireZonalTreasurer();
-        $entries = $_SESSION['zonal_ledger_demo'][(string)($_SESSION['user_id'] ?? 'demo')] ?? [
-            ['id' => 'ZL-101', 'date' => 'Sep 20, 2026', 'description' => 'NYSC allocation received', 'type' => 'Income', 'type_key' => 'income', 'amount' => 1500000, 'receipt' => 'NYSC-ALLOC-2026-091.pdf', 'status' => 'Recorded', 'status_key' => 'verified'],
-            ['id' => 'ZL-102', 'date' => 'Sep 18, 2026', 'description' => 'Division allocation — Ja-Ela', 'type' => 'Expense', 'type_key' => 'expense', 'amount' => 200000, 'receipt' => 'GZ-DIV-2026-004.pdf', 'status' => 'Recorded', 'status_key' => 'verified'],
-            ['id' => 'ZL-103', 'date' => 'Sep 12, 2026', 'description' => 'Zone leadership forum venue', 'type' => 'Expense', 'type_key' => 'expense', 'amount' => 85000, 'receipt' => 'GZ-EVT-2026-014.pdf', 'status' => 'Recorded', 'status_key' => 'verified'],
-        ];
-        $_SESSION['zonal_ledger_demo'][(string)($_SESSION['user_id'] ?? 'demo')] = $entries;
-        $balance = 0;
-        foreach (array_reverse($entries) as $entry) $balance += $entry['type_key'] === 'income' ? $entry['amount'] : -$entry['amount'];
-        foreach ($entries as &$entry) { $entry['balance'] = $balance; $balance -= $entry['type_key'] === 'income' ? $entry['amount'] : -$entry['amount']; } unset($entry);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
+        $ledger = $model->ensureZoneLedger($zonalId);
+        $summary = $model->getLedgerSummary((int) $ledger->ledger_id);
+
+        $running = 0.0;
+        $entries = [];
+        foreach ($model->getLedgerEntries((int) $ledger->ledger_id) as $entry) {
+            $amount = (float) $entry->amount;
+            $running += $entry->type === 'Income' ? $amount : -$amount;
+            $ts = strtotime((string) $entry->date);
+            $entries[] = [
+                'id' => (int) $entry->entry_id,
+                'date' => $ts ? date('M d, Y', $ts) : '—',
+                'description' => $entry->description ?? '',
+                'type' => $entry->type ?? '',
+                'type_key' => strtolower($entry->type ?? ''),
+                'amount' => $amount,
+                'balance' => $running,
+                'has_receipt' => !empty($entry->attachment_url),
+                'status' => $entry->status ?? '',
+                'status_key' => strtolower($entry->status ?? ''),
+            ];
+        }
+        $entries = array_reverse($entries);
+
         $data = $this->shell(
             'Zonal Ledger — YouthNexus Pulse',
             'Zonal Ledger',
-            'Record Gampaha Zone income and expenses with a running balance.',
+            'Record zone income and expenses with a running balance.',
             'zonaltreasurer/ledger'
         );
-        $data += ['entries' => $entries, 'balance' => $entries ? $entries[0]['balance'] : 0,
-            'income' => array_sum(array_map(static fn($entry) => $entry['type_key'] === 'income' ? $entry['amount'] : 0, $entries)),
-            'expenses' => array_sum(array_map(static fn($entry) => $entry['type_key'] === 'expense' ? $entry['amount'] : 0, $entries)),
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $_SESSION['zonal_ledger_flash'] ?? ''];
-        unset($_SESSION['zonal_ledger_flash']);
+        $data += ['entries' => $entries, 'balance' => $summary['balance'],
+            'income' => $summary['income'], 'expenses' => $summary['expenses'],
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
         $this->view('zonaltreasurer/ledger', $data);
     }
 
     public function logtransaction() {
         $this->requireZonalTreasurer(); $this->validZonalPost('zonaltreasurer/ledger');
-        $type = trim((string)($_POST['type'] ?? '')); $amount = (float)str_replace(',', '', (string)($_POST['amount'] ?? ''));
-        $date = trim((string)($_POST['transaction_date'] ?? '')); $description = trim((string)($_POST['description'] ?? '')); $receipt = trim((string)($_POST['receipt'] ?? ''));
-        $dateValue = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
-        if (!in_array($type, ['Income', 'Expense'], true) || $amount <= 0 || !$dateValue || $dateValue->format('Y-m-d') !== $date
-            || $description === '' || mb_strlen($description) > 255 || $receipt === '' || mb_strlen($receipt) > 100) {
-            $_SESSION['zonal_ledger_flash'] = 'Provide a transaction type, positive amount, date, description and receipt reference.';
-        } else {
-            $key = (string)($_SESSION['user_id'] ?? 'demo'); $entries = $_SESSION['zonal_ledger_demo'][$key] ?? [];
-            array_unshift($entries, ['id' => 'ZL-' . (101 + count($entries)), 'date' => $dateValue->format('M j, Y'), 'description' => $description,
-                'type' => $type, 'type_key' => strtolower($type), 'amount' => $amount, 'receipt' => $receipt, 'status' => 'Recorded', 'status_key' => 'verified']);
-            $_SESSION['zonal_ledger_demo'][$key] = $entries; $_SESSION['zonal_ledger_flash'] = 'Zonal transaction recorded for this session.';
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
+
+        try {
+            $receiptUrl = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->treasurerFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/ledger');
         }
+        if ($receiptUrl === null) {
+            $this->treasurerFlash('error', 'A receipt upload is mandatory.');
+            $this->redirect('zonaltreasurer/ledger');
+        }
+
+        $ledger = $model->ensureZoneLedger($zonalId);
+        try {
+            $model->logTransaction((int) $ledger->ledger_id, (int) $_SESSION['user_id'], [
+                'amount' => $_POST['amount'] ?? 0,
+                'type' => $_POST['type'] ?? '',
+                'category' => trim($_POST['category'] ?? '') !== '' ? trim($_POST['category']) : 'General',
+                'description' => trim($_POST['description'] ?? ''),
+                'attachment_url' => $receiptUrl,
+                'date' => trim($_POST['transaction_date'] ?? ''),
+            ]);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->treasurerFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/ledger');
+        }
+        $this->treasurerFlash('success', 'Zonal transaction recorded.');
         $this->redirect('zonaltreasurer/ledger');
     }
 
     public function exportzonalledger() {
-        $this->requireZonalTreasurer(); $key = (string)($_SESSION['user_id'] ?? 'demo'); $entries = $_SESSION['zonal_ledger_demo'][$key] ?? [];
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Ledger.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Entry', 'Date', 'Description', 'Type', 'Amount (LKR)', 'Receipt reference', 'Status']);
-        foreach ($entries as $entry) fputcsv($out, [$entry['id'], $entry['date'], $entry['description'], $entry['type'], number_format($entry['amount'], 2, '.', ''), $entry['receipt'], $entry['status']]);
+        $this->requireZonalTreasurer();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
+        $ledger = $model->ensureZoneLedger($zonalId);
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Ledger.csv"');
+        $out = fopen('php://output', 'w'); fputcsv($out, ['Entry', 'Date', 'Description', 'Type', 'Amount (LKR)', 'Status']);
+        foreach ($model->getLedgerEntries((int) $ledger->ledger_id) as $entry) {
+            fputcsv($out, [$entry->entry_id, $entry->date, $entry->description, $entry->type, number_format($entry->amount, 2, '.', ''), $entry->status]);
+        }
         fclose($out);
     }
 
-    private function voidState() {
-        $key = (string)($_SESSION['user_id'] ?? 'demo');
-        if (!isset($_SESSION['zonal_void_demo'][$key])) {
-            $_SESSION['zonal_void_demo'][$key] = [
-                ['id' => 'ZV-101', 'division' => 'Gampaha Division', 'reference' => 'GAM-EXP-2026-034', 'description' => 'Programme transport reimbursement', 'amount' => 18500, 'requested_on' => 'Sep 20, 2026', 'reason' => 'Duplicate reimbursement entry identified after reconciliation.', 'status' => 'Pending'],
-                ['id' => 'ZV-102', 'division' => 'Ja-Ela Division', 'reference' => 'JAE-EXP-2026-041', 'description' => 'Workshop materials purchase', 'amount' => 12400, 'requested_on' => 'Sep 19, 2026', 'reason' => 'Supplier invoice was entered under the wrong programme code.', 'status' => 'Pending'],
-                ['id' => 'ZV-103', 'division' => 'Negombo Division', 'reference' => 'NEG-EXP-2026-017', 'description' => 'Venue deposit', 'amount' => 25000, 'requested_on' => 'Sep 16, 2026', 'reason' => 'Event was cancelled before the venue confirmation date.', 'status' => 'Approved'],
-            ];
-        }
-        return $_SESSION['zonal_void_demo'][$key];
-    }
-
-    private function saveVoidState(array $requests) {
-        $_SESSION['zonal_void_demo'][(string)($_SESSION['user_id'] ?? 'demo')] = $requests;
-    }
-
     /**
-     * Review pending requests submitted by divisions within the zone.
+     * Review DivisionToZonal void requests within the zone (D12).
      */
     public function voids() {
         $this->requireZonalTreasurer();
-        $requests = $this->voidState();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
         $status = trim((string)($_GET['status'] ?? 'Pending'));
         if (!in_array($status, ['Pending', 'Approved', 'Rejected', ''], true)) $status = 'Pending';
         $search = strtolower(trim((string)($_GET['search'] ?? '')));
+
+        $requests = [];
+        foreach ($model->getVoidRequests($zonalId) as $r) {
+            $ts = strtotime((string) $r->requested_at);
+            $requests[] = [
+                'id' => (int) $r->void_request_id,
+                'division' => $r->division ?? '',
+                'reference' => $r->reference ?? '',
+                'description' => $r->description ?? '',
+                'amount' => (float) $r->amount,
+                'requested_on' => $ts ? date('M d, Y', $ts) : '—',
+                'reason' => $r->reason ?? '',
+                'status' => $r->status ?? '',
+                'remark' => $r->remarks ?? '',
+                'requester' => $r->requester_name ?? '',
+            ];
+        }
         $visible = array_values(array_filter($requests, static function ($request) use ($status, $search) {
             return ($status === '' || $request['status'] === $status)
                 && ($search === '' || str_contains(strtolower($request['division'] . ' ' . $request['reference'] . ' ' . $request['description']), $search));
@@ -469,39 +579,45 @@ class Zonaltreasurer extends Controller {
         $data = $this->shell(
             'Void Requests — YouthNexus Pulse',
             'Void Requests',
-            'Review division void requests within Gampaha Zone.',
+            'Review division void requests within the zone.',
             'zonaltreasurer/voids'
         );
         $data += ['requests' => $visible, 'status' => $status, 'search' => $search,
             'pendingCount' => count(array_filter($requests, static fn($request) => $request['status'] === 'Pending')),
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $_SESSION['zonal_void_flash'] ?? ''];
-        unset($_SESSION['zonal_void_flash']);
+            'divisionCount' => count($model->getDivisions($zonalId)),
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
         $this->view('zonaltreasurer/voids', $data);
     }
 
     private function decideVoid($decision) {
         $this->requireZonalTreasurer(); $this->validZonalPost('zonaltreasurer/voids');
-        $id = trim((string)($_POST['void_id'] ?? '')); $remark = trim((string)($_POST['remark'] ?? ''));
-        $requests = $this->voidState(); $found = null;
-        foreach ($requests as $index => $request) if ($request['id'] === $id) { $found = $index; break; }
-        if ($found === null || $requests[$found]['status'] !== 'Pending' || $remark === '' || mb_strlen($remark) > 1000) {
-            $_SESSION['zonal_void_flash'] = 'A pending division request and a decision remark are required.';
-        } else {
-            $requests[$found]['status'] = $decision; $requests[$found]['remark'] = $remark;
-            $this->saveVoidState($requests); $_SESSION['zonal_void_flash'] = 'Void request ' . strtolower($decision) . ' and the division has been notified.';
+        $id = (int) ($_POST['void_id'] ?? 0); $remark = trim((string)($_POST['remark'] ?? ''));
+        try {
+            $this->model('ZoneTreasuryModel')->decideVoid((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $decision, $remark);
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->treasurerFlash('error', $e->getMessage());
+            $this->redirect('zonaltreasurer/voids');
         }
+        $this->treasurerFlash('success', 'Void request ' . strtolower($decision === 'approve' ? 'approved' : 'rejected') . ' and the division has been notified.');
         $this->redirect('zonaltreasurer/voids');
     }
 
-    public function approvevoid() { $this->decideVoid('Approved'); }
+    public function approvevoid() { $this->decideVoid('approve'); }
 
-    public function rejectvoid() { $this->decideVoid('Rejected'); }
+    public function rejectvoid() { $this->decideVoid('reject'); }
 
     public function exportvoids() {
         $this->requireZonalTreasurer();
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Division_Void_Requests.csv"');
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneTreasuryModel');
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $zone->zonal_name ?? 'Zone');
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Division_Void_Requests.csv"');
         $out = fopen('php://output', 'w'); fputcsv($out, ['Request', 'Division', 'Transaction reference', 'Description', 'Amount (LKR)', 'Requested on', 'Reason', 'Status', 'Decision remark']);
-        foreach ($this->voidState() as $request) fputcsv($out, [$request['id'], $request['division'], $request['reference'], $request['description'], number_format($request['amount'], 2, '.', ''), $request['requested_on'], $request['reason'], $request['status'], $request['remark'] ?? '']);
+        foreach ($model->getVoidRequests($zonalId) as $r) {
+            $ts = strtotime((string) $r->requested_at);
+            fputcsv($out, [$r->void_request_id, $r->division, $r->reference, $r->description, number_format($r->amount, 2, '.', ''), $ts ? date('M d, Y', $ts) : '', $r->reason, $r->status, $r->remarks ?? '']);
+        }
         fclose($out);
     }
 }

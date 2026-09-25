@@ -19,8 +19,11 @@ class Fundtransfer extends Controller {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'NYSCAdministrator') {
+        if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
+        }
+        if (($_SESSION['user_role'] ?? '') !== 'NYSCAdministrator') {
+            $this->redirect('home');
         }
     }
 

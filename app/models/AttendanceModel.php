@@ -748,4 +748,101 @@ class AttendanceModel extends Model {
             return (bool)$this->single($sql, [(int)$memberId, (int)$divisionId]);
         }
     }
+
+    // ==================================================================
+    // CLUB SCOPE (D3: club dashboards mark their own attendance)
+    // ==================================================================
+
+    /**
+     * Markable club events (approved or completed), newest first.
+     */
+    public function getClubMarkableEvents($clubId) {
+        return $this->resultSet(
+            "SELECT event_id, title, start_datetime, status
+             FROM Event
+             WHERE organizer_club_id = ? AND status IN ('Approved', 'Completed')
+             ORDER BY start_datetime DESC",
+            [(int) $clubId]
+        );
+    }
+
+    /**
+     * One event if it belongs to the club and is markable, else false.
+     */
+    public function getClubEventInScope($clubId, $eventId) {
+        return $this->single(
+            "SELECT event_id, title, start_datetime, status FROM Event
+             WHERE event_id = ? AND organizer_club_id = ?
+               AND status IN ('Approved', 'Completed') LIMIT 1",
+            [(int) $eventId, (int) $clubId]
+        );
+    }
+
+    /**
+     * Active roster with this event's records (unmarked members included).
+     */
+    public function getClubEventRoster($clubId, $eventId) {
+        return $this->resultSet(
+            "SELECT u.user_id, u.first_name, u.last_name,
+                    a.status AS att_status, a.check_in_time, a.check_out_time, a.remark
+             FROM User u
+             LEFT JOIN Attendance a ON a.user_id = u.user_id AND a.event_id = ?
+             WHERE u.club_id = ? AND u.status = 'Active'
+               AND COALESCE(u.membership_status, 'Active') = 'Active'
+             ORDER BY u.first_name, u.last_name",
+            [(int) $eventId, (int) $clubId]
+        );
+    }
+
+    /**
+     * Scoped upsert: event and member must both belong to the club.
+     * Returns true on write, false on scope mismatch.
+     */
+    public function saveClubAttendance($clubId, $eventId, $memberId, $status, $in, $out, $remark, $by) {
+        if (!in_array($status, ['Present', 'Absent'], true)) {
+            return false;
+        }
+        $event = $this->getClubEventInScope($clubId, $eventId);
+        if (!$event) {
+            return false;
+        }
+        $member = $this->single(
+            "SELECT user_id FROM User
+             WHERE user_id = ? AND club_id = ? AND status = 'Active'
+               AND COALESCE(membership_status, 'Active') = 'Active' LIMIT 1",
+            [(int) $memberId, (int) $clubId]
+        );
+        if (!$member) {
+            return false;
+        }
+        $this->saveAttendance($eventId, $memberId, $status, $in, $out, $remark, $by);
+        return true;
+    }
+
+    /**
+     * Member's own summary across club events.
+     */
+    public function getClubMemberSummary($clubId, $userId) {
+        $history = $this->resultSet(
+            "SELECT e.title, e.start_datetime, a.status
+             FROM Attendance a
+             JOIN Event e ON a.event_id = e.event_id
+             WHERE a.user_id = ? AND e.organizer_club_id = ?
+             ORDER BY e.start_datetime DESC",
+            [(int) $userId, (int) $clubId]
+        );
+        $present = 0;
+        foreach ($history as $h) {
+            if ($h->status === 'Present') {
+                $present++;
+            }
+        }
+        $sessions = count($history);
+        return [
+            'sessions' => $sessions,
+            'rate'     => $sessions > 0 ? (int) round($present * 100 / $sessions) . '%' : '—',
+            'absent'   => $sessions - $present,
+            'history'  => $history,
+        ];
+    }
 }

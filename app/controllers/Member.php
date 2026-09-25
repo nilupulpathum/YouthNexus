@@ -16,6 +16,10 @@ class Member extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['club_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a club.');
+        }
     }
 
     /**
@@ -33,67 +37,76 @@ class Member extends Controller {
             substr($memberName, 0, 1) . substr(strrchr(' ' . $memberName, ' '), 1, 1)
         );
 
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $roleLabels = ['ClubPresident' => 'President', 'ClubSecretary' => 'Secretary', 'ClubTreasurer' => 'Treasurer', 'ClubMember' => 'Member', 'Member' => 'Member'];
+
+        $attSummary = $this->model('AttendanceModel')->getClubMemberSummary($clubId, $userId);
+        $upcoming = ClubOverview::upcoming($this, $clubId);
+        $annRows = ClubOverview::announcements($this, $clubId, $userId, $_SESSION['user_role'] ?? 'ClubMember', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+
+        $unread = 0;
+        try {
+            $all = $this->model('AnnouncementModel')->findForUser($userId, $_SESSION['user_role'] ?? 'ClubMember', $clubId, (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+            $readModel = $this->model('AnnouncementReadModel');
+            foreach (is_array($all) ? $all : [] as $a) {
+                $row = is_array($a) ? (object) $a : $a;
+                $id = (int) ($row->announcement_id ?? $row->id ?? 0);
+                if ($id > 0 && !$readModel->hasRead($id, $userId)) {
+                    $unread++;
+                }
+            }
+        } catch (Throwable $e) {
+            $unread = 0;
+        }
+
+        $certs = $this->model('CertificateModel')->findByOwner('Member', $userId);
+        $latestCert = '—';
+        if (is_array($certs) && count($certs) > 0) {
+            $first = is_array($certs[0]) ? (object) $certs[0] : $certs[0];
+            $latestCert = ($first->certificate_type ?? 'Certificate') . ' — Issued';
+        }
+
+        $actionLabels = [
+            'SAVE_ATTENDANCE' => 'Attendance recorded',
+            'APPROVE_MEMBER'  => 'Approved a member application',
+            'REJECT_MEMBER'   => 'Reviewed a member application',
+            'ASSIGN_ROLE'     => 'Assigned an executive role',
+            'CREATE_EVENT'    => 'Created an event',
+            'APPROVE_EVENT'   => 'Approved an event',
+            'REJECT_EVENT'    => 'Reviewed an event',
+            'COMPLETE_EVENT'  => 'Completed an event',
+            'LOG_TRANSACTION' => 'Logged a transaction',
+            'REQUEST_VOID'    => 'Requested a void',
+            'REGISTER_MEMBER' => 'Registered a member',
+            'HANDOVER'        => 'Handed over the presidency',
+        ];
+        $recentActivity = [];
+        foreach ($this->model('AuditLogModel')->getByActor($userId, 4) as $log) {
+            $ts = strtotime((string) $log->timestamp);
+            $recentActivity[] = [
+                'label' => $actionLabels[$log->action_type] ?? ucwords(strtolower(str_replace('_', ' ', $log->action_type))),
+                'meta'  => $ts ? date('M d, g:i A', $ts) : '',
+                'icon'  => 'check',
+            ];
+        }
+
         $memberDashboard = [
             'member' => [
                 'name'      => $memberName,
-                'role'      => 'Member',
+                'role'      => $roleLabels[$_SESSION['user_role'] ?? ''] ?? 'Member',
                 'club_name' => $_SESSION['club_name'] ?? 'Gampaha Youth Development Club',
                 'initials'   => $memberInitials ?: 'JD',
             ],
             'tiles' => [
-                'volunteer_hours'      => 136,
-                'upcoming_events'      => 5,
-                'unread_announcements'=> 2,
-                'latest_certificate'  => 'Youth Leadership — Verified',
+                'volunteer_hours'      => '—',
+                'upcoming_events'      => count($upcoming),
+                'unread_announcements'=> $unread,
+                'latest_certificate'  => $latestCert,
             ],
-            'announcements' => [
-                [
-                    'title'   => 'Divisional Leadership Summit 2025',
-                    'summary' => 'Confirm your attendance for the upcoming leadership summit by this Friday.',
-                    'scope'   => 'Divisional',
-                    'age'     => '2 days ago',
-                    'is_new'  => true,
-                ],
-                [
-                    'title'   => 'New Volunteer Hour Submission Policy',
-                    'summary' => 'Volunteer hours should be submitted within seven days of the activity.',
-                    'scope'   => 'National',
-                    'age'     => '1 week ago',
-                    'is_new'  => false,
-                ],
-            ],
-            'upcoming_events_list' => [
-                [
-                    'title'    => 'Gampaha Youth Leadership Workshop 2026',
-                    'date'     => 'Sep 15, 2026',
-                    'location' => 'Gampaha Town Hall',
-                    'scope'    => 'Divisional',
-                    'status'   => 'Attending',
-                    'status_key'=> 'attending',
-                ],
-                [
-                    'title'    => 'Divisional Skills Development Seminar',
-                    'date'     => 'Sep 22, 2026',
-                    'location' => 'Gampaha',
-                    'scope'    => 'Divisional',
-                    'status'   => 'Pending',
-                    'status_key'=> 'pending',
-                ],
-                [
-                    'title'    => 'Club Planning Session',
-                    'date'     => 'Sep 28, 2026',
-                    'location' => 'Club Centre',
-                    'scope'    => 'Club',
-                    'status'   => 'Attending',
-                    'status_key'=> 'attending',
-                ],
-            ],
-            'recent_activity' => [
-                ['label' => 'Marked attendance at Divisional Youth Summit', 'meta' => 'Yesterday, 3:45 PM', 'icon' => 'check'],
-                ['label' => 'Volunteer hours submitted for Community Clean-up Drive', 'meta' => 'Sep 9, 10:12 AM', 'icon' => 'hours'],
-                ['label' => 'RSVP’d to Gampaha Youth Leadership Workshop', 'meta' => 'Sep 8, 2:00 PM', 'icon' => 'event'],
-                ['label' => 'Read announcement: New Volunteer Hour Policy', 'meta' => 'Sep 7, 9:20 AM', 'icon' => 'read'],
-            ],
+            'announcements' => $annRows,
+            'upcoming_events_list' => $upcoming,
+            'recent_activity' => $recentActivity,
         ];
 
         $this->view('member/index', [
@@ -107,16 +120,50 @@ class Member extends Controller {
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
             'unreadNotificationCount' => 2,
             'memberDashboard'         => $memberDashboard,
-            // Exec summary strips (C2/C9 data, full overviews live at /president + /treasurer).
+            // Exec summary strips (same sources as the full overviews).
             'presidentSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubPresident', 'president'], true)
-                ? ['health_score' => 78, 'health_label' => 'Green', 'pending_events' => 1, 'pending_members' => 1]
+                ? $this->presidentStrip($clubId)
                 : null,
             'treasurerSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubTreasurer', 'treasurer'], true)
-                ? ['balance' => 'Rs. 132,400', 'income' => 'Rs. 74,500', 'expenses' => 'Rs. 25,500', 'pending_voids' => 1]
+                ? $this->treasurerStrip($clubId)
                 : null,
             'secretarySummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubSecretary', 'secretary'], true)
-                ? ['pending_members' => 1, 'pending_events' => 1]
+                ? $this->secretaryStrip($clubId)
                 : null,
         ]);
+    }
+
+    private function presidentStrip($clubId) {
+        $score = $this->model('DivisionalClubHealthModel')->scoreClub($clubId);
+        $memberCounts = $this->model('UserModel')->countClubRoster($clubId);
+        $eventCounts = $this->model('EventModel')->countClubEventsByStatus($clubId);
+        return [
+            'health_score' => $score['overall_score'],
+            'health_label' => $score['health_status'],
+            'pending_events' => $eventCounts['PendingApproval'],
+            'pending_members' => $memberCounts['pending'],
+        ];
+    }
+
+    private function treasurerStrip($clubId) {
+        $ledgerModel = $this->model('ClubLedgerModel');
+        $ledger = $ledgerModel->ensureClubLedger($clubId);
+        $summary = $ledgerModel->getSummary((int) $ledger->ledger_id);
+        $money = static fn($v) => 'Rs. ' . number_format((float) $v, 2);
+        return [
+            'balance' => $money($summary['balance']),
+            'income' => $money($summary['income']),
+            'expenses' => $money($summary['expenses']),
+            'pending_voids' => $ledgerModel->getPendingVoidCount((int) $ledger->ledger_id),
+        ];
+    }
+
+    private function secretaryStrip($clubId) {
+        $memberCounts = $this->model('UserModel')->countClubRoster($clubId);
+        $eventCounts = $this->model('EventModel')->countClubEventsByStatus($clubId);
+        return [
+            'pending_members' => $memberCounts['pending'],
+            'pending_events' => $eventCounts['PendingApproval'],
+        ];
     }
 }
