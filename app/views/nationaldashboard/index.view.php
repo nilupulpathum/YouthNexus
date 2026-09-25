@@ -19,11 +19,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <h3>Create Event</h3>
                     <p>Schedule a national-level event</p>
                 </a>
-                <a class="nd-quick-card" href="<?= ROOT ?>/applications">
-                    <h3>Review Pending Registrations</h3>
-                    <p><?= (int)$pendingApps ?> clubs awaiting approval</p>
-                </a>
-                <a class="nd-quick-card" href="<?= ROOT ?>/clubs">
+                <a class="nd-quick-card" href="<?= ROOT ?>/audit">
                     <h3>View Overdue Audits</h3>
                     <p><?= (int)$overdueAudits ?> audits past due date</p>
                 </a>
@@ -79,7 +75,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="nd-panel nd-panel-left">
                     <div class="nd-panel-header">
                         <h3>Club Health Score Distribution</h3>
-                        <a href="<?= ROOT ?>/clubs">View all &rsaquo;</a>
+                        <a href="<?= ROOT ?>/nationalanalytics">View all &rsaquo;</a>
                     </div>
                     <div class="nd-bar-chart">
                         <?php
@@ -136,7 +132,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             </div>
                         </li>
                     </ul>
-                    <a href="<?= ROOT ?>/analytics" class="nd-view-link">View Analytics &rsaquo;</a>
+                    <a href="<?= ROOT ?>/nationalanalytics" class="nd-view-link">View Analytics &rsaquo;</a>
                 </div>
             </div>
 
