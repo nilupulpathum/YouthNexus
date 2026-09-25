@@ -24,6 +24,10 @@ class Zonalcoordinator extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['zonal_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a zone.');
+        }
     }
 
     /**
@@ -51,25 +55,24 @@ class Zonalcoordinator extends Controller {
     public function index() {
         $this->requireZonalCoordinator();
 
-        $mock = $this->model('ZoneHealthMock');
-        $clubs = $mock->zoneClubs();
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $built = $this->buildMonitor($zonalId);
 
         $data = $this->shell(
             'Zonal Coordinator Overview — YouthNexus Pulse',
             'Zonal Coordinator Overview',
-            'Zone health of Gampaha Zone.',
+            'Zone health of ' . $built['zone_name'] . '.',
             'zonalcoordinator'
         );
-        $data['zoneHealth'] = $mock->zoneHealth($clubs);
-        $data['divisions'] = $mock->divisionAverages($clubs);
-        $data['announcements'] = [
-            ['title' => 'Quarterly reporting window', 'summary' => 'Division coordinators should complete their zone reports by September 30.', 'age' => '1 day ago', 'is_new' => true],
-            ['title' => 'NYSC leadership forum', 'summary' => 'Zone representatives should confirm attendance with the zonal secretary.', 'age' => '4 days ago', 'is_new' => false],
-        ];
-        $data['upcomingEvents'] = [
-            ['title' => 'Zone Youth Leadership Forum', 'date' => 'Oct 10, 2026', 'location' => 'Gampaha Youth Centre', 'status' => 'Scheduled', 'status_key' => 'attending'],
-            ['title' => 'Digital Skills Workshop', 'date' => 'Oct 22, 2026', 'location' => 'Ja-Ela Community Hall', 'status' => 'Scheduled', 'status_key' => 'attending'],
-        ];
+        $data['zoneHealth'] = $built['zoneHealth'];
+        $data['divisions'] = $built['divisions'];
+        $data['announcements'] = [];
+        $data['upcomingEvents'] = [];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('zonalcoordinator/index', $data);
     }
@@ -82,11 +85,12 @@ class Zonalcoordinator extends Controller {
     public function clubs() {
         $this->requireZonalCoordinator();
 
-        $mock = $this->model('ZoneHealthMock');
-        $clubs = $mock->zoneClubs();
-        usort($clubs, static function ($a, $b) {
-            return $b['score'] <=> $a['score'];
-        });
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $built = $this->buildMonitor($zonalId);
 
         $data = $this->shell(
             'Monitor Club Health — YouthNexus Pulse',
@@ -94,11 +98,187 @@ class Zonalcoordinator extends Controller {
             'Monitor club health scores and identify clubs requiring intervention.',
             'zonalcoordinator/clubs'
         );
-        $data['zoneHealth'] = $mock->zoneHealth($clubs);
-        $data['divisions'] = $mock->divisionAverages($clubs);
-        $data['clubs'] = $clubs;
+        $data['zoneHealth'] = $built['bands'];
+        $data['divisions'] = $built['divisions'];
+        $data['clubs'] = $built['clubs'];
+        $data['csrf_token'] = $_SESSION['csrf_token'];
+        $data['flash'] = $this->pullFlash();
 
         $this->view('zonalcoordinator/clubs', $data);
+    }
+
+    /**
+     * Flag a club for NYSC Admin review (D8).
+     */
+    public function flagClub() {
+        $this->requireZonalCoordinator();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('zonalcoordinator/clubs');
+        }
+        if (!$this->verifyCsrf()) {
+            $this->setFlash('error', 'Invalid request. Please try again.');
+            $this->redirect('zonalcoordinator/clubs');
+        }
+
+        $clubId = (int) ($_POST['club_id'] ?? 0);
+        $category = trim($_POST['category'] ?? '');
+        $remarks = trim($_POST['remarks'] ?? '');
+        if ($clubId < 1) {
+            $this->setFlash('error', 'Invalid club.');
+            $this->redirect('zonalcoordinator/clubs');
+        }
+
+        try {
+            $flagId = $this->model('ZoneMonitorModel')->raiseZoneFlag(
+                (int) ($_SESSION['zonal_id'] ?? 0), $clubId, (int) $_SESSION['user_id'], $category, $remarks
+            );
+        } catch (InvalidArgumentException | RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('zonalcoordinator/clubs');
+        }
+        $this->setFlash('success', "Club flagged for NYSC Admin review (flag #{$flagId}).");
+        $this->redirect('zonalcoordinator/clubs');
+    }
+
+    private function verifyCsrf(): bool {
+        $token = (string) ($_POST['csrf_token'] ?? '');
+        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
+    }
+
+    private function setFlash(string $type, string $message): void {
+        $_SESSION['zonal_flash'] = ['type' => $type, 'message' => $message];
+    }
+
+    private function pullFlash(): ?array {
+        $flash = $_SESSION['zonal_flash'] ?? null;
+        unset($_SESSION['zonal_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+
+    /**
+     * Assemble bands, division averages and club cards for a zone.
+     */
+    private function buildMonitor(int $zonalId): array {
+        $monitor = $this->model('ZoneMonitorModel');
+        $healthModel = $this->model('DivisionalClubHealthModel');
+        $zone = $monitor->getZone($zonalId);
+        $zoneName = $zone->zonal_name ?? 'Zone';
+
+        $bandOf = static function ($score) {
+            if ($score >= 85) {
+                return 'healthy';
+            }
+            if ($score >= 50) {
+                return 'atrisk';
+            }
+            return 'dormant';
+        };
+
+        $clubs = [];
+        $divStats = [];
+        foreach ($monitor->getClubs($zonalId) as $c) {
+            $clubId = (int) $c->club_id;
+            $score = $healthModel->scoreClub($clubId);
+            $overall = (float) $score['overall_score'];
+            $band = $bandOf($overall);
+            $execs = [];
+            foreach ($monitor->getExecutives($clubId) as $x) {
+                $execs[] = [
+                    'name' => trim(($x->first_name ?? '') . ' ' . ($x->last_name ?? '')),
+                    'role' => ['ClubPresident' => 'President', 'ClubSecretary' => 'Secretary', 'ClubTreasurer' => 'Treasurer'][$x->role] ?? $x->role,
+                ];
+            }
+            $recent = [];
+            foreach ($monitor->getRecentEvents($clubId) as $ev) {
+                $ts = strtotime((string) $ev->start_datetime);
+                $recent[] = [
+                    'title' => $ev->title ?? '',
+                    'date' => $ts ? date('M d, Y', $ts) : '—',
+                    'status' => $ev->status ?? '',
+                ];
+            }
+            $rate = $monitor->getAttendanceRate($clubId);
+            $openFlags = (int) ($c->open_flags ?? 0);
+            $trigger = $band === 'dormant' ? 'Intervention required' : ($band === 'atrisk' ? 'Watch list' : 'Healthy');
+            if ($openFlags > 0) {
+                $trigger .= " · {$openFlags} open flag(s)";
+            }
+            $clubs[] = [
+                'id' => $clubId,
+                'name' => $c->club_name ?? '',
+                'division' => $c->division_name ?? '',
+                'score' => $overall,
+                'band' => $band,
+                'status' => $score['health_status'],
+                'status_key' => strtolower($score['health_status']),
+                'members' => (int) ($c->active_members ?? 0),
+                'members_note' => (int) ($c->active_members ?? 0) . ' active members',
+                'about' => $c->description ?? '',
+                'category' => '—',
+                'location' => '—',
+                'established' => ($c->registration_date && $c->registration_date !== '0000-00-00') ? date('M Y', strtotime($c->registration_date)) : '—',
+                'avg_attendance' => $rate === null ? '—' : $rate . '%',
+                'attendance_trend' => '—',
+                'trigger' => $trigger,
+                'events' => ['points' => (int) round($score['event_score'] / 100 * 40), 'max' => 40],
+                'finances' => ['points' => (int) round($score['finance_score'] / 100 * 30), 'max' => 30],
+                'attendance' => ['points' => (int) round($score['attendance_score'] / 100 * 30), 'max' => 30],
+                'recent_events' => $recent,
+                'execs' => $execs,
+            ];
+            $divId = (int) $c->division_id;
+            if (!isset($divStats[$divId])) {
+                $divStats[$divId] = ['division' => $c->division_name ?? '', 'scores' => [], 'clubs' => 0];
+            }
+            $divStats[$divId]['scores'][] = $overall;
+            $divStats[$divId]['clubs']++;
+        }
+        usort($clubs, static fn($a, $b) => $b['score'] <=> $a['score']);
+
+        $divisions = [];
+        foreach ($monitor->getDivisions($zonalId) as $d) {
+            $stats = $divStats[(int) $d->division_id] ?? ['scores' => [], 'clubs' => 0];
+            $avg = count($stats['scores']) > 0 ? round(array_sum($stats['scores']) / count($stats['scores']), 1) : 0;
+            $divisions[] = [
+                'division' => $d->division_name ?? '',
+                'average' => $avg,
+                'clubs' => $stats['clubs'],
+                'status' => $avg >= 85 ? 'Healthy' : ($avg >= 50 ? 'At Risk' : 'Dormant'),
+                'status_key' => $bandOf($avg),
+            ];
+        }
+
+        $bands = ['healthy' => 0, 'atrisk' => 0, 'dormant' => 0];
+        foreach ($clubs as $c) {
+            $bands[$c['band']]++;
+        }
+
+        $n = count($clubs);
+        $avgOf = static function ($key) use ($clubs, $n) {
+            if ($n === 0) {
+                return 0;
+            }
+            $sum = 0;
+            foreach ($clubs as $c) {
+                $sum += $c[$key]['points'] / max(1, $c[$key]['max']) * 100;
+            }
+            return round($sum / $n, 1);
+        };
+        $eventScore = $avgOf('events');
+        $financeScore = $avgOf('finances');
+        $attendanceScore = $avgOf('attendance');
+        $overall = $n > 0 ? round(($eventScore * 0.4) + ($financeScore * 0.3) + ($attendanceScore * 0.3), 1) : 0;
+        $zoneHealth = [
+            'score' => $overall,
+            'label' => $overall >= 85 ? 'Healthy' : ($overall >= 50 ? 'At Risk' : 'Dormant'),
+            'state' => $n . ($n === 1 ? ' club' : ' clubs'),
+            'events' => ['points' => (int) round($eventScore / 100 * 40), 'max' => 40],
+            'finances' => ['points' => (int) round($financeScore / 100 * 30), 'max' => 30],
+            'attendance' => ['points' => (int) round($attendanceScore / 100 * 30), 'max' => 30],
+        ];
+
+        return ['zone_name' => $zoneName, 'bands' => $bands, 'zoneHealth' => $zoneHealth, 'divisions' => $divisions, 'clubs' => $clubs];
     }
 
     private function programmeState() {
@@ -117,52 +297,132 @@ class Zonalcoordinator extends Controller {
     }
 
     public function events() {
-        $this->requireZonalCoordinator(); $state = $this->programmeState();
-        $data = $this->shell('Approve Zonal Events — YouthNexus Pulse', 'Approve Zonal Events', 'Review events submitted by the Zonal Secretary for Gampaha Zone.', 'zonalcoordinator/events');
-        $data += ['events' => array_reverse($state['events']), 'eventStats' => ['scheduled' => count($state['events']), 'committed' => $state['spent'], 'available' => $state['budget']], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $_SESSION['zonal_coordinator_flash'] ?? ''];
-        unset($_SESSION['zonal_coordinator_flash']); $this->view('zonalcoordinator/events', $data);
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $statusMap = [
+            'PendingApproval' => 'Pending approval',
+            'Approved' => 'Approved',
+            'Completed' => 'Completed',
+            'Rejected' => 'Changes requested',
+        ];
+        $events = [];
+        $pending = 0;
+        $approved = 0;
+        foreach ($this->model('EventModel')->getZonalEvents($zonalId) as $ev) {
+            if ($ev->status === 'PendingApproval') {
+                $pending++;
+            } elseif ($ev->status === 'Approved') {
+                $approved++;
+            }
+            $start = strtotime((string) $ev->start_datetime);
+            $events[] = [
+                'id' => (int) $ev->event_id,
+                'title' => $ev->title ?? '',
+                'type' => $ev->event_type ?? '',
+                'date' => $start ? date('M d, Y', $start) : '—',
+                'time' => $start ? date('g:i A', $start) : '',
+                'location' => $ev->location ?? '',
+                'audience' => $ev->target_divisions ?: 'All divisions',
+                'status' => $statusMap[$ev->status] ?? $ev->status,
+                'status_key' => strtolower($ev->status ?? ''),
+                'coordinator_remark' => $ev->rejection_remarks ?? '',
+            ];
+        }
+        $data = $this->shell('Approve Zonal Events — YouthNexus Pulse', 'Approve Zonal Events', 'Review events submitted by the Zonal Secretary.', 'zonalcoordinator/events');
+        $data += ['events' => $events, 'eventStats' => ['scheduled' => $pending, 'approved' => $approved, 'total' => count($events)], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $this->pullFlash()];
+        $this->view('zonalcoordinator/events', $data);
     }
 
-    private function decideEvent($status) {
+    private function decideEvent($decision) {
         $this->requireZonalCoordinator();
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !is_string($_POST['csrf_token'] ?? null) || !hash_equals($this->coordinatorCsrf(), $_POST['csrf_token'])) {
-            $_SESSION['zonal_coordinator_flash'] = 'Refresh the event queue before submitting a decision.'; $this->redirect('zonalcoordinator/events');
+            $this->setFlash('error', 'Refresh the event queue before submitting a decision.'); $this->redirect('zonalcoordinator/events');
         }
-        $id = trim((string)($_POST['event_id'] ?? '')); $remark = trim((string)($_POST['remark'] ?? '')); $state = $this->programmeState(); $found = null;
-        foreach ($state['events'] as $index => $event) if ($event['id'] === $id) { $found = $index; break; }
-        if ($found === null || $state['events'][$found]['status'] !== 'Pending approval' || $remark === '' || mb_strlen($remark) > 1000) {
-            $_SESSION['zonal_coordinator_flash'] = 'A pending event and decision remark are required.';
-        } else {
-            $state['events'][$found]['status'] = $status; $state['events'][$found]['coordinator_remark'] = $remark; $_SESSION['zonal_secretary_demo']['gampaha'] = $state;
-            $_SESSION['zonal_coordinator_flash'] = $status === 'Approved' ? 'Event approved and the Zonal Secretary has been notified.' : 'Event returned to the Zonal Secretary with the requested changes.';
+        $id = (int) ($_POST['event_id'] ?? 0); $remark = trim((string)($_POST['remark'] ?? ''));
+        if ($id < 1 || $remark === '' || mb_strlen($remark) > 1000) {
+            $this->setFlash('error', 'A pending event and decision remark are required.');
+            $this->redirect('zonalcoordinator/events');
         }
+        $rows = $this->model('EventModel')->decideZonalEvent((int) ($_SESSION['zonal_id'] ?? 0), $id, (int) $_SESSION['user_id'], $decision, $remark);
+        if ($rows < 1) {
+            $this->setFlash('error', 'Event not found in your zone.');
+            $this->redirect('zonalcoordinator/events');
+        }
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], $decision === 'approve' ? 'APPROVE_EVENT' : 'REJECT_EVENT', 'Event', $id, $remark);
+        $this->setFlash('success', $decision === 'approve' ? 'Event approved and the Zonal Secretary has been notified.' : 'Event returned to the Zonal Secretary with the requested changes.');
         $this->redirect('zonalcoordinator/events');
     }
 
-    public function approveevent() { $this->decideEvent('Approved'); }
-    public function returnevent() { $this->decideEvent('Changes requested'); }
+    public function approveevent() { $this->decideEvent('approve'); }
+    public function returnevent() { $this->decideEvent('request-changes'); }
 
     public function reports() {
         $this->requireZonalCoordinator();
-        $reports = [
-            ['id' => 'ZCR-101', 'title' => 'Quarterly financial rollup', 'division' => 'All divisions', 'date' => 'Sep 20, 2026'],
-            ['id' => 'ZCR-102', 'title' => 'Division attendance rollup', 'division' => 'All divisions', 'date' => 'Sep 18, 2026'],
-            ['id' => 'ZCR-103', 'title' => 'Zonal programme activity', 'division' => 'Ja-Ela Division', 'date' => 'Sep 16, 2026'],
-        ];
-        $data = $this->shell('Aggregate Reports — YouthNexus Pulse', 'Aggregate Reports', 'Generate and review Gampaha Zone divisional rollups.', 'zonalcoordinator/reports');
-        $data += ['reports' => $reports]; $this->view('zonalcoordinator/reports', $data);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $reports = [];
+        foreach ($this->model('ZoneReportModel')->getReports($zonalId) as $r) {
+            $ts = strtotime((string) $r->generated_at);
+            $reports[] = [
+                'id' => (int) $r->report_id,
+                'title' => $r->type_name ?? '',
+                'division' => 'All divisions',
+                'date' => $ts ? date('M d, Y', $ts) : '—',
+            ];
+        }
+        $data = $this->shell('Aggregate Reports — YouthNexus Pulse', 'Aggregate Reports', 'Zone-generated rollups.', 'zonalcoordinator/reports');
+        $data += ['reports' => $reports, 'zoneName' => $this->zoneDisplayName($zonalId)]; $this->view('zonalcoordinator/reports', $data);
     }
 
     public function reportpreview($id = null) {
         $this->requireZonalCoordinator();
-        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', 'Gampaha Zone aggregate report preview.', 'zonalcoordinator/reports');
-        $data['reportId'] = preg_match('/^ZCR-10[1-3]$/', (string)$id) ? $id : 'ZCR-101'; $this->view('zonalcoordinator/reportpreview', $data);
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalcoordinator/reports');
+        }
+        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', $report->type_name ?? 'Report', 'zonalcoordinator/reports');
+        $data['report'] = $report;
+        $data['snapshot'] = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        $data['zoneName'] = $this->zoneDisplayName($zonalId);
+        $data['backRoute'] = 'zonalcoordinator/reports';
+        $data['exportRoute'] = 'zonalcoordinator/exportreport/' . (int) $report->report_id;
+        $this->view('zonalcoordinator/reportpreview', $data);
+    }
+
+    public function exportreport($id = null) {
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
+        if (!$report) {
+            $this->redirect('zonalcoordinator/reports');
+        }
+        $snapshot = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="zone-report-' . (int) $report->report_id . '.csv"');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, $snapshot['columns'] ?? []);
+        foreach ($snapshot['rows'] ?? [] as $row) {
+            fputcsv($out, array_values(is_array($row) ? $row : (array) $row));
+        }
+        fclose($out);
+    }
+
+    private function zoneDisplayName(int $zonalId): string {
+        $zone = $this->model('ZoneFundModel')->getZone($zonalId);
+        return $zone->zonal_name ?? 'Zone';
     }
 
     public function exportreports() {
-        $this->requireZonalCoordinator(); header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="Gampaha_Zone_Coordinator_Reports.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Division', 'Reporting clubs', 'Events', 'Attendance rate', 'Reported balance (LKR)']);
-        fputcsv($out, ['Gampaha Division', 8, 7, '78%', '206000']); fputcsv($out, ['Ja-Ela Division', 6, 6, '79%', '222000']); fputcsv($out, ['Negombo Division', 5, 5, '74%', '142000']); fclose($out);
+        $this->requireZonalCoordinator();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $model = $this->model('ZoneReportModel');
+        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $this->zoneDisplayName($zonalId));
+        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Reports.csv"');
+        $out = fopen('php://output', 'w'); fputcsv($out, ['Report', 'Category', 'Period', 'Format', 'Generated']);
+        foreach ($model->getReports($zonalId) as $r) {
+            fputcsv($out, [$r->type_name, $r->category, $r->date_range_start . ' to ' . $r->date_range_end, $r->format, $r->generated_at]);
+        }
+        fclose($out);
     }
 
 }
