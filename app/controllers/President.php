@@ -53,68 +53,77 @@ class President extends Controller {
     public function index() {
         $this->requirePresident();
 
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+        $eventModel = $this->model('EventModel');
+
+        $score = $this->model('DivisionalClubHealthModel')->scoreClub($clubId);
         $health = [
-            'score'  => 78,
-            'label'  => 'Green',
+            'score'  => $score['overall_score'],
+            'label'  => $score['health_status'],
             'state'  => 'Active',
-            'events' => ['points' => 32, 'max' => 40],
-            'finances' => ['points' => 24, 'max' => 30],
-            'attendance' => ['points' => 22, 'max' => 30],
+            'events' => ['points' => (int) round($score['event_score'] / 100 * 40), 'max' => 40],
+            'finances' => ['points' => (int) round($score['finance_score'] / 100 * 30), 'max' => 30],
+            'attendance' => ['points' => (int) round($score['attendance_score'] / 100 * 30), 'max' => 30],
         ];
 
-        $pendingEvents = [
-            ['id' => 1, 'title' => 'Gampaha Youth Leadership Workshop 2026', 'date' => 'Sep 15, 2026 · 9:00 AM', 'location' => 'Gampaha Town Hall', 'type' => 'Workshop', 'budget' => 'Rs. 45,000', 'submitted_by' => 'Amal Perera (Secretary)'],
-        ];
+        $roleLabels = ['ClubPresident' => 'President', 'ClubSecretary' => 'Secretary', 'ClubTreasurer' => 'Treasurer'];
+        $pendingEvents = [];
+        foreach ($eventModel->getClubEvents($clubId) as $ev) {
+            if ($ev->status !== 'PendingApproval') {
+                continue;
+            }
+            $start = strtotime((string) $ev->start_datetime);
+            $pendingEvents[] = [
+                'id' => (int) $ev->event_id,
+                'title' => $ev->title ?? '',
+                'date' => $start ? date('M d, Y g:i A', $start) : '—',
+                'location' => $ev->location ?? '—',
+                'type' => $ev->event_type ?? '—',
+                'submitted_by' => trim(($ev->creator_name ?? '') . ' (' . ($roleLabels[$ev->creator_role] ?? $ev->creator_role ?? '') . ')'),
+            ];
+            if (count($pendingEvents) >= 3) {
+                break;
+            }
+        }
 
-        $pendingMembers = [
-            ['name' => 'Sanduni Wickrama', 'email' => 'sanduni@example.test', 'phone' => '+94 78 112 3344', 'address' => '12 Lake Road, Gampaha', 'nic' => '200512345678', 'joined' => 'Jan 2025', 'registered_by' => 'Amal Perera (Secretary)'],
-        ];
+        $pendingMembers = [];
+        foreach ($userModel->getClubPending($clubId) as $u) {
+            $pendingMembers[] = [
+                'name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'email' => $u->email ?? '',
+                'phone' => $u->phone_number ?? '—',
+                'address' => $u->address ?? '—',
+                'nic' => $u->NIC ?? '—',
+                'joined' => ($u->membership_date && $u->membership_date !== '0000-00-00') ? date('M Y', strtotime($u->membership_date)) : '—',
+                'registered_by' => 'Secretary',
+            ];
+            if (count($pendingMembers) >= 3) {
+                break;
+            }
+        }
 
-        $execRoster = [
-            ['name' => 'Nuwan Bandara',  'role' => 'President', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Amal Perera',    'role' => 'Secretary', 'status' => 'Active', 'status_key' => 'active'],
-            ['name' => 'Kasun Fernando', 'role' => 'Treasurer', 'status' => 'Active', 'status_key' => 'active'],
-        ];
+        $execRoster = [];
+        foreach ($userModel->getClubRoster($clubId) as $u) {
+            if (!isset($roleLabels[$u->role])) {
+                continue;
+            }
+            $execRoster[] = [
+                'name' => trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? '')),
+                'role' => $roleLabels[$u->role],
+                'status' => 'Active',
+                'status_key' => 'active',
+            ];
+        }
 
-        $announcements = [
-            [
-                'title'   => 'Divisional Leadership Summit 2025',
-                'summary' => 'Confirm your attendance for the upcoming leadership summit by this Friday.',
-                'scope'   => 'Divisional',
-                'age'     => '2 days ago',
-                'is_new'  => true,
-            ],
-            [
-                'title'   => 'New Volunteer Hour Submission Policy',
-                'summary' => 'Volunteer hours should be submitted within seven days of the activity.',
-                'scope'   => 'National',
-                'age'     => '1 week ago',
-                'is_new'  => false,
-            ],
-        ];
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubPresident', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
-        $upcomingEvents = [
-            [
-                'title'    => 'Gampaha Youth Leadership Workshop 2026',
-                'date'     => 'Sep 15, 2026',
-                'location' => 'Gampaha Town Hall',
-                'scope'    => 'Divisional',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-            [
-                'title'    => 'Club Planning Session',
-                'date'     => 'Sep 28, 2026',
-                'location' => 'Club Centre',
-                'scope'    => 'Club',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-        ];
-
+        $completed = ClubOverview::completedCount($this, $clubId);
         $socialCv = [
-            'volunteer_hours' => 136,
-            'events_count'    => 18,
+            'volunteer_hours' => '—',
+            'events_count'    => $completed,
             'leadership'      => 'Club President',
         ];
 
