@@ -6,8 +6,11 @@ use PHPMailer\PHPMailer\Exception;
 class ClubRegistrationApproval extends Controller {
 
     private function requireCoordinator() {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'DivisionalCoordinator') {
+        if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
+        }
+        if (($_SESSION['user_role'] ?? '') !== 'DivisionalCoordinator') {
+            $this->redirect('home');
         }
     }
 

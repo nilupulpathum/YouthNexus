@@ -28,7 +28,7 @@ class Manageuser extends Controller {
             $this->redirect('auth/signin');
         }
         if (($_SESSION['user_role'] ?? '') !== self::ALLOWED_ROLE) {
-            $this->redirect('auth/signin');
+            $this->redirect('home');
         }
     }
 
