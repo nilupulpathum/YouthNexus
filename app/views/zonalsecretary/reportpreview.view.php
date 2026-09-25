@@ -4,11 +4,10 @@ require __DIR__ . '/../partials/icons.view.php';
 $report = $report ?? null;
 $snapshot = is_array($snapshot ?? null) ? $snapshot : [];
 $zoneName = $zoneName ?? 'Zone';
+$pageStyles = [ROOT . '/assets/css/managereports.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css">
 
 <section class="rpt-content" aria-labelledby="zonal-preview-heading">
     <div class="rpt-header-bar">
