@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Reports Management';
 $pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports across all youth clubs, divisions, and zones';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260927'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -59,7 +59,7 @@ $formatColors = [
     <!-- ── Page action row ─────────────────────────────────────────── -->
     <div class="rpt-header-bar rpt-action-row db-action-row">
         <div class="rpt-header-actions">
-            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline" id="btn-aggregate">
+            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline db-secondary-action" id="btn-aggregate">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Aggregate Reports
             </a>

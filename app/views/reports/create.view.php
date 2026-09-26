@@ -6,9 +6,10 @@
 
 $title                   = $title ?? 'Create New Report — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Create New Report';
+$pageDescription         = $pageDescription ?? 'Select report parameters, aggregation scope, and export format.';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260927'];
 
 $catalog = $catalog ?? [];
 $scopes  = $scopes  ?? [
@@ -42,10 +43,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </a>
             <div class="rpt-modal__title-row">
-                <h1 class="rpt-modal__h1">Create New Report</h1>
                 <span class="rpt-phase-badge">PHASE 1: CONFIGURATION</span>
             </div>
-            <p class="rpt-modal__sub">Select report parameters, aggregation scope, and export format.</p>
         </div>
 
         <!-- Form body -->

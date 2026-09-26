@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit';
 $pageDescription         = $pageDescription ?? 'Select an entity and financial year to compile its statutory audit.';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=20260927'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

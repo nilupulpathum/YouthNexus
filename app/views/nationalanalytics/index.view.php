@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Performance Analytics';
 $pageDescription         = $pageDescription ?? 'Executive performance, health metrics, and financial oversight across all youth clubs.';
 $currentRoute            = 'nationalanalytics';
 $unreadNotificationCount = (int)($queueSummary['count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/nationalanalytics.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/nationalanalytics.css?v=20260927'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
