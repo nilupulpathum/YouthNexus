@@ -5,7 +5,10 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/settings.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css'];
+$pageScripts = [ROOT . '/assets/js/settings.js'];
+$maskedEmail = $maskedEmail ?? '';
+$csrfToken = $csrf_token ?? '';
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -84,21 +87,22 @@ $settingsInitials = strtoupper(
                 <h2>Security</h2>
                 <p>Manage your password and account security.</p>
             </div>
-            <form class="settings-form">
+            <form class="settings-form" id="security-form" novalidate data-action-base="<?= ROOT ?>/settings">
+                <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
                 <div class="form-group">
                     <label for="current-password">Current Password</label>
-                    <input type="password" id="current-password" placeholder="••••••••">
+                    <input type="password" id="current-password" name="current" placeholder="••••••••" autocomplete="current-password">
                 </div>
                 <div class="form-group">
                     <label for="new-password">New Password</label>
-                    <input type="password" id="new-password" placeholder="••••••••">
+                    <input type="password" id="new-password" name="new" placeholder="••••••••" autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label for="confirm-password">Re-enter New Password</label>
-                    <input type="password" id="confirm-password" placeholder="••••••••">
+                    <input type="password" id="confirm-password" name="confirm" placeholder="••••••••" autocomplete="new-password">
                 </div>
+                <p id="pw-form-error" class="dw-field-error" hidden></p>
                 <div class="form-footer">
-                    <button type="button" class="btn-verify-code">Send Verification Code</button>
                     <button type="submit" class="btn-save">Update Password</button>
                 </div>
             </form>
@@ -139,6 +143,34 @@ $settingsInitials = strtoupper(
     </div>
 </div>
 
-<script src="<?= ROOT ?>/assets/js/settings.js"></script>
+<!-- Password verification code modal -->
+<div id="pw-code-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="pw-code-title" hidden>
+    <div class="dw-modal__backdrop" data-modal-close></div>
+    <div class="dw-modal__dialog" role="document">
+        <header class="dw-modal__header">
+            <div>
+                <p>Security check</p>
+                <h2 id="pw-code-title">Enter verification code</h2>
+            </div>
+            <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+        </header>
+        <div class="dw-modal__body" id="pw-code-body">
+            <p>We sent a 6-digit code<?php if ($maskedEmail !== ''): ?> to <?= $escape($maskedEmail) ?><?php endif; ?>. It expires in 15 minutes.</p>
+            <div class="dw-field dw-field--span-2">
+                <label for="pw-code-input">Verification code</label>
+                <input id="pw-code-input" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+            </div>
+            <p id="pw-code-error" class="dw-field-error" hidden></p>
+            <p id="pw-code-resend-wrap">Didn't get it? <button type="button" id="pw-code-resend" class="dw-button dw-button--ghost">Resend code</button> <span id="pw-code-cooldown"></span></p>
+        </div>
+        <div class="dw-modal__body" id="pw-code-success" hidden>
+            <p>Your password has been changed.</p>
+        </div>
+        <footer class="dw-modal__footer" id="pw-code-footer">
+            <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+            <button type="button" class="dw-button dw-button--primary" id="pw-code-confirm">Confirm</button>
+        </footer>
+    </div>
+</div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
