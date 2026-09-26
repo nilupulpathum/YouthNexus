@@ -81,8 +81,8 @@ class Reports extends Controller {
 
         $this->view('reports/index', [
             'title'             => 'Manage Reports — YouthNexus',
-            'pageTitle'         => 'Manage Reports',
-            'pageDescription'   => 'Create, filter, and aggregate reports up to the Zonal Secretary',
+            'pageTitle'         => 'National Reports Management',
+            'pageDescription'   => 'Create, filter, and aggregate reports across all youth clubs, divisions, and zones',
             'currentRoute'      => 'reports',
             'userRole'          => $_SESSION['user_role'] ?? 'NYSCAdministrator',
             'userName'          => $userName,

@@ -876,10 +876,8 @@ body.dashboard {
 }
 
 .dashboard .db-primary-action.db-primary-action::before {
-  content: "+";
-  font-size: 20px;
-  font-weight: 400;
-  line-height: .8;
+  content: none !important;
+  display: none !important;
 }
 
 .dashboard .db-primary-action.db-primary-action:hover,
@@ -1221,3 +1219,20 @@ body.dashboard {
   padding-right: 20px;
   border-radius: 9999px 0 0 9999px;
 }
+
+/* Standard top action row across dashboard modules */
+.db-action-row {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.db-action-row > div:only-child,
+.db-action-row > :last-child {
+  margin-left: auto;
+}
+

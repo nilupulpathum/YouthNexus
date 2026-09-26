@@ -4,8 +4,8 @@
  * National Asset Management & Logistics Module
  */
 $title                   = $title ?? 'Manage Assets — YouthNexus';
-$pageTitle               = $pageTitle ?? 'National Asset Management & Warehouse Logistics';
-$pageDescription         = $pageDescription ?? 'National Youth Services Council — Central Logistics, Zonal Stock Allocation & Deficit Surveillance';
+$pageTitle               = $pageTitle ?? 'National Asset Management & Logistics';
+$pageDescription         = $pageDescription ?? 'Central logistics, zonal stock allocation, and inventory deficit surveillance.';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
 
@@ -25,20 +25,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="asset-module">
 
     <!-- Top Action Bar -->
-    <div class="am-header-bar">
-        <div class="am-header-titles">
-            <h2 class="am-section-title">National Asset Management &amp; Warehouse Logistics</h2>
-            <p class="am-section-desc">National Youth Services Council — Central Logistics, Zonal Stock Allocation &amp; Deficit Surveillance</p>
-        </div>
+    <div class="am-header-bar am-action-row db-action-row">
         <div class="am-header-actions">
             <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline" id="btnExportReport" title="Export Inventory to CSV">
-                <span>&#8681;</span> Export Inventory Report
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Inventory Report
             </a>
             <button type="button" class="am-btn am-btn-sky" id="btnOpenDistribute">
-                <span>🎯</span> Distribute to Zone
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                Distribute to Zone
             </button>
-            <button type="button" class="am-btn am-btn-primary" id="btnOpenAddStock">
-                <span>+</span> Add National Stock
+            <button type="button" class="am-btn am-btn-primary db-primary-action" id="btnOpenAddStock">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add National Stock
             </button>
         </div>
     </div>
@@ -82,10 +81,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" style="margin: 0;">
         <div class="am-filter-bar">
             <div class="am-search-wrap">
-                <span class="am-search-icon">&#128269;</span>
                 <input type="text" name="search" id="assetSearchInput" class="am-search-input"
                        placeholder="Search catalog items, SKUs, or specifications..."
                        value="<?= htmlspecialchars($searchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
+                <span class="am-search-icon">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
             </div>
 
             <select name="category" id="filterCategory" class="am-select" onchange="document.getElementById('filterForm').submit()">
@@ -119,7 +120,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <span class="am-badge-count">Showing <?= count($inventory) ?> of <?= count($allCatalogItems) ?> Items</span>
             </div>
             <a href="#" class="am-link" id="btnRunReconcile">
-                <span>⇄</span> Run Zonal Reconciliation
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Run Zonal Reconciliation
             </a>
         </div>
 
@@ -380,7 +382,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="am-popup-body">
                 <!-- Intelligent Deficit Note Box -->
                 <div class="am-note-box" id="distNoteBox">
-                    <span class="am-note-icon">i</span>
+                    <span class="am-note-icon">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    </span>
                     <p class="am-note-text" id="distNoteText">
                         Note: Select an item and zone to analyze regional deficit requirements and recommended allocations.
                     </p>

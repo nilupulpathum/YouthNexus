@@ -14,8 +14,8 @@
  */
 
 // Ensure layout variables are set
-$title            = $title ?? 'User Management — YouthNexus';
-$pageTitle        = $pageTitle ?? 'User Management';
+$title            = $title ?? 'Manage User — YouthNexus';
+$pageTitle        = $pageTitle ?? 'National Personnel & User Governance';
 $pageDescription  = $pageDescription ?? 'Manage NYSC administrative personnel across all zones and divisions.';
 $currentRoute     = 'manageuser';
 
@@ -72,14 +72,15 @@ function mu_status_badge(string $status): string {
     --mu-red:       #ef4444;
 }
 
-/* ---- page head ---- */
+/* ---- page head / action row ---- */
 .mu-page-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 26px;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center;
+    margin-bottom: 24px;
     gap: 16px;
     flex-wrap: wrap;
+    width: 100%;
 }
 .mu-page-head__titles h1 {
     font-size: 22px;
@@ -95,6 +96,7 @@ function mu_status_badge(string $status): string {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    margin-left: auto;
 }
 .mu-btn {
     display: inline-flex;
@@ -197,7 +199,8 @@ function mu_status_badge(string $status): string {
 }
 .mu-search-wrap svg {
     position: absolute;
-    left: 12px;
+    right: 12px;
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     color: var(--mu-gray);
@@ -205,7 +208,7 @@ function mu_status_badge(string $status): string {
 }
 .mu-search {
     width: 100%;
-    padding: 9px 12px 9px 36px;
+    padding: 9px 36px 9px 12px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #f9fafb;
@@ -365,6 +368,8 @@ function mu_status_badge(string $status): string {
 .mu-action-btn:hover { background: #f0f4ff; border-color: var(--mu-blue-lt); color: var(--mu-blue); }
 .mu-action-btn.deactivate:hover  { background: #fff0f0; border-color: #fca5a5; color: var(--mu-red); }
 .mu-action-btn.reactivate:hover  { background: #f0fdf4; border-color: #86efac; color: #16a34a; }
+.mu-action-btn.delete { color: #9ca3af; }
+.mu-action-btn.delete:hover     { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
 .mu-action-btn[disabled]  { opacity: .35; cursor: default; pointer-events: none; }
 
 /* ---- panel footer ---- */
@@ -638,19 +643,15 @@ function mu_status_badge(string $status): string {
 </style>
 
 <!-- ============================================================
-     PAGE HEADING
+     ACTION ROW
      ============================================================ -->
-<div class="mu-page-head">
-    <div class="mu-page-head__titles">
-        <h1><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></h1>
-        <p><?= htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8') ?></p>
-    </div>
+<div class="mu-page-head mu-action-row db-action-row">
     <div class="mu-head-actions">
         <button class="mu-btn mu-btn-light" id="mu-export-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
         </button>
-        <button class="mu-btn mu-btn-primary" id="mu-add-user-btn" type="button">
+        <button class="mu-btn mu-btn-primary db-primary-action" id="mu-add-user-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
             Add User
         </button>
@@ -716,13 +717,13 @@ function mu_status_badge(string $status): string {
         <div class="mu-filters">
             <!-- search -->
             <div class="mu-search-wrap">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text"
                        name="search"
                        class="mu-search"
                        placeholder="Search by name, NIC, or email…"
                        value="<?= htmlspecialchars($filters['search'], ENT_QUOTES, 'UTF-8') ?>"
                        id="mu-search-input">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
 
             <!-- level -->
@@ -868,6 +869,14 @@ function mu_status_badge(string $status): string {
                                 title="Reactivate account">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                         </button>
+                        <!-- Permanent delete (deactivated accounts only) -->
+                        <button type="button"
+                                class="mu-action-btn delete mu-delete-btn"
+                                data-uid="<?= (int)$u->user_id ?>"
+                                data-name="<?= $fullName ?>"
+                                title="Permanently delete account">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        </button>
                         <?php endif; ?>
                     </div>
                 </td>
@@ -882,7 +891,7 @@ function mu_status_badge(string $status): string {
     <div class="mu-panel-footer">
         <div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;opacity:.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Soft delete policy enforced: Deactivated accounts retain complete financial ledger audit history.
+            Soft delete policy enforced: Deactivated accounts retain complete financial ledger audit history. Only accounts with no financial, audit, or operational history can be permanently deleted.
         </div>
 
         <!-- pagination -->
@@ -1535,6 +1544,35 @@ function mu_status_badge(string $status): string {
                         setTimeout(() => location.reload(), 1200);
                     } else {
                         showToast(data.message || 'Action failed.', 'error');
+                    }
+                })
+                .catch(() => showToast('Network error.', 'error'));
+        });
+    });
+
+    // ----------------------------------------------------------------
+    // PERMANENT DELETE (deactivated accounts only)
+    // ----------------------------------------------------------------
+    document.querySelectorAll('.mu-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const uid  = btn.dataset.uid;
+            const name = btn.dataset.name;
+
+            const msg = 'Permanently delete the account for ' + name + '?\n\n'
+                + 'This removes the account forever and cannot be undone. '
+                + 'Accounts with any financial, audit, or operational history are protected and cannot be deleted.';
+            if (!confirm(msg)) return;
+
+            const fd = new FormData();
+            fd.append('csrf_token', CSRF);
+
+            postJSON(ROOT + '/manageuser/delete/' + uid, fd)
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        setTimeout(() => location.reload(), 1200);
+                    } else {
+                        showToast(data.message || 'Delete failed.', 'error');
                     }
                 })
                 .catch(() => showToast('Network error.', 'error'));
