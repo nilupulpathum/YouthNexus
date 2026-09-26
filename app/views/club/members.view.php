@@ -128,7 +128,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             data-nic="<?= $can_manage ? $e($m['nic'] ?? '') : '' ?>"
                             data-joined="<?= $e($m['joined'] ?? '') ?>"
                             data-status="<?= $e($m['status_key'] ?? 'active') ?>">
-                            <td><strong><?= $e($m['name'] ?? '') ?></strong></td>
+                            <td><?php if (($m['status_key'] ?? '') === 'active' && (int) ($m['id'] ?? 0) > 0): ?><a class="dw-cv-link" href="<?= ROOT ?>/profile/member/<?= (int) ($m['id'] ?? 0) ?>"><?= $e($m['name'] ?? '') ?></a><?php else: ?><strong><?= $e($m['name'] ?? '') ?></strong><?php endif; ?></td>
                             <td><?= $e($m['role'] ?? '') ?></td>
                             <td><?= $e($m['email'] ?? '') ?></td>
                             <td><?= $e($m['phone'] ?? '') ?></td>

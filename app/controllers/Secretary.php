@@ -73,7 +73,9 @@ class Secretary extends Controller {
             'pending_events'  => $eventCounts['PendingApproval'],
         ];
 
-        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubSecretary', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        // Hierarchy-resolved scope (raw session ids drop zonal/divisional rows).
+        $annScope = ZoneOverview::effectiveScope($this, $userId);
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubSecretary', $annScope['division_id'], $annScope['zonal_id']);
         $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
         $socialCv = [

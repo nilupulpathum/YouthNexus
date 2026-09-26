@@ -119,7 +119,9 @@ class President extends Controller {
             ];
         }
 
-        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubPresident', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        // Hierarchy-resolved scope (raw session ids drop zonal/divisional rows).
+        $annScope = ZoneOverview::effectiveScope($this, $userId);
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubPresident', $annScope['division_id'], $annScope['zonal_id']);
         $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
         $completed = ClubOverview::completedCount($this, $clubId);

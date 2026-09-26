@@ -635,6 +635,27 @@ class EventModel extends Model {
         return $counts;
     }
 
+    /**
+     * CV timeline source (OUTSIDE item 1): club events the member actually
+     * attended (Present), newest first, with datetimes so callers can apply
+     * the hours rule (event duration x attendance). Read-only.
+     *
+     * @return object[]  event_id, title, event_type, location,
+     *                   start_datetime, end_datetime, status
+     */
+    public function getMemberCvEvents($clubId, $userId, $limit = 12) {
+        return $this->resultSet(
+            "SELECT e.event_id, e.title, e.event_type, e.location,
+                    e.start_datetime, e.end_datetime, e.status
+             FROM Attendance a
+             JOIN Event e ON a.event_id = e.event_id
+             WHERE a.user_id = ? AND e.organizer_club_id = ? AND a.status = 'Present'
+             ORDER BY e.start_datetime DESC
+             LIMIT " . max(1, (int) $limit),
+            [(int) $userId, (int) $clubId]
+        );
+    }
+
     public function createClubEvent($clubId, $divisionId, $userId, $title, $type, $location, $start, $end) {
         return $this->createEvent([
             'title'                => $title,
