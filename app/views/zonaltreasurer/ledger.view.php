@@ -1,6 +1,6 @@
 <?php
 /**
- * Zonal Ledger — session-only transaction records with running balances.
+ * Zonal Ledger — zone transaction records with running balances.
  * Log-transaction modal posts to the existing backend contract.
  * UI follows the divisional standard (dw-* classes + shared partials).
  */
@@ -12,15 +12,15 @@ require __DIR__ . '/../partials/icons.view.php';
 
 $title = 'Zonal Ledger - YouthNexus';
 $pageTitle = 'Zonal Ledger';
-$pageDescription = 'Session-only records with running balances.';
+$pageDescription = 'Zone records with running balances.';
 $currentRoute = 'zonaltreasurer/ledger';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
 
 $summaryCards = [
-    ['value' => 'LKR ' . number_format($balance ?? 0, 2), 'label' => 'Running balance', 'note' => 'Gampaha Zone', 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => 'LKR ' . number_format($income ?? 0, 2), 'label' => 'Recorded income', 'note' => 'This session', 'icon' => 'award', 'tone' => 'green'],
-    ['value' => 'LKR ' . number_format($expenses ?? 0, 2), 'label' => 'Recorded expenses', 'note' => 'This session', 'icon' => 'clock', 'tone' => 'amber'],
+    ['value' => 'LKR ' . number_format($balance ?? 0, 2), 'label' => 'Running balance', 'note' => ($zoneName ?? 'Zone'), 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => 'LKR ' . number_format($income ?? 0, 2), 'label' => 'Recorded income', 'note' => 'Approved entries', 'icon' => 'award', 'tone' => 'green'],
+    ['value' => 'LKR ' . number_format($expenses ?? 0, 2), 'label' => 'Recorded expenses', 'note' => 'Approved entries', 'icon' => 'clock', 'tone' => 'amber'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -89,7 +89,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <?php
         $emptyTitle = 'No ledger entries recorded';
-        $emptyMessage = 'Log a transaction to start the session ledger.';
+        $emptyMessage = 'Log a transaction to start the zone ledger.';
         $emptyVisible = count($entries) === 0;
         require __DIR__ . '/../partials/divisional/empty-state.view.php';
         ?>
