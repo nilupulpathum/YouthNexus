@@ -156,7 +156,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
         </header>
         <div class="dw-modal__body">
-            <p id="transfer-asset-name"></p>
+            <p id="transfer-asset-name" class="dw-field--span-2"></p>
             <form id="asset-transfer-form" method="post" action="<?= ROOT ?>/zonaltreasurer/transferasset">
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
                 <input id="transfer-asset-id" type="hidden" name="catalog_item_id">
