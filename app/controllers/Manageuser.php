@@ -10,6 +10,7 @@
  *   POST manageuser/create     → create()       — AJAX create user
  *   POST manageuser/update/{id}→ update($id)    — AJAX update user
  *   POST manageuser/setstatus/{id} → setstatus($id) — activate / deactivate
+ *   POST manageuser/delete/{id}    → delete($id)    — permanent delete (guarded)
  *   GET  manageuser/getuser/{id}   → getuser($id)   — JSON for edit pre-fill
  *   GET  manageuser/getdivisions   → getdivisions() — JSON divisions by zone
  * ============================================================
@@ -155,12 +156,12 @@ class Manageuser extends Controller {
         $totalPages = (int) ceil($result['total'] / self::PER_PAGE);
 
         $this->view('manageuser/list', [
-            'title'          => 'User Management — YouthNexus',
+            'title'          => 'Manage User — YouthNexus',
             'currentRoute'   => 'manageuser',
             'userRole'       => $_SESSION['user_role'] ?? '',
             'userName'       => ($_SESSION['user_first_name'] ?? '') . ' ' . ($_SESSION['user_last_name'] ?? ''),
-            'pageTitle'      => 'User Management',
-            'pageDescription'=> 'Create, edit and manage NYSC administrative personnel across all zones and divisions.',
+            'pageTitle'      => 'National Personnel & User Governance',
+            'pageDescription'=> 'Manage NYSC administrative personnel across all zones and divisions.',
 
             'users'          => $result['rows'],
             'total'          => $result['total'],
@@ -388,6 +389,79 @@ class Manageuser extends Controller {
             'success'   => true,
             'message'   => "User {$user->first_name} {$user->last_name} {$label} successfully.",
             'newStatus' => $newStatus,
+        ]);
+    }
+
+    // ================================================================
+    // DELETE — permanent removal (hard delete)
+    // ================================================================
+
+    public function delete(string $id = ''): void {
+        $this->requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'message' => 'Method not allowed.'], 405);
+        }
+
+        if (!$this->verifyCsrf($this->post('csrf_token'))) {
+            $this->json(['success' => false, 'message' => 'Invalid security token.'], 403);
+        }
+
+        $userId = (int) $id;
+        if (!$userId) {
+            $this->json(['success' => false, 'message' => 'Invalid user ID.'], 400);
+        }
+
+        $model = $this->model('ManageUserModel');
+        $user  = $model->getUserById($userId);
+
+        if (!$user) {
+            $this->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        // Prevent self-deletion
+        if ($userId === (int) $_SESSION['user_id']) {
+            $this->json(['success' => false, 'message' => 'You cannot permanently delete your own account.'], 400);
+        }
+
+        // Protect administrators from an accidental lock-out
+        if ($user->role === 'NYSCAdministrator' && !$model->otherActiveAdminExists($userId)) {
+            $this->json(['success' => false, 'message' => 'Cannot delete the last NYSC Administrator account.'], 400);
+        }
+
+        // Preserve the soft-delete policy: accounts with any financial,
+        // audit, or operational history must stay for traceability.
+        $blockers = $model->getDeletionBlockers($userId);
+        if (!empty($blockers)) {
+            $this->json([
+                'success' => false,
+                'message' => 'This account cannot be permanently deleted because it has '
+                    . $blockers[0] . '. Deactivate it instead to retain the audit history.',
+            ], 409);
+        }
+
+        try {
+            $model->deleteUserPermanently($userId);
+        } catch (Exception $e) {
+            $this->json([
+                'success' => false,
+                'message' => 'This account is still referenced by other records and cannot be permanently deleted. Deactivate it instead.',
+            ], 409);
+        }
+
+        // Audit log (records the acting admin; the target id is kept for reference)
+        $auditModel = $this->model('AuditLogModel');
+        $auditModel->log(
+            $_SESSION['user_id'],
+            'USER_PERMANENTLY_DELETED',
+            'User',
+            $userId,
+            "NYSC Admin permanently deleted user ID {$userId}: {$user->first_name} {$user->last_name} ({$user->email}), Role: {$user->role}"
+        );
+
+        $this->json([
+            'success' => true,
+            'message' => "User {$user->first_name} {$user->last_name} permanently deleted.",
         ]);
     }
 
