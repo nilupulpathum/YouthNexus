@@ -543,6 +543,63 @@
 .dr-document__footer-right { gap: 8px; }
 .dr-document__footer form { margin: 0; }
 
+.dr-archive-dialog .dw-modal__header {
+  align-items: flex-start;
+}
+
+.dr-archive-dialog .dw-modal__header p {
+  margin: 5px 0 0;
+  color: var(--dw-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.dr-archive-modal__body {
+  grid-template-columns: 1fr;
+}
+
+.dr-archive-summary {
+  display: grid;
+  gap: 5px;
+  padding: 14px 15px;
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  background: #f8fafc;
+}
+
+.dr-archive-summary span {
+  color: var(--dw-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dr-archive-summary strong {
+  color: var(--dw-text);
+  font-size: 13px;
+}
+
+.dr-archive-summary p,
+.dr-archive-dialog .dw-field small {
+  margin: 0;
+  color: var(--dw-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.dr-field-error {
+  margin: 0;
+  color: var(--dw-danger);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dr-archive-dialog textarea[aria-invalid="true"] {
+  border-color: var(--dw-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .1);
+}
+
 @media (max-width: 1100px) {
   .dr-report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

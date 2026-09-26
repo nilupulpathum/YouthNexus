@@ -21,6 +21,10 @@ $pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260924'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
+            <?php if (!empty($flash)): ?>
+                <div class="me-validation-alert is-visible" role="status"><span class="me-validation-msg"><?= htmlspecialchars($flash['message']) ?></span></div>
+            <?php endif; ?>
+
             <!-- Action Row -->
             <div class="me-header-row me-header-row-actions">
                 <button type="button" class="me-btn-primary db-primary-action" id="btnOpenCreateModal">
@@ -176,8 +180,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <label for="meFilterStatus">Event Status</label>
                         <select id="meFilterStatus" name="status">
                             <option value="All" <?= ($filters['status'] ?? 'All') === 'All' ? 'selected' : '' ?>>All Statuses</option>
+                            <option value="Draft" <?= ($filters['status'] ?? '') === 'Draft' ? 'selected' : '' ?>>Draft</option>
                             <option value="PendingApproval" <?= ($filters['status'] ?? '') === 'PendingApproval' ? 'selected' : '' ?>>Pending Approval</option>
                             <option value="Approved" <?= ($filters['status'] ?? '') === 'Approved' ? 'selected' : '' ?>>Approved</option>
+                            <option value="CancellationPending" <?= ($filters['status'] ?? '') === 'CancellationPending' ? 'selected' : '' ?>>Cancellation Pending</option>
+                            <option value="Cancelled" <?= ($filters['status'] ?? '') === 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                            <option value="Withdrawn" <?= ($filters['status'] ?? '') === 'Withdrawn' ? 'selected' : '' ?>>Withdrawn</option>
                             <option value="Rejected" <?= ($filters['status'] ?? '') === 'Rejected' ? 'selected' : '' ?>>Rejected</option>
                             <option value="Completed" <?= ($filters['status'] ?? '') === 'Completed' ? 'selected' : '' ?>>Completed</option>
                         </select>
@@ -432,6 +440,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <div class="me-modal-footer">
                 <button type="button" class="me-btn-secondary me-btn-cancel">Cancel</button>
+                <?php if (!$isNyscAdmin): ?>
+                    <button type="submit" class="me-btn-secondary" data-submission-mode="draft">Save Draft</button>
+                <?php endif; ?>
                 <button type="submit" class="me-btn-primary"><?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?></button>
             </div>
         </form>

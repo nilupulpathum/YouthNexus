@@ -64,7 +64,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="ea-card" data-event-id="<?= (int)$event->event_id ?>">
                         <div class="ea-card-top">
                             <span class="ea-badge <?= $badgeTypeClass ?>"><?= $badgeTypeLabel ?></span>
-                            <span class="ea-badge pending">Pending Approval</span>
+                            <span class="ea-badge pending"><?= $event->status === 'CancellationPending' ? 'Cancellation Review' : 'Pending Approval' ?></span>
                         </div>
                         <h3 class="ea-card-title"><?= htmlspecialchars($event->title) ?></h3>
                         <p class="ea-card-club">

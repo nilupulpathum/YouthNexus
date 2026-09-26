@@ -147,9 +147,9 @@
 .dw-status--approved, .dw-status--posted, .dw-status--reconciled, .dw-status--resolved, .dw-status--income, .dw-status--completed { background: var(--dw-success-bg); color: var(--dw-success); }
 .dw-status--expense { background: var(--dw-danger-bg); color: var(--dw-danger); }
 .dw-status--pending, .dw-status--pendingapproval, .dw-status--processing, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
-.dw-status--inprogress, .dw-status--clarificationrequested { background: var(--dw-warning-bg); color: var(--dw-warning); }
-.dw-status--rejected, .dw-status--voided, .dw-status--unreconciled, .dw-status--open, .dw-status--overdue { background: var(--dw-danger-bg); color: var(--dw-danger); }
-.dw-status--withdrawn { background: #f1f5f9; color: #64748b; }
+.dw-status--inprogress, .dw-status--clarificationrequested, .dw-status--underreview, .dw-status--reopened { background: var(--dw-warning-bg); color: var(--dw-warning); }
+.dw-status--rejected, .dw-status--voided, .dw-status--unreconciled, .dw-status--open, .dw-status--overdue, .dw-status--escalated { background: var(--dw-danger-bg); color: var(--dw-danger); }
+.dw-status--withdrawn, .dw-status--cancelled, .dw-status--archived, .dw-status--retracted { background: #f1f5f9; color: #64748b; }
 
 .dw-detail-box { display: grid; gap: 5px; padding: 12px; border-radius: var(--dw-radius); background: var(--dw-info-bg); }
 .dw-detail-box span { color: var(--dw-muted); font-size: 10px; font-weight: 750; text-transform: uppercase; }
