@@ -405,3 +405,12 @@
 .dashboard .btn-view-details { color: #fff; }
 .dashboard .btn-participate.is-active { color: #10b981; }
 .dashboard .btn-not-participate.is-active { color: #ef4444; }
+
+/* Filtered-empty note (shown by events.js when no cards match) */
+.events-empty {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+}
+.events-empty[hidden] { display: none; }
