@@ -1,0 +1,23 @@
+name: Divisional UI contract
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PHP CLI
+        run: sudo apt-get update && sudo apt-get install -y php-cli
+      - name: Check view contract
+        run: php scripts/lint_views.php
+      - name: Check PHP syntax
+        run: |
+          php -l scripts/lint_views.php
+          php -l app/core/config.php
+          php -l app/views/partials/empty-state.view.php
+          find app/views -path '*/divisional*/*.view.php' -print0 | xargs -0 -n1 php -l
+          for view in app/views/{announcements,attendance,clubregistrationapproval,eventapproval,manageevents}/*.view.php; do
+            php -l "$view"
+          done

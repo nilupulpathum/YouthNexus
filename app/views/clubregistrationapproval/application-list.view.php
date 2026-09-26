@@ -13,30 +13,31 @@ $currentRoute    = 'clubregistrationapproval';
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 $pageStyles              = [
     ROOT . '/assets/css/clubregistrationapproval.css',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/clubregistrationapproval.js?v=20260926'];
+$pageScripts             = [ROOT . '/assets/js/clubregistrationapproval.js'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
     <!-- ============ Stat cards ============ -->
     <div class="cr-stats">
-        <button type="button" class="cr-stat-card" data-filter="Pending" id="statPending">
+        <button type="button" class="yn-stat-card cr-stat-card" data-filter="Pending" id="statPending">
             <div class="cr-stat-icon pending">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <?= yn_icon('clock') ?>
             </div>
             <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Pending'] ?></span><span class="cr-stat-label">Pending Applications</span></span>
         </button>
-        <button type="button" class="cr-stat-card is-active" data-filter="Approved" id="statApproved">
+        <button type="button" class="yn-stat-card cr-stat-card is-active" data-filter="Approved" id="statApproved">
             <div class="cr-stat-icon approved">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                <?= yn_icon('check') ?>
             </div>
             <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Approved'] ?></span><span class="cr-stat-label">Approved Applications</span></span>
         </button>
-        <button type="button" class="cr-stat-card" data-filter="Rejected" id="statRejected">
+        <button type="button" class="yn-stat-card cr-stat-card" data-filter="Rejected" id="statRejected">
             <div class="cr-stat-icon rejected">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </div>
             <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Rejected'] ?></span><span class="cr-stat-label">Rejected Applications</span></span>
         </button>
@@ -47,19 +48,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="cr-search-group">
             <div class="cr-search-input-wrapper">
                 <span class="cr-search-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <?= yn_icon('search') ?>
                 </span>
                 <input type="text" id="crSearchInput" placeholder="Search applications...">
             </div>
         </div>
-        <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-            Filters
+        <button type="button" class="cr-filter-btn yn-filter-toggle" id="crFilterBtn" aria-expanded="false">
+            <?= yn_icon('filter') ?> Filters
         </button>
     </div>
 
     <!-- Filter panel: hidden until "Filters" is clicked -->
     <div class="cr-filter-panel" id="crFilterPanel">
+        <h2 class="yn-filter-heading">Advanced Filters for Club Registration Applications</h2>
         <div class="cr-filter-field">
             <label for="crFilterStatus">Status</label>
             <select id="crFilterStatus">
@@ -77,9 +78,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <option value="incomplete">Incomplete</option>
             </select>
         </div>
+        <div class="cr-filter-field">
+            <label for="crFilterSubmittedFrom">Submitted from</label>
+            <input type="date" id="crFilterSubmittedFrom">
+        </div>
         <div class="cr-filter-actions">
-            <button type="button" class="cr-btn" id="crClearFilterBtn">Clear Filter</button>
-            <button type="button" class="cr-btn cr-btn-primary" id="crAddFilterBtn">Add Filter</button>
+            <button type="button" class="cr-btn yn-filter-clear" id="crClearFilterBtn">Clear filters</button>
+            <button type="button" class="cr-btn cr-btn-primary yn-filter-apply" id="crAddFilterBtn">Apply filters</button>
         </div>
     </div>
 
@@ -104,6 +109,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                  data-name="<?= htmlspecialchars(strtolower($app->club_name)) ?>"
                  data-proposer="<?= htmlspecialchars(strtolower($app->proposer_name)) ?>"
                  data-submitted="<?= strtotime($app->submitted_at) ?>"
+                 data-submitted-date="<?= htmlspecialchars(substr($app->submitted_at, 0, 10), ENT_QUOTES, 'UTF-8') ?>"
                  data-status="Pending"
                  data-docstatus="<?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
                 <div class="cr-card-top">

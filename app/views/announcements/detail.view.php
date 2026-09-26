@@ -18,10 +18,10 @@ $pageTitle       = 'Announcement Details';
 $pageDescription = 'View announcement information, recipients and attachments';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css?v=20260924',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/announcements.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260924'];
+$pageScripts     = [ROOT . '/assets/js/announcements.js'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';

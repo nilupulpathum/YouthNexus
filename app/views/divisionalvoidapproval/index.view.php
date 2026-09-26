@@ -11,6 +11,7 @@ $currentRoute = 'divisionalvoidapproval';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-void-approval.js',
 ];
 $summaryCards = [
@@ -42,6 +43,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalvoidapproval/export"><?= yn_icon('download') ?> Export</a>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Void approval summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -49,12 +54,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <div class="dw-toolbar" aria-label="Void approval tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="void-approval-search">Search club void requests</label>
-      <input id="void-approval-search" type="search" placeholder="Search by request, club, ledger entry, or reason" data-approval-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="void-approval-search" type="search" placeholder="Search by request, club, ledger entry, or reason" data-approval-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-approval-filters" aria-expanded="false">Filters</button>
-    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalvoidapproval/export"><?= yn_icon('download') ?> Export</a>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="void-approval-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="void-approval-filters" hidden>
@@ -117,8 +121,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-approval-filter-reset>Reset all</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-approval-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-approval-filter-reset>Clear filters</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-approval-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -127,10 +131,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2 id="pending-void-title">Pending Void Requests</h2><p>Club requests waiting for your decision</p></div>
       <span class="dw-count" data-pending-count><?= count($pendingRequests) ?> <?= count($pendingRequests) === 1 ? 'request' : 'requests' ?></span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead>
-        <tbody data-pending-body>
+        <tbody id="void-pending-rows" data-pending-body>
           <?php foreach ($pendingRequests as $request): ?>
             <?php
             $reference = $requestReference($request->void_request_id);
@@ -170,11 +174,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <div class="dw-empty-state<?= !$pendingRequests ? ' is-visible' : '' ?>" data-pending-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
-      <strong>No pending void requests</strong>
-      <p>New requests from clubs in your division appear here.</p>
-    </div>
+    <nav class="yn-pagination" aria-label="Pending void request pages" data-yn-pagination data-yn-page-target="void-pending-rows" data-yn-page-size="10" hidden></nav>
+    <?php $emptyTitle = 'No pending void requests'; $emptyMessage = 'New requests from clubs in your division appear here.'; $emptyVisible = !$pendingRequests; $emptyIcon = 'check'; $emptyAttribute = 'data-pending-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
   </section>
 
   <section class="dw-panel" aria-labelledby="decided-void-title">
@@ -182,10 +183,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2 id="decided-void-title">Recently Decided</h2><p>Completed club void-request decisions</p></div>
       <span class="dw-count" data-decided-count><?= count($decidedRequests) ?> <?= count($decidedRequests) === 1 ? 'request' : 'requests' ?></span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Decided On</th><th>Decision</th><th>Remarks</th></tr></thead>
-        <tbody data-decided-body>
+        <tbody id="void-decided-rows" data-decided-body>
           <?php foreach ($decidedRequests as $request): ?>
             <?php
             $reference = $requestReference($request->void_request_id);
@@ -211,11 +212,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <div class="dw-empty-state<?= !$decidedRequests ? ' is-visible' : '' ?>" data-decided-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No decisions found</strong>
-      <p>Approved and rejected requests appear here.</p>
-    </div>
+    <nav class="yn-pagination" aria-label="Decided void request pages" data-yn-pagination data-yn-page-target="void-decided-rows" data-yn-page-size="10" hidden></nav>
+    <?php $emptyTitle = 'No decisions found'; $emptyMessage = 'Approved and rejected requests appear here.'; $emptyVisible = !$decidedRequests; $emptyAttribute = 'data-decided-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
   </section>
 </section>
 
@@ -261,7 +259,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </section>
       <section class="dw-evidence-section dw-field--span-2" aria-labelledby="nearby-entries-title">
         <div class="dw-section-header"><div><h3 id="nearby-entries-title">Nearby Ledger Entries</h3><p>Entries recorded within three days of the requested transaction</p></div></div>
-        <div class="dw-table-wrap">
+        <div class="yn-table-wrap dw-table-wrap">
           <table class="yn-table dw-table">
             <thead><tr><th>Reference</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Check</th></tr></thead>
             <tbody data-nearby-entries></tbody>
@@ -295,7 +293,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit" data-submit-decision>Submit Decision</button>
+      <button class="yn-btn yn-btn--approve dw-button" type="submit" data-submit-decision>Approve Request</button>
     </footer>
   </form>
 </div>

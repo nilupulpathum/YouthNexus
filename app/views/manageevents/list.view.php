@@ -13,11 +13,12 @@ $pageDescription         = $isNyscAdmin
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/manageevents.css?v=20260924',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/manageevents.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260924'];
+$pageScripts             = [ROOT . '/assets/js/manageevents.js'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -34,7 +35,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <!-- Stat Cards -->
             <div class="me-stats-grid<?= $isNyscAdmin ? ' me-stats-grid-admin' : '' ?>">
-                <div class="me-stat-card">
+                <div class="yn-stat-card me-stat-card">
                     <div class="me-stat-icon awaiting">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
@@ -44,7 +45,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                 </div>
 
-                <div class="me-stat-card">
+                <div class="yn-stat-card me-stat-card">
                     <div class="me-stat-icon approved">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
@@ -54,7 +55,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                 </div>
 
-                <div class="me-stat-card">
+                <div class="yn-stat-card me-stat-card">
                     <div class="me-stat-icon hosted">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
@@ -65,7 +66,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
 
                 <?php if ($isNyscAdmin && isset($stats['national_events'])): ?>
-                    <div class="me-stat-card">
+                    <div class="yn-stat-card me-stat-card">
                         <div class="me-stat-icon national">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         </div>
@@ -100,8 +101,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, type..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                         </div>
                     </div>
-                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    <button type="button" class="me-filter-btn yn-filter-toggle" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
+                        <?= yn_icon('filter') ?>
                         Filters
                         <?php if ($activeFilters > 0): ?>
                             <span class="me-filter-count"><?= $activeFilters ?></span>
@@ -111,6 +112,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                 <!-- Expandable Filter Panel -->
                 <div class="me-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="meFilterPanel">
+                    <h2 class="yn-filter-heading">Advanced Filters for Events</h2>
                     
                     <?php if ($isNyscAdmin): ?>
                         <!-- Event Level (Admin Only) -->
@@ -214,8 +216,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
 
                     <div class="me-filter-actions">
-                        <a href="<?= ROOT ?>/manageevents" class="me-btn" id="meClearFilterBtn">Clear Filters</a>
-                        <button type="submit" class="me-btn me-btn-primary" id="meAddFilterBtn">Apply Filters</button>
+                        <a href="<?= ROOT ?>/manageevents" class="me-btn yn-filter-clear" id="meClearFilterBtn">Clear filters</a>
+                        <button type="submit" class="me-btn me-btn-primary yn-filter-apply" id="meAddFilterBtn">Apply filters</button>
                     </div>
                 </div>
             </form>

@@ -98,9 +98,14 @@
     const searchInput  = document.getElementById('amSearchInput');
     const typeFilter   = document.getElementById('amFilterType');
     const scopeFilter  = document.getElementById('amFilterScope');
+    const dateFromFilter = document.getElementById('amFilterDateFrom');
     const applyFilters = document.getElementById('amApplyFilterBtn');
     const clearFilters = document.getElementById('amClearFilterBtn');
     const cardGrid     = document.getElementById('amCardGrid');
+
+    let appliedType = typeFilter?.value || '';
+    let appliedScope = scopeFilter?.value || '';
+    let appliedDateFrom = dateFromFilter?.value || '';
 
     function setFilterCount(count) {
         if (!filterCount) return;
@@ -110,8 +115,9 @@
 
     function getClientFilterCount() {
         let count = 0;
-        if (typeFilter?.value) count++;
-        if (scopeFilter?.value) count++;
+        if (appliedType) count++;
+        if (appliedScope) count++;
+        if (appliedDateFrom) count++;
         return count;
     }
 
@@ -135,10 +141,10 @@
         const query = (searchInput?.value || '').toLowerCase().trim();
         const selectedType = isNYSCAdmin
             ? ''
-            : (typeFilter?.value || '').toLowerCase();
+            : appliedType.toLowerCase();
         const selectedScope = isNYSCAdmin
             ? ''
-            : (scopeFilter?.value || '').toLowerCase();
+            : appliedScope.toLowerCase();
         const cards = document.querySelectorAll('#amCardGrid .am-card');
         let visible = 0;
 
@@ -149,7 +155,8 @@
             const matchesQuery = !query || searchableText.includes(query);
             const matchesType = !selectedType || eventType === selectedType;
             const matchesScope = !selectedScope || eventScope === selectedScope;
-            const matches = matchesQuery && matchesType && matchesScope;
+            const matchesDate = !appliedDateFrom || (card.dataset.eventDate || '') >= appliedDateFrom;
+            const matches = matchesQuery && matchesType && matchesScope && matchesDate;
 
             card.style.display = matches ? '' : 'none';
             if (matches) visible++;
@@ -165,6 +172,9 @@
 
     if (!isNYSCAdmin) {
         applyFilters?.addEventListener('click', () => {
+            appliedType = typeFilter?.value || '';
+            appliedScope = scopeFilter?.value || '';
+            appliedDateFrom = dateFromFilter?.value || '';
             filterEventCards();
             setFilterCount(getClientFilterCount());
         });
@@ -172,6 +182,10 @@
         clearFilters?.addEventListener('click', () => {
             if (typeFilter) typeFilter.value = '';
             if (scopeFilter) scopeFilter.value = '';
+            if (dateFromFilter) dateFromFilter.value = '';
+            appliedType = '';
+            appliedScope = '';
+            appliedDateFrom = '';
             setFilterCount(0);
             filterEventCards();
         });

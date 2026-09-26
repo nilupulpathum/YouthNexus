@@ -14,19 +14,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <header class="dr-document__header">
       <div>
         <div class="dr-document__badges"><span class="dr-format-pill dr-format-pill--<?= $e(strtolower($report->format)) ?>"><?= $e($report->format === 'OnScreen' ? 'On-screen' : $report->format) ?></span><span class="<?= $report->status === 'Archived' ? 'dr-archive-pill' : 'dr-active-pill' ?>"><?= $report->status === 'Archived' ? 'Archived report' : 'Active report' ?></span></div>
-        <h2>Report Preview: <?= $e($report->type_name) ?></h2>
+        <h2><?= $e($report->type_name) ?> snapshot</h2>
         <div class="dr-document__meta"><span>Scope: <strong>Divisional</strong></span><span>Range: <strong><?= $e(date('d M Y', strtotime($report->date_range_start))) ?> - <?= $e(date('d M Y', strtotime($report->date_range_end))) ?></strong></span><span>Category: <strong><?= $e($report->category) ?></strong></span></div>
       </div>
       <div class="dr-document__reference"><strong>RPT-<?= str_pad((string) $report->report_id, 4, '0', STR_PAD_LEFT) ?></strong><span>Generated <?= $e(date('d M Y, H:i', strtotime($report->generated_at))) ?></span></div>
     </header>
 
     <div class="dr-document__body">
-      <div class="dr-kpi-grid" aria-label="Report summary"><?php foreach ($reportData['kpis'] as $kpi): ?><div class="dr-kpi"><span><?= $e($kpi['label']) ?></span><strong><?= $e($kpi['value']) ?></strong></div><?php endforeach; ?></div>
+      <div class="yn-stat-grid dr-kpi-grid" aria-label="Report summary"><?php foreach ($reportData['kpis'] as $kpi): ?><div class="yn-stat-card dr-kpi"><span class="yn-stat-card__label"><?= $e($kpi['label']) ?></span><strong class="yn-stat-card__value"><?= $e($kpi['value']) ?></strong></div><?php endforeach; ?></div>
 
       <section class="dr-results" aria-labelledby="report-details-title">
         <div class="dr-results__heading"><div><h3 id="report-details-title">Report details</h3><p>Records included in this report snapshot</p></div><span class="dw-count"><?= count($reportData['rows']) ?> <?= count($reportData['rows']) === 1 ? 'record' : 'records' ?></span></div>
-        <div class="dw-table-wrap"><table class="yn-table dw-table"><thead><tr><?php foreach ($reportData['columns'] as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($reportData['rows'] as $row): ?><tr><?php foreach (array_keys($reportData['columns']) as $key): ?><td><?= $e($row[$key] ?? '-') ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div>
-        <?php if (!$reportData['rows']): ?><div class="dw-empty-state is-visible"><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No records found</strong><p>No matching records were recorded during this reporting period.</p></div><?php endif; ?>
+        <div class="yn-table-wrap dw-table-wrap"><table class="yn-table dw-table"><thead><tr><?php foreach ($reportData['columns'] as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($reportData['rows'] as $row): ?><tr><?php foreach (array_keys($reportData['columns']) as $key): ?><td><?= $e($row[$key] ?? '-') ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div>
+        <?php if (!$reportData['rows']): ?><?php $emptyTitle = 'No records found'; $emptyMessage = 'No matching records were recorded during this reporting period.'; $emptyVisible = true; $emptyIcon = 'file'; require __DIR__ . '/../partials/empty-state.view.php'; ?><?php endif; ?>
       </section>
 
       <div class="dr-verification-note"><?= yn_icon('info') ?><p><strong>Report snapshot:</strong> The values shown here were recorded when this report was generated for <?= $e($division->division_name) ?>.</p></div>
@@ -35,12 +35,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <footer class="dr-document__footer">
       <div class="dr-document__footer-left">
-        <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
+        <a class="yn-btn yn-btn--ghost yn-btn-back dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
         <?php if ($report->status === 'Archived'): ?>
           <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="yn-btn yn-btn--primary dw-button dw-button--primary db-confirm-action" type="submit">Restore Report</button></form>
         <?php endif; ?>
       </div>
-      <div class="dr-document__footer-right"><?php if ($report->status !== 'Archived'): ?><button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="button" data-modal-open="archive-report-modal">Archive Report</button><?php endif; ?><a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="yn-btn yn-btn--primary dw-button dw-button--primary yn-btn-download" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
+      <div class="dr-document__footer-right"><?php if ($report->status !== 'Archived'): ?><button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="button" data-modal-open="archive-report-modal">Archive Report</button><?php endif; ?><a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
     </footer>
   </article>
 </section>

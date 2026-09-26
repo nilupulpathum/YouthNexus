@@ -36,6 +36,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Void request summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -43,12 +47,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <div class="dw-toolbar" aria-label="Void request tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="void-request-search">Search ledger entries and requests</label>
-      <input id="void-request-search" type="search" placeholder="Search by entry, description, or reason" data-void-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="void-request-search" type="search" placeholder="Search by entry, description, or reason" data-void-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">Filters</button>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="void-request-filters" hidden>
@@ -103,8 +106,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-void-filter-reset>Reset all</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-void-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-void-filter-reset>Clear filters</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-void-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -116,7 +119,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <span class="dw-count" data-eligible-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Entry ID</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Action</th></tr></thead>
         <tbody data-eligible-body>
@@ -142,11 +145,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <div class="dw-empty-state<?= !$entries ? ' is-visible' : '' ?>" data-eligible-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No eligible entries found</strong>
-      <p>Approved entries appear here when they do not have a pending void request.</p>
-    </div>
+    <?php $emptyTitle = 'No eligible entries found'; $emptyMessage = 'Approved entries appear here when they do not have a pending void request.'; $emptyVisible = !$entries; $emptyAttribute = 'data-eligible-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
   </section>
 
   <section class="dw-panel" aria-labelledby="sent-requests-title">
@@ -157,7 +156,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <span class="dw-count" data-request-count><?= count($requests) ?> <?= count($requests) === 1 ? 'request' : 'requests' ?></span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Ledger Entry</th><th>Reason</th><th>Sent To</th><th>Date Sent</th><th>Status</th><th>Action</th></tr></thead>
         <tbody data-request-body>
@@ -207,11 +206,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <div class="dw-empty-state<?= !$requests ? ' is-visible' : '' ?>" data-request-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No void requests found</strong>
-      <p>Submitted requests and their review status appear here.</p>
-    </div>
+    <?php $emptyTitle = 'No void requests found'; $emptyMessage = 'Submitted requests and their review status appear here.'; $emptyVisible = !$requests; $emptyAttribute = 'data-request-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
   </section>
 </section>
 

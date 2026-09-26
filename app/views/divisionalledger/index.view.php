@@ -10,6 +10,7 @@ $currentRoute = 'divisionalledger';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-ledger.js',
 ];
 
@@ -30,6 +31,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalledger/export">
+      <?= yn_icon('download') ?> Export
+    </a>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
+  </div>
+
   <div class="dw-summary-grid" aria-label="Ledger summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -37,15 +45,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <div class="dw-toolbar" aria-label="Ledger tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="ledger-search">Search ledger entries</label>
-      <input id="ledger-search" type="search" placeholder="Search by reference, description, or category" data-ledger-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="ledger-search" type="search" placeholder="Search by reference, description, or category" data-ledger-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false">Filters</button>
-    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalledger/export">
-      <?= yn_icon('download') ?> Export
-    </a>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="ledger-filters" hidden>
@@ -95,8 +99,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-reset>Reset all</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-filter-reset>Clear filters</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -109,7 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <span class="dw-count" data-entry-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
       </header>
-      <div class="dw-table-wrap">
+      <div class="yn-table-wrap dw-table-wrap">
         <table class="yn-table dw-table">
           <thead>
             <tr>
@@ -125,7 +129,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <th>Action</th>
             </tr>
           </thead>
-          <tbody data-ledger-rows>
+          <tbody id="ledger-page-rows" data-ledger-rows>
             <?php foreach ($entries as $entry): ?>
               <?php
               $hasReceipt = !empty($entry->attachment_url);
@@ -172,11 +176,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           </tbody>
         </table>
       </div>
+      <nav class="yn-pagination" aria-label="Ledger pages" data-yn-pagination data-yn-page-target="ledger-page-rows" data-yn-page-size="10" hidden></nav>
       <?php
       $emptyTitle = 'No ledger entries found';
       $emptyMessage = 'Add an entry or change the current search and filters.';
       $emptyVisible = count($entries) === 0;
-      require __DIR__ . '/../partials/divisional/empty-state.view.php';
+      require __DIR__ . '/../partials/empty-state.view.php';
       ?>
     </section>
 
