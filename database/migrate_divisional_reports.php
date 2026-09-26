@@ -47,6 +47,7 @@ try {
     }
     $seeds = [
         ['User Interactions','Club Registration Status','Club registration applications and decisions within the selected period.',1],
+        ['Events','Club Activity Aggregate','Club-level event, attendance, membership, and health figures rolled up for the division.',1],
         ['Events','Event Approval Summary','Event approval requests and decisions within the selected period.',1],
         ['Events','Event Status Summary','Divisional and club events grouped by their current status.',2],
         ['Events','Event Attendance Rate','Recorded attendance and attendance rates for events in the division.',3],

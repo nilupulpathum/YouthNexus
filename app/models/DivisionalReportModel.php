@@ -8,6 +8,7 @@ class DivisionalReportModel extends Model {
             'Club Health Summary',
         ],
         'DivisionalSecretary' => [
+            'Club Activity Aggregate',
             'Event Status Summary',
             'Event Attendance Rate',
             'Club Health Summary',
@@ -154,6 +155,7 @@ class DivisionalReportModel extends Model {
         return match ($report->type_name) {
             'Club Registration Status' => $this->registrations($divisionId, $start, $end),
             'Event Approval Summary' => $this->eventApprovals($divisionId, $start, $end),
+            'Club Activity Aggregate' => $this->clubActivityAggregate($divisionId, $start, $end),
             'Event Status Summary' => $this->events($divisionId, $start, $end),
             'Event Attendance Rate' => $this->attendance($divisionId, $start, $end),
             'Divisional Financial Summary' => $this->financial($divisionId, $start, $end),
@@ -270,6 +272,80 @@ class DivisionalReportModel extends Model {
         ], [
             'event' => 'Event', 'title' => 'Title', 'type' => 'Type', 'organiser' => 'Organiser',
             'event_date' => 'Event date', 'created_by' => 'Created by', 'decided_by' => 'Decided by', 'status' => 'Status',
+        ], $data);
+    }
+
+    private function clubActivityAggregate(int $divisionId, string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT c.club_id, c.club_name, c.status AS club_status, c.no_of_members,
+                    COUNT(DISTINCT e.event_id) AS event_count,
+                    COUNT(DISTINCT CASE WHEN e.status = 'Completed' THEN e.event_id END) AS completed_events,
+                    COUNT(DISTINCT a.attendance_id) AS attendance_recorded,
+                    COUNT(DISTINCT CASE WHEN a.status = 'Present' THEN a.attendance_id END) AS attendance_present,
+                    hs.overall_score, hs.health_status, hs.score_month
+             FROM Club c
+             LEFT JOIN Event e ON e.organizer_club_id = c.club_id
+                 AND DATE(e.start_datetime) BETWEEN ? AND ?
+             LEFT JOIN Attendance a ON a.event_id = e.event_id
+             LEFT JOIN ClubHealthSnapshot hs ON hs.snapshot_id = (
+                 SELECT hs2.snapshot_id
+                 FROM ClubHealthSnapshot hs2
+                 WHERE hs2.club_id = c.club_id
+                   AND hs2.score_month BETWEEN DATE_FORMAT(?, '%Y-%m-01') AND DATE_FORMAT(?, '%Y-%m-01')
+                 ORDER BY hs2.score_month DESC, hs2.snapshot_id DESC
+                 LIMIT 1
+             )
+             WHERE c.division_id = ?
+             GROUP BY c.club_id, c.club_name, c.status, c.no_of_members,
+                      hs.overall_score, hs.health_status, hs.score_month
+             ORDER BY c.club_name",
+            [$start, $end, $start, $end, $divisionId]
+        );
+
+        $data = [];
+        $members = 0;
+        $events = 0;
+        $present = 0;
+        $recorded = 0;
+        foreach ($rows as $row) {
+            $clubRecorded = (int) $row->attendance_recorded;
+            $clubPresent = (int) $row->attendance_present;
+            $attendanceRate = $clubRecorded > 0 ? round($clubPresent * 100 / $clubRecorded, 1) : 0;
+            $members += (int) $row->no_of_members;
+            $events += (int) $row->event_count;
+            $present += $clubPresent;
+            $recorded += $clubRecorded;
+            $data[] = [
+                'club' => $row->club_name,
+                'club_status' => $row->club_status,
+                'members' => (int) $row->no_of_members,
+                'events' => (int) $row->event_count,
+                'completed' => (int) $row->completed_events,
+                'attendance' => $clubRecorded,
+                'present' => $clubPresent,
+                'attendance_rate' => $attendanceRate . '%',
+                'health_score' => $row->overall_score !== null ? round((float) $row->overall_score, 1) : '-',
+                'health_status' => $row->health_status ?: 'Not assessed',
+            ];
+        }
+
+        $overallAttendanceRate = $recorded > 0 ? round($present * 100 / $recorded, 1) : 0;
+        return $this->pack([
+            ['label' => 'Clubs included', 'value' => count($rows)],
+            ['label' => 'Registered members', 'value' => $members],
+            ['label' => 'Events in period', 'value' => $events],
+            ['label' => 'Attendance rate', 'value' => $overallAttendanceRate . '%'],
+        ], [
+            'club' => 'Club',
+            'club_status' => 'Club status',
+            'members' => 'Members',
+            'events' => 'Events',
+            'completed' => 'Completed',
+            'attendance' => 'Attendance records',
+            'present' => 'Present',
+            'attendance_rate' => 'Attendance rate',
+            'health_score' => 'Health score',
+            'health_status' => 'Health status',
         ], $data);
     }
 
