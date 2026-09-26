@@ -34,6 +34,7 @@ class Zonaltreasurer extends Controller {
      */
     private function shell($title, $pageTitle, $pageDescription, $currentRoute) {
         $memberName = trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User';
+        $headerNotif = ZoneOverview::headerNotifications($this);
         return [
             'title'                   => $title,
             'pageTitle'               => $pageTitle,
@@ -43,7 +44,8 @@ class Zonaltreasurer extends Controller {
             'userName'                => $memberName,
             'userEmail'               => $_SESSION['user_email'] ?? '',
             'userInitials'            => $_SESSION['user_initials'] ?? '',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications'     => $headerNotif['items'],
         ];
     }
 
