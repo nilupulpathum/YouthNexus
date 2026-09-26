@@ -57,10 +57,10 @@ $navigation = [
     ],
     'zonalcoordinator' => [
         ['label' => 'Overview', 'route' => 'zonalcoordinator', 'href' => $dashboardRoot . '/zonalcoordinator', 'icon' => 'grid'],
-        ['label' => 'Monitor Club Health', 'route' => 'zonalcoordinator/clubs', 'href' => $dashboardRoot . '/zonalcoordinator/clubs', 'icon' => 'chart'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
         ['label' => 'Approve Zonal Events', 'route' => 'zonalcoordinator/events', 'href' => $dashboardRoot . '/zonalcoordinator/events', 'icon' => 'calendar'],
-        ['label' => 'Aggregate Reports', 'route' => 'zonalcoordinator/reports', 'href' => $dashboardRoot . '/zonalcoordinator/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Aggregate Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -97,11 +97,11 @@ $navigation = [
     ],
     'zonalsecretary' => [
         ['label' => 'Overview', 'route' => 'zonalsecretary', 'href' => $dashboardRoot . '/zonalsecretary', 'icon' => 'grid'],
-        ['label' => 'Monitor Club Health', 'route' => 'zonalsecretary/clubs', 'href' => $dashboardRoot . '/zonalsecretary/clubs', 'icon' => 'chart'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
         ['label' => 'Zonal Events', 'route' => 'zonalsecretary/events', 'href' => $dashboardRoot . '/zonalsecretary/events', 'icon' => 'calendar'],
         ['label' => 'Attendance', 'route' => 'zonalsecretary/attendance', 'href' => $dashboardRoot . '/zonalsecretary/attendance', 'icon' => 'check'],
-        ['label' => 'Reports', 'route' => 'zonalsecretary/reports', 'href' => $dashboardRoot . '/zonalsecretary/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -112,7 +112,9 @@ $navigation = [
         ['label' => 'Zonal Assets', 'route' => 'zonaltreasurer/assets', 'href' => $dashboardRoot . '/zonaltreasurer/assets', 'icon' => 'briefcase'],
         ['label' => 'Zonal Ledger', 'route' => 'zonaltreasurer/ledger', 'href' => $dashboardRoot . '/zonaltreasurer/ledger', 'icon' => 'wallet'],
         ['label' => 'Void Requests', 'route' => 'zonaltreasurer/voids', 'href' => $dashboardRoot . '/zonaltreasurer/voids', 'icon' => 'clock'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
+        ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'reports'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -209,7 +211,7 @@ $icons = [
     <?php
     // Exact match wins: a parent entry (e.g. zonalcoordinator Overview)
     // must not stay highlighted when a child page (e.g.
-    // zonalcoordinator/clubs) is open. Prefix highlighting applies only
+    // zonalclubhealth) is open. Prefix highlighting applies only
     // when no entry matches exactly (e.g. president/handover keeps the
     // president Overview lit since handover has no entry of its own).
     $hasExactMatch = false;
