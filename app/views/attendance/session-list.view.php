@@ -14,6 +14,7 @@ $pageStyles              = [
     ROOT . '/assets/css/attendance.css?v=' . time(),
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+$pageScripts             = [ROOT . '/assets/js/attendance.js?v=20260926'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -221,7 +222,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <span class="am-empty-state-icon"><?= yn_icon('info') ?></span>
                 <p>No approved events match the selected criteria.</p>
                 <?php if (!empty($filters['zone_id']) || !empty($filters['division_id']) || !empty($filters['club_id'])): ?>
-                    <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-sm" style="margin-top:10px;">Clear All Filters</a>
+                    <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-sm yn-mt-2">Clear all filters</a>
                 <?php endif; ?>
             </div>
         <?php else: foreach ($events as $evt): ?>
@@ -317,7 +318,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <!-- Single Entry -->
             <div class="am-tab-pane active" id="paneSingle">
                 <div class="am-field">
-                    <label for="sEventSelect">EVENT <span style="color:#ef4444;">*</span></label>
+                    <label for="sEventSelect">EVENT <span class="yn-required">*</span></label>
                     <select id="sEventSelect">
                         <option value="">— Select Event —</option>
                         <?php foreach ($events as $evt): ?>
@@ -326,14 +327,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </select>
                 </div>
                 <div class="am-field">
-                    <label for="sMemberSelect">MEMBER <span style="color:#ef4444;">*</span></label>
+                    <label for="sMemberSelect">MEMBER <span class="yn-required">*</span></label>
                     <select id="sMemberSelect" disabled>
                         <option value="">— Select Event first —</option>
                     </select>
                 </div>
                 <div class="am-fields-row">
                     <div class="am-field">
-                        <label for="sStatus">STATUS <span style="color:#ef4444;">*</span></label>
+                        <label for="sStatus">STATUS <span class="yn-required">*</span></label>
                         <select id="sStatus">
                             <option value="Present">Present</option>
                             <option value="Absent">Absent</option>
@@ -353,7 +354,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <!-- Bulk CSV -->
             <div class="am-tab-pane" id="paneBulk">
                 <div class="am-field">
-                    <label for="bEventSelect">EVENT <span style="color:#ef4444;">*</span></label>
+                    <label for="bEventSelect">EVENT <span class="yn-required">*</span></label>
                     <select id="bEventSelect">
                         <option value="">— Select Event —</option>
                         <?php foreach ($events as $evt): ?>
@@ -362,7 +363,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </select>
                 </div>
                 <div class="am-field">
-                    <label for="bCsvFile">CSV FILE <span style="color:#ef4444;">*</span></label>
+                    <label for="bCsvFile">CSV FILE <span class="yn-required">*</span></label>
                     <input type="file" id="bCsvFile" accept=".csv">
                 </div>
                 <div class="am-csv-note">
@@ -382,10 +383,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="am-toast" id="amToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
-<script>
-    window.ROOT = "<?= ROOT ?>";
-    window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
-</script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
+<div id="attendanceConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-nysc-admin="<?= $isNYSCAdmin ? 'true' : 'false' ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

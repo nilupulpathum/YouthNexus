@@ -25,7 +25,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
       <section class="dr-results" aria-labelledby="report-details-title">
         <div class="dr-results__heading"><div><h3 id="report-details-title">Report details</h3><p>Records included in this report snapshot</p></div><span class="dw-count"><?= count($reportData['rows']) ?> <?= count($reportData['rows']) === 1 ? 'record' : 'records' ?></span></div>
-        <div class="dw-table-wrap"><table class="dw-table"><thead><tr><?php foreach ($reportData['columns'] as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($reportData['rows'] as $row): ?><tr><?php foreach (array_keys($reportData['columns']) as $key): ?><td><?= $e($row[$key] ?? '-') ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div>
+        <div class="dw-table-wrap"><table class="yn-table dw-table"><thead><tr><?php foreach ($reportData['columns'] as $label): ?><th><?= $e($label) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($reportData['rows'] as $row): ?><tr><?php foreach (array_keys($reportData['columns']) as $key): ?><td><?= $e($row[$key] ?? '-') ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div>
         <?php if (!$reportData['rows']): ?><div class="dw-empty-state is-visible"><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No records found</strong><p>No matching records were recorded during this reporting period.</p></div><?php endif; ?>
       </section>
 
@@ -35,12 +35,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <footer class="dr-document__footer">
       <div class="dr-document__footer-left">
-        <a class="dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
+        <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
         <?php if ($report->status === 'Archived'): ?>
-          <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--primary db-confirm-action" type="submit">Restore Report</button></form>
+          <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="yn-btn yn-btn--primary dw-button dw-button--primary db-confirm-action" type="submit">Restore Report</button></form>
         <?php endif; ?>
       </div>
-      <div class="dr-document__footer-right"><?php if ($report->status !== 'Archived'): ?><button class="dw-button dw-button--danger" type="button" data-modal-open="archive-report-modal">Archive Report</button><?php endif; ?><a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="dw-button dw-button--primary" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
+      <div class="dr-document__footer-right"><?php if ($report->status !== 'Archived'): ?><button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="button" data-modal-open="archive-report-modal">Archive Report</button><?php endif; ?><a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="yn-btn yn-btn--primary dw-button dw-button--primary yn-btn-download" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
     </footer>
   </article>
 </section>
@@ -56,7 +56,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-field dw-field--span-2"><label for="report-archive-reason">Reason for archiving <span aria-hidden="true">*</span></label><textarea id="report-archive-reason" name="reason" minlength="5" maxlength="1000" aria-required="true" aria-describedby="report-archive-help report-archive-error" placeholder="Explain why this report is being archived"></textarea><small id="report-archive-help">Enter at least 5 characters so the decision is clear in the audit history.</small><p class="dr-field-error" id="report-archive-error" role="alert" hidden>Please provide a reason of at least 5 characters.</p></div>
       <div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>Archiving does not delete this report or its downloadable files.</span></div>
     </div>
-    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--danger" type="submit">Archive Report</button></footer>
+    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="submit">Archive Report</button></footer>
   </form>
 </div>
 <?php endif; ?>

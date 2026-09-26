@@ -41,11 +41,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="ledger-search">Search ledger entries</label>
       <input id="ledger-search" type="search" placeholder="Search by reference, description, or category" data-ledger-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false">Filters</button>
-    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalledger/export">
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="ledger-filters" aria-expanded="false">Filters</button>
+    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalledger/export">
       <?= yn_icon('download') ?> Export
     </a>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
   </div>
 
   <section class="dw-filter-panel" id="ledger-filters" hidden>
@@ -95,8 +95,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="dw-button dw-button--secondary" type="button" data-filter-reset>Reset all</button>
-      <button class="dw-button dw-button--primary" type="button" data-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-reset>Reset all</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -110,7 +110,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <span class="dw-count" data-entry-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
       </header>
       <div class="dw-table-wrap">
-        <table class="dw-table">
+        <table class="yn-table dw-table">
           <thead>
             <tr>
               <th>Date</th>
@@ -154,10 +154,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <td>
                   <div class="dw-row-actions">
                     <?php if ($hasReceipt): ?>
-                      <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?> View Receipt</a>
+                      <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $entry->entry_id ?>" target="_blank" rel="noopener" aria-label="View receipt for <?= $e($entry->reference_no) ?>"><?= yn_icon('eye') ?> View Receipt</a>
                     <?php endif; ?>
                     <?php if ($entry->status === 'Approved' && (int) $entry->has_pending_void !== 1): ?>
-                      <button class="dw-button dw-button--ghost" type="button"
+                      <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button"
                               data-reconcile-entry
                               data-reconciled="<?= $isReconciled ? '1' : '0' ?>"
                               data-csrf="<?= $e($csrfToken) ?>"
@@ -258,8 +258,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </label>
     </div>
     <footer class="dw-modal__footer">
-      <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button dw-button--primary" type="submit">Save Entry</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Save Entry</button>
     </footer>
   </form>
 </div>

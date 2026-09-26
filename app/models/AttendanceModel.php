@@ -468,7 +468,7 @@ class AttendanceModel extends Model {
                     c.club_code   AS organizer_club_code,
                     d.division_name AS organizer_division_name,
                     'Division' AS organizer_level,
-                    (SELECT COUNT(*) FROM Attendance a WHERE a.event_id = e.event_id)                        AS attendance_recorded,
+                    (SELECT COUNT(*) FROM Attendance a WHERE a.event_id = e.event_id) AS attendance_recorded,
                     (SELECT COUNT(*) FROM Attendance a WHERE a.event_id = e.event_id AND a.status = 'Present') AS present_count,
                     e.max_attendance
                 FROM Event e
@@ -591,12 +591,245 @@ class AttendanceModel extends Model {
     }
 
     /**
+     * Return approved events in scope for a Zonal Secretary: events organised
+     * at the Zonal level, or by any Division/Club that belongs to this zone.
+     *
+     * @param  int $zonalId
+     * @return array
+     */
+    public function getApprovedEventsByZone($zonalId) {
+        $sql = "SELECT
+                    e.event_id,
+                    e.title,
+                    e.description,
+                    e.event_type,
+                    e.start_datetime,
+                    e.end_datetime,
+                    e.location,
+                    e.target_scope,
+                    e.organizer_division_id,
+                    e.organizer_club_id,
+                    e.organizer_zonal_id,
+                    c.club_name      AS organizer_club_name,
+                    c.club_code      AS organizer_club_code,
+                    d.division_name  AS organizer_division_name,
+                    CASE
+                        WHEN e.organizer_zonal_id    IS NOT NULL THEN 'Zonal'
+                        WHEN e.organizer_division_id IS NOT NULL THEN 'Division'
+                        WHEN e.organizer_club_id     IS NOT NULL THEN 'Club'
+                        ELSE 'National'
+                    END AS organizer_level,
+                    (SELECT COUNT(*) FROM Attendance a
+                     JOIN User attendee ON attendee.user_id = a.user_id
+                     JOIN Club attendee_club ON attendee_club.club_id = attendee.club_id
+                     JOIN Division attendee_division ON attendee_division.division_id = attendee_club.division_id
+                     WHERE a.event_id = e.event_id AND attendee_division.zonal_id = ?) AS attendance_recorded,
+                    (SELECT COUNT(*) FROM Attendance a
+                     JOIN User attendee ON attendee.user_id = a.user_id
+                     JOIN Club attendee_club ON attendee_club.club_id = attendee.club_id
+                     JOIN Division attendee_division ON attendee_division.division_id = attendee_club.division_id
+                     WHERE a.event_id = e.event_id AND a.status = 'Present'
+                       AND attendee_division.zonal_id = ?) AS present_count,
+                    e.max_attendance
+                FROM Event e
+                LEFT JOIN Club     c  ON e.organizer_club_id     = c.club_id
+                LEFT JOIN Division cd ON c.division_id           = cd.division_id
+                LEFT JOIN Division d  ON e.organizer_division_id = d.division_id
+                WHERE e.status = 'Approved'
+                  AND (
+                        e.organizer_zonal_id = ?
+                        OR
+                        (e.organizer_division_id IS NOT NULL AND d.zonal_id = ?)
+                        OR
+                        (e.organizer_club_id IS NOT NULL AND cd.zonal_id = ?)
+                        OR
+                        (e.organizer_division_id IS NULL AND e.organizer_club_id IS NULL AND e.organizer_zonal_id IS NULL)
+                  )
+                ORDER BY e.start_datetime DESC";
+        return $this->resultSet($sql, [$zonalId, $zonalId, $zonalId, $zonalId, $zonalId]);
+    }
+
+    /**
+     * Return a single Approved event, verifying it belongs to this zone or is a national event.
+     *
+     * @param  int $eventId
+     * @param  int $zonalId
+     * @return object|false
+     */
+    public function getApprovedEventInZoneScope($eventId, $zonalId) {
+        $sql = "SELECT e.*,
+                       c.club_name      AS organizer_club_name,
+                       c.club_code      AS organizer_club_code,
+                       c.division_id    AS club_division_id,
+                       d.division_name  AS organizer_division_name
+                FROM Event e
+                LEFT JOIN Club     c  ON e.organizer_club_id     = c.club_id
+                LEFT JOIN Division cd ON c.division_id           = cd.division_id
+                LEFT JOIN Division d  ON e.organizer_division_id = d.division_id
+                WHERE e.event_id = ?
+                  AND e.status   = 'Approved'
+                  AND (
+                        e.organizer_zonal_id = ?
+                        OR
+                        (e.organizer_division_id IS NOT NULL AND d.zonal_id = ?)
+                        OR
+                        (e.organizer_club_id IS NOT NULL AND cd.zonal_id = ?)
+                        OR
+                        (e.organizer_division_id IS NULL AND e.organizer_club_id IS NULL AND e.organizer_zonal_id IS NULL)
+                  )
+                LIMIT 1";
+        return $this->single($sql, [$eventId, $zonalId, $zonalId, $zonalId]);
+    }
+
+    /**
+     * Return member roster for an event in zone scope.
+     *
+     * @param  int    $eventId
+     * @param  int    $zonalId
+     * @param  string $targetScope
+     * @return array
+     */
+    public function getMemberRosterForEventZone($eventId, $zonalId, $targetScope = 'AllInScope') {
+        $event = $this->getApprovedEventInZoneScope($eventId, $zonalId);
+        if (!$event) {
+            return [];
+        }
+        $sql = "SELECT
+                    u.user_id,
+                    u.user_id AS member_id,
+                    u.first_name,
+                    u.last_name,
+                    CONCAT(u.first_name, ' ', u.last_name) AS member_name,
+                    u.email,
+                    u.role,
+                    cu.club_name,
+                    cu.club_code,
+                    cd.division_name,
+                    a.attendance_id,
+                    a.status        AS att_status,
+                    a.check_in_time,
+                    a.check_out_time,
+                    a.remark,
+                    a.recorded_at,
+                    CONCAT(rec.first_name, ' ', rec.last_name) AS recorded_by_name,
+                    rec.role AS recorded_by_role
+                FROM User u
+                JOIN Club           cu ON cu.club_id  = u.club_id
+                JOIN Division       cd ON cu.division_id = cd.division_id
+                LEFT JOIN Attendance a ON a.event_id = ? AND a.user_id = u.user_id
+                LEFT JOIN User rec ON a.recorded_by = rec.user_id
+                WHERE cd.zonal_id = ?
+                  AND u.status = 'Active'
+                  AND u.membership_status = 'Active'";
+        $params = [$eventId, $zonalId];
+        if ($targetScope === 'SelectedClubs') {
+            // A selected club outside this zone must never leak into the roster.
+            $sql .= " AND EXISTS (SELECT 1 FROM EventTarget et
+                                  WHERE et.event_id = ? AND et.target_club_id = cu.club_id)";
+            $params[] = $eventId;
+        } elseif (!empty($event->organizer_club_id)) {
+            $sql .= " AND cu.club_id = ?";
+            $params[] = (int)$event->organizer_club_id;
+        } elseif (!empty($event->organizer_division_id)) {
+            $sql .= " AND cd.division_id = ?";
+            $params[] = (int)$event->organizer_division_id;
+        }
+        $sql .= "
+                GROUP BY u.user_id
+                ORDER BY cu.club_name, u.last_name, u.first_name";
+        return $this->resultSet($sql, $params);
+    }
+
+    /** Check both zone membership and any event-specific club targeting before writes. */
+    public function memberIsInZoneScope($memberId, $eventId, $zonalId, $targetScope) {
+        if ((int)$zonalId <= 0) {
+            return false;
+        }
+        $event = $this->getApprovedEventInZoneScope($eventId, $zonalId);
+        if (!$event) {
+            return false;
+        }
+        $sql = "SELECT 1 FROM User u
+                JOIN Club c ON c.club_id = u.club_id
+                JOIN Division d ON d.division_id = c.division_id
+                WHERE u.user_id = ? AND d.zonal_id = ?
+                  AND u.status = 'Active' AND u.membership_status = 'Active'";
+        $params = [(int)$memberId, (int)$zonalId];
+        if ($targetScope === 'SelectedClubs') {
+            $sql .= " AND EXISTS (SELECT 1 FROM EventTarget et
+                                  WHERE et.event_id = ? AND et.target_club_id = c.club_id)";
+            $params[] = (int)$eventId;
+        } elseif (!empty($event->organizer_club_id)) {
+            $sql .= " AND c.club_id = ?";
+            $params[] = (int)$event->organizer_club_id;
+        } elseif (!empty($event->organizer_division_id)) {
+            $sql .= " AND d.division_id = ?";
+            $params[] = (int)$event->organizer_division_id;
+        }
+        return (bool)$this->single($sql . ' LIMIT 1', $params);
+    }
+
+    /**
+     * Year-level summary stats for the session-list view stat cards (Zonal scope).
+     *
+     * @param  int $zonalId
+     * @return object
+     */
+    public function getZoneAttendanceStats($zonalId) {
+        $sql = "SELECT
+                    (SELECT COUNT(DISTINCT e.event_id)
+                     FROM Event e
+                     LEFT JOIN Club     c  ON e.organizer_club_id = c.club_id
+                     LEFT JOIN Division cd ON c.division_id       = cd.division_id
+                     LEFT JOIN Division d  ON e.organizer_division_id = d.division_id
+                     WHERE e.status = 'Approved'
+                       AND YEAR(e.start_datetime) = YEAR(CURDATE())
+                       AND (e.organizer_zonal_id = ? OR d.zonal_id = ? OR cd.zonal_id = ?
+                            OR (e.organizer_zonal_id IS NULL AND e.organizer_division_id IS NULL
+                                AND e.organizer_club_id IS NULL))
+                    ) AS events_this_year,
+                    (SELECT COUNT(*)
+                     FROM Attendance a
+                     JOIN Event e ON a.event_id = e.event_id
+                     JOIN User attendee ON attendee.user_id = a.user_id
+                     JOIN Club attendee_club ON attendee_club.club_id = attendee.club_id
+                     JOIN Division attendee_division ON attendee_division.division_id = attendee_club.division_id
+                     LEFT JOIN Club     c  ON e.organizer_club_id = c.club_id
+                     LEFT JOIN Division cd ON c.division_id       = cd.division_id
+                     LEFT JOIN Division d  ON e.organizer_division_id = d.division_id
+                     WHERE YEAR(a.recorded_at) = YEAR(CURDATE())
+                       AND attendee_division.zonal_id = ?
+                       AND (e.organizer_zonal_id = ? OR d.zonal_id = ? OR cd.zonal_id = ?
+                            OR (e.organizer_zonal_id IS NULL AND e.organizer_division_id IS NULL
+                                AND e.organizer_club_id IS NULL))
+                    ) AS attendance_this_year";
+        return $this->single($sql, [$zonalId, $zonalId, $zonalId, $zonalId, $zonalId, $zonalId, $zonalId]);
+    }
+
+    /**
      * Attendance stats for one event.
      *
      * @param  int $eventId
      * @return object|false
      */
-    public function getEventAttendanceStats($eventId) {
+    public function getEventAttendanceStats($eventId, $zonalId = null) {
+        if ($zonalId !== null) {
+            return $this->single("SELECT
+                    SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+                    SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count
+                FROM Attendance a
+                JOIN User u ON u.user_id = a.user_id
+                JOIN Club c ON c.club_id = u.club_id
+                JOIN Division d ON d.division_id = c.division_id
+                JOIN Event e ON e.event_id = a.event_id
+                WHERE a.event_id = ? AND d.zonal_id = ?
+                  AND ((e.target_scope = 'SelectedClubs' AND EXISTS
+                        (SELECT 1 FROM EventTarget et WHERE et.event_id = e.event_id AND et.target_club_id = c.club_id))
+                       OR (e.target_scope <> 'SelectedClubs'
+                           AND (e.organizer_club_id IS NULL OR e.organizer_club_id = c.club_id)
+                           AND (e.organizer_division_id IS NULL OR e.organizer_division_id = d.division_id)))",
+                [(int)$eventId, (int)$zonalId]);
+        }
         $sql = "SELECT
                     SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present_count,
                     SUM(CASE WHEN status = 'Absent'  THEN 1 ELSE 0 END) AS absent_count
@@ -636,7 +869,7 @@ class AttendanceModel extends Model {
      * @param  int $eventId
      * @return array
      */
-    public function getAttendanceForEvent($eventId) {
+    public function getAttendanceForEvent($eventId, $zonalId = null) {
         $sql = "SELECT
                     a.attendance_id,
                     a.user_id AS member_id,
@@ -654,9 +887,22 @@ class AttendanceModel extends Model {
                 JOIN User u       ON a.user_id     = u.user_id
                 LEFT JOIN Club c  ON u.club_id     = c.club_id
                 LEFT JOIN User r  ON a.recorded_by = r.user_id
-                WHERE a.event_id = ?
-                ORDER BY u.last_name, u.first_name";
-        return $this->resultSet($sql, [(int)$eventId]);
+                WHERE a.event_id = ?";
+        $params = [(int)$eventId];
+        if ($zonalId !== null) {
+            // National events can have members from every zone; export only this zone.
+            $sql .= " AND EXISTS (SELECT 1 FROM Division d
+                                  WHERE d.division_id = c.division_id AND d.zonal_id = ?)";
+            $sql .= " AND EXISTS (SELECT 1 FROM Event e WHERE e.event_id = a.event_id
+                AND ((e.target_scope = 'SelectedClubs' AND EXISTS
+                       (SELECT 1 FROM EventTarget et WHERE et.event_id = e.event_id AND et.target_club_id = c.club_id))
+                     OR (e.target_scope <> 'SelectedClubs'
+                         AND (e.organizer_club_id IS NULL OR e.organizer_club_id = c.club_id)
+                         AND (e.organizer_division_id IS NULL OR e.organizer_division_id = c.division_id))))";
+            $params[] = (int)$zonalId;
+        }
+        $sql .= " ORDER BY u.last_name, u.first_name";
+        return $this->resultSet($sql, $params);
     }
 
     /**

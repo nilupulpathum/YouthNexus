@@ -543,7 +543,7 @@
 .cr-modal-close {
     background: none;
     border: none;
-    font-size: 26px;
+    font-size: 12px;
     cursor: pointer;
     color: var(--db-text-grey);
     line-height: 1;
@@ -2487,10 +2487,11 @@
     background: rgba(255, 255, 255, 0.15);
     border: none;
     color: #fff;
-    width: 32px;
+    min-width: 48px;
+    padding: 0 8px;
     height: 32px;
-    border-radius: 50%;
-    font-size: 20px;
+    border-radius: 8px;
+    font-size: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -2722,9 +2723,10 @@
     background: rgba(255, 255, 255, 0.9);
     color: #1e40af;
     border: 1px solid var(--db-border);
-    width: 38px;
+    min-width: 64px;
+    padding: 0 8px;
     height: 38px;
-    border-radius: 50%;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2853,4 +2855,21 @@
 .cr-fallback-box.stage svg {
     width: 48px;
     height: 48px;
-}
+}
+
+.cr-empty--full-row { grid-column: 1 / -1; }
+
+/* Dynamic approval content uses the same visual rules as the PHP view. */
+.cr-grid-feedback { grid-column: 1 / -1; padding: 20px; color: var(--yn-text-muted); text-align: center; }
+.cr-grid-feedback--error, .cr-modal-feedback--error { color: var(--yn-danger-hover); }
+.cr-modal-feedback { padding: 20px; color: var(--yn-text-muted); font-size: 13px; }
+.cr-nic-val-emphasis { color: var(--yn-primary); font-size: 14px; font-weight: 700; }
+.cr-nic-modal-body--compact { padding: 16px; }
+.cr-nic-preview-image { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.cr-detail-row--spaced { margin-top: 12px; }
+.cr-decision-remarks-section--spaced { margin-top: 14px; }
+.cr-nominee-role-name { display: flex; align-items: center; color: var(--yn-primary); font-size: 12px; font-weight: 800; }
+.cr-photo-count-value { font-size: 15px; font-weight: 900; }
+.cr-photo-count-label { font-size: 9.5px; letter-spacing: .5px; }
+.cr-photos-stacked-container { cursor: pointer; }
+.cr-photo-stacked-circle.count-more { z-index: 5; }

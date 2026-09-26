@@ -15,6 +15,7 @@ $pageStyles              = [
     ROOT . '/assets/css/clubregistrationapproval.css',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+$pageScripts             = [ROOT . '/assets/js/clubregistrationapproval.js?v=20260926'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -84,13 +85,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <div class="cr-section-header-row" id="crSectionHeaderRow">
         <h3 class="cr-section-heading">Applications</h3>
-        <button type="button" class="cr-sort-toggle-btn" id="crSortToggleBtn" data-sort="asc">Sort: Oldest First ▾</button>
+        <button type="button" class="cr-sort-toggle-btn" id="crSortToggleBtn" data-sort="asc">Sort: Oldest First</button>
     </div>
 
     <!-- ============ Application cards grid ============ -->
     <div class="cr-grid" id="crGrid">
         <?php if (empty($applications)): ?>
-            <div class="cr-empty" style="grid-column: 1 / -1;">
+            <div class="cr-empty cr-empty--full-row">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
                 <p>No pending applications right now.</p>
             </div>
@@ -171,8 +172,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div class="cr-toast" id="crToast"></div>
 
-<input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">
-<script>var ROOT_URL = "<?= ROOT ?>"; var COORDINATOR_NAME = "<?= htmlspecialchars($_SESSION['user_name'] ?? 'R. Perera') ?>";</script>
-<script src="<?= ROOT ?>/assets/js/clubregistrationapproval.js?v=<?= time() ?>"></script>
+<input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+<div id="crPageConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-coordinator-name="<?= htmlspecialchars((string) ($_SESSION['user_name'] ?? 'Divisional Coordinator'), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

@@ -13,12 +13,14 @@ $pageStyles              = [
     ROOT . '/assets/css/attendance.css?v=' . time(),
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+$pageScripts             = [ROOT . '/assets/js/attendance.js?v=20260926'];
+require_once __DIR__ . '/../partials/icons.view.php';
 
 $orgHierarchy = [];
 if (!empty($event->organizer_club_name))     $orgHierarchy[] = $event->organizer_club_name;
 if (!empty($event->organizer_division_name)) $orgHierarchy[] = $event->organizer_division_name;
 if (!empty($event->organizer_zonal_name))    $orgHierarchy[] = $event->organizer_zonal_name;
-$organiser = !empty($orgHierarchy) ? implode(' &bull; ', $orgHierarchy) : 'National Administration';
+$organiser = !empty($orgHierarchy) ? implode(', ', $orgHierarchy) : 'National Administration';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -29,17 +31,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
          Detail Header
          ============================================================ -->
     <div class="am-detail-header">
-        <a href="<?= ROOT ?>/attendance" class="am-back-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <a href="<?= ROOT ?>/attendance" class="am-back-btn yn-btn-back">
             Back to Events
         </a>
         <div class="am-detail-actions">
-            <a href="<?= ROOT ?>/attendance/download/<?= (int)$event->event_id ?>" class="am-btn" id="amDownloadCsvBtn">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <a href="<?= ROOT ?>/attendance/download/<?= (int)$event->event_id ?>" class="am-btn yn-btn yn-btn--secondary yn-btn-download" id="amDownloadCsvBtn">
+                <?= yn_icon('download') ?>
                 Download CSV
             </a>
-            <button type="button" class="am-btn" id="amExportPdfBtn" onclick="window.print()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <button type="button" class="am-btn yn-btn yn-btn--secondary" id="amExportPdfBtn" onclick="window.print()">
+                <?= yn_icon('file') ?>
                 Print / Export
             </button>
         </div>
@@ -53,9 +54,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <span class="am-badge type"><?= htmlspecialchars($event->event_type) ?></span>
             <?php endif; ?>
             <span class="am-event-summary-meta">
-                <?= $organiser ?> &nbsp;&bull;&nbsp;
+                <?= htmlspecialchars($organiser, ENT_QUOTES, 'UTF-8') ?>,
                 <?= date('M j, Y \a\t g:i A', strtotime($event->start_datetime)) ?>
-                <?= $event->location ? ' &nbsp;&bull;&nbsp; ' . htmlspecialchars($event->location) : '' ?>
+                <?= $event->location ? ', ' . htmlspecialchars($event->location, ENT_QUOTES, 'UTF-8') : '' ?>
             </span>
         </div>
     </div>
@@ -104,11 +105,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <option value="Absent">Absent</option>
                 <option value="unmarked">Not Recorded</option>
             </select>
-            <span style="font-size:13px;color:#6b7280;margin-left:auto;"><strong><?= count($roster) ?></strong> members in scope</span>
+            <span class="am-roster-count"><strong><?= count($roster) ?></strong> members in scope</span>
         </div>
 
         <?php if (empty($roster)): ?>
-            <div class="am-empty-state" style="padding:40px 0;">
+            <div class="am-empty-state am-empty-state--padded">
                 <p>No member attendance records found for this event.</p>
             </div>
         <?php else: ?>
@@ -121,7 +122,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <th>Check-in Time</th>
                     <th>Remark</th>
                     <th>Recorded By</th>
-                    <th style="text-align:right;">Actions</th>
+                    <th class="yn-text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -144,14 +145,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     data-status="<?= htmlspecialchars($attStatus) ?>">
                     <td>
                         <strong><?= htmlspecialchars($mName) ?></strong><br>
-                        <small style="color:#64748b;"><?= htmlspecialchars($row->email ?? '') ?></small>
+                        <small class="am-member-email"><?= htmlspecialchars($row->email ?? '') ?></small>
                     </td>
                     <td><?= $clubLoc ?></td>
                     <td>
                         <?php if ($attStatus === 'Present'): ?>
-                            <span class="am-status-badge present">&#9679; Present</span>
+                            <span class="am-status-badge present">Present</span>
                         <?php elseif ($attStatus === 'Absent'): ?>
-                            <span class="am-status-badge absent">&#10007; Absent</span>
+                            <span class="am-status-badge absent">Absent</span>
                         <?php else: ?>
                             <span class="am-status-badge unmarked">Not recorded</span>
                         <?php endif; ?>
@@ -165,10 +166,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <td>
                         <?= $recordedBy ?>
                         <?php if (!empty($row->recorded_at)): ?>
-                            <div style="font-size:11px;color:#94a3b8;margin-top:2px;"><?= date('M j, H:i', strtotime($row->recorded_at)) ?></div>
+                            <div class="am-recorder-time"><?= date('M j, H:i', strtotime($row->recorded_at)) ?></div>
                         <?php endif; ?>
                     </td>
-                    <td style="text-align:right;">
+                    <td class="yn-text-right">
                         <button type="button"
                                 class="am-btn am-btn-quick-update"
                                 data-member-id="<?= (int)$row->user_id ?>"
@@ -192,7 +193,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
      Quick Update Modal
      ============================================================ -->
 <div class="am-modal-backdrop" id="amQuickUpdateModal">
-    <div class="am-modal" style="max-width:440px;">
+    <div class="am-modal am-modal--narrow">
         <div class="am-modal-header">
             <h3>Update Member Attendance</h3>
             <button type="button" class="am-modal-close" id="amQuickClose" aria-label="Close">
@@ -205,11 +206,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <div class="am-field">
                 <label>MEMBER</label>
-                <div id="quMemberName" style="font-weight:700;font-size:14px;color:#0f172a;padding:8px 0;"></div>
+                <div id="quMemberName" class="am-member-name"></div>
             </div>
 
             <div class="am-field">
-                <label for="quStatus">ATTENDANCE STATUS <span style="color:#ef4444;">*</span></label>
+                <label for="quStatus">ATTENDANCE STATUS <span class="yn-required">*</span></label>
                 <select id="quStatus">
                     <option value="Present">Present</option>
                     <option value="Absent">Absent</option>
@@ -236,14 +237,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="am-toast" id="amToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
-<script>
-    window.ROOT = "<?= ROOT ?>";
-    window.currentEventId = <?= (int)$event->event_id ?>;
-    window.currentAttendanceUser = {
-        name: <?= json_encode($userName ?? 'Administrator', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
-        role: <?= json_encode($userRole ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
-    };
-</script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
+<div id="attendanceConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-nysc-admin="<?= $isNYSCAdmin ? 'true' : 'false' ?>" data-user-name="<?= htmlspecialchars((string) ($userName ?? 'Administrator'), ENT_QUOTES, 'UTF-8') ?>" data-user-role="<?= htmlspecialchars((string) ($userRole ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

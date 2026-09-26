@@ -43,8 +43,7 @@ $isClub       = !empty($event->organizer_club_id);
                                 <div class="me-badges-group">
                                     <?php if ($isNational): ?>
                                         <span class="me-badge me-badge-national">
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:3px;vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                            National Event
+                                            National event
                                         </span>
                                     <?php elseif ($isZonal): ?>
                                         <span class="me-badge me-badge-zonal">Zonal: <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zone') ?></span>
@@ -113,7 +112,7 @@ $isClub       = !empty($event->organizer_club_id);
                                             <?php endforeach; ?>
                                         </ul>
                                     <?php else: ?>
-                                        <em style="color: var(--db-text-grey);">No clubs targeted</em>
+                                        <em class="yn-text-muted">No clubs targeted</em>
                                     <?php endif; ?>
                                 </span>
                             </div>
@@ -142,20 +141,20 @@ $isClub       = !empty($event->organizer_club_id);
                                 <span class="me-field-label">Organized By</span>
                                 <span class="me-field-value">
                                     <?php if ($isNational): ?>
-                                        <strong>National Youth Services Council (NYSC)</strong> <small style="color:var(--db-text-grey);">(National Level)</small>
+                                        <strong>National Youth Services Council (NYSC)</strong> <small class="yn-text-muted">(National Level)</small>
                                     <?php elseif ($isZonal): ?>
-                                        <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zonal Secretariat') ?> <small style="color:var(--db-text-grey);">(Zonal Level)</small>
+                                        <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zonal Secretariat') ?> <small class="yn-text-muted">(Zonal Level)</small>
                                     <?php elseif ($isDivisional): ?>
-                                        <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?> <small style="color:var(--db-text-grey);">(Divisional Level)</small>
+                                        <?= htmlspecialchars($event->organizer_division_name ?? 'Divisional Secretariat') ?> <small class="yn-text-muted">(Divisional Level)</small>
                                     <?php else: ?>
-                                        <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?> <small style="color:var(--db-text-grey);">(Club Level)</small>
+                                        <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?> <small class="yn-text-muted">(Club Level)</small>
                                     <?php endif; ?>
                                 </span>
                             </div>
 
                             <div class="me-field-item">
                                 <span class="me-field-label">Created By</span>
-                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Administration' : 'Secretary')) ?> <small style="color:var(--db-text-grey)">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
+                                <span class="me-field-value"><?= htmlspecialchars($event->creator_name ?? ($isNational ? 'NYSC Administration' : 'Secretary')) ?> <small class="yn-text-muted">(<?= htmlspecialchars($event->creator_role ?? 'User') ?>)</small></span>
                             </div>
 
                             <div class="me-field-item full">
@@ -228,8 +227,8 @@ $isClub       = !empty($event->organizer_club_id);
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                     </div>
                                     <div class="me-timeline-content">
-                                        <h4 style="color: #b91c1c;">Rejected</h4>
-                                        <p style="color: #991b1b;"><?= !empty($event->rejection_remarks) ? htmlspecialchars($event->rejection_remarks) : 'Application rejected.' ?></p>
+                                        <h4 class="me-rejection-title">Rejected</h4>
+                                        <p class="me-rejection-reason"><?= !empty($event->rejection_remarks) ? htmlspecialchars($event->rejection_remarks) : 'Application rejected.' ?></p>
                                     </div>
                                 </div>
                             <?php else: ?>
@@ -245,7 +244,7 @@ $isClub       = !empty($event->organizer_club_id);
                         </div>
 
                         <div class="me-status-notice">
-                            <strong style="display: block; margin-bottom: 4px; color: var(--db-text-dark);">Governance Notice</strong>
+                            <strong class="me-governance-title">Governance Notice</strong>
                             <?php if ($isNational): ?>
                                 This is a National-level event authorized and published across all zones, divisions, and clubs by the National Youth Services Council.
                             <?php elseif ($event->status === 'PendingApproval'): ?>
@@ -363,7 +362,7 @@ $isClub       = !empty($event->organizer_club_id);
                                             <?= htmlspecialchars($club->club_name) ?>
                                             <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
                                             <?php if (!empty($club->division_name)): ?>
-                                                <small style="color:var(--db-text-grey);font-size:11px;">(<?= htmlspecialchars($club->division_name) ?>)</small>
+                                                <small class="yn-text-muted yn-text-xs">(<?= htmlspecialchars($club->division_name) ?>)</small>
                                             <?php endif; ?>
                                         </span>
                                     </div>
@@ -386,7 +385,7 @@ $isClub       = !empty($event->organizer_club_id);
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
+                        <label class="me-form-label">Max Attendees <small class="me-form-hint">(event-wide)</small></label>
                         <input type="number" name="max_attendance" class="me-form-input" value="<?= !empty($event->max_attendance) ? (int)$event->max_attendance : '' ?>" min="1">
                     </div>
 

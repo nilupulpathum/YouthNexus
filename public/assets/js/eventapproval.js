@@ -3,6 +3,9 @@
  * Divisional Coordinator Dashboard
  */
 (function () {
+    const pageConfig = document.getElementById('eaPageConfig');
+    const rootUrl = pageConfig?.dataset.root || '';
+    const csrfToken = pageConfig?.dataset.csrfToken || '';
     const modal            = document.getElementById('eaReviewModal');
     const modalBody        = document.getElementById('eaModalBody');
     const modalTitle       = document.getElementById('eaModalEventTitle');
@@ -75,11 +78,11 @@
     function openReview(eventId) {
         activeEventId = eventId;
         modalTitle.textContent = 'Loading Event Details...';
-        modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#6b7280;"><p>Loading event information...</p></div>';
+        modalBody.innerHTML = '<div class="ea-modal-feedback"><p>Loading event information...</p></div>';
         decisionPanel.hidden = true;
         modal.classList.add('open');
         
-        fetch((window.ROOT || '') + '/eventapproval/review/' + eventId)
+        fetch(rootUrl + '/eventapproval/review/' + eventId)
             .then(response => {
                 if (!response.ok) throw new Error('Failed to load event details.');
                 return response.json();
@@ -98,8 +101,8 @@
                 const isDivisionalEvent = Boolean(ev.organizer_division_id);
                 const organizerLabel    = isDivisionalEvent ? 'Organizing Body' : 'Organizing Club';
                 const organizerValue    = isDivisionalEvent 
-                    ? `Divisional Secretariat <small style="color:#64748b; font-weight:normal;">(${escapeHtml(ev.organizer_division_name || 'Division')})</small>`
-                    : `${escapeHtml(ev.organizer_club_name || 'Club')} <small style="color:#64748b; font-weight:normal;">(${escapeHtml(ev.organizer_club_code || '')})</small>`;
+                    ? `Divisional Secretariat <small class="ea-organizer-note">(${escapeHtml(ev.organizer_division_name || 'Division')})</small>`
+                    : `${escapeHtml(ev.organizer_club_name || 'Club')} <small class="ea-organizer-note">(${escapeHtml(ev.organizer_club_code || '')})</small>`;
 
                 const timeRangeDisplay = formatTimeRange(ev.start_datetime, ev.end_datetime);
                 const targetDisplay    = renderTargetSummary(ev.target_scope, targets);
@@ -146,7 +149,7 @@
                     <div class="ea-modal-section">
                         <div class="ea-submitter-badge-bar">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <span>Submitted by <strong>${escapeHtml(ev.creator_name || 'Club Officer')}</strong> &bull; Role: <strong>${escapeHtml(ev.creator_role || 'Club Leader')}</strong></span>
+                            <span>Submitted by <strong>${escapeHtml(ev.creator_name || 'Club Officer')}</strong>, role: <strong>${escapeHtml(ev.creator_role || 'Club Leader')}</strong></span>
                         </div>
                     </div>
                 `;
@@ -158,7 +161,7 @@
                 updateImpactAlert();
             })
             .catch(err => {
-                modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#dc2626;"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
+                modalBody.innerHTML = '<div class="ea-modal-feedback ea-modal-feedback--error"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
             });
     }
 
@@ -270,7 +273,7 @@
                         </div>
                     </div>
                     <div class="ea-card-footer">
-                        <span class="ea-card-submitter">Submitted by ${escapeHtml(ev.creator_name || '—')} &bull; <strong style="color:#4b5563;">${extraNote}</strong></span>
+                        <span class="ea-card-submitter">Submitted by ${escapeHtml(ev.creator_name || '—')}, <strong class="ea-card-extra-note">${extraNote}</strong></span>
                         <button type="button" class="ea-btn ea-btn-review db-view-button" data-event-id="${ev.event_id}">View Details</button>
                     </div>
                 </div>
@@ -295,7 +298,7 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading approved events...</p></div>';
-            fetch((window.ROOT || '') + '/eventapproval/approved')
+            fetch(rootUrl + '/eventapproval/approved')
                 .then(r => r.json())
                 .then(data => {
                     if (!statApproved.classList.contains('is-active')) return;
@@ -304,7 +307,7 @@
                 })
                 .catch(err => {
                     if (!statApproved.classList.contains('is-active')) return;
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load approved events.</p></div>';
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state ea-empty-state--error"><p>Failed to load approved events.</p></div>';
                 });
         });
     }
@@ -316,7 +319,7 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading rejected events...</p></div>';
-            fetch((window.ROOT || '') + '/eventapproval/rejected')
+            fetch(rootUrl + '/eventapproval/rejected')
                 .then(r => r.json())
                 .then(data => {
                     if (!statRejected.classList.contains('is-active')) return;
@@ -325,7 +328,7 @@
                 })
                 .catch(err => {
                     if (!statRejected.classList.contains('is-active')) return;
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load rejected events.</p></div>';
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state ea-empty-state--error"><p>Failed to load rejected events.</p></div>';
                 });
         });
     }
@@ -357,9 +360,9 @@
             ? '/eventapproval/cancellation/' + activeEventId
             : '/eventapproval/' + decision + '/' + activeEventId;
         const payload = activeEventStatus === 'CancellationPending'
-            ? { csrf_token: window.CSRF_TOKEN, remarks: remarks, decision: decision }
-            : { csrf_token: window.CSRF_TOKEN, remarks: remarks };
-        fetch((window.ROOT || '') + endpoint, {
+            ? { csrf_token: csrfToken, remarks: remarks, decision: decision }
+            : { csrf_token: csrfToken, remarks: remarks };
+        fetch(rootUrl + endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(payload)
