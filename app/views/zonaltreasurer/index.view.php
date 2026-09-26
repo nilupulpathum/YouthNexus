@@ -1,7 +1,7 @@
 <?php
 /**
  * Zonal Treasurer Overview — fund summary + workspace links.
- * Presentation-only; preview allocations persist for this session.
+ * Fund figures come from live FundAllocation rows and the zone ledger.
  * UI follows the divisional standard (dw-* classes + shared partials).
  */
 $e = static function ($value) {
@@ -12,7 +12,7 @@ require __DIR__ . '/../partials/icons.view.php';
 
 $title = 'Zonal Treasurer Overview - YouthNexus';
 $pageTitle = 'Zonal Treasurer';
-$pageDescription = 'Funds received by Gampaha Zone. Preview allocations persist for this session.';
+$pageDescription = 'Funds received by ' . ($zoneName ?? 'Zone') . '.';
 $currentRoute = 'zonaltreasurer/index';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
@@ -25,8 +25,8 @@ $links = [
 ];
 
 $summaryCards = [
-    ['value' => 'LKR ' . number_format($fundStats['budget_cap'] ?? 0, 2), 'label' => 'NYSC funds received', 'note' => 'Gampaha Zone', 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => 'LKR ' . number_format($fundStats['year_total'] ?? 0, 2), 'label' => 'Allocated to divisions', 'note' => 'Distributed this session', 'icon' => 'award', 'tone' => 'green'],
+    ['value' => 'LKR ' . number_format($fundStats['budget_cap'] ?? 0, 2), 'label' => 'NYSC funds received', 'note' => ($zoneName ?? 'Zone'), 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => 'LKR ' . number_format($fundStats['year_total'] ?? 0, 2), 'label' => 'Allocated to divisions', 'note' => 'Completed zone allocations', 'icon' => 'award', 'tone' => 'green'],
     ['value' => 'LKR ' . number_format($fundStats['remaining_budget'] ?? 0, 2), 'label' => 'Available zonal balance', 'note' => 'Remaining to allocate', 'icon' => 'clock', 'tone' => 'amber'],
 ];
 
@@ -46,7 +46,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <header class="dw-panel__header">
             <div>
                 <h2 id="zonaltreasurer-links-heading">Treasurer workspace</h2>
-                <p>Gampaha Zone — distribute funds to divisions and manage the zone's finance records.</p>
+                <p><?= $e($zoneName ?? 'Zone') ?> — distribute funds to divisions and manage the zone's finance records.</p>
             </div>
             <span class="dw-count"><?= count($links) ?> workspaces</span>
         </header>

@@ -12,7 +12,7 @@ require __DIR__ . '/../partials/icons.view.php';
 $links = [
     ['title' => 'Zonal Events', 'desc' => 'Schedule events and notify divisions and clubs', 'href' => 'zonalsecretary/events', 'icon' => 'calendar'],
     ['title' => 'Attendance Statistics', 'desc' => 'Review read-only attendance summaries', 'href' => 'zonalsecretary/attendance', 'icon' => 'file'],
-    ['title' => 'Aggregate Reports', 'desc' => 'Division rollups across the zone', 'href' => 'zonalsecretary/reports', 'icon' => 'file'],
+    ['title' => 'Aggregate Reports', 'desc' => 'Division rollups across the zone', 'href' => 'zonalreports', 'icon' => 'file'],
     ['title' => 'Announcements', 'desc' => 'Zone-wide communications', 'href' => 'announcements', 'icon' => 'bell'],
 ];
 $announcements = $announcements ?? [];
@@ -46,7 +46,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="zonalsecretary-links-heading">
         <header class="dw-panel__header">
             <div>
-                <p>Gampaha Zone</p>
+                <p><?= $e($zoneName ?? 'Zone') ?></p>
                 <h2 id="zonalsecretary-links-heading">Secretary workspace</h2>
             </div>
             <span class="dw-count"><?= count($links) ?> shortcuts</span>
@@ -78,7 +78,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </section>
 
     <section class="member-panel" aria-labelledby="zonalsecretary-announcements-heading">
-        <div class="member-panel-header"><div><p class="member-eyebrow">Stay informed</p><h2 id="zonalsecretary-announcements-heading">Zone announcements</h2></div><a class="member-panel-link" href="<?= ROOT ?>/zonalannouncements">View all</a></div>
+        <div class="member-panel-header"><div><p class="member-eyebrow">Stay informed</p><h2 id="zonalsecretary-announcements-heading">Zone announcements</h2></div><a class="member-panel-link" href="<?= ROOT ?>/announcements">View all</a></div>
         <div class="member-announcement-list">
             <?php foreach ($announcements as $announcement): ?>
                 <article class="member-announcement-item<?= !empty($announcement['is_new']) ? ' is-new' : '' ?>"><span class="member-list-dot" aria-hidden="true"></span><div class="member-list-copy"><div class="member-list-meta"><span><?= $e($announcement['age']) ?></span><?php if (!empty($announcement['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?></div><h3><?= $e($announcement['title']) ?></h3><p><?= $e($announcement['summary']) ?></p><span class="member-scope-tag">Zonal</span></div></article>

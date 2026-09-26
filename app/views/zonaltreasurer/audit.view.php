@@ -9,14 +9,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <section class="audit-content" aria-labelledby="zonal-audit-heading">
     <div class="audit-page-head">
-        <div><h1 id="zonal-audit-heading">Audit Divisional Finance</h1><p>Gampaha Zone review of divisional reports. NYSC retains final sign-off and ledger-lock authority.</p></div>
+        <div><h1 id="zonal-audit-heading">Audit Divisional Finance</h1><p><?= $escape($zoneName ?? 'Zone') ?> review of divisional reports. NYSC retains final sign-off and ledger-lock authority.</p></div>
         <div class="audit-head-right"><span class="audit-fy-badge">FY <b>2026</b></span><a class="audit-btn audit-btn-light" href="<?= ROOT ?>/zonaltreasurer/exportaudit"><?= yn_icon('download') ?> Export audit summary</a><button class="audit-btn audit-btn-blue" type="button" data-modal-open="flag-modal">Flag discrepancy</button></div>
     </div>
 
     <?php if (!empty($flash)): ?><div class="audit-flash-alert <?= ($flash['type'] ?? '') === 'success' ? 'audit-flash-success' : '' ?>" role="status"><div><?= $escape($flash['message'] ?? '') ?></div></div><?php endif; ?>
 
     <div class="audit-stats" aria-label="Zonal audit summary">
-        <article class="audit-stat-card"><h3>Divisional income reviewed</h3><div class="num">LKR <?= number_format((float)$income, 0) ?></div><div class="sub green">Gampaha Zone divisions</div></article>
+        <article class="audit-stat-card"><h3>Divisional income reviewed</h3><div class="num">LKR <?= number_format((float)$income, 0) ?></div><div class="sub green"><?= $escape($zoneName ?? 'Zone') ?> divisions</div></article>
         <article class="audit-stat-card"><h3>Reported expenses</h3><div class="num">LKR <?= number_format((float)$expenses, 0) ?></div><div class="sub gray">Across <?= count($reports) ?> divisions</div></article>
         <article class="audit-stat-card"><h3>Reported closing balance</h3><div class="num num-amber">LKR <?= number_format($totalBalance, 0) ?></div><div class="sub amber">Subject to report review</div></article>
         <article class="audit-stat-card audit-stat-alert"><h3>Open audit items</h3><div class="attention"><?= $escape($unresolvedCount) ?> require review</div><div class="sub red"><?= $reviewReady ? 'Zonal review can be exported' : 'Resolve or escalate each item' ?></div></article>
@@ -27,7 +27,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="audit-ledger-steps">
             <?php foreach ($reports as $report): ?><article class="audit-step"><div class="step-label"><?= $escape($report['division']) ?></div><div class="step-value blue">LKR <?= number_format((float)$report['balance'], 0) ?></div><div class="step-label">Income <?= number_format((float)$report['income'], 0) ?> · Expenses <?= number_format((float)$report['expenses'], 0) ?></div></article><?php endforeach; ?>
         </div>
-        <div class="audit-ledger-result">Review scope is limited to Gampaha, Ja-Ela and Negombo divisions. The Zonal Treasurer cannot sign off or lock a division ledger.</div>
+        <div class="audit-ledger-result">Review scope is limited to <?= $escape(implode(', ', $divisionNames ?? [])) ?>. The Zonal Treasurer cannot sign off or lock a division ledger.</div>
     </section>
 
     <div class="audit-exceptions-head"><div class="left"><h2>Audit flags</h2><span class="audit-count-badge"><?= count($flags) ?> items</span></div></div>

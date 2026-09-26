@@ -1,11 +1,10 @@
 <?php
 
 /**
- * Zonaltreasurer — zonal finance workspace and session-only fund distribution.
+ * Zonaltreasurer — zonal finance workspace on real tables (D10 fund
+ * allocation, D11 audit, D12 assets/ledger/voids).
  *
- * Presentation-only: mock data mirroring the future backend contract.
- * No database reads or writes. Full pages land in Z7 (dashboard +
- * allocate), Z8 (audit), Z9 (assets/ledger), Z10 (voids).
+ * All finance reads and writes hit real tables; no session state.
  *
  * Routes:
  *   zonaltreasurer -> index()  (zonal treasurer only)
@@ -54,31 +53,32 @@ class Zonaltreasurer extends Controller {
     public function index() {
         $this->requireZonalTreasurer();
 
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
         $data = $this->shell(
             'Zonal Treasurer Overview — YouthNexus Pulse',
             'Zonal Treasurer Overview',
-            'Funds, audits and assets of Gampaha Zone.',
+            'Funds, audits and assets of ' . ZoneOverview::zoneName($this, $zonalId) . '.',
             'zonaltreasurer'
         );
 
-        $data['fundStats'] = $this->model('ZoneFundModel')->getStats((int) ($_SESSION['zonal_id'] ?? 0));
+        $data['zoneName'] = ZoneOverview::zoneName($this, $zonalId);
+        $data['fundStats'] = $this->model('ZoneFundModel')->getStats($zonalId);
         $this->view('zonaltreasurer/index', $data);
     }
 
     /**
-     * Reuse the NYSC allocation screen with a zonal demo adapter.
+     * Allocate zone funds to own-zone divisions (real FundAllocation rows).
      */
     public function allocate() {
         $this->requireZonalTreasurer();
 
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
         $data = $this->shell(
             'Allocate Funds — YouthNexus Pulse',
             'Allocate Funds',
-            'Distribute NYSC funds to divisions under Gampaha Zone — demo.',
+            'Distribute zone funds to divisions under ' . ZoneOverview::zoneName($this, $zonalId) . '.',
             'zonaltreasurer/allocate'
         );
-
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
         $model = $this->model('ZoneFundModel');
         $filters = $this->fundFilters();
         $_SESSION['zonal_fund_csrf'] = $_SESSION['zonal_fund_csrf'] ?? bin2hex(random_bytes(32));
@@ -215,9 +215,14 @@ class Zonaltreasurer extends Controller {
             'Review own-zone divisional finance and escalate material issues to NYSC.',
             'zonaltreasurer/audit'
         );
+        $divisionNames = array_map(
+            static fn($d) => $d->division_name,
+            $this->model('ZoneMonitorModel')->getDivisions($zonalId)
+        );
         $data += ['reports' => $reports, 'flags' => $flags, 'income' => $income, 'expenses' => $expenses,
             'unresolvedCount' => count($unresolved), 'reviewReady' => empty($unresolved), 'csrf_token' => $this->auditCsrf(),
-            'flash' => $this->pullAuditFlash()];
+            'flash' => $this->pullAuditFlash(), 'zoneName' => ZoneOverview::zoneName($this, $zonalId),
+            'divisionNames' => $divisionNames];
         $this->view('zonaltreasurer/audit', $data);
     }
 
@@ -406,7 +411,8 @@ class Zonaltreasurer extends Controller {
         $data += ['assets' => $visible, 'categories' => array_keys($categories), 'category' => $category, 'status' => $status, 'search' => $search,
             'stats' => ['units' => $summary['units'], 'items' => $summary['items']],
             'catalog' => $catalog, 'custodians' => $custodians, 'divisions' => $divisions,
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash(),
+            'zoneName' => ZoneOverview::zoneName($this, $zonalId)];
         $this->view('zonaltreasurer/assets', $data);
     }
 
@@ -492,7 +498,8 @@ class Zonaltreasurer extends Controller {
         );
         $data += ['entries' => $entries, 'balance' => $summary['balance'],
             'income' => $summary['income'], 'expenses' => $summary['expenses'],
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash(),
+            'zoneName' => ZoneOverview::zoneName($this, $zonalId)];
         $this->view('zonaltreasurer/ledger', $data);
     }
 
@@ -585,7 +592,8 @@ class Zonaltreasurer extends Controller {
         $data += ['requests' => $visible, 'status' => $status, 'search' => $search,
             'pendingCount' => count(array_filter($requests, static fn($request) => $request['status'] === 'Pending')),
             'divisionCount' => count($model->getDivisions($zonalId)),
-            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash()];
+            'csrf_token' => $this->zonalCsrf(), 'flash' => $this->pullTreasurerFlash(),
+            'zoneName' => ZoneOverview::zoneName($this, $zonalId)];
         $this->view('zonaltreasurer/voids', $data);
     }
 

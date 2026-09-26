@@ -12,7 +12,7 @@ require __DIR__ . '/../partials/icons.view.php';
 
 $title = 'Division Void Requests - YouthNexus';
 $pageTitle = 'Division Void Requests';
-$pageDescription = 'Pending void requests from divisions under Gampaha Zone.';
+$pageDescription = 'Pending void requests from divisions under ' . ($zoneName ?? 'Zone') . '.';
 $currentRoute = 'zonaltreasurer/voids';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];

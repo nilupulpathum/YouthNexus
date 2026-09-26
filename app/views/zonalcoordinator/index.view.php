@@ -46,10 +46,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="zonal-divisions-heading">
         <header class="dw-panel__header">
             <div>
-                <p>Gampaha Zone · <?= count($divisions) ?> divisions</p>
+                <p><?= $e($zoneName ?? 'Zone') ?> · <?= count($divisions) ?> divisions</p>
                 <h2 id="zonal-divisions-heading">Average club health per division</h2>
             </div>
-            <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/zonalcoordinator/clubs">Monitor club health</a>
+            <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/zonalclubhealth">Monitor club health</a>
         </header>
 
         <div class="dw-table-wrap">
@@ -85,7 +85,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="member-panel" aria-labelledby="zonalcoordinator-announcements-heading">
         <div class="member-panel-header">
             <div><p class="member-eyebrow">Stay informed</p><h2 id="zonalcoordinator-announcements-heading">Zone announcements</h2></div>
-            <a class="member-panel-link" href="<?= ROOT ?>/zonalannouncements">View all</a>
+            <a class="member-panel-link" href="<?= ROOT ?>/announcements">View all</a>
         </div>
         <div class="member-announcement-list">
             <?php foreach ($announcements as $announcement): ?>

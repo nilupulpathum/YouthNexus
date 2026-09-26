@@ -65,8 +65,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="zonal-assets-list-heading">
         <header class="dw-panel__header">
             <div>
+                <p><?= $e($zoneName ?? 'Zone') ?></p>
                 <h2 id="zonal-assets-list-heading">Zonal asset inventory</h2>
                 <p>Record ownership and custody of zonal assets. Physical asset verification is not a zonal workflow.</p>
+            </div>
             </div>
             <span class="dw-count"><?= count($assets) ?> <?= count($assets) === 1 ? 'asset' : 'assets' ?></span>
         </header>
