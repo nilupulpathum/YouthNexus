@@ -622,14 +622,18 @@
                 renderImg(n.photo_path, n.name || 'Nominee', '', 'avatar') +
             '</div>';
         }
-        return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + (n ? escapeHtml(n.name.charAt(0)) : '?') + '</div>';
+        var initial = n && n.name ? String(n.name).charAt(0) : '?';
+        return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + escapeHtml(initial) + '</div>';
     }
 
     function renderModal(data) {
+        if (!data || !data.application) {
+            throw new Error('The server response does not contain an application record.');
+        }
         var app = data.application;
-        var nominees = data.nominees || [];
-        var assets = data.assets || [];
-        var photos = data.photos || [];
+        var nominees = Array.isArray(data.nominees) ? data.nominees : [];
+        var assets = Array.isArray(data.assets) ? data.assets : [];
+        var photos = Array.isArray(data.photos) ? data.photos : [];
 
         var estDate = formatDOB(app.date_establishment);
         var submittedDate = formatDOB(app.submitted_at);
@@ -831,11 +835,13 @@
                             '</thead>' +
                             '<tbody>' +
                                 (assets.length > 0 ? assets.map(function(ast) {
-                                    var padQty = String(ast.quantity).padStart(2, '0');
+                                    var padQty = String(ast.quantity == null ? 0 : ast.quantity).padStart(2, '0');
+                                    var condition = String(ast.condition || 'Not recorded');
+                                    var conditionClass = condition.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                                     return '<tr>' +
-                                        '<td class="cr-asset-table-name">' + escapeHtml(ast.asset_name) + '</td>' +
+                                        '<td class="cr-asset-table-name">' + escapeHtml(ast.asset_name || 'Unnamed asset') + '</td>' +
                                         '<td class="cr-asset-table-qty">' + escapeHtml(padQty) + '</td>' +
-                                        '<td><span class="cr-asset-table-condition-pill ' + escapeHtml(ast.condition.toLowerCase()) + '">' + escapeHtml(ast.condition) + '</span></td>' +
+                                        '<td><span class="cr-asset-table-condition-pill ' + escapeHtml(conditionClass) + '">' + escapeHtml(condition) + '</span></td>' +
                                         '</tr>';
                                 }).join('') : '<tr><td colspan="3" class="cr-table-empty">No assets listed</td></tr>') +
                             '</tbody>' +
@@ -1200,7 +1206,20 @@
         modalContent.innerHTML = '<p style="padding:20px;font-size:13px;color:#6b7280;">Loading application…</p>';
 
         fetch(ROOT_URL + '/clubregistrationapproval/review/' + applicationId, { credentials: 'same-origin' })
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                return res.text().then(function (body) {
+                    var data;
+                    try {
+                        data = JSON.parse(body);
+                    } catch (error) {
+                        throw new Error('The server returned an invalid response while loading this application.');
+                    }
+                    if (!res.ok) {
+                        throw new Error(data.error || 'The application could not be loaded.');
+                    }
+                    return data;
+                });
+            })
             .then(function (data) {
                 if (data.error) {
                     modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">' + escapeHtml(data.error) + '</p>';
@@ -1208,8 +1227,11 @@
                 }
                 renderModal(data);
             })
-            .catch(function () {
-                modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">Something went wrong loading this application.</p>';
+            .catch(function (error) {
+                console.error('Club registration application review failed:', error);
+                modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">' +
+                    escapeHtml(error.message || 'Something went wrong loading this application.') +
+                    '</p>';
             });
     }
 

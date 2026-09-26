@@ -53,6 +53,10 @@ $roleLabel = function ($role) {
         )
     );
 };
+
+$statusLabel = static function ($status) {
+    return $status === 'Retracted' ? 'Withdrawn from Publication' : (string) $status;
+};
 ?>
 
 
@@ -224,6 +228,8 @@ $roleLabel = function ($role) {
                 <option value="Draft">
                     Draft
                 </option>
+                <option value="Retracted">Withdrawn from Publication</option>
+                <option value="Archived">Archived</option>
 
             <?php endif; ?>
 
@@ -470,7 +476,7 @@ $roleLabel = function ($role) {
                                 : 'ann-badge-published' ?>"
                         >
                             <?= htmlspecialchars(
-                                $a->status,
+                                $statusLabel($a->status),
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -614,9 +620,7 @@ $roleLabel = function ($role) {
                     </span>
 
 
-                    <?php if (
-                        !empty($a->can_manage)
-                    ): ?>
+                    <?php if (!empty($a->can_manage) && in_array($a->status, ['Draft', 'Published'], true)): ?>
 
                         <button
                             type="button"

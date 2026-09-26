@@ -1432,3 +1432,28 @@
     color: #94a3b8;
     opacity: 1;
 }
+.me-detail-actions,
+.me-lifecycle-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.me-detail-actions form {
+    margin: 0;
+}
+
+.me-lifecycle-card {
+    grid-column: 1 / -1;
+}
+
+.me-lifecycle-form label {
+    flex-basis: 100%;
+    font-weight: 600;
+}
+
+.me-lifecycle-form textarea {
+    min-height: 5rem;
+    flex: 1 1 24rem;
+}

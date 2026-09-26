@@ -22,6 +22,12 @@ $isClub       = !empty($event->organizer_club_id);
 
             <div class="me-status-page">
 
+                <?php if (!empty($flash)): ?>
+                    <div class="me-validation-alert is-visible" role="status">
+                        <span class="me-validation-msg"><?= htmlspecialchars($flash['message']) ?></span>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Back button -->
                 <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary me-back-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -48,12 +54,16 @@ $isClub       = !empty($event->organizer_club_id);
                                         <span class="me-badge me-badge-club">Club: <?= htmlspecialchars($event->organizer_club_name ?? 'Club') ?></span>
                                     <?php endif; ?>
 
-                                    <?php if ($event->status === 'PendingApproval'): ?>
+                                    <?php if ($event->status === 'Draft'): ?>
+                                        <span class="me-badge me-badge-status-pending">Draft</span>
+                                    <?php elseif ($event->status === 'PendingApproval'): ?>
                                         <span class="me-badge me-badge-status-pending">Pending Approval</span>
                                     <?php elseif ($event->status === 'Approved'): ?>
                                         <span class="me-badge me-badge-status-approved">Approved</span>
                                     <?php elseif ($event->status === 'Rejected'): ?>
                                         <span class="me-badge me-badge-status-rejected">Rejected</span>
+                                    <?php elseif (in_array($event->status, ['Withdrawn', 'CancellationPending', 'Cancelled'], true)): ?>
+                                        <span class="me-badge me-badge-status-pending"><?= htmlspecialchars(preg_replace('/(?<!^)([A-Z])/', ' $1', $event->status)) ?></span>
                                     <?php else: ?>
                                         <span class="me-badge me-badge-status-completed"><?= htmlspecialchars($event->status) ?></span>
                                     <?php endif; ?>
@@ -61,12 +71,17 @@ $isClub       = !empty($event->organizer_club_id);
                                 <h2><?= htmlspecialchars($event->title) ?></h2>
                             </div>
 
+                            <div class="me-detail-actions">
                             <?php if ($can_edit): ?>
                                 <button type="button" class="me-btn-secondary db-secondary-action" id="btnOpenEditModal">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                     Edit Event
                                 </button>
                             <?php endif; ?>
+                            <?php if (!empty($can_submit_draft)): ?>
+                                <form action="<?= ROOT ?>/manageevents/submitDraft/<?= (int) $event->event_id ?>" method="post"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>"><button type="submit" class="me-btn-primary">Submit for Approval</button></form>
+                            <?php endif; ?>
+                            </div>
                         </div>
 
                         <div class="me-fields-table">
@@ -149,6 +164,9 @@ $isClub       = !empty($event->organizer_club_id);
                                     <?= !empty($event->description) ? nl2br(htmlspecialchars($event->description)) : '<em>No detailed description provided.</em>' ?>
                                 </div>
                             </div>
+                            <?php if (!empty($event->lifecycle_reason)): ?>
+                                <div class="me-field-item full"><span class="me-field-label">Lifecycle Reason</span><div class="me-field-value desc"><?= nl2br(htmlspecialchars($event->lifecycle_reason)) ?></div></div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -189,8 +207,8 @@ $isClub       = !empty($event->organizer_club_id);
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1"/></svg>
                                     </div>
                                     <div class="me-timeline-content">
-                                        <h4>Pending Zonal Coordinator Approval</h4>
-                                        <p>Awaiting review and approval from the Zonal Coordinator.</p>
+                                        <h4>Pending Divisional Coordinator Approval</h4>
+                                        <p>Awaiting review and approval from the Divisional Coordinator.</p>
                                         <span class="me-timeline-time">In Progress</span>
                                     </div>
                                 </div>
@@ -241,6 +259,32 @@ $isClub       = !empty($event->organizer_club_id);
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <?php if (!empty($can_delete_draft) || !empty($can_withdraw) || !empty($can_request_cancellation)): ?>
+                        <div class="me-detail-card me-lifecycle-card">
+                            <div class="me-detail-card-header"><div><h2>Lifecycle Actions</h2><p>Use a reversible status transition whenever the event has entered review or approval.</p></div></div>
+                            <?php if (!empty($can_withdraw)): ?>
+                                <form action="<?= ROOT ?>/manageevents/withdraw/<?= (int) $event->event_id ?>" method="post" class="me-lifecycle-form">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                                    <label for="withdraw-reason">Withdrawal reason</label>
+                                    <textarea id="withdraw-reason" name="reason" minlength="5" maxlength="1000" required></textarea>
+                                    <button type="submit" class="me-btn-secondary">Withdraw Submission</button>
+                                </form>
+                            <?php elseif (!empty($can_request_cancellation)): ?>
+                                <form action="<?= ROOT ?>/manageevents/requestCancellation/<?= (int) $event->event_id ?>" method="post" class="me-lifecycle-form">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                                    <label for="cancel-reason">Cancellation reason</label>
+                                    <textarea id="cancel-reason" name="reason" minlength="5" maxlength="1000" required></textarea>
+                                    <button type="submit" class="me-btn-secondary">Request Cancellation</button>
+                                </form>
+                            <?php elseif (!empty($can_delete_draft)): ?>
+                                <form action="<?= ROOT ?>/manageevents/deleteDraft/<?= (int) $event->event_id ?>" method="post" data-confirm="Delete this unpublished draft?">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                                    <button type="submit" class="me-btn-danger">Delete Draft</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
 
                 </div>
 

@@ -56,4 +56,24 @@
   });
 
   applyFilters();
+
+  var archiveForm = document.querySelector('[data-report-archive-form]');
+  if (archiveForm) {
+    var archiveReason = archiveForm.querySelector('textarea[name="reason"]');
+    var archiveError = document.getElementById('report-archive-error');
+
+    function clearArchiveError() {
+      if (archiveError) archiveError.hidden = true;
+      if (archiveReason) archiveReason.removeAttribute('aria-invalid');
+    }
+
+    archiveReason.addEventListener('input', clearArchiveError);
+    archiveForm.addEventListener('submit', function (event) {
+      if (archiveReason.value.trim().length >= 5) return;
+      event.preventDefault();
+      if (archiveError) archiveError.hidden = false;
+      archiveReason.setAttribute('aria-invalid', 'true');
+      archiveReason.focus();
+    });
+  }
 }());
