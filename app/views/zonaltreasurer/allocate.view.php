@@ -10,7 +10,9 @@ $transferRoute = $transferRoute ?? 'fundtransfer';
 $listRoute = $listRoute ?? $transferRoute;
 $isZonalMode = $isZonalMode ?? false;
 $currentRoute = $listRoute;
-$unreadNotificationCount = $isZonalMode ? 2 : 0;
+// The controller passes the real unread-announcement count + items; only
+// fall back to the legacy hardcode when it did not (e.g. direct renders).
+$unreadNotificationCount = $unreadNotificationCount ?? ($isZonalMode ? 2 : 0);
 $pageStyles = [ROOT . '/assets/css/fundtransfer.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
