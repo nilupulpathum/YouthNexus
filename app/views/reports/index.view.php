@@ -5,8 +5,8 @@
  */
 
 $title                   = $title   ?? 'Manage Reports — YouthNexus';
-$pageTitle               = $pageTitle ?? 'Manage Reports';
-$pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports up to the Zonal Secretary';
+$pageTitle               = $pageTitle ?? 'National Reports Management';
+$pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports across all youth clubs, divisions, and zones';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
@@ -56,18 +56,14 @@ $formatColors = [
         </div>
     <?php endif; ?>
 
-    <!-- ── Page header ─────────────────────────────────────────── -->
-    <div class="rpt-header-bar">
-        <div>
-            <h1 class="rpt-section-title"><?= htmlspecialchars($pageTitle) ?></h1>
-            <p class="rpt-section-desc"><?= htmlspecialchars($pageDescription) ?></p>
-        </div>
+    <!-- ── Page action row ─────────────────────────────────────────── -->
+    <div class="rpt-header-bar rpt-action-row db-action-row">
         <div class="rpt-header-actions">
             <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline" id="btn-aggregate">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Aggregate Reports
             </a>
-            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--primary" id="btn-create-report">
+            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--primary db-primary-action" id="btn-create-report">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create New Report
             </a>
@@ -79,7 +75,6 @@ $formatColors = [
 
         <!-- Combined category dropdown + keyword search pill -->
         <div class="rpt-filter-pill">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color:#9ca3af;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <span class="rpt-select-wrap">
                 <select name="category" id="categorySelect" onchange="this.form.submit()">
                     <option value="">All Reports</option>
@@ -92,6 +87,7 @@ $formatColors = [
             <span class="rpt-pill-divider"></span>
             <input class="rpt-pill-input" type="text" name="search" id="searchInput"
                    placeholder="Search reports..." value="<?= htmlspecialchars($searchText) ?>">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color:#9ca3af;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
 
         <!-- Report Type dropdown (depends on category) -->

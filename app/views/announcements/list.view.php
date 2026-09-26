@@ -163,8 +163,6 @@ $roleLabel = function ($role) {
 
     <div class="ann-search-wrap">
 
-        <?= $annIcon('search') ?>
-
         <label
             class="visually-hidden"
             for="annSearchInput"
@@ -177,6 +175,8 @@ $roleLabel = function ($role) {
             id="annSearchInput"
             placeholder="Search announcements..."
         >
+
+        <?= $annIcon('search') ?>
 
     </div>
 

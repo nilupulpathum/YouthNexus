@@ -209,7 +209,8 @@
 .am-search-icon {
     width: 18px;
     height: 18px;
-    margin-left: 14px;
+    margin-right: 14px;
+    margin-left: 0;
 
     display: inline-flex;
     align-items: center;
@@ -236,7 +237,7 @@
     align-items: center;
 
     margin: 0 !important;
-    padding: 0 14px 0 10px !important;
+    padding: 0 10px 0 14px !important;
 
     background: transparent !important;
     border: 0 !important;

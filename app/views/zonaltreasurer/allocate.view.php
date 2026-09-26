@@ -52,10 +52,12 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
         <div class="ft-header-actions">
             <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline" id="btnDownloadLedger" title="Export Ledger to CSV">
-                <span class="ft-btn-icon" aria-hidden="true"></span> Download Ledger
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Ledger
             </a>
             <button type="button" class="ft-btn ft-btn-primary" id="btnOpenCreateModal" aria-haspopup="dialog">
-                <span class="ft-btn-icon">+</span> New Fund Allocation
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Fund Allocation
             </button>
         </div>
     </div>
@@ -114,8 +116,8 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
     <!-- Filter Bar -->
     <form method="GET" action="<?= ROOT ?>/<?= htmlspecialchars($listRoute) ?>" id="ftFilterForm" class="ft-filter-bar">
         <div class="ft-search-box-wrap">
+            <input type="text" name="search" class="ft-filter-input" placeholder="Search recipient, reference, or purpose..." value="<?= htmlspecialchars($activeSearch ?? '', ENT_QUOTES, 'UTF-8') ?>">
             <svg class="ft-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" name="search" class="ft-filter-input" placeholder="Search recipient, reference, or purpose..." value="<?= $activeSearch ?>">
         </div>
 
         <select name="zone_id" class="ft-filter-select" id="ftFilterZone">
