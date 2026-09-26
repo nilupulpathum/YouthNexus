@@ -18,30 +18,44 @@
     return element ? element.value.trim().toLowerCase() : '';
   }
 
+  var panelControls = Object.keys(filters).map(function (key) { return filters[key]; });
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function applyFilters() {
     var term = value(search);
-    var min = filters.min && filters.min.value !== '' ? Number(filters.min.value) : null;
-    var max = filters.max && filters.max.value !== '' ? Number(filters.max.value) : null;
+    var min = selected(filters.min) !== '' ? Number(selected(filters.min)) : null;
+    var max = selected(filters.max) !== '' ? Number(selected(filters.max)) : null;
 
     rows.forEach(function (row) {
       var amount = Number(row.dataset.amount || 0);
       var visible = (!term || row.dataset.search.indexOf(term) !== -1)
-        && (!value(filters.club) || row.dataset.club === value(filters.club))
-        && (!value(filters.category) || row.dataset.category === value(filters.category))
-        && (!value(filters.status) || row.dataset.status === value(filters.status))
+        && (!selected(filters.club).trim().toLowerCase() || row.dataset.club === value(filters.club))
+        && (!selected(filters.category).trim().toLowerCase() || row.dataset.category === value(filters.category))
+        && (!selected(filters.status).trim().toLowerCase() || row.dataset.status === value(filters.status))
         && (min === null || amount >= min)
         && (max === null || amount <= max)
-        && (!value(filters.from) || row.dataset.date >= value(filters.from))
-        && (!value(filters.to) || row.dataset.date <= value(filters.to));
+        && (!selected(filters.from).trim().toLowerCase() || row.dataset.date >= value(filters.from))
+        && (!selected(filters.to).trim().toLowerCase() || row.dataset.date <= value(filters.to));
       row.hidden = !visible;
+      row.dataset.filterMatch = visible ? 'true' : 'false';
     });
 
     sortRows();
     updateSections();
+    if (window.ynPager) window.ynPager.update();
   }
 
   function sortRows() {
-    var mode = value(filters.sort) || 'newest';
+    var mode = selected(filters.sort).trim().toLowerCase() || 'newest';
     ['pending', 'history'].forEach(function (section) {
       var body = document.querySelector('[data-allocation-rows="' + section + '"]');
       if (!body) return;
@@ -72,7 +86,7 @@
 
   if (search) search.addEventListener('input', applyFilters);
   var applyButton = document.querySelector('[data-allocation-filter-apply]');
-  if (applyButton) applyButton.addEventListener('click', applyFilters);
+  if (applyButton) applyButton.addEventListener('click', function () { captureFilters(); applyFilters(); });
 
   var resetButton = document.querySelector('[data-allocation-filter-reset]');
   if (resetButton) {
@@ -81,6 +95,7 @@
         if (filters[key]) filters[key].value = key === 'sort' ? 'newest' : '';
       });
       if (search) search.value = '';
+      captureFilters();
       applyFilters();
     });
   }

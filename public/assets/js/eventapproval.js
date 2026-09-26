@@ -6,6 +6,11 @@
     const pageConfig = document.getElementById('eaPageConfig');
     const rootUrl = pageConfig?.dataset.root || '';
     const csrfToken = pageConfig?.dataset.csrfToken || '';
+    const icons = {
+        user: document.getElementById('eaIconUser')?.innerHTML || '',
+        calendar: document.getElementById('eaIconCalendar')?.innerHTML || '',
+        pin: document.getElementById('eaIconPin')?.innerHTML || ''
+    };
     const modal            = document.getElementById('eaReviewModal');
     const modalBody        = document.getElementById('eaModalBody');
     const modalTitle       = document.getElementById('eaModalEventTitle');
@@ -148,7 +153,7 @@
 
                     <div class="ea-modal-section">
                         <div class="ea-submitter-badge-bar">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            ${icons.user}
                             <span>Submitted by <strong>${escapeHtml(ev.creator_name || 'Club Officer')}</strong>, role: <strong>${escapeHtml(ev.creator_role || 'Club Leader')}</strong></span>
                         </div>
                     </div>
@@ -215,7 +220,59 @@
     const statApproved = document.getElementById('statApproved');
     const statRejected = document.getElementById('statRejected');
     const eaList       = document.getElementById('eaPendingList');
+    const searchInput  = document.getElementById('eaSearchInput');
+    const filterBtn    = document.getElementById('eaFilterBtn');
+    const filterPanel  = document.getElementById('eaFilterPanel');
+    const filterLevel  = document.getElementById('eaFilterLevel');
+    const dateFrom = document.getElementById('eaFilterDateFrom');
+    const dateTo = document.getElementById('eaFilterDateTo');
+    const clearFilters = document.getElementById('eaClearFilters');
+    const applyFiltersButton = document.getElementById('eaApplyFilters');
+    let appliedLevel = filterLevel.value;
+    let appliedFrom = dateFrom.value;
+    let appliedTo = dateTo.value;
+    const filterEmpty  = document.getElementById('eaFilterEmpty');
     let pendingListHtml = null;
+
+    function applyEventFilters() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        const level = appliedLevel;
+        const cards = [...eaList.querySelectorAll('.ea-card')];
+        let visible = 0;
+        cards.forEach(card => {
+            const matchesText = card.textContent.toLocaleLowerCase().includes(query);
+            const matchesLevel = level === 'all' || Boolean(card.querySelector('.ea-badge.' + level));
+            const eventDate = card.dataset.eventDate || '';
+            const matchesDate = (!appliedFrom || eventDate >= appliedFrom) && (!appliedTo || eventDate <= appliedTo);
+            card.hidden = !(matchesText && matchesLevel && matchesDate);
+            if (!card.hidden) visible++;
+        });
+        filterEmpty.hidden = cards.length === 0 || visible > 0;
+        filterEmpty.classList.toggle('is-visible', !filterEmpty.hidden);
+    }
+
+    searchInput.addEventListener('input', applyEventFilters);
+    applyFiltersButton.addEventListener('click', () => {
+        appliedLevel = filterLevel.value;
+        appliedFrom = dateFrom.value;
+        appliedTo = dateTo.value;
+        applyEventFilters();
+    });
+    filterBtn.addEventListener('click', () => {
+        filterPanel.hidden = !filterPanel.hidden;
+        filterBtn.setAttribute('aria-expanded', String(!filterPanel.hidden));
+    });
+    clearFilters.addEventListener('click', () => {
+        searchInput.value = '';
+        filterLevel.value = 'all';
+        dateFrom.value = '';
+        dateTo.value = '';
+        appliedLevel = 'all';
+        appliedFrom = '';
+        appliedTo = '';
+        applyEventFilters();
+        searchInput.focus();
+    });
 
     function setActiveStat(targetCard) {
         [statPending, statApproved, statRejected].forEach(card => {
@@ -228,6 +285,7 @@
         if (!eaList) return;
         if (!events || !events.length) {
             eaList.innerHTML = '<div class="ea-empty-state"><p>No ' + type.toLowerCase() + ' events found in this division.</p></div>';
+            applyEventFilters();
             return;
         }
 
@@ -252,7 +310,7 @@
                 : '';
 
             return `
-                <div class="ea-card" data-event-id="${ev.event_id}">
+                <div class="ea-card" data-event-id="${ev.event_id}" data-event-date="${escapeHtml(String(ev.start_datetime || '').slice(0, 10))}">
                     <div class="ea-card-top">
                         <span class="ea-badge ${badgeTypeClass}">${badgeTypeLabel}</span>
                         <span class="ea-badge ${badgeClass}">${badgeLabel}</span>
@@ -264,11 +322,11 @@
                     </p>
                     <div class="ea-card-meta">
                         <div class="ea-meta-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            ${icons.calendar}
                             <span>${dateDisplay}</span>
                         </div>
                         <div class="ea-meta-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            ${icons.pin}
                             <span>${escapeHtml(ev.location || '—')}</span>
                         </div>
                     </div>
@@ -279,6 +337,7 @@
                 </div>
             `;
         }).join('');
+        applyEventFilters();
     }
 
     if (statPending) {
@@ -288,6 +347,7 @@
                 eaList.innerHTML = pendingListHtml;
                 attachReviewButtons();
             }
+            applyEventFilters();
         });
     }
 
@@ -298,6 +358,8 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading approved events...</p></div>';
+            filterEmpty.hidden = true;
+            filterEmpty.classList.remove('is-visible');
             fetch(rootUrl + '/eventapproval/approved')
                 .then(r => r.json())
                 .then(data => {
@@ -319,6 +381,8 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading rejected events...</p></div>';
+            filterEmpty.hidden = true;
+            filterEmpty.classList.remove('is-visible');
             fetch(rootUrl + '/eventapproval/rejected')
                 .then(r => r.json())
                 .then(data => {

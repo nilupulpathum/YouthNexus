@@ -10,6 +10,7 @@ $currentRoute = 'divisionalallocations';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-allocations.js',
 ];
 $summaryCards = [
@@ -34,6 +35,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--two" aria-label="Allocation summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -41,12 +46,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <div class="dw-toolbar" aria-label="Allocation tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="allocation-search">Search allocations</label>
-      <input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="allocation-filters" hidden>
@@ -108,8 +112,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-allocation-filter-reset>Reset all</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-allocation-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-allocation-filter-reset>Clear filters</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-allocation-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -118,10 +122,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2>Pending Fund Requests</h2><p>Requests submitted by clubs in <?= $e($division->division_name) ?></p></div>
       <span class="dw-count" data-allocation-count="pending"><?= count($pendingRequests) ?> pending</span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Club</th><th>Purpose</th><th>Category</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
-        <tbody data-allocation-rows="pending">
+        <tbody id="allocation-pending-rows" data-allocation-rows="pending">
           <?php foreach ($pendingRequests as $request): ?>
             <?php $searchText = strtolower(implode(' ', [$request->club_name, $request->reference_no, $request->purpose_description, $request->fund_category])); ?>
             <tr data-allocation-row
@@ -139,7 +143,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($request->created_at))) ?></td>
               <td>
                 <div class="dw-row-actions">
-                  <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button"
+                  <button class="yn-btn yn-btn--approve dw-button" type="button"
                           data-review-allocation
                           data-modal-open="review-allocation"
                           data-action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>"
@@ -152,7 +156,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                   <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
                     <input type="hidden" name="decision" value="reject">
-                    <button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="submit">Reject</button>
+                    <button class="yn-btn yn-btn--reject dw-button" type="submit">Reject</button>
                   </form>
                 </div>
               </td>
@@ -161,11 +165,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
+    <nav class="yn-pagination" aria-label="Pending allocation pages" data-yn-pagination data-yn-page-target="allocation-pending-rows" data-yn-page-size="10" hidden></nav>
     <?php
     $emptyTitle = 'No pending requests found';
     $emptyMessage = 'There are no club fund requests matching the current search and filters.';
     $emptyVisible = count($pendingRequests) === 0;
-    require __DIR__ . '/../partials/divisional/empty-state.view.php';
+    require __DIR__ . '/../partials/empty-state.view.php';
     ?>
   </section>
 
@@ -174,10 +179,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2>Allocation History</h2><p>Reviewed and completed club allocations</p></div>
       <span class="dw-count" data-allocation-count="history"><?= count($history) ?> records</span>
     </header>
-    <div class="dw-table-wrap">
+    <div class="yn-table-wrap dw-table-wrap">
       <table class="yn-table dw-table">
         <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody data-allocation-rows="history">
+        <tbody id="allocation-history-rows" data-allocation-rows="history">
           <?php foreach ($history as $allocation): ?>
             <?php $searchText = strtolower(implode(' ', [$allocation->club_name, $allocation->reference_no, $allocation->purpose_description, $allocation->fund_category])); ?>
             <tr data-allocation-row
@@ -200,11 +205,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
+    <nav class="yn-pagination" aria-label="Allocation history pages" data-yn-pagination data-yn-page-target="allocation-history-rows" data-yn-page-size="10" hidden></nav>
     <?php
     $emptyTitle = 'No allocation history found';
     $emptyMessage = 'Create an allocation or change the current search and filters.';
     $emptyVisible = count($history) === 0;
-    require __DIR__ . '/../partials/divisional/empty-state.view.php';
+    require __DIR__ . '/../partials/empty-state.view.php';
     ?>
   </section>
 </section>

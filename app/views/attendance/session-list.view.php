@@ -11,10 +11,10 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=' . time(),
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/attendance.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/attendance.js?v=20260926'];
+$pageScripts             = [ROOT . '/assets/js/attendance.js'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -33,7 +33,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
          Stat Cards
          ============================================================ -->
     <div class="am-stats <?= $isNYSCAdmin ? 'am-stats-3' : '' ?>">
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon events">
                 <?= yn_icon('calendar') ?>
             </div>
@@ -41,7 +41,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="am-stat-label"><?= $isNYSCAdmin ? 'National Approved Events' : 'Approved Events This Year' ?></div>
         </div>
 
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon recorded">
                 <?= yn_icon('check') ?>
             </div>
@@ -50,7 +50,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <?php if ($isNYSCAdmin): ?>
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon rate">
                 <?= yn_icon('award') ?>
             </div>
@@ -93,12 +93,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <button
             type="button"
-            class="am-filter-btn"
+            class="am-filter-btn yn-filter-toggle"
             id="amFilterBtn"
             aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>"
             aria-controls="amFilterPanel"
         >
-            Filters
+            <?= yn_icon('filter') ?> Filters
             <span
                 class="am-filter-count<?= $activeFilters > 0 ? '' : ' hidden' ?>"
                 id="amFilterCount"
@@ -110,6 +110,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php if ($isNYSCAdmin): ?>
     <!-- NYSC Administrator Cascading Filter Panel (Server & Client supported) -->
     <form method="GET" action="<?= ROOT ?>/attendance" class="am-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
+        <h2 class="yn-filter-heading">Advanced Filters for Attendance Events</h2>
         <div class="am-filter-grid">
             <!-- 1. Zone Filter -->
             <div class="am-filter-field">
@@ -178,37 +179,44 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <div class="am-filter-actions">
-            <button type="submit" class="am-btn am-btn-primary" id="amApplyFilterBtn">Apply Filters</button>
-            <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-cancel" id="amClearFilterBtn">Reset</a>
+            <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-cancel yn-filter-clear" id="amClearFilterBtn">Clear filters</a>
+            <button type="submit" class="am-btn am-btn-primary yn-filter-apply" id="amApplyFilterBtn">Apply filters</button>
         </div>
     </form>
 
     <?php else: ?>
     <!-- Divisional Secretary Client-Side Filter Panel -->
     <div class="am-filter-panel" id="amFilterPanel">
-        <div class="am-filter-field">
-            <label for="amFilterType">Event Type</label>
-            <select id="amFilterType">
-                <option value="">All Types</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Community Service">Community Service</option>
-                <option value="Training">Training</option>
-                <option value="Sports">Sports</option>
-                <option value="Cultural">Cultural</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <div class="am-filter-field">
-            <label for="amFilterScope">Organiser</label>
-            <select id="amFilterScope">
-                <option value="">All</option>
-                <option value="division">Division Events</option>
-                <option value="club">Club Events</option>
-            </select>
+        <h2 class="yn-filter-heading">Advanced Filters for Attendance Events</h2>
+        <div class="am-filter-grid">
+            <div class="am-filter-field">
+                <label for="amFilterType">Event Type</label>
+                <select id="amFilterType">
+                    <option value="">All Types</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Community Service">Community Service</option>
+                    <option value="Training">Training</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="am-filter-field">
+                <label for="amFilterScope">Organiser</label>
+                <select id="amFilterScope">
+                    <option value="">All</option>
+                    <option value="division">Division Events</option>
+                    <option value="club">Club Events</option>
+                </select>
+            </div>
+            <div class="am-filter-field">
+                <label for="amFilterDateFrom">Event date from</label>
+                <input type="date" id="amFilterDateFrom">
+            </div>
         </div>
         <div class="am-filter-actions">
-            <button type="button" class="am-btn am-btn-primary" id="amApplyFilterBtn">Apply</button>
-            <button type="button" class="am-btn" id="amClearFilterBtn">Clear</button>
+            <button type="button" class="am-btn yn-filter-clear" id="amClearFilterBtn">Clear filters</button>
+            <button type="button" class="am-btn am-btn-primary yn-filter-apply" id="amApplyFilterBtn">Apply filters</button>
         </div>
     </div>
     <?php endif; ?>
@@ -257,6 +265,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                  data-search="<?= htmlspecialchars($searchText) ?>"
                  data-title="<?= htmlspecialchars(strtolower($evt->title)) ?>"
                  data-type="<?= htmlspecialchars(strtolower($evt->event_type ?? '')) ?>"
+                 data-event-date="<?= htmlspecialchars(substr($evt->start_datetime ?? '', 0, 10), ENT_QUOTES, 'UTF-8') ?>"
                  data-scope="<?= $lvl ?>"
                  data-zone="<?= (int)($evt->event_zonal_id ?? 0) ?>"
                  data-division="<?= (int)($evt->event_division_id ?? 0) ?>"

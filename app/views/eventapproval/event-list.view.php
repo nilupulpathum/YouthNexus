@@ -13,11 +13,12 @@ $pageDescription         = 'Review club-level events submitted within your divis
 $currentRoute            = 'eventapproval';
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/eventapproval.css?v=' . time(),
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/eventapproval.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/eventapproval.js?v=20260926'];
+$pageScripts             = [ROOT . '/assets/js/eventapproval.js'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -25,24 +26,53 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                  Stat cards — ea-stats/ea-stat-card/ea-stat-icon
                  ============================================================ -->
             <div class="ea-stats">
-                <button type="button" class="ea-stat-card" data-filter="Pending" id="statPending">
+                <button type="button" class="yn-stat-card ea-stat-card" data-filter="Pending" id="statPending">
                     <div class="ea-stat-icon pending">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a5b06" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <?= yn_icon('clock') ?>
                     </div>
                     <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Pending'] ?? 0) ?></span><span class="ea-stat-label">Awaiting Your Review</span></span>
                 </button>
-                <button type="button" class="ea-stat-card is-active" data-filter="Approved" id="statApproved">
+                <button type="button" class="yn-stat-card ea-stat-card is-active" data-filter="Approved" id="statApproved">
                     <div class="ea-stat-icon approved">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#157a45" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                        <?= yn_icon('check') ?>
                     </div>
                     <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Approved'] ?? 0) ?></span><span class="ea-stat-label">Approved Events</span></span>
                 </button>
-                <button type="button" class="ea-stat-card" data-filter="Rejected" id="statRejected">
+                <button type="button" class="yn-stat-card ea-stat-card" data-filter="Rejected" id="statRejected">
                     <div class="ea-stat-icon rejected">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <?= yn_icon('close') ?>
                     </div>
                     <span class="ea-stat-content"><span class="ea-stat-value"><?= (int)($counts['Rejected'] ?? 0) ?></span><span class="ea-stat-label">Rejected Events</span></span>
                 </button>
+            </div>
+
+            <div class="ea-toolbar" role="search" aria-label="Find events for review">
+                <label class="yn-search ea-toolbar__search">
+                    <span class="yn-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span>
+                    <input type="search" id="eaSearchInput" placeholder="Search events, clubs or locations..." aria-label="Search events" autocomplete="off">
+                </label>
+                <button type="button" class="yn-btn yn-btn--secondary yn-filter-toggle" id="eaFilterBtn" aria-controls="eaFilterPanel" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
+            </div>
+            <div class="yn-filter-panel ea-filter-panel" id="eaFilterPanel" hidden>
+                <h2 class="yn-filter-heading">Advanced Filters for Event Approvals</h2>
+                <div class="yn-filter-fields">
+                    <div class="yn-filter-field">
+                        <label for="eaFilterLevel">Organizer</label>
+                        <select id="eaFilterLevel"><option value="all">All organizers</option><option value="club">Club events</option><option value="division">Divisional events</option></select>
+                    </div>
+                    <div class="yn-filter-field">
+                        <label for="eaFilterDateFrom">Event date from</label>
+                        <input type="date" id="eaFilterDateFrom">
+                    </div>
+                    <div class="yn-filter-field">
+                        <label for="eaFilterDateTo">Event date to</label>
+                        <input type="date" id="eaFilterDateTo">
+                    </div>
+                </div>
+                <div class="yn-filter-actions">
+                    <button type="button" class="yn-btn yn-btn--secondary yn-filter-clear" id="eaClearFilters">Clear filters</button>
+                    <button type="button" class="yn-btn yn-btn--primary yn-filter-apply" id="eaApplyFilters">Apply filters</button>
+                </div>
             </div>
 
             <!-- ============================================================
@@ -62,7 +92,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             ? 'Divisional Secretariat (' . htmlspecialchars($event->organizer_division_name ?? 'Gampaha') . ')'
                             : htmlspecialchars($event->club_name ?? '');
                     ?>
-                    <div class="ea-card" data-event-id="<?= (int)$event->event_id ?>">
+                    <div class="ea-card" data-event-id="<?= (int)$event->event_id ?>" data-event-date="<?= htmlspecialchars(substr($event->start_datetime ?? '', 0, 10), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="ea-card-top">
                             <span class="ea-badge <?= $badgeTypeClass ?>"><?= $badgeTypeLabel ?></span>
                             <span class="ea-badge pending"><?= $event->status === 'CancellationPending' ? 'Cancellation Review' : 'Pending Approval' ?></span>
@@ -85,6 +115,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                 <?php endforeach; endif; ?>
             </div>
+            <div class="yn-empty-state ea-filter-empty" id="eaFilterEmpty" role="status" hidden>No events match your search and filters.</div>
 
 <!-- ============================================================
      Review / Decision Modal
@@ -97,7 +128,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <h3 id="eaModalEventTitle">Event Review</h3>
             </div>
             <button type="button" class="ea-modal-close" id="eaModalClose" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </button>
         </div>
 
@@ -141,6 +172,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
+<template id="eaIconUser"><?= yn_icon('user') ?></template>
+<template id="eaIconCalendar"><?= yn_icon('calendar') ?></template>
+<template id="eaIconPin"><?= yn_icon('pin') ?></template>
 <div id="eaPageConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-csrf-token="<?= htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

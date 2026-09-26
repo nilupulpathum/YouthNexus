@@ -18,11 +18,12 @@ $pageTitle       = 'Announcements';
 $pageDescription = 'View communications relevant to your role and organisational scope';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css?v=20260924',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/announcements.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260924'];
+$pageScripts     = [ROOT . '/assets/js/announcements.js'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';
 
@@ -81,7 +82,7 @@ $statusLabel = static function ($status) {
 <!-- Summary cards                                             -->
 <!-- ========================================================= -->
 
-<div class="ann-stats">
+<div class="ann-stats<?= $canManageAnnouncements ? '' : ' ann-stats--two' ?>">
 
     <?php
     $statCards = [
@@ -111,7 +112,7 @@ $statusLabel = static function ($status) {
 
         <button
             type="button"
-            class="ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
+            class="yn-stat-card ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
             data-ann-status="<?= htmlspecialchars(
                 $statusValue,
                 ENT_QUOTES,
@@ -188,12 +189,12 @@ $statusLabel = static function ($status) {
     <div class="ann-filter-actions">
         <button
             type="button"
-            class="ann-btn ann-btn-secondary"
+            class="ann-btn ann-btn-secondary yn-filter-toggle"
             id="annFilterBtn"
             aria-expanded="false"
             aria-controls="annFilterPanel"
         >
-            <?= $annIcon('filter') ?>
+            <?= yn_icon('filter') ?>
             Filters
         </button>
 
@@ -206,6 +207,8 @@ $statusLabel = static function ($status) {
     class="ann-filter-panel"
     id="annFilterPanel"
 >
+
+    <h2 class="yn-filter-heading">Advanced Filters for Announcements</h2>
 
     <div class="ann-filter-field">
 
@@ -309,13 +312,10 @@ $statusLabel = static function ($status) {
     </div>
 
 
-    <button
-        type="button"
-        class="ann-btn ann-btn-secondary"
-        id="annClearFilterBtn"
-    >
-        Clear Filter
-    </button>
+    <div class="yn-filter-actions">
+        <button type="button" class="ann-btn ann-btn-secondary yn-filter-clear" id="annClearFilterBtn">Clear filters</button>
+        <button type="button" class="ann-btn ann-btn-primary yn-filter-apply" id="annApplyFilterBtn">Apply filters</button>
+    </div>
 
 </div>
 
