@@ -89,6 +89,11 @@
         });
 
         document.querySelectorAll('.btn-download-pdf, .btn-download-pdf-large').forEach(function (btn) {
+            // Submit buttons that borrow the primary style (e.g. the endorse
+            // form) must post the form, never open the print dialog.
+            if (btn.getAttribute('type') === 'submit') {
+                return;
+            }
             btn.addEventListener('click', function () {
                 window.print();
             });
