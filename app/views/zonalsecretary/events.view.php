@@ -23,7 +23,7 @@ require __DIR__ . '/../partials/icons.view.php';
 
 $title = 'Zonal Events - YouthNexus';
 $pageTitle = 'Zonal Events';
-$pageDescription = 'Schedule zone events and notify divisions and clubs';
+$pageDescription = 'Schedule zone events for divisions and clubs';
 $currentRoute = 'zonalsecretary/events';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/zonal.js'];
@@ -91,7 +91,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="zonal-events-list-heading">
         <header class="dw-panel__header">
             <div>
-                <p>Gampaha Zone</p>
+                <p><?= $e($zoneName ?? 'Zone') ?></p>
                 <h2 id="zonal-events-list-heading">Events</h2>
             </div>
             <span class="dw-count"><?= count($events) ?> <?= count($events) === 1 ? 'event' : 'events' ?></span>
@@ -120,6 +120,29 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 <span class="dw-record-card__reference">Coordinator remark: <?= $e($event['coordinator_remark']) ?></span>
                             </div>
                         <?php endif; ?>
+                        <?php if (in_array($event['status_key'] ?? '', ['pendingapproval', 'approved', 'rejected'], true)): ?>
+                            <div class="dw-record-card__footer">
+                                <div class="dw-row-actions">
+                                    <button class="dw-button dw-button--ghost" type="button"
+                                        data-edit-event="<?= $e($event['id']) ?>"
+                                        data-title="<?= $e($event['title'] ?? '') ?>"
+                                        data-type="<?= $e($event['type'] ?? '') ?>"
+                                        data-date="<?= $e($event['raw_date'] ?? '') ?>"
+                                        data-time="<?= $e($event['raw_time'] ?? '') ?>"
+                                        data-location="<?= $e($event['location'] ?? '') ?>"
+                                        data-audience="<?= $e($event['audience_value'] ?? 'All divisions') ?>"
+                                        data-status="<?= $e($event['status_key'] ?? '') ?>">Edit</button>
+                                    <?php if (($event['status_key'] ?? '') === 'rejected'): ?>
+                                        <button class="dw-button dw-button--ghost" type="button"
+                                            data-delete-event="<?= $e($event['id']) ?>"
+                                            data-title="<?= $e($event['title'] ?? '') ?>">Delete</button>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if (($event['status_key'] ?? '') === 'approved'): ?>
+                                    <span class="dw-record-card__reference">Editing an approved event sends it back for coordinator approval.</span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             </div>
@@ -137,7 +160,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div id="zonal-event-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="zonal-event-modal-title" aria-hidden="true"<?= !empty($errors) ? '' : ' hidden' ?>>
     <div class="dw-modal__backdrop" data-modal-close></div>
-    <div class="dw-modal__dialog">
+    <div class="dw-modal__dialog dw-modal__dialog--wide">
         <header class="dw-modal__header">
             <div>
                 <p>Zonal secretary action</p>
@@ -146,7 +169,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
         </header>
         <div class="dw-modal__body">
-            <p>New events are submitted to the Zonal Coordinator for approval before divisions and clubs are notified.</p>
+            <p class="dw-field--span-2">New events are submitted to the Zonal Coordinator for approval before they appear in the zone programme.</p>
             <form id="zonal-event-form" method="post" action="<?= ROOT ?>/zonalsecretary/events" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
                 <?php if (!empty($errors['general'])): ?>
@@ -159,47 +182,45 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <span aria-hidden="true"><?= yn_icon('info') ?></span>
                     <div><strong>Event date must be in the future</strong><p>Choose a future date and time to continue.</p></div>
                 </div>
-                <div class="dw-filter-grid">
-                    <div class="dw-field dw-field--span-2">
-                        <label for="zonal-event-title">Event title</label>
-                        <input id="zonal-event-title" name="title" type="text" required maxlength="150" autocomplete="off" placeholder="Zone Youth Leadership Forum" value="<?= $e($old['title'] ?? '') ?>">
-                        <?php if (!empty($errors['title'])): ?><p><?= $e($errors['title']) ?></p><?php endif; ?>
-                    </div>
-                    <div class="dw-field">
-                        <label for="zonal-event-date">Date</label>
-                        <input id="zonal-event-date" name="event_date" type="date" required value="<?= $e($old['event_date'] ?? '') ?>">
-                        <p id="zonal-event-date-error"<?= !empty($errors['event_date']) ? '' : ' hidden' ?>><?= $e($errors['event_date'] ?? 'This date has already passed') ?></p>
-                    </div>
-                    <div class="dw-field">
-                        <label for="zonal-event-time">Time</label>
-                        <input id="zonal-event-time" name="event_time" type="time" required value="<?= $e($old['event_time'] ?? '') ?>">
-                        <?php if (!empty($errors['event_time'])): ?><p><?= $e($errors['event_time']) ?></p><?php endif; ?>
-                    </div>
-                    <div class="dw-field dw-field--span-2">
-                        <label for="zonal-event-location">Location</label>
-                        <input id="zonal-event-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Venue or coordinates" value="<?= $e($old['location'] ?? '') ?>">
-                        <?php if (!empty($errors['location'])): ?><p><?= $e($errors['location']) ?></p><?php endif; ?>
-                    </div>
-                    <div class="dw-field">
-                        <label for="zonal-event-type-input">Event type</label>
-                        <select id="zonal-event-type-input" name="event_type" required>
-                            <option value="">Select type...</option>
-                            <?php foreach (['Leadership', 'Training', 'Community Service', 'Workshop', 'Meeting'] as $type): ?>
-                                <option<?= ($old['event_type'] ?? '') === $type ? ' selected' : '' ?>><?= $e($type) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if (!empty($errors['event_type'])): ?><p><?= $e($errors['event_type']) ?></p><?php endif; ?>
-                    </div>
-                    <div class="dw-field dw-field--span-2">
-                        <label for="zonal-event-audience">Notify</label>
-                        <select id="zonal-event-audience" name="audience" required>
-                            <option value="All divisions"<?= $selected('All divisions') ?>>All divisions and their clubs</option>
-                            <?php foreach ($divisions as $divisionName): ?>
-                                <option value="<?= $e($divisionName) ?>"<?= $selected($divisionName) ?>><?= $e($divisionName) ?> and its clubs</option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if (!empty($errors['audience'])): ?><p><?= $e($errors['audience']) ?></p><?php endif; ?>
-                    </div>
+                <div class="dw-field dw-field--span-2">
+                    <label for="zonal-event-title">Event title</label>
+                    <input id="zonal-event-title" name="title" type="text" required maxlength="150" autocomplete="off" placeholder="Zone Youth Leadership Forum" value="<?= $e($old['title'] ?? '') ?>">
+                    <?php if (!empty($errors['title'])): ?><p><?= $e($errors['title']) ?></p><?php endif; ?>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-date">Date</label>
+                    <input id="zonal-event-date" name="event_date" type="date" required value="<?= $e($old['event_date'] ?? '') ?>">
+                    <p id="zonal-event-date-error"<?= !empty($errors['event_date']) ? '' : ' hidden' ?>><?= $e($errors['event_date'] ?? 'This date has already passed') ?></p>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-time">Time</label>
+                    <input id="zonal-event-time" name="event_time" type="time" required value="<?= $e($old['event_time'] ?? '') ?>">
+                    <?php if (!empty($errors['event_time'])): ?><p><?= $e($errors['event_time']) ?></p><?php endif; ?>
+                </div>
+                <div class="dw-field dw-field--span-2">
+                    <label for="zonal-event-location">Location</label>
+                    <input id="zonal-event-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Venue or coordinates" value="<?= $e($old['location'] ?? '') ?>">
+                    <?php if (!empty($errors['location'])): ?><p><?= $e($errors['location']) ?></p><?php endif; ?>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-type-input">Event type</label>
+                    <select id="zonal-event-type-input" name="event_type" required>
+                        <option value="">Select type...</option>
+                        <?php foreach (['Leadership', 'Training', 'Community Service', 'Workshop', 'Meeting'] as $type): ?>
+                            <option<?= ($old['event_type'] ?? '') === $type ? ' selected' : '' ?>><?= $e($type) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (!empty($errors['event_type'])): ?><p><?= $e($errors['event_type']) ?></p><?php endif; ?>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-audience">Notify</label>
+                    <select id="zonal-event-audience" name="audience" required>
+                        <option value="All divisions"<?= $selected('All divisions') ?>>All divisions and their clubs</option>
+                        <?php foreach ($divisions as $divisionName): ?>
+                            <option value="<?= $e($divisionName) ?>"<?= $selected($divisionName) ?>><?= $e($divisionName) ?> and its clubs</option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (!empty($errors['audience'])): ?><p><?= $e($errors['audience']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-alert dw-alert--error" id="zonal-event-error" role="alert" hidden></div>
             </form>
@@ -212,5 +233,88 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div>
 
 
+
+<div id="zonal-event-edit-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="zonal-event-edit-title" aria-hidden="true" hidden>
+    <div class="dw-modal__backdrop" data-modal-close></div>
+    <div class="dw-modal__dialog dw-modal__dialog--wide">
+        <header class="dw-modal__header">
+            <div>
+                <p>Zonal secretary action</p>
+                <h2 id="zonal-event-edit-title">Edit Event</h2>
+            </div>
+            <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+        </header>
+        <div class="dw-modal__body">
+            <p id="zonal-event-edit-note" class="dw-field--span-2">Pending events stay pending. Editing an approved event or a rejected event sends it back to the Zonal Coordinator for approval.</p>
+            <form id="zonal-event-edit-form" method="post" action="<?= ROOT ?>/zonalsecretary/updateevent" novalidate>
+                <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
+                <input type="hidden" id="zonal-event-edit-id" name="event_id">
+                <div class="dw-field dw-field--span-2">
+                    <label for="zonal-event-edit-title-input">Event title</label>
+                    <input id="zonal-event-edit-title-input" name="title" type="text" required maxlength="150" autocomplete="off">
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-edit-date">Date</label>
+                    <input id="zonal-event-edit-date" name="event_date" type="date" required>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-edit-time">Time</label>
+                    <input id="zonal-event-edit-time" name="event_time" type="time" required>
+                </div>
+                <div class="dw-field dw-field--span-2">
+                    <label for="zonal-event-edit-location">Location</label>
+                    <input id="zonal-event-edit-location" name="location" type="text" required maxlength="255" autocomplete="off">
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-edit-type">Event type</label>
+                    <select id="zonal-event-edit-type" name="event_type" required>
+                        <option value="">Select type...</option>
+                        <?php foreach (['Leadership', 'Training', 'Community Service', 'Workshop', 'Meeting'] as $type): ?>
+                            <option><?= $e($type) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="dw-field">
+                    <label for="zonal-event-edit-audience">Notify</label>
+                    <select id="zonal-event-edit-audience" name="audience" required>
+                        <option value="All divisions">All divisions and their clubs</option>
+                        <?php foreach ($divisions as $divisionName): ?>
+                            <option value="<?= $e($divisionName) ?>"><?= $e($divisionName) ?> and its clubs</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="dw-alert dw-alert--error" id="zonal-event-edit-error" role="alert" hidden></div>
+            </form>
+        </div>
+        <footer class="dw-modal__footer">
+            <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="dw-button dw-button--primary" form="zonal-event-edit-form">Save changes</button>
+        </footer>
+    </div>
+</div>
+
+<div id="zonal-event-delete-modal" class="dw-modal" role="dialog" aria-modal="true" aria-labelledby="zonal-event-delete-title" aria-hidden="true" hidden>
+    <div class="dw-modal__backdrop" data-modal-close></div>
+    <div class="dw-modal__dialog">
+        <header class="dw-modal__header">
+            <div>
+                <p>Zonal secretary action</p>
+                <h2 id="zonal-event-delete-title">Delete rejected event</h2>
+            </div>
+            <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
+        </header>
+        <div class="dw-modal__body">
+            <p id="zonal-event-delete-name" class="dw-muted-copy dw-field--span-2"></p>
+            <form id="zonal-event-delete-form" method="post" action="<?= ROOT ?>/zonalsecretary/deleteevent">
+                <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
+                <input type="hidden" id="zonal-event-delete-id" name="event_id">
+            </form>
+        </div>
+        <footer class="dw-modal__footer">
+            <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="dw-button dw-button--primary" form="zonal-event-delete-form">Delete event</button>
+        </footer>
+    </div>
+</div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

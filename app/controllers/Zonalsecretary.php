@@ -148,37 +148,17 @@ class Zonalsecretary extends Controller {
             $old = $_POST;
             if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($this->eventCsrf(), $_POST['csrf_token'])) {
                 $errors['general'] = 'Refresh the page before creating an event.';
-            }
-            $title = trim((string)($_POST['title'] ?? ''));
-            $type = trim((string)($_POST['event_type'] ?? ''));
-            $date = trim((string)($_POST['event_date'] ?? ''));
-            $time = trim((string)($_POST['event_time'] ?? ''));
-            $location = trim((string)($_POST['location'] ?? ''));
-            $audience = trim((string)($_POST['audience'] ?? 'All divisions'));
-            $dateValue = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
-            if ($title === '' || mb_strlen($title) > 150) $errors['title'] = 'Enter an event title of 150 characters or fewer.';
-            if ($type === '' || mb_strlen($type) > 50) $errors['event_type'] = 'Enter an event type of 50 characters or fewer.';
-            if (!$dateValue || $dateValue->format('Y-m-d') !== $date) $errors['event_date'] = 'Enter a valid event date.';
-            if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) $errors['event_time'] = 'Enter a valid event time.';
-            if ($dateValue && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) {
-                $eventAt = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
-                if ($eventAt && $eventAt <= new DateTimeImmutable()) {
-                    $errors['event_date'] = 'Choose a date and time in the future.';
-                }
-            }
-            if ($location === '' || mb_strlen($location) > 255) $errors['location'] = 'Enter a location of 255 characters or fewer.';
-            $targetDivisionId = null;
-            if ($audience !== 'All divisions') {
-                $target = $eventModel->findZoneDivision($zonalId, $audience);
-                if (!$target) {
-                    $errors['audience'] = 'Select a valid audience.';
-                } else {
-                    $targetDivisionId = (int) $target->division_id;
-                }
+            } else {
+                $checked = $this->validateZonalEventInput($eventModel, $zonalId, $_POST);
+                $errors = $checked['errors'];
+                $title = $checked['values']['title'];
+                $type = $checked['values']['type'];
+                $location = $checked['values']['location'];
+                $targetDivisionId = $checked['values']['targetDivisionId'];
+                $start = $checked['values']['start'];
             }
 
             if (!$errors) {
-                $start = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
                 $eventId = $eventModel->createZonalEvent($zonalId, (int) $_SESSION['user_id'], [
                     'title' => substr($title, 0, 150),
                     'type' => substr($type, 0, 50),
@@ -215,8 +195,11 @@ class Zonalsecretary extends Controller {
                 'type' => $ev->event_type ?? '',
                 'date' => $start ? date('M d, Y', $start) : '—',
                 'time' => $start ? date('g:i A', $start) : '',
+                'raw_date' => $start ? date('Y-m-d', $start) : '',
+                'raw_time' => $start ? date('H:i', $start) : '',
                 'location' => $ev->location ?? '',
                 'audience' => $ev->target_divisions ?: 'All divisions',
+                'audience_value' => $ev->target_divisions ?: 'All divisions',
                 'status' => $statusMap[$ev->status] ?? $ev->status,
                 'status_key' => strtolower($ev->status ?? ''),
                 'coordinator_remark' => $ev->rejection_remarks ?? '',
@@ -226,10 +209,11 @@ class Zonalsecretary extends Controller {
         $data = $this->shell(
             'Zonal Events — YouthNexus Pulse',
             'Zonal Events',
-            'Create zonal events and notify divisions and clubs.',
+            'Create zonal events for divisions and clubs.',
             'zonalsecretary/events'
         );
         $data['events'] = $events;
+        $data['zoneName'] = $this->zoneName($zonalId);
         $data['divisions'] = $divisionNames;
         $data['eventStats'] = [
             'scheduled' => $pending,
@@ -243,6 +227,151 @@ class Zonalsecretary extends Controller {
         unset($_SESSION['zonal_event_flash']);
 
         $this->view('zonalsecretary/events', $data);
+    }
+
+    /**
+     * Shared server-side boundary for create and edit. Scope comes from the
+     * session zone; the posted audience is only validated against it.
+     *
+     * @return array{errors: array, values: array}
+     */
+    private function validateZonalEventInput($eventModel, int $zonalId, array $post): array {
+        $errors = [];
+        $title = trim((string)($post['title'] ?? ''));
+        $type = trim((string)($post['event_type'] ?? ''));
+        $date = trim((string)($post['event_date'] ?? ''));
+        $time = trim((string)($post['event_time'] ?? ''));
+        $location = trim((string)($post['location'] ?? ''));
+        $audience = trim((string)($post['audience'] ?? 'All divisions'));
+        $dateValue = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        if ($title === '' || mb_strlen($title) > 150) $errors['title'] = 'Enter an event title of 150 characters or fewer.';
+        if ($type === '' || mb_strlen($type) > 50) $errors['event_type'] = 'Enter an event type of 50 characters or fewer.';
+        if (!$dateValue || $dateValue->format('Y-m-d') !== $date) $errors['event_date'] = 'Enter a valid event date.';
+        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) $errors['event_time'] = 'Enter a valid event time.';
+        $start = null;
+        if ($dateValue && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time)) {
+            $start = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
+            if ($start && $start <= new DateTimeImmutable()) {
+                $errors['event_date'] = 'Choose a date and time in the future.';
+                $start = null;
+            }
+            if (!$start) $errors['event_date'] = 'Enter a valid event date.';
+        }
+        if ($location === '' || mb_strlen($location) > 255) $errors['location'] = 'Enter a location of 255 characters or fewer.';
+        $targetDivisionId = null;
+        if ($audience !== 'All divisions') {
+            $target = $eventModel->findZoneDivision($zonalId, $audience);
+            if (!$target) {
+                $errors['audience'] = 'Select a valid audience.';
+            } else {
+                $targetDivisionId = (int) $target->division_id;
+            }
+        }
+        return ['errors' => $errors, 'values' => [
+            'title' => $title, 'type' => $type, 'location' => $location,
+            'targetDivisionId' => $targetDivisionId, 'start' => $start,
+        ]];
+    }
+
+    /**
+     * Secretary edits a PendingApproval event in place, or corrects an
+     * Approved/Rejected one — which returns it to PendingApproval for the
+     * coordinator to decide again.
+     */
+    public function updateevent() {
+        $this->requireZonalSecretary();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('zonalsecretary/events');
+        }
+        if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($this->eventCsrf(), $_POST['csrf_token'])) {
+            $_SESSION['zonal_event_flash'] = 'Refresh the page before editing an event.';
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        if ($eventId < 1) {
+            $_SESSION['zonal_event_flash'] = 'Invalid event request.';
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $eventModel = $this->model('EventModel');
+        $checked = $this->validateZonalEventInput($eventModel, $zonalId, $_POST);
+        if ($checked['errors']) {
+            $_SESSION['zonal_event_flash'] = reset($checked['errors']);
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $current = $eventModel->getZonalEventForSecretary($zonalId, $eventId);
+        if (!$current || !in_array($current->status ?? '', ['PendingApproval', 'Approved', 'Rejected'], true)) {
+            $_SESSION['zonal_event_flash'] = 'Event not found in your zone.';
+            $this->redirect('zonalsecretary/events');
+        }
+        $wasPending = ($current->status === 'PendingApproval');
+
+        $values = $checked['values'];
+        $rows = $eventModel->updateZonalEvent($zonalId, $eventId, [
+            'title' => substr($values['title'], 0, 150),
+            'type' => substr($values['type'], 0, 50),
+            'location' => $values['location'],
+            'start' => $values['start']->format('Y-m-d H:i:s'),
+            'end' => $values['start']->modify('+2 hours')->format('Y-m-d H:i:s'),
+        ], $values['targetDivisionId']);
+        if ($rows < 1) {
+            $_SESSION['zonal_event_flash'] = 'Event not found in your zone.';
+            $this->redirect('zonalsecretary/events');
+        }
+
+        if ($wasPending) {
+            $this->model('AuditLogModel')->log($_SESSION['user_id'], 'UPDATE_EVENT', 'Event', $eventId, "Edited pending zonal event '{$values['title']}'");
+            $_SESSION['zonal_event_flash'] = 'Pending event updated.';
+        } else {
+            $this->model('AuditLogModel')->log($_SESSION['user_id'], 'RESUBMIT_EVENT', 'Event', $eventId, "Edited zonal event '{$values['title']}' and returned it for approval");
+            $_SESSION['zonal_event_flash'] = 'Event updated and sent back to the Zonal Coordinator for approval.';
+        }
+        $this->redirect('zonalsecretary/events');
+    }
+
+    /**
+     * Secretary deletes a coordinator-rejected event. Refused when recorded
+     * attendance still references it.
+     */
+    public function deleteevent() {
+        $this->requireZonalSecretary();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->redirect('zonalsecretary/events');
+        }
+        if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($this->eventCsrf(), $_POST['csrf_token'])) {
+            $_SESSION['zonal_event_flash'] = 'Refresh the page before deleting an event.';
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $eventId = (int) ($_POST['event_id'] ?? 0);
+        if ($eventId < 1) {
+            $_SESSION['zonal_event_flash'] = 'Invalid event request.';
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $result = $this->model('EventModel')->deleteRejectedZonalEvent($zonalId, $eventId);
+        if (!$result['deleted']) {
+            if (!$result['blockers']) {
+                $_SESSION['zonal_event_flash'] = 'Rejected event not found in your zone.';
+            } else {
+                $labels = array_map(
+                    static fn($b) => $b['table'] . ' (' . $b['count'] . ')',
+                    $result['blockers']
+                );
+                $_SESSION['zonal_event_flash'] = 'Cannot delete — this event is still referenced by ' . implode(', ', $labels) . '.';
+            }
+            $this->redirect('zonalsecretary/events');
+        }
+
+        $this->model('AuditLogModel')->log($_SESSION['user_id'], 'DELETE_EVENT', 'Event', $eventId, 'Deleted rejected zonal event');
+        $_SESSION['zonal_event_flash'] = 'Rejected event deleted.';
+        $this->redirect('zonalsecretary/events');
     }
 
     /**
