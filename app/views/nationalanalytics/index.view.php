@@ -5,8 +5,8 @@
  * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
  */
 $title                   = $title ?? 'National Analytics — YouthNexus';
-$pageTitle               = $pageTitle ?? 'National Analytics';
-$pageDescription         = $pageDescription ?? 'National Youth Services Council — Executive Performance, Health & Financial Oversight';
+$pageTitle               = $pageTitle ?? 'National Performance Analytics';
+$pageDescription         = $pageDescription ?? 'Executive performance, health metrics, and financial oversight across all youth clubs.';
 $currentRoute            = 'nationalanalytics';
 $unreadNotificationCount = (int)($queueSummary['count'] ?? 0);
 
@@ -28,6 +28,8 @@ $icoBell   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
 ?>
 
+<link rel="stylesheet" href="<?= ROOT ?>/assets/css/nationalanalytics.css?v=<?= time() ?>">
+
         <!-- Flash alerts -->
         <?php if (!empty($flashSuccess)): ?>
             <div class="analytics-alert alert-success">
@@ -42,14 +44,10 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
             </div>
         <?php endif; ?>
 
-        <!-- Page heading + actions -->
-        <div class="page-head">
-            <div>
-                <h1>National Analytics</h1>
-                <p>National Youth Services Council &mdash; Executive Performance, Health &amp; Financial Oversight</p>
-            </div>
+        <!-- Page action row -->
+        <div class="page-head na-action-row db-action-row">
             <div class="page-actions">
-                <a href="<?= ROOT ?>/nationalanalytics/export" class="btn-blue">
+                <a href="<?= ROOT ?>/nationalanalytics/export" class="btn-blue db-primary-action">
                     <?= $icoDown ?> Export Report
                 </a>
             </div>
@@ -157,20 +155,20 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                 <svg class="trend-chart" viewBox="0 0 560 210">
                     <defs>
                         <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.28"/>
-                            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                            <stop offset="0%" stop-color="#1e5eff" stop-opacity="0.28"/>
+                            <stop offset="100%" stop-color="#1e5eff" stop-opacity="0"/>
                         </linearGradient>
                     </defs>
                     <path d="M10,175 C35,171 80,158 109,152 C138,146 180,138 207,135 C234,132 278,123 305,120 C332,117 376,99 403,92 C430,85 476,66 501,60 C520,55 536,42 550,35 L550,205 L10,205 Z" fill="url(#fillGrad)"/>
-                    <path d="M10,175 C35,171 80,158 109,152 C138,146 180,138 207,135 C234,132 278,123 305,120 C332,117 376,99 403,92 C430,85 476,66 501,60 C520,55 536,42 550,35" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                    <path d="M10,175 C35,171 80,158 109,152 C138,146 180,138 207,135 C234,132 278,123 305,120 C332,117 376,99 403,92 C430,85 476,66 501,60 C520,55 536,42 550,35" fill="none" stroke="#1e5eff" stroke-width="2.5"/>
                     <line x1="550" y1="40" x2="550" y2="200" stroke="#93b4f8" stroke-dasharray="4 4"/>
-                    <circle cx="10" cy="175" r="3.5" fill="#1e3a8a"/><circle cx="60" cy="168" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="109" cy="152" r="3.5" fill="#1e3a8a"/><circle cx="158" cy="143" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="207" cy="135" r="3.5" fill="#1e3a8a"/><circle cx="256" cy="123" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="305" cy="120" r="3.5" fill="#1e3a8a"/><circle cx="354" cy="105" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="403" cy="92" r="3.5" fill="#1e3a8a"/><circle cx="452" cy="75" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="501" cy="60" r="3.5" fill="#1e3a8a"/>
-                    <circle cx="550" cy="35" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="10" cy="175" r="3.5" fill="#1e3fa0"/><circle cx="60" cy="168" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="109" cy="152" r="3.5" fill="#1e3fa0"/><circle cx="158" cy="143" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="207" cy="135" r="3.5" fill="#1e3fa0"/><circle cx="256" cy="123" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="305" cy="120" r="3.5" fill="#1e3fa0"/><circle cx="354" cy="105" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="403" cy="92" r="3.5" fill="#1e3fa0"/><circle cx="452" cy="75" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="501" cy="60" r="3.5" fill="#1e3fa0"/>
+                    <circle cx="550" cy="35" r="5" fill="#1e5eff" stroke="#ffffff" stroke-width="2"/>
                 </svg>
                 <div class="x-labels">
                     <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
@@ -341,8 +339,6 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                 </div>
             </div>
         </div>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/nationalanalytics.css">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
