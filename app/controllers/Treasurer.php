@@ -75,7 +75,9 @@ class Treasurer extends Controller {
             ['title' => 'Review Pending Voids', 'desc' => $pendingVoids . ' void request(s) awaiting the Divisional Treasurer', 'href' => 'club/ledger', 'icon' => 'eye'],
         ];
 
-        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubTreasurer', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        // Hierarchy-resolved scope (raw session ids drop zonal/divisional rows).
+        $annScope = ZoneOverview::effectiveScope($this, $userId);
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubTreasurer', $annScope['division_id'], $annScope['zonal_id']);
         $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
         $socialCv = [
