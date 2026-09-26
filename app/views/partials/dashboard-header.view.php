@@ -45,6 +45,18 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
           <strong>Notifications</strong>
           <span><?= $unreadNotificationCount > 0 ? $unreadNotificationCount . ' unread' : 'All caught up' ?></span>
         </div>
+        <?php if (isset($headerNotifications) && is_array($headerNotifications)): ?>
+        <?php if (!$headerNotifications): ?>
+        <span class="dashboard-notif__empty">No new announcements.</span>
+        <?php else: ?>
+        <?php foreach ($headerNotifications as $headerItem): ?>
+        <a href="<?= $dashboardRoot ?>/announcements/view/<?= (int) ($headerItem['id'] ?? 0) ?>">
+          <strong><?= htmlspecialchars((string) ($headerItem['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
+          <span><?= htmlspecialchars((string) ($headerItem['age'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+        </a>
+        <?php endforeach; ?>
+        <?php endif; ?>
+        <?php else: ?>
         <a href="<?= $dashboardRoot ?>/announcements">
           <strong>Divisional Leadership Summit 2026</strong>
           <span>Confirm your attendance by Friday · 2 days ago</span>
@@ -53,6 +65,7 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
           <strong>Volunteer hour submission guidelines</strong>
           <span>Submit within 7 days of the activity · 4 days ago</span>
         </a>
+        <?php endif; ?>
         <div class="dashboard-profile__menu-divider"></div>
         <a class="dashboard-notif__view-all" href="<?= $dashboardRoot ?>/announcements">
           View all announcements

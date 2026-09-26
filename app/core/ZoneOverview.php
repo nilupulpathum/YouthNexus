@@ -74,6 +74,54 @@ final class ZoneOverview {
         return $controller->model('ZoneMonitorModel')->getZoneAttendance($zonalId);
     }
 
+    /**
+     * Bell + badge data for zonal shells: unread published announcements for
+     * the session user (count) plus the latest few (id/title/age) linking to
+     * the unified detail view. Reads the session; controllers stay one-liners.
+     *
+     * @return array{count: int, items: list<array{id: int, title: string, age: string}>}
+     */
+    public static function headerNotifications(Controller $controller): array {
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        if ($userId < 1) {
+            return ['count' => 0, 'items' => []];
+        }
+        try {
+            $rows = $controller->model('AnnouncementModel')->findForUser(
+                $userId,
+                (string) ($_SESSION['user_role'] ?? ''),
+                isset($_SESSION['club_id']) ? (int) $_SESSION['club_id'] : null,
+                isset($_SESSION['division_id']) ? (int) $_SESSION['division_id'] : null,
+                isset($_SESSION['zonal_id']) ? (int) $_SESSION['zonal_id'] : null
+            );
+        } catch (Throwable $e) {
+            return ['count' => 0, 'items' => []];
+        }
+        $readModel = $controller->model('AnnouncementReadModel');
+        $count = 0;
+        $items = [];
+        foreach (is_array($rows) ? $rows : [] as $a) {
+            $row = is_array($a) ? (object) $a : $a;
+            if (($row->status ?? '') !== 'Published') {
+                continue;
+            }
+            $id = (int) ($row->announcement_id ?? $row->id ?? 0);
+            if ($id < 1 || $readModel->hasRead($id, $userId)) {
+                continue;
+            }
+            $count++;
+            if (count($items) < 3) {
+                $raw = $row->published_at ?? $row->created_at ?? null;
+                $items[] = [
+                    'id' => $id,
+                    'title' => (string) ($row->title ?? ''),
+                    'age' => ClubOverview::ageLabel($raw ? strtotime((string) $raw) : false),
+                ];
+            }
+        }
+        return ['count' => $count, 'items' => $items];
+    }
+
     public static function funds(Controller $controller, int $zonalId): array {
         return $controller->model('ZoneFundModel')->getStats($zonalId);
     }

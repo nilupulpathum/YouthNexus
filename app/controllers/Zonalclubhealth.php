@@ -50,6 +50,7 @@ class Zonalclubhealth extends Controller {
             exit('Club health data could not be calculated. Run the club health migration and try again.');
         }
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
         $this->view('zonalclubhealth/index', [
             'zone' => $zone,
             'clubs' => $clubs,
@@ -62,6 +63,8 @@ class Zonalclubhealth extends Controller {
             'userName' => $_SESSION['user_name'] ?? 'Zonal Officer',
             'userRole' => $_SESSION['user_role'],
             'userEmail' => $_SESSION['user_email'] ?? '',
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
         ]);
     }
 
