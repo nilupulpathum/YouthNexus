@@ -44,6 +44,7 @@ class Zonalreports extends Controller {
             http_response_code(500);
             exit('Report data could not be loaded. Run the divisional reports migration and try again.');
         }
+        $headerNotif = ZoneOverview::headerNotifications($this);
         $this->view('zonalreports/index', [
             'zone' => $zone,
             'reports' => $reports,
@@ -54,6 +55,8 @@ class Zonalreports extends Controller {
             'userName' => $_SESSION['user_name'] ?? 'Zonal Officer',
             'userRole' => $_SESSION['user_role'],
             'userEmail' => $_SESSION['user_email'] ?? '',
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
         ]);
     }
 
@@ -72,6 +75,7 @@ class Zonalreports extends Controller {
         }
         $aggregateMode = $role === 'ZonalSecretary'
             && (string) ($_GET['mode'] ?? '') === 'aggregate';
+        $headerNotif = ZoneOverview::headerNotifications($this);
         $this->view('zonalreports/create', [
             'zone' => $zone,
             'catalog' => $catalog,
@@ -81,6 +85,8 @@ class Zonalreports extends Controller {
             'userName' => $_SESSION['user_name'] ?? 'Zonal Officer',
             'userRole' => $role,
             'userEmail' => $_SESSION['user_email'] ?? '',
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
         ]);
     }
 
@@ -126,6 +132,7 @@ class Zonalreports extends Controller {
             $this->redirect('zonalreports');
         }
         $data = $model->getReportData((int) $_SESSION['zonal_id'], $report);
+        $headerNotif = ZoneOverview::headerNotifications($this);
         $this->view('zonalreports/preview', [
             'report' => $report,
             'reportData' => $data,
@@ -134,6 +141,8 @@ class Zonalreports extends Controller {
             'userName' => $_SESSION['user_name'] ?? 'Zonal Officer',
             'userRole' => $_SESSION['user_role'],
             'userEmail' => $_SESSION['user_email'] ?? '',
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
         ]);
     }
 
