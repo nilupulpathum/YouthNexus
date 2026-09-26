@@ -9,6 +9,8 @@ $title                   = $title ?? 'Audit Report — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Annual Financial Audit Report';
 $pageDescription         = $pageDescription ?? 'Math verification, red flags and sign-off for the selected entity & financial year.';
 $currentRoute            = 'audit';
+$unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -41,8 +43,6 @@ $steps = [
     ['label' => '= Expected Balance', 'value' => $fmtLKR($audit->expected_closing_balance),     'color' => 'blue'],
 ];
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/annualaudit.css?v=<?= time() ?>">
 
 <div class="audit-content">
 

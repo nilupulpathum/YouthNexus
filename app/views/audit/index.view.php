@@ -8,11 +8,11 @@ $title                   = $title ?? 'Annual Audit — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Annual Financial Audit';
 $pageDescription         = $pageDescription ?? 'Select an entity and financial year to compile its statutory audit.';
 $currentRoute            = 'audit';
+$unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/annualaudit.css?v=<?= time() ?>">
 
 <div class="audit-content">
 
