@@ -9,6 +9,10 @@ $pageDescription         = 'View and verify member attendance for this event';
 $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
+$pageStyles              = [
+    ROOT . '/assets/css/attendance.css?v=' . time(),
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+];
 
 $orgHierarchy = [];
 if (!empty($event->organizer_club_name))     $orgHierarchy[] = $event->organizer_club_name;
@@ -240,8 +244,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         role: <?= json_encode($userRole ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
 </script>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

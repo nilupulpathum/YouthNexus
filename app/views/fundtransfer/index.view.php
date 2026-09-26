@@ -11,6 +11,7 @@ $listRoute = $listRoute ?? $transferRoute;
 $isZonalDemo = $isZonalDemo ?? false;
 $currentRoute = $listRoute;
 $unreadNotificationCount = $isZonalDemo ? 2 : 0;
+$pageStyles = [ROOT . '/assets/css/fundtransfer.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -38,7 +39,6 @@ $errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_old'], $_SESSION['form_errors']);
 ?>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/fundtransfer.css">
 
 <div class="fund-transfer-module">
 

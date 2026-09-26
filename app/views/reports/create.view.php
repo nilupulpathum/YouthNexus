@@ -8,6 +8,7 @@ $title                   = $title ?? 'Create New Report — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Create New Report';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
 
 $catalog = $catalog ?? [];
 $scopes  = $scopes  ?? [
@@ -29,8 +30,6 @@ $defaultScopeKey = 'National';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css?v=<?= time() ?>">
 
 <div class="rpt-content rpt-create-wrap">
 

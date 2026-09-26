@@ -16,8 +16,11 @@ class Attendance extends Controller {
             session_start();
         }
         $role = $_SESSION['user_role'] ?? '';
-        if (empty($_SESSION['user_id']) || !in_array($role, ['NYSCAdministrator', 'DivisionalSecretary', 'ZonalSecretary'])) {
+        if (empty($_SESSION['user_id'])) {
             $this->redirect('auth/signin');
+        }
+        if (!in_array($role, ['NYSCAdministrator', 'DivisionalSecretary', 'ZonalSecretary'])) {
+            $this->redirect('home');
         }
         return $role;
     }

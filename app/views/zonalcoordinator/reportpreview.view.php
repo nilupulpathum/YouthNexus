@@ -1,4 +1,0 @@
-<?php require __DIR__ . '/../partials/icons.view.php'; require __DIR__ . '/../layouts/dashboard-start.view.php'; ?>
-<section class="club-page" aria-labelledby="coordinator-preview-heading"><h1 id="coordinator-preview-heading" class="sr-only">Coordinator report preview</h1><section class="club-panel"><div class="club-panel-header"><div><p class="club-eyebrow">Gampaha Zone</p><h2>Aggregate report preview</h2></div><a class="club-btn-secondary" href="<?= ROOT ?>/zonalcoordinator/reports">Back to reports</a></div><p class="club-muted">Report <?= htmlspecialchars($reportId, ENT_QUOTES, 'UTF-8') ?> · 19 reporting clubs, 18 recorded programmes and 78% attendance.</p></section></section>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
-<?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

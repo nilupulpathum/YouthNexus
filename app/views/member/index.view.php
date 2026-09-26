@@ -4,6 +4,7 @@
  *
  * This view owns only Member page content. The shared authenticated shell
  * is provided by dashboard-start and dashboard-end.
+ * UI follows the divisional standard (dw-* classes + shared partials).
  */
 $title           = $title ?? 'Member Dashboard — YouthNexus Pulse';
 $pageTitle       = $pageTitle ?? 'Welcome back';
@@ -20,8 +21,8 @@ $presidentSummary = $presidentSummary ?? null;
 $treasurerSummary = $treasurerSummary ?? null;
 $secretarySummary = $secretarySummary ?? null;
 
-$escape = static function ($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$e = static function ($value) {
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
 
 $activityIcons = [
@@ -31,227 +32,220 @@ $activityIcons = [
     'read'  => 'eye',
 ];
 
+$summaryCards = [
+    ['value' => (string) ($tiles['volunteer_hours'] ?? 0), 'label' => 'Total volunteer hours', 'note' => 'Across approved activities', 'icon' => 'clock', 'tone' => 'blue'],
+    ['value' => (string) ($tiles['upcoming_events'] ?? 0), 'label' => 'Upcoming events', 'note' => 'Next 30 days', 'icon' => 'calendar', 'tone' => 'amber'],
+    ['value' => (string) ($tiles['unread_announcements'] ?? 0), 'label' => 'Unread announcements', 'note' => 'Needs your attention', 'icon' => 'info', 'tone' => 'red'],
+    ['value' => 'Verified', 'label' => 'Latest certificate', 'note' => (string) ($tiles['latest_certificate'] ?? 'No certificate yet'), 'icon' => 'award', 'tone' => 'green'],
+];
+
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
+
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-<section class="member-dashboard" aria-labelledby="member-dashboard-heading">
-    <h1 id="member-dashboard-heading" class="sr-only">Member dashboard</h1>
+<section class="dw-page" aria-labelledby="member-dashboard-heading">
+    <h1 id="member-dashboard-heading" class="visually-hidden">Member dashboard</h1>
 
     <?php if (!empty($presidentSummary)): ?>
-        <section class="member-panel member-exec-strip" aria-label="President summary">
-            <div class="member-exec-health">
-                <p class="member-eyebrow">President summary</p>
-                <p class="member-exec-score"><?= $escape($presidentSummary['health_score'] ?? 0) ?><span>/100</span></p>
-                <span class="member-status member-status--attending"><?= $escape($presidentSummary['health_label'] ?? '') ?></span>
-            </div>
-            <div class="member-exec-pending">
+        <section class="dw-panel" aria-label="President summary">
+            <header class="dw-panel__header">
                 <div>
-                    <strong><?= $escape($presidentSummary['pending_events'] ?? 0) ?></strong>
-                    <span>Event approval</span>
+                    <p>President summary</p>
+                    <h2>Club health <?= $e($presidentSummary['health_score'] ?? 0) ?>/100</h2>
                 </div>
-                <div>
-                    <strong><?= $escape($presidentSummary['pending_members'] ?? 0) ?></strong>
-                    <span>Member approval</span>
+                <?php $status = $presidentSummary['health_label'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+            </header>
+            <div class="dw-panel__body">
+                <div class="dw-metric-list">
+                    <div class="dw-metric"><span>Event approval</span><strong><?= $e($presidentSummary['pending_events'] ?? 0) ?></strong></div>
+                    <div class="dw-metric"><span>Member approval</span><strong><?= $e($presidentSummary['pending_members'] ?? 0) ?></strong></div>
+                </div>
+                <div class="dw-filter-actions">
+                    <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
                 </div>
             </div>
-            <a class="member-panel-link" href="<?= ROOT ?>/president">Open president overview <span aria-hidden="true">›</span></a>
         </section>
     <?php endif; ?>
 
     <?php if (!empty($treasurerSummary)): ?>
-        <section class="member-panel member-exec-strip" aria-label="Treasurer summary">
-            <div class="member-exec-health">
-                <p class="member-eyebrow">Treasurer summary</p>
-                <p class="member-exec-score"><?= $escape($treasurerSummary['balance'] ?? '') ?></p>
-                <span class="member-status member-status--pending"><?= $escape(($treasurerSummary['pending_voids'] ?? 0) . ' pending void') ?></span>
-            </div>
-            <div class="member-exec-pending">
+        <section class="dw-panel" aria-label="Treasurer summary">
+            <header class="dw-panel__header">
                 <div>
-                    <strong><?= $escape($treasurerSummary['income'] ?? '') ?></strong>
-                    <span>Income</span>
+                    <p>Treasurer summary</p>
+                    <h2><?= $e($treasurerSummary['balance'] ?? '') ?></h2>
                 </div>
-                <div>
-                    <strong><?= $escape($treasurerSummary['expenses'] ?? '') ?></strong>
-                    <span>Expenses</span>
+                <?php $status = ($treasurerSummary['pending_voids'] ?? 0) . ' pending void'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+            </header>
+            <div class="dw-panel__body">
+                <div class="dw-metric-list">
+                    <div class="dw-metric"><span>Income</span><strong><?= $e($treasurerSummary['income'] ?? '') ?></strong></div>
+                    <div class="dw-metric"><span>Expenses</span><strong><?= $e($treasurerSummary['expenses'] ?? '') ?></strong></div>
+                </div>
+                <div class="dw-filter-actions">
+                    <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/treasurer">Open treasurer overview <span aria-hidden="true">›</span></a>
                 </div>
             </div>
-            <a class="member-panel-link" href="<?= ROOT ?>/treasurer">Open treasurer overview <span aria-hidden="true">›</span></a>
         </section>
     <?php endif; ?>
 
     <?php if (!empty($secretarySummary)): ?>
-        <section class="member-panel member-exec-strip" aria-label="Secretary summary">
-            <div class="member-exec-health">
-                <p class="member-eyebrow">Secretary summary</p>
-                <p class="member-exec-score"><?= $escape($secretarySummary['pending_members'] ?? 0) ?><span> + <?= $escape($secretarySummary['pending_events'] ?? 0) ?></span></p>
-                <span class="member-status member-status--pending">Queue</span>
-            </div>
-            <div class="member-exec-pending">
+        <section class="dw-panel" aria-label="Secretary summary">
+            <header class="dw-panel__header">
                 <div>
-                    <strong><?= $escape($secretarySummary['pending_members'] ?? 0) ?></strong>
-                    <span>Member approval</span>
+                    <p>Secretary summary</p>
+                    <h2><?= $e($secretarySummary['pending_members'] ?? 0) ?> + <?= $e($secretarySummary['pending_events'] ?? 0) ?> awaiting</h2>
                 </div>
-                <div>
-                    <strong><?= $escape($secretarySummary['pending_events'] ?? 0) ?></strong>
-                    <span>Event approval</span>
+                <?php $status = 'Queue'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+            </header>
+            <div class="dw-panel__body">
+                <div class="dw-metric-list">
+                    <div class="dw-metric"><span>Member approval</span><strong><?= $e($secretarySummary['pending_members'] ?? 0) ?></strong></div>
+                    <div class="dw-metric"><span>Event approval</span><strong><?= $e($secretarySummary['pending_events'] ?? 0) ?></strong></div>
+                </div>
+                <div class="dw-filter-actions">
+                    <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/secretary">Open secretary overview <span aria-hidden="true">›</span></a>
                 </div>
             </div>
-            <a class="member-panel-link" href="<?= ROOT ?>/secretary">Open secretary overview <span aria-hidden="true">›</span></a>
         </section>
     <?php endif; ?>
 
-    <div class="member-stat-grid" aria-label="Member activity summary">
-        <article class="member-stat-card member-stat-card--blue">
-            <div class="member-stat-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 7h8M8 11h8M8 15h4" stroke-linecap="round"/><path d="m15.5 15.5 1.4 1.4 2.7-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-                <p class="member-stat-label">Total volunteer hours</p>
-                <p class="member-stat-value"><?= $escape($tiles['volunteer_hours'] ?? 0) ?></p>
-                <p class="member-stat-note">Across approved activities</p>
-            </div>
-        </article>
-
-        <article class="member-stat-card member-stat-card--orange">
-            <div class="member-stat-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h5" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-                <p class="member-stat-label">Upcoming events</p>
-                <p class="member-stat-value"><?= $escape($tiles['upcoming_events'] ?? 0) ?></p>
-                <p class="member-stat-note">Next 30 days</p>
-            </div>
-        </article>
-
-        <article class="member-stat-card member-stat-card--red">
-            <div class="member-stat-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-                <p class="member-stat-label">Unread announcements</p>
-                <p class="member-stat-value"><?= $escape($tiles['unread_announcements'] ?? 0) ?></p>
-                <p class="member-stat-note">Needs your attention</p>
-            </div>
-        </article>
-
-        <article class="member-stat-card member-stat-card--purple">
-            <div class="member-stat-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3.5h9l3 3V20H6z"/><path d="M15 3.5V7h3M9 12h6M9 15h6" stroke-linecap="round"/><path d="m9 18 1.6 1.6L14 16.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-                <p class="member-stat-label">Latest certificate</p>
-                <p class="member-stat-value member-stat-value--status">Verified</p>
-                <p class="member-stat-note"><?= $escape($tiles['latest_certificate'] ?? 'No certificate yet') ?></p>
-            </div>
-        </article>
+    <div class="dw-summary-grid" aria-label="Member activity summary">
+        <?php foreach ($summaryCards as $card): ?>
+            <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
+        <?php endforeach; ?>
     </div>
 
-    <div class="member-content-grid">
-        <section class="member-panel member-panel--announcements" aria-labelledby="member-announcements-heading">
-            <div class="member-panel-header">
-                <div>
-                    <p class="member-eyebrow">Stay informed</p>
-                    <h2 id="member-announcements-heading">Announcements</h2>
-                </div>
-                <a class="member-panel-link" href="<?= ROOT ?>/announcements">View all <span aria-hidden="true">›</span></a>
+    <section class="dw-panel" aria-labelledby="member-announcements-heading">
+        <header class="dw-panel__header">
+            <div>
+                <p>Stay informed</p>
+                <h2 id="member-announcements-heading">Announcements</h2>
             </div>
-
-            <div class="member-announcement-list">
+            <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/announcements">View all <span aria-hidden="true">›</span></a>
+        </header>
+        <div class="dw-panel__body">
+            <div class="dw-record-grid">
                 <?php foreach ($announcements as $announcement): ?>
-                    <article class="member-announcement-item<?= !empty($announcement['is_new']) ? ' is-new' : '' ?>">
-                        <span class="member-list-dot" aria-hidden="true"></span>
-                        <div class="member-list-copy">
-                            <div class="member-list-meta">
-                                <span><?= $escape($announcement['age'] ?? '') ?></span>
-                                <?php if (!empty($announcement['is_new'])): ?><span class="member-badge member-badge--new">New</span><?php endif; ?>
+                    <article class="dw-record-card">
+                        <div class="dw-record-card__header">
+                            <div class="dw-record-card__identity">
+                                <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon('info') ?></span>
+                                <div class="dw-record-card__meta"><span><?= $e($announcement['age'] ?? '') ?></span></div>
                             </div>
-                            <h3><?= $escape($announcement['title'] ?? '') ?></h3>
-                            <p><?= $escape($announcement['summary'] ?? '') ?></p>
-                            <span class="member-scope-tag"><?= $escape($announcement['scope'] ?? '') ?></span>
+                            <?php if (!empty($announcement['is_new'])): ?><?php $status = 'New'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?><?php endif; ?>
+                        </div>
+                        <h3 class="dw-record-card__title"><?= $e($announcement['title'] ?? '') ?></h3>
+                        <p><?= $e($announcement['summary'] ?? '') ?></p>
+                        <div class="dw-record-card__footer">
+                            <span class="dw-record-card__reference"><?= $e($announcement['scope'] ?? '') ?></span>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
-        </section>
+            <?php
+            $emptyTitle = 'No announcements yet';
+            $emptyMessage = 'New announcements will appear here.';
+            $emptyVisible = count($announcements) === 0;
+            require __DIR__ . '/../partials/divisional/empty-state.view.php';
+            ?>
+        </div>
+    </section>
 
-        <section class="member-panel member-panel--events" aria-labelledby="member-events-heading">
-            <div class="member-panel-header">
-                <div>
-                    <p class="member-eyebrow">Plan ahead</p>
-                    <h2 id="member-events-heading">Upcoming Events</h2>
-                </div>
-                <a class="member-panel-link" href="<?= ROOT ?>/events">View all <span aria-hidden="true">›</span></a>
+    <section class="dw-panel" aria-labelledby="member-events-heading">
+        <header class="dw-panel__header">
+            <div>
+                <p>Plan ahead</p>
+                <h2 id="member-events-heading">Upcoming Events</h2>
             </div>
-
-            <div class="member-event-list">
+            <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/events">View all <span aria-hidden="true">›</span></a>
+        </header>
+        <div class="dw-panel__body">
+            <div class="dw-record-grid">
                 <?php foreach ($events as $event): ?>
-                    <article class="member-event-item">
-                        <div class="member-event-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16" stroke-linecap="round"/></svg>
-                        </div>
-                        <div class="member-event-copy">
-                            <div class="member-event-heading">
-                                <h3><?= $escape($event['title'] ?? '') ?></h3>
-                                <span class="member-scope-text"><?= $escape($event['scope'] ?? '') ?></span>
+                    <article class="dw-record-card">
+                        <div class="dw-record-card__header">
+                            <div class="dw-record-card__identity">
+                                <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon('calendar') ?></span>
+                                <div class="dw-record-card__meta"><span><?= $e($event['scope'] ?? '') ?></span></div>
                             </div>
-                            <p><?= $escape($event['date'] ?? '') ?> · <?= $escape($event['location'] ?? '') ?></p>
+                            <?php $status = $event['status'] ?? ''; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
                         </div>
-                        <span class="member-status member-status--<?= $escape($event['status_key'] ?? 'pending') ?>"><?= $escape($event['status'] ?? '') ?></span>
+                        <h3 class="dw-record-card__title"><?= $e($event['title'] ?? '') ?></h3>
+                        <div class="dw-record-card__details">
+                            <span><?= $e($event['date'] ?? '') ?> · <?= $e($event['location'] ?? '') ?></span>
+                        </div>
                     </article>
                 <?php endforeach; ?>
             </div>
-        </section>
-    </div>
+            <?php
+            $emptyTitle = 'No upcoming events';
+            $emptyMessage = 'Scheduled events will appear here.';
+            $emptyVisible = count($events) === 0;
+            require __DIR__ . '/../partials/divisional/empty-state.view.php';
+            ?>
+        </div>
+    </section>
 
-    <div class="member-lower-grid">
-        <section class="member-panel member-panel--activity" aria-labelledby="member-activity-heading">
-            <div class="member-panel-header">
-                <div>
-                    <p class="member-eyebrow">Your timeline</p>
-                    <h2 id="member-activity-heading">Recent Activity</h2>
-                </div>
-                <a class="member-panel-link" href="<?= htmlspecialchars($profileUrl, ENT_QUOTES, 'UTF-8') ?>">My profile <span aria-hidden="true">›</span></a>
+    <section class="dw-panel" aria-labelledby="member-activity-heading">
+        <header class="dw-panel__header">
+            <div>
+                <p>Your timeline</p>
+                <h2 id="member-activity-heading">Recent Activity</h2>
             </div>
-            <div class="member-activity-list">
+            <a class="dw-button dw-button--ghost" href="<?= $e($profileUrl) ?>">My profile <span aria-hidden="true">›</span></a>
+        </header>
+        <div class="dw-panel__body">
+            <div class="dw-record-grid">
                 <?php foreach ($activity as $item): ?>
-                    <article class="member-activity-item">
-                        <span class="member-activity-icon member-activity-icon--<?= $escape($item['icon'] ?? 'read') ?>" aria-hidden="true"><?= yn_icon($activityIcons[$item['icon'] ?? 'read'] ?? 'eye') ?></span>
-                        <div>
-                            <h3><?= $escape($item['label'] ?? '') ?></h3>
-                            <p><?= $escape($item['meta'] ?? '') ?></p>
+                    <article class="dw-record-card">
+                        <div class="dw-record-card__header">
+                            <div class="dw-record-card__identity">
+                                <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon($activityIcons[$item['icon'] ?? 'read'] ?? 'eye') ?></span>
+                                <div class="dw-record-card__meta"><span>Activity</span></div>
+                            </div>
+                        </div>
+                        <h3 class="dw-record-card__title"><?= $e($item['label'] ?? '') ?></h3>
+                        <div class="dw-record-card__details">
+                            <span><?= $e($item['meta'] ?? '') ?></span>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
-        </section>
+            <?php
+            $emptyTitle = 'No recent activity';
+            $emptyMessage = 'Your activity will appear here.';
+            $emptyVisible = count($activity) === 0;
+            require __DIR__ . '/../partials/divisional/empty-state.view.php';
+            ?>
+        </div>
+    </section>
 
-        <section class="member-cv-card" aria-labelledby="member-cv-heading">
-            <div class="member-cv-glow member-cv-glow--top" aria-hidden="true"></div>
-            <div class="member-cv-glow member-cv-glow--bottom" aria-hidden="true"></div>
-            <div class="member-cv-header">
-                <div>
-                    <p class="member-cv-kicker">Your contribution record</p>
-                    <h2 id="member-cv-heading">My Social CV</h2>
-                </div>
-                <a href="<?= htmlspecialchars($profileUrl, ENT_QUOTES, 'UTF-8') ?>" class="member-cv-link">Full view <span aria-hidden="true">→</span></a>
+    <section class="dw-panel" aria-labelledby="member-cv-heading">
+        <header class="dw-panel__header">
+            <div>
+                <p>Your contribution record</p>
+                <h2 id="member-cv-heading">My Social CV</h2>
             </div>
-            <div class="member-cv-summary">
-                <div><strong><?= $escape($tiles['upcoming_events'] ?? 0) ?></strong><span>Upcoming events</span></div>
-                <div><strong><?= $escape($tiles['volunteer_hours'] ?? 0) ?>h</strong><span>Volunteer hours</span></div>
-                <div><strong>3</strong><span>Leadership roles</span></div>
+            <a class="dw-button dw-button--ghost" href="<?= $e($profileUrl) ?>">Full view <span aria-hidden="true">→</span></a>
+        </header>
+        <div class="dw-panel__body">
+            <div class="dw-metric-list">
+                <div class="dw-metric"><span>Upcoming events</span><strong><?= $e($tiles['upcoming_events'] ?? 0) ?></strong></div>
+                <div class="dw-metric"><span>Volunteer hours</span><strong><?= $e($tiles['volunteer_hours'] ?? 0) ?>h</strong></div>
+                <div class="dw-metric"><span>Leadership roles</span><strong>3</strong></div>
             </div>
-            <div class="member-cv-footer">
+            <div class="dw-filter-actions">
                 <span>Certificate status</span>
-                <span class="member-cv-pill">2 Verified</span>
-                <span class="member-cv-pill member-cv-pill--muted">1 Pending</span>
-                <button type="button" class="member-cv-button" disabled title="Available after backend integration">Download CV</button>
-                <button type="button" class="member-cv-button member-cv-button--ghost" disabled title="Available after backend integration">Generate QR</button>
+                <?php $status = '2 Verified'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+                <?php $status = '1 Pending'; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?>
+                <button type="button" class="dw-button dw-button--secondary" disabled title="Available after backend integration">Download CV</button>
+                <button type="button" class="dw-button dw-button--ghost" disabled title="Available after backend integration">Generate QR</button>
             </div>
-        </section>
-    </div>
+        </div>
+    </section>
 </section>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/member-dashboard.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

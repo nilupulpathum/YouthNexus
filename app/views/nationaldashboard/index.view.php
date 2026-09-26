@@ -9,6 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Dashboard';
 $pageDescription         = $pageDescription ?? 'National governance overview';
 $currentRoute            = $currentRoute ?? 'nationaldashboard';
 $unreadNotificationCount = (int)($pendingApps ?? 0);
+$pageStyles              = [ROOT . '/assets/css/nationaldashboard.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -19,11 +20,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <h3>Create Event</h3>
                     <p>Schedule a national-level event</p>
                 </a>
-                <a class="nd-quick-card" href="<?= ROOT ?>/applications">
-                    <h3>Review Pending Registrations</h3>
-                    <p><?= (int)$pendingApps ?> clubs awaiting approval</p>
-                </a>
-                <a class="nd-quick-card" href="<?= ROOT ?>/clubs">
+                <a class="nd-quick-card" href="<?= ROOT ?>/audit">
                     <h3>View Overdue Audits</h3>
                     <p><?= (int)$overdueAudits ?> audits past due date</p>
                 </a>
@@ -136,7 +133,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             </div>
                         </li>
                     </ul>
-                    <a href="<?= ROOT ?>/analytics" class="nd-view-link">View Analytics &rsaquo;</a>
+                    <a href="<?= ROOT ?>/nationalanalytics" class="nd-view-link">View Analytics &rsaquo;</a>
                 </div>
             </div>
 
@@ -156,5 +153,4 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </ul>
             </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/nationaldashboard.css">
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

@@ -45,4 +45,12 @@ class AuditLogModel extends Model {
             [$limit]
         );
     }
+
+    public function getByActor($userId, $limit = 5) {
+        return $this->resultSet(
+            "SELECT * FROM AuditLog WHERE actor_user_id = ?
+             ORDER BY timestamp DESC LIMIT ?",
+            [(int) $userId, (int) $limit]
+        );
+    }
 }

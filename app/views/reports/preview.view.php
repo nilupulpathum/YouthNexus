@@ -7,6 +7,7 @@
 $title                   = $title ?? 'Report Preview — YouthNexus';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
 
 $report      = $report      ?? (object)[];
 $kpis        = $kpis        ?? [];
@@ -25,8 +26,6 @@ if (empty($generatedBy)) $generatedBy = 'N. Fernando';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/managereports.css?v=<?= time() ?>">
 
 <div class="rpt-content rpt-preview-wrap">
 <div class="rpt-preview-modal">

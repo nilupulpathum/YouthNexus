@@ -1,14 +1,21 @@
 <?php
 /**
- * Zonal Treasurer Overview — Z0 scaffolding.
- * Full fund summary lands in Z7.
+ * Zonal Treasurer Overview — fund summary + workspace links.
+ * Fund figures come from live FundAllocation rows and the zone ledger.
+ * UI follows the divisional standard (dw-* classes + shared partials).
  */
-$escape = static function ($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+$e = static function ($value) {
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
 
 require __DIR__ . '/../partials/icons.view.php';
-require __DIR__ . '/../layouts/dashboard-start.view.php';
+
+$title = 'Zonal Treasurer Overview - YouthNexus';
+$pageTitle = 'Zonal Treasurer';
+$pageDescription = 'Funds received by ' . ($zoneName ?? 'Zone') . '.';
+$currentRoute = 'zonaltreasurer/index';
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 
 $links = [
     ['title' => 'Allocate Funds', 'desc' => 'Distribute NYSC funds to divisions under this zone', 'href' => 'zonaltreasurer/allocate', 'icon' => 'file'],
@@ -16,48 +23,58 @@ $links = [
     ['title' => 'Zonal Assets', 'desc' => 'Zonal-level asset inventory', 'href' => 'zonaltreasurer/assets', 'icon' => 'calendar'],
     ['title' => 'Void Requests', 'desc' => 'Pending void requests from clubs', 'href' => 'zonaltreasurer/voids', 'icon' => 'clock'],
 ];
+
+$summaryCards = [
+    ['value' => 'LKR ' . number_format($fundStats['budget_cap'] ?? 0, 2), 'label' => 'NYSC funds received', 'note' => ($zoneName ?? 'Zone'), 'icon' => 'file', 'tone' => 'blue'],
+    ['value' => 'LKR ' . number_format($fundStats['year_total'] ?? 0, 2), 'label' => 'Allocated to divisions', 'note' => 'Completed zone allocations', 'icon' => 'award', 'tone' => 'green'],
+    ['value' => 'LKR ' . number_format($fundStats['remaining_budget'] ?? 0, 2), 'label' => 'Available zonal balance', 'note' => 'Remaining to allocate', 'icon' => 'clock', 'tone' => 'amber'],
+];
+
+require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-<section class="club-page" aria-labelledby="zonaltreasurer-overview-heading">
-    <h1 id="zonaltreasurer-overview-heading" class="sr-only">Zonal treasurer overview</h1>
+<section class="dw-page" aria-labelledby="zonaltreasurer-overview-heading">
+    <h1 id="zonaltreasurer-overview-heading" class="visually-hidden">Zonal treasurer overview</h1>
 
-    <p class="club-muted">Funds received by Gampaha Zone. Preview allocations persist for this session.</p>
-    <div class="club-stat-grid">
-        <?php foreach (['NYSC funds received' => 'budget_cap', 'Allocated to divisions' => 'year_total', 'Available zonal balance' => 'remaining_budget'] as $label => $key): ?>
-        <article class="club-stat-card">
-            <p class="club-stat-label"><?= $escape($label) ?></p>
-            <p class="club-stat-value">LKR <?= number_format($fundStats[$key] ?? 0, 2) ?></p>
-        </article>
+    <div class="dw-summary-grid dw-summary-grid--three" aria-label="Zonal fund summary">
+        <?php foreach ($summaryCards as $card): ?>
+            <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
         <?php endforeach; ?>
     </div>
 
-    <section class="club-panel" aria-labelledby="zonaltreasurer-links-heading">
-        <div class="club-panel-header">
+    <section class="dw-panel" aria-labelledby="zonaltreasurer-links-heading">
+        <header class="dw-panel__header">
             <div>
-                <p class="club-eyebrow">Gampaha Zone</p>
                 <h2 id="zonaltreasurer-links-heading">Treasurer workspace</h2>
+                <p><?= $e($zoneName ?? 'Zone') ?> — distribute funds to divisions and manage the zone's finance records.</p>
             </div>
-        </div>
-
-        <p class="club-muted">Distribute funds to divisions and manage the zone's finance records.</p>
-
-        <div class="club-list">
-            <?php foreach ($links as $s): ?>
-                <article class="club-list-item">
-                    <div class="club-list-icon" aria-hidden="true"><?= yn_icon($s['icon']) ?></div>
-                    <div class="club-list-copy">
-                        <h3><?= $escape($s['title']) ?></h3>
-                        <p><?= $escape($s['desc']) ?></p>
-                    </div>
-                    <div class="club-event-side">
-                        <a class="club-btn-small" href="<?= ROOT ?>/<?= $escape($s['href']) ?>">Open</a>
-                    </div>
-                </article>
-            <?php endforeach; ?>
+            <span class="dw-count"><?= count($links) ?> workspaces</span>
+        </header>
+        <div class="dw-table-wrap">
+            <table class="dw-table">
+                <thead>
+                    <tr>
+                        <th>Workspace</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($links as $s): ?>
+                        <tr>
+                            <td><strong><?= $e($s['title']) ?></strong></td>
+                            <td><?= $e($s['desc']) ?></td>
+                            <td>
+                                <div class="dw-row-actions">
+                                    <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/<?= $e($s['href']) ?>">Open</a>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </section>
 </section>
-
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/club.css">
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

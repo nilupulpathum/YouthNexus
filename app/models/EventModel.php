@@ -602,4 +602,396 @@ class EventModel extends Model {
 
         $this->query($sql, $params);
     }
+
+    // ---------------------------------------------------------------
+    // CLUB SCOPE (D2: club dashboards read/write their own events)
+    // ---------------------------------------------------------------
+
+    public function getClubEvents($clubId) {
+        return $this->resultSet(
+            "SELECT e.*,
+                    CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                    u.role AS creator_role
+             FROM Event e
+             JOIN User u ON e.created_by = u.user_id
+             WHERE e.organizer_club_id = ?
+             ORDER BY e.start_datetime DESC",
+            [(int) $clubId]
+        );
+    }
+
+    public function countClubEventsByStatus($clubId) {
+        $rows = $this->resultSet(
+            "SELECT status, COUNT(*) AS total FROM Event
+             WHERE organizer_club_id = ? GROUP BY status",
+            [(int) $clubId]
+        );
+        $counts = ['PendingApproval' => 0, 'Approved' => 0, 'Completed' => 0];
+        foreach ($rows as $r) {
+            if (array_key_exists($r->status, $counts)) {
+                $counts[$r->status] = (int) $r->total;
+            }
+        }
+        return $counts;
+    }
+
+    /**
+     * CV timeline source (OUTSIDE item 1): club events the member actually
+     * attended (Present), newest first, with datetimes so callers can apply
+     * the hours rule (event duration x attendance). Read-only.
+     *
+     * @return object[]  event_id, title, event_type, location,
+     *                   start_datetime, end_datetime, status
+     */
+    public function getMemberCvEvents($clubId, $userId, $limit = 12) {
+        return $this->resultSet(
+            "SELECT e.event_id, e.title, e.event_type, e.location,
+                    e.start_datetime, e.end_datetime, e.status
+             FROM Attendance a
+             JOIN Event e ON a.event_id = e.event_id
+             WHERE a.user_id = ? AND e.organizer_club_id = ? AND a.status = 'Present'
+             ORDER BY e.start_datetime DESC
+             LIMIT " . max(1, (int) $limit),
+            [(int) $userId, (int) $clubId]
+        );
+    }
+
+    /**
+     * Scope + targeting predicate shared by getVisibleEvents() and
+     * findVisibleEvent(): appends the AND fragment and fills $params
+     * (unique placeholder names — native prepares forbid reuse).
+     */
+    private function visibleEventScopeSql($clubId, $divisionId, $zonalId, array &$params) {
+        $clubId = (int) $clubId ?: null;
+        $divisionId = (int) $divisionId ?: null;
+        $zonalId = (int) $zonalId ?: null;
+        if ($clubId === null && $divisionId === null && $zonalId === null) {
+            return '';
+        }
+        // One OR-term per known id only: a null id must never match
+        // (SQL NULL comparisons would leak other scopes' events).
+        $scopeTerms = [];
+        $targetTerms = [];
+        if ($clubId !== null) {
+            $scopeTerms[] = 'e.organizer_club_id = :club_s';
+            $targetTerms[] = 't.target_club_id = :club_t';
+            $params['club_s'] = $clubId;
+            $params['club_t'] = $clubId;
+        }
+        if ($divisionId !== null) {
+            $scopeTerms[] = 'e.organizer_division_id = :division_s';
+            // Club-organized events also belong to their club's division.
+            $scopeTerms[] = 'sc.division_id = :division_c';
+            $targetTerms[] = 't.target_division_id = :division_t';
+            $params['division_s'] = $divisionId;
+            $params['division_c'] = $divisionId;
+            $params['division_t'] = $divisionId;
+        }
+        if ($zonalId !== null) {
+            $scopeTerms[] = 'e.organizer_zonal_id = :zonal_s';
+            // ... and to their club's division's zone.
+            $scopeTerms[] = 'sd.zonal_id = :zonal_c';
+            $targetTerms[] = 't.target_zonal_id = :zonal_t';
+            $params['zonal_s'] = $zonalId;
+            $params['zonal_c'] = $zonalId;
+            $params['zonal_t'] = $zonalId;
+        }
+        $scopeTerms[] = '(e.organizer_club_id IS NULL
+                          AND e.organizer_division_id IS NULL
+                          AND e.organizer_zonal_id IS NULL)';
+        return ' AND (' . implode(' OR ', $scopeTerms) . ')'
+            . " AND (e.target_scope = 'AllInScope'
+                     OR EXISTS (SELECT 1 FROM EventTarget t
+                                WHERE t.event_id = e.event_id
+                                  AND (" . implode(' OR ', $targetTerms) . ')))';
+    }
+
+    /**
+     * Events browser source (fix/club-event-wiring): every non-draft,
+     * non-rejected event visible to the viewer, with live attendance
+     * counts for sorting. Scope = own club + own division + own zone +
+     * national rows; SelectedClubs targeting is enforced; NYSC (no scope
+     * at all) sees everything. Read-only.
+     *
+     * @return object[]  event rows + present_count + marked_count
+     */
+    public function getVisibleEvents($clubId, $divisionId, $zonalId, $limit = 60) {
+        $sql = "SELECT e.event_id, e.title, e.description, e.event_type,
+                       e.location, e.start_datetime, e.end_datetime,
+                       e.status, e.created_at,
+                       e.organizer_club_id, e.organizer_division_id, e.organizer_zonal_id,
+                       COUNT(CASE WHEN a.status = 'Present' THEN 1 END) AS present_count,
+                       COUNT(a.user_id) AS marked_count
+                FROM Event e
+                LEFT JOIN Attendance a ON a.event_id = e.event_id
+                LEFT JOIN Club sc ON sc.club_id = e.organizer_club_id
+                LEFT JOIN Division sd ON sd.division_id = sc.division_id
+                WHERE e.status IN ('PendingApproval', 'Approved', 'Completed')";
+        $params = [];
+        $sql .= $this->visibleEventScopeSql($clubId, $divisionId, $zonalId, $params);
+        $sql .= " GROUP BY e.event_id
+                  ORDER BY e.start_datetime ASC
+                  LIMIT " . max(1, (int) $limit);
+        return $this->resultSet($sql, $params);
+    }
+
+    /**
+     * Single event, same visibility rules as getVisibleEvents(). Used to
+     * authorize RSVP writes. Returns the row or false.
+     */
+    public function findVisibleEvent($eventId, $clubId, $divisionId, $zonalId) {
+        $sql = "SELECT e.event_id, e.title, e.start_datetime, e.end_datetime, e.status
+                FROM Event e
+                LEFT JOIN Club sc ON sc.club_id = e.organizer_club_id
+                LEFT JOIN Division sd ON sd.division_id = sc.division_id
+                WHERE e.event_id = :event_id
+                  AND e.status IN ('PendingApproval', 'Approved', 'Completed')";
+        $params = ['event_id' => (int) $eventId];
+        $sql .= $this->visibleEventScopeSql($clubId, $divisionId, $zonalId, $params);
+        return $this->single($sql . " LIMIT 1", $params);
+    }
+
+    public function createClubEvent($clubId, $divisionId, $userId, $title, $type, $location, $start, $end) {
+        return $this->createEvent([
+            'title'                => $title,
+            'event_type'           => $type,
+            'location'             => $location,
+            'start_datetime'       => $start,
+            'end_datetime'         => $end,
+            'organizer_club_id'    => (int) $clubId,
+            'organizer_division_id' => (int) $divisionId,
+            'target_scope'         => 'AllInScope',
+            'status'               => 'PendingApproval',
+            'created_by'           => (int) $userId,
+        ]);
+    }
+
+    /**
+     * President decision on a pending club event. Scoped: only pending
+     * events of the president's own club move. Returns affected rows.
+     */
+    public function decideClubEvent($clubId, $eventId, $userId, $decision, $remarks = '') {
+        if ($decision === 'approve') {
+            $stmt = $this->query(
+                "UPDATE Event SET status = 'Approved', approved_by = ?, rejection_remarks = NULL
+                 WHERE event_id = ? AND organizer_club_id = ? AND status = 'PendingApproval'",
+                [(int) $userId, (int) $eventId, (int) $clubId]
+            );
+        } else {
+            $stmt = $this->query(
+                "UPDATE Event SET status = 'Rejected', approved_by = ?, rejection_remarks = ?
+                 WHERE event_id = ? AND organizer_club_id = ? AND status = 'PendingApproval'",
+                [(int) $userId, $remarks, (int) $eventId, (int) $clubId]
+            );
+        }
+        return $stmt->rowCount();
+    }
+
+    /**
+     * Secretary marks an approved club event completed. Scoped. Returns rows.
+     */
+    public function completeClubEvent($clubId, $eventId) {
+        $stmt = $this->query(
+            "UPDATE Event SET status = 'Completed'
+             WHERE event_id = ? AND organizer_club_id = ? AND status = 'Approved'",
+            [(int) $eventId, (int) $clubId]
+        );
+        return $stmt->rowCount();
+    }
+
+    // ---------------------------------------------------------------
+    // ZONAL SCOPE (D9: zonal programme events)
+    // ---------------------------------------------------------------
+
+    public function getZonalEvents($zonalId) {
+        return $this->resultSet(
+            "SELECT e.*,
+                    CONCAT(u.first_name, ' ', u.last_name) AS creator_name,
+                    u.role AS creator_role,
+                    GROUP_CONCAT(DISTINCT d.division_name ORDER BY d.division_name SEPARATOR ', ') AS target_divisions
+             FROM Event e
+             JOIN User u ON e.created_by = u.user_id
+             LEFT JOIN EventTarget et ON et.event_id = e.event_id
+             LEFT JOIN Division d ON d.division_id = et.target_division_id
+             WHERE e.organizer_zonal_id = ?
+             GROUP BY e.event_id
+             ORDER BY e.start_datetime DESC",
+            [(int) $zonalId]
+        );
+    }
+
+    public function findZoneDivision($zonalId, $name) {
+        return $this->single(
+            "SELECT division_id, division_name FROM Division
+             WHERE zonal_id = ? AND division_name = ? LIMIT 1",
+            [(int) $zonalId, $name]
+        );
+    }
+
+    public function getZoneDivisions($zonalId) {
+        return $this->resultSet(
+            "SELECT division_id, division_name FROM Division
+             WHERE zonal_id = ? ORDER BY division_name",
+            [(int) $zonalId]
+        );
+    }
+
+    public function createZonalEvent($zonalId, $userId, $data, $targetDivisionId = null) {
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $eventId = $this->createEvent([
+                'title'                => $data['title'],
+                'event_type'           => $data['type'],
+                'location'             => $data['location'],
+                'start_datetime'       => $data['start'],
+                'end_datetime'         => $data['end'],
+                'organizer_zonal_id'   => (int) $zonalId,
+                'target_scope'         => $targetDivisionId ? 'SelectedClubs' : 'AllInScope',
+                'status'               => 'PendingApproval',
+                'created_by'           => (int) $userId,
+            ]);
+            if ($targetDivisionId) {
+                require_once __DIR__ . '/EventTargetModel.php';
+                $targetModel = new EventTargetModel();
+                $targetModel->createTarget($eventId, null, null, (int) $targetDivisionId, null);
+            }
+            $pdo->commit();
+            return $eventId;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * One own-zone zonal event for the secretary (edit/delete guards read
+     * the current status from this, never from posted data).
+     *
+     * @return object|false
+     */
+    public function getZonalEventForSecretary($zonalId, $eventId) {
+        return $this->single(
+            "SELECT e.*,
+                    GROUP_CONCAT(DISTINCT d.division_name ORDER BY d.division_name SEPARATOR ', ') AS target_divisions
+             FROM Event e
+             LEFT JOIN EventTarget et ON et.event_id = e.event_id
+             LEFT JOIN Division d ON d.division_id = et.target_division_id
+             WHERE e.event_id = ? AND e.organizer_zonal_id = ?
+             GROUP BY e.event_id
+             LIMIT 1",
+            [(int) $eventId, (int) $zonalId]
+        );
+    }
+
+    /**
+     * Secretary edits a PendingApproval, Approved or Rejected own-zone event.
+     * Pending stays pending; Approved/Rejected go back to PendingApproval so
+     * the coordinator decides again. Audience targets are replaced atomically.
+     * Returns affected rows (0 = wrong zone/id/status).
+     */
+    public function updateZonalEvent($zonalId, $eventId, array $data, $targetDivisionId = null) {
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $stmt = $this->query(
+                "UPDATE Event SET title = ?, event_type = ?, location = ?,
+                        start_datetime = ?, end_datetime = ?,
+                        target_scope = ?, status = 'PendingApproval',
+                        approved_by = NULL, rejection_remarks = NULL
+                 WHERE event_id = ? AND organizer_zonal_id = ?
+                   AND status IN ('PendingApproval', 'Approved', 'Rejected')",
+                [
+                    $data['title'], $data['type'], $data['location'],
+                    $data['start'], $data['end'],
+                    $targetDivisionId ? 'SelectedClubs' : 'AllInScope',
+                    (int) $eventId, (int) $zonalId,
+                ]
+            );
+            $rows = $stmt->rowCount();
+            if ($rows > 0) {
+                $this->query("DELETE FROM EventTarget WHERE event_id = ?", [(int) $eventId]);
+                if ($targetDivisionId) {
+                    require_once __DIR__ . '/EventTargetModel.php';
+                    $targetModel = new EventTargetModel();
+                    $targetModel->createTarget((int) $eventId, null, null, (int) $targetDivisionId, null);
+                }
+            }
+            $pdo->commit();
+            return $rows;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * Secretary deletes a Rejected own-zone event outright. The event's own
+     * EventTarget rows go with it; recorded attendance blocks the delete so
+     * nothing used downstream disappears silently. Audit rows survive
+     * (AuditLog.target_id has no FK).
+     *
+     * @return array{deleted: bool, blockers: array}
+     */
+    public function deleteRejectedZonalEvent($zonalId, $eventId) {
+        $target = $this->single(
+            "SELECT event_id FROM Event
+              WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'Rejected'
+              LIMIT 1",
+            [(int) $eventId, (int) $zonalId]
+        );
+        if (!$target) {
+            return ['deleted' => false, 'blockers' => []];
+        }
+
+        $attendance = (int) ($this->single(
+            "SELECT COUNT(*) AS total FROM Attendance WHERE event_id = ?",
+            [(int) $eventId]
+        )->total ?? 0);
+        if ($attendance > 0) {
+            return ['deleted' => false, 'blockers' => [['table' => 'Attendance', 'count' => $attendance]]];
+        }
+
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $this->query("DELETE FROM EventTarget WHERE event_id = ?", [(int) $eventId]);
+            $this->query(
+                "DELETE FROM Event
+                  WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'Rejected'",
+                [(int) $eventId, (int) $zonalId]
+            );
+            $pdo->commit();
+            return ['deleted' => true, 'blockers' => []];
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * Coordinator decision on a pending zonal event. Scoped. Returns rows.
+     */
+    public function decideZonalEvent($zonalId, $eventId, $userId, $decision, $remarks = '') {
+        if ($decision === 'approve') {
+            $stmt = $this->query(
+                "UPDATE Event SET status = 'Approved', approved_by = ?, rejection_remarks = NULL
+                 WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'PendingApproval'",
+                [(int) $userId, (int) $eventId, (int) $zonalId]
+            );
+        } else {
+            $stmt = $this->query(
+                "UPDATE Event SET status = 'Rejected', approved_by = ?, rejection_remarks = ?
+                 WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'PendingApproval'",
+                [(int) $userId, $remarks, (int) $eventId, (int) $zonalId]
+            );
+        }
+        return $stmt->rowCount();
+    }
 }

@@ -524,3 +524,72 @@
     width: 12px;
     height: 12px;
 }
+
+/* Flash notice (endorsement write/delete feedback) */
+.cv-flash {
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+.cv-flash--success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+}
+.cv-flash--error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+/* Endorse form + per-endorsement remove */
+.endorse-form {
+    display: grid;
+    gap: 10px;
+}
+.endorse-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--db-text-grey);
+}
+.endorse-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 90px;
+    padding: 10px 12px;
+    border: 1px solid var(--db-border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.55;
+    resize: vertical;
+}
+.endorse-form textarea:focus {
+    outline: 2px solid var(--db-sidebar-bg);
+    outline-offset: -1px;
+}
+.endorse-delete {
+    margin-top: 10px;
+}
+
+/* Print: the Download buttons produce a clean CV via the print dialog */
+@media print {
+    .dashboard-sidebar,
+    .dashboard-sidebar-scrim,
+    .db-topbar,
+    .dashboard-footer,
+    .profile-actions-top,
+    .cv-footer-actions,
+    .endorse-form,
+    .endorse-delete {
+        display: none !important;
+    }
+    .social-cv-container {
+        display: block;
+    }
+    .cv-section {
+        break-inside: avoid;
+    }
+}

@@ -57,11 +57,38 @@ class Divisionalreports extends Controller {
         ]);
     }
 
+    public function create(): void {
+        $this->requireDivisionalReportAccess();
+        if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $divisionId = (int) $_SESSION['division_id'];
+        $role = (string) $_SESSION['user_role'];
+        $model = $this->model('DivisionalReportModel');
+        try {
+            $division = $model->getDivision($divisionId);
+            $catalog = $model->getCatalog($role);
+        } catch (Throwable $exception) {
+            http_response_code(500);
+            exit('Report configuration could not be loaded. Run the divisional reports migration and try again.');
+        }
+        $aggregateMode = $role === 'DivisionalSecretary'
+            && (string) ($_GET['mode'] ?? '') === 'aggregate';
+        $this->view('divisionalreports/create', [
+            'division' => $division,
+            'catalog' => $catalog,
+            'aggregateMode' => $aggregateMode,
+            'csrfToken' => $_SESSION['csrf_token'],
+            'flash' => $this->pullFlash(),
+            'userName' => $_SESSION['user_name'] ?? 'Divisional Officer',
+            'userRole' => $role,
+            'userEmail' => $_SESSION['user_email'] ?? '',
+        ]);
+    }
+
     public function generate(): void {
         $this->requireDivisionalReportAccess();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
             $this->setFlash('error', 'The report request could not be verified. Please try again.');
-            $this->redirect('divisionalreports');
+            $this->redirect('divisionalreports/create');
         }
         $typeId = (int) ($_POST['report_type_id'] ?? 0);
         $start = trim((string) ($_POST['date_start'] ?? ''));
@@ -70,7 +97,7 @@ class Divisionalreports extends Controller {
         if (!in_array($format, ['OnScreen', 'PDF', 'CSV'], true)) $format = 'OnScreen';
         if (!$this->validDate($start) || !$this->validDate($end) || $start > $end) {
             $this->setFlash('error', 'Select a valid report period.');
-            $this->redirect('divisionalreports');
+            $this->redirect('divisionalreports/create');
         }
         try {
             $model = $this->model('DivisionalReportModel');
@@ -83,7 +110,7 @@ class Divisionalreports extends Controller {
             $this->redirect('divisionalreports/preview/' . $reportId);
         } catch (Throwable $exception) {
             $this->setFlash('error', 'The report could not be generated from the selected period.');
-            $this->redirect('divisionalreports');
+            $this->redirect('divisionalreports/create');
         }
     }
 

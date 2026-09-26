@@ -8,9 +8,12 @@ $pageTitle               = $pageTitle ?? 'Fund Transfer';
 $pageDescription         = $pageDescription ?? 'NYSC National Administration — Colombo Division & Zonal Ledger';
 $transferRoute = $transferRoute ?? 'fundtransfer';
 $listRoute = $listRoute ?? $transferRoute;
-$isZonalDemo = $isZonalDemo ?? false;
+$isZonalMode = $isZonalMode ?? false;
 $currentRoute = $listRoute;
-$unreadNotificationCount = $isZonalDemo ? 2 : 0;
+// The controller passes the real unread-announcement count + items; only
+// fall back to the legacy hardcode when it did not (e.g. direct renders).
+$unreadNotificationCount = $unreadNotificationCount ?? ($isZonalMode ? 2 : 0);
+$pageStyles = [ROOT . '/assets/css/fundtransfer.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -38,15 +41,14 @@ $errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_old'], $_SESSION['form_errors']);
 ?>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/fundtransfer.css">
 
 <div class="fund-transfer-module">
 
     <!-- Top Action Bar / Page Subtitle -->
     <div class="ft-header-bar">
         <div class="ft-header-titles">
-            <h2 class="ft-section-title"><?= $isZonalDemo ? 'Zonal Fund Distribution &amp; Division Ledger' : 'National Fund Disbursement &amp; Zonal Ledger' ?></h2>
-            <p class="ft-section-desc"><?= $isZonalDemo ? 'Demo: distribute NYSC funds received by Gampaha Zone to its divisions. Session-only balances; no money is transferred.' : 'Manage inter-governmental grants, RTGS clearance, and zonal treasury allocations.' ?></p>
+            <h2 class="ft-section-title"><?= $isZonalMode ? 'Zonal Fund Distribution &amp; Division Ledger' : 'National Fund Disbursement &amp; Zonal Ledger' ?></h2>
+            <p class="ft-section-desc"><?= $isZonalMode ? 'Distribute zone funds received to its divisions. Allocations post to both ledgers.' : 'Manage inter-governmental grants, RTGS clearance, and zonal treasury allocations.' ?></p>
         </div>
         <div class="ft-header-actions">
             <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline" id="btnDownloadLedger" title="Export Ledger to CSV">
@@ -68,7 +70,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 <span class="ft-stat-title"><?= htmlspecialchars(strtoupper($qLabel)) ?> FISCAL WINDOW</span>
             </div>
             <div class="ft-stat-big"><?= $fmtLKR($stats['quarter_total'] ?? 0) ?></div>
-            <div class="ft-stat-sub">Total across <?= count($zones) ?> <?= $isZonalDemo ? 'Divisions' : 'Zonal Offices' ?></div>
+            <div class="ft-stat-sub">Total across <?= count($zones) ?> <?= $isZonalMode ? 'Divisions' : 'Zonal Offices' ?></div>
         </div>
 
         <!-- 2. In-flight Transfers -->
@@ -89,7 +91,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         <!-- 3. Budget Cap & Utilization -->
         <div class="ft-stat-card ft-stat-card-budget">
             <div class="ft-stat-head">
-                <span class="ft-stat-title"><?= $isZonalDemo ? 'NYSC FUNDS RECEIVED' : 'ANNUAL BUDGET' ?> <?= date('Y') ?></span>
+                <span class="ft-stat-title"><?= $isZonalMode ? 'NYSC FUNDS RECEIVED' : 'ANNUAL BUDGET' ?> <?= date('Y') ?></span>
                 <span class="ft-badge ft-badge-blue"><?= $utilizedPct ?>% Utilized</span>
             </div>
             <div class="ft-stat-big"><?= $fmtLKR($budgetCap) ?></div>
@@ -119,7 +121,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
 
         <select name="zone_id" class="ft-filter-select" id="ftFilterZone">
-            <option value=""><?= $isZonalDemo ? 'All Divisions' : 'All Zones' ?> (<?= count($zones) ?>)</option>
+            <option value=""><?= $isZonalMode ? 'All Divisions' : 'All Zones' ?> (<?= count($zones) ?>)</option>
             <?php foreach ($zones as $z): ?>
                 <option value="<?= (int)$z->zonal_id ?>" <?= $activeZone === (int)$z->zonal_id ? 'selected' : '' ?>>
                     <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' — ' . htmlspecialchars($z->province) : '' ?>
@@ -154,7 +156,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
             <thead>
                 <tr>
                     <th>DATE &amp; REF</th>
-                    <th><?= $isZonalDemo ? 'TARGET DIVISION' : 'TARGET ZONAL OFFICE' ?></th>
+                    <th><?= $isZonalMode ? 'TARGET DIVISION' : 'TARGET ZONAL OFFICE' ?></th>
                     <th>METHOD &amp; ACCOUNT</th>
                     <th>AMOUNT (LKR)</th>
                     <th>STATUS</th>
@@ -235,7 +237,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         <!-- Table Footer -->
         <div class="ft-table-footer">
             <div class="ft-footer-count">
-                Showing <strong><?= count($transfers) ?></strong> recorded <?= $isZonalDemo ? 'division' : 'zonal' ?> transfer<?= count($transfers) !== 1 ? 's' : '' ?> in FY <?= date('Y') ?>
+                Showing <strong><?= count($transfers) ?></strong> recorded <?= $isZonalMode ? 'division' : 'zonal' ?> transfer<?= count($transfers) !== 1 ? 's' : '' ?> in FY <?= date('Y') ?>
             </div>
             <div class="ft-pages">
                 <span class="ft-page-link ft-page-active">1</span>
@@ -257,7 +259,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 <div class="ft-header-icon" aria-hidden="true"></div>
                 <div>
                     <h1 id="allocModalTitle">New Fund Allocation</h1>
-                    <p><?= $isZonalDemo ? 'Transfer demo funds to a division under Gampaha Zone' : 'Transfer funds to zonal office ledger' ?></p>
+                    <p><?= $isZonalMode ? 'Transfer zone funds to a division' : 'Transfer funds to zonal office ledger' ?></p>
                 </div>
             </div>
             <button type="button" class="ft-close-btn" id="btnCloseAllocModal" aria-label="Close dialog">&times;</button>
@@ -272,9 +274,9 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
             <!-- Target recipient -->
             <div class="ft-field">
-                <label for="alloc_zone_id"><?= $isZonalDemo ? 'Target Division' : 'Target Zonal Office' ?> <span class="ft-required">*</span></label>
+                <label for="alloc_zone_id"><?= $isZonalMode ? 'Target Division' : 'Target Zonal Office' ?> <span class="ft-required">*</span></label>
                 <select class="ft-input" name="zone_id" id="alloc_zone_id" required>
-                    <option value="">— Select <?= $isZonalDemo ? 'Target Division' : 'Target Zonal Office' ?> —</option>
+                    <option value="">— Select <?= $isZonalMode ? 'Target Division' : 'Target Zonal Office' ?> —</option>
                     <?php foreach ($zones as $z): ?>
                         <option value="<?= (int)$z->zonal_id ?>">
                             <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' — ' . htmlspecialchars($z->province) : '' ?><?= !empty($z->hub_name) ? ' (' . htmlspecialchars($z->hub_name) . ')' : '' ?>
@@ -295,7 +297,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                     </div>
                 </div>
                 <input type="hidden" name="bank_account_id" value="<?= (int)($coreAccount->bank_account_id ?? 1) ?>">
-                <span class="ft-verified-badge"><?= $isZonalDemo ? 'Demo Zonal Account' : 'Verified Core Account' ?></span>
+                <span class="ft-verified-badge"><?= $isZonalMode ? 'Verified Zonal Account' : 'Verified Core Account' ?></span>
             </div>
 
             <!-- Amount + Date Row -->
@@ -390,7 +392,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
             <div class="ft-detail-info-card">
                 <h2>Recipient &amp; Account</h2>
                 <div class="ft-detail-row">
-                    <span class="ft-dk"><?= $isZonalDemo ? 'Target Division' : 'Target Zonal Office' ?></span>
+                    <span class="ft-dk"><?= $isZonalMode ? 'Target Division' : 'Target Zonal Office' ?></span>
                     <span class="ft-dv" id="dtModalZone">Colombo Zone</span>
                 </div>
                 <div class="ft-detail-row">
@@ -405,7 +407,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                     <span class="ft-dk">Account Number</span>
                     <span class="ft-dv" id="dtModalAccount">
                         8620-0012-3456-7890
-                        <span class="ft-verified-tag">(<?= $isZonalDemo ? 'Demo Zonal Account' : 'Verified Core Account' ?>)</span>
+                        <span class="ft-verified-tag">(<?= $isZonalMode ? 'Verified Zonal Account' : 'Verified Core Account' ?>)</span>
                     </span>
                 </div>
             </div>

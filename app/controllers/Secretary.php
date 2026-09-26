@@ -20,6 +20,10 @@ class Secretary extends Controller {
         if (!in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
             $this->redirect('home');
         }
+        if ((int) ($_SESSION['club_id'] ?? 0) < 1) {
+            http_response_code(403);
+            exit('Your user account is not assigned to a club.');
+        }
     }
 
     /**
@@ -27,6 +31,7 @@ class Secretary extends Controller {
      */
     private function shell($title, $pageTitle, $pageDescription, $currentRoute) {
         $memberName = trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User';
+        $headerNotif = ZoneOverview::headerNotifications($this);
         return [
             'title'                   => $title,
             'pageTitle'               => $pageTitle,
@@ -36,7 +41,8 @@ class Secretary extends Controller {
             'userName'                => $memberName,
             'userEmail'               => $_SESSION['user_email'] ?? '',
             'userInitials'            => $_SESSION['user_initials'] ?? '',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications'     => $headerNotif['items'],
         ];
     }
 
@@ -48,6 +54,11 @@ class Secretary extends Controller {
     public function index() {
         $this->requireSecretary();
 
+        $clubId = (int) ($_SESSION['club_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $userModel = $this->model('UserModel');
+        $eventModel = $this->model('EventModel');
+
         $shortcuts = [
             ['title' => 'Register Member', 'desc' => 'Add a member — president approves', 'href' => 'club/members', 'icon' => 'user'],
             ['title' => 'Create Event', 'desc' => 'Submit an event for approval', 'href' => 'club/events', 'icon' => 'calendar'],
@@ -55,50 +66,21 @@ class Secretary extends Controller {
             ['title' => 'Publish Announcement', 'desc' => 'Normal or Urgent club update', 'href' => 'announcements', 'icon' => 'bell'],
         ];
 
+        $memberCounts = $userModel->countClubRoster($clubId);
+        $eventCounts = $eventModel->countClubEventsByStatus($clubId);
         $queue = [
-            'pending_members' => 1,
-            'pending_events'  => 1,
+            'pending_members' => $memberCounts['pending'],
+            'pending_events'  => $eventCounts['PendingApproval'],
         ];
 
-        $announcements = [
-            [
-                'title'   => 'Divisional Leadership Summit 2025',
-                'summary' => 'Confirm your attendance for the upcoming leadership summit by this Friday.',
-                'scope'   => 'Divisional',
-                'age'     => '2 days ago',
-                'is_new'  => true,
-            ],
-            [
-                'title'   => 'New Volunteer Hour Submission Policy',
-                'summary' => 'Volunteer hours should be submitted within seven days of the activity.',
-                'scope'   => 'National',
-                'age'     => '1 week ago',
-                'is_new'  => false,
-            ],
-        ];
-
-        $upcomingEvents = [
-            [
-                'title'    => 'Gampaha Youth Leadership Workshop 2026',
-                'date'     => 'Sep 15, 2026',
-                'location' => 'Gampaha Town Hall',
-                'scope'    => 'Divisional',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-            [
-                'title'    => 'Club Planning Session',
-                'date'     => 'Sep 28, 2026',
-                'location' => 'Club Centre',
-                'scope'    => 'Club',
-                'status'   => 'Attending',
-                'status_key'=> 'attending',
-            ],
-        ];
+        // Hierarchy-resolved scope (raw session ids drop zonal/divisional rows).
+        $annScope = ZoneOverview::effectiveScope($this, $userId);
+        $announcements = ClubOverview::announcements($this, $clubId, $userId, 'ClubSecretary', $annScope['division_id'], $annScope['zonal_id']);
+        $upcomingEvents = ClubOverview::upcoming($this, $clubId);
 
         $socialCv = [
-            'volunteer_hours' => 112,
-            'events_count'    => 15,
+            'volunteer_hours' => '—',
+            'events_count'    => ClubOverview::completedCount($this, $clubId),
             'leadership'      => 'Club Secretary',
         ];
 
