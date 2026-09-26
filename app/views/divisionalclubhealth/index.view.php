@@ -45,8 +45,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
   <div class="dw-toolbar" aria-label="Club health tools">
     <div class="dw-toolbar__search dw-search dw-search--plain"><label class="visually-hidden" for="health-search">Search clubs</label><input id="health-search" type="search" placeholder="Search by club name, code, or division" data-health-search></div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="health-filters" aria-expanded="false">Filters</button>
-    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalclubhealth/export"><?= yn_icon('download') ?> Export</a>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="health-filters" aria-expanded="false">Filters</button>
+    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalclubhealth/export"><?= yn_icon('download') ?> Export</a>
   </div>
 
   <section class="dw-filter-panel" id="health-filters" hidden>
@@ -58,12 +58,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-field"><label for="health-max-score">Maximum score</label><input id="health-max-score" type="number" min="0" max="100" data-health-max></div>
       <div class="dw-field"><label for="health-sort">Sort by</label><select id="health-sort" data-health-sort><option value="score-high">Health score (high to low)</option><option value="score-low">Health score (low to high)</option><option value="name">Club name</option><option value="flags">Open concerns</option></select></div>
     </div>
-    <div class="dw-filter-actions"><button class="dw-button dw-button--secondary" type="button" data-health-reset>Reset all</button><button class="dw-button dw-button--primary" type="button" data-health-apply>Apply filters</button></div>
+    <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-health-reset>Reset all</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-health-apply>Apply filters</button></div>
   </section>
 
   <section class="dw-formula-note" aria-labelledby="health-formula-title">
     <div><h2 id="health-formula-title">How the score is calculated</h2><p>A rolling six-month score from verified system records. Overall score = Events 40% + Finances 30% + Attendance 30%.</p></div>
-    <button class="dw-button dw-button--ghost" type="button" data-modal-open="health-formula-modal">View formula</button>
+    <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button" data-modal-open="health-formula-modal">View formula</button>
   </section>
 
   <section aria-labelledby="club-health-list-title">
@@ -92,7 +92,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div><span>Finance</span><strong><?= $e(number_format($score['finance_score'], 0)) ?></strong></div>
             <div><span>Attendance</span><strong><?= $e(number_format($score['attendance_score'], 0)) ?></strong></div>
           </div>
-          <button class="dw-button dw-button--ghost dch-card__action" type="button" data-club-details="<?= (int) $club->club_id ?>" data-modal-open="club-health-details"><?= yn_icon('eye') ?> View details</button>
+          <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost dch-card__action" type="button" data-club-details="<?= (int) $club->club_id ?>" data-modal-open="club-health-details"><?= yn_icon('eye') ?> View details</button>
         </article>
       <?php endforeach; ?>
     </div>
@@ -102,7 +102,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <script type="application/json" id="club-health-data" data-root="<?= $e(ROOT) ?>"><?= $detailsJson ?></script>
 
-<div class="dw-modal" id="health-formula-modal" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><div class="dw-modal__dialog dw-modal__dialog--wide"><header class="dw-modal__header"><h2>Club Health Score Formula</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Measurement window</h3><p>The most recent six months, recalculated from database records.</p></div></div></section><section class="dw-evidence-section"><div class="dw-section-header"><div><h3>Events - 40%</h3><p>Completed club events divided by a six-event target, capped at 100.</p></div></div></section><section class="dw-evidence-section"><div class="dw-section-header"><div><h3>Attendance - 30%</h3><p>Present records divided by all recorded attendance for completed club events.</p></div></div></section><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Finances - 30%</h3><p>40% transaction activity, 30% expense receipt coverage, and 30% ledger reconciliation.</p></div></div></section><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Health bands</h3><p>Above 70: Healthy. From 30 through 70: At Risk. Below 30: Dormant. Six consecutive dormant monthly calculations create an automatic administrative review flag.</p></div></div></section></div><footer class="dw-modal__footer"><button class="dw-button dw-button--primary" type="button" data-modal-close>Close</button></footer></div></div>
+<div class="dw-modal" id="health-formula-modal" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><div class="dw-modal__dialog dw-modal__dialog--wide"><header class="dw-modal__header"><h2>Club Health Score Formula</h2><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body"><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Measurement window</h3><p>The most recent six months, recalculated from database records.</p></div></div></section><section class="dw-evidence-section"><div class="dw-section-header"><div><h3>Events - 40%</h3><p>Completed club events divided by a six-event target, capped at 100.</p></div></div></section><section class="dw-evidence-section"><div class="dw-section-header"><div><h3>Attendance - 30%</h3><p>Present records divided by all recorded attendance for completed club events.</p></div></div></section><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Finances - 30%</h3><p>40% transaction activity, 30% expense receipt coverage, and 30% ledger reconciliation.</p></div></div></section><section class="dw-evidence-section dw-field--span-2"><div class="dw-section-header"><div><h3>Health bands</h3><p>Above 70: Healthy. From 30 through 70: At Risk. Below 30: Dormant. Six consecutive dormant monthly calculations create an automatic administrative review flag.</p></div></div></section></div><footer class="dw-modal__footer"><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-modal-close>Close</button></footer></div></div>
 
 <div class="dw-modal" id="club-health-details" role="dialog" aria-modal="true" aria-hidden="true" hidden><div class="dw-modal__backdrop" data-modal-close></div><div class="dw-modal__dialog dw-modal__dialog--wide dch-modal"><header class="dw-modal__header dch-modal__header"><div class="dch-modal__title"><div class="dch-modal__avatar" data-detail-avatar></div><div><h2 data-detail-club-name>Club Health Details</h2><div class="dch-modal__badges"><span class="dch-code" data-detail-club-code></span><span class="dw-status" data-detail-status></span></div></div></div><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header><div class="dw-modal__body dch-modal__body">
   <section class="dch-score-hero"><div><span>Overall health score</span><strong data-detail-overall>0</strong><small>/100</small></div><p data-detail-window></p></section>
@@ -113,13 +113,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </aside>
     <div class="dch-performance-column">
       <section class="dch-content-block"><h3>Performance Overview</h3><div class="dch-performance-grid" data-detail-performance></div></section>
-      <section class="dch-content-block"><div class="dw-section-header"><div><h3>Recent Events and Attendance</h3><p>Events inside the current scoring window</p></div></div><div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Event</th><th>Date</th><th>Status</th><th>Present</th><th>Attendance</th></tr></thead><tbody data-detail-events></tbody></table></div><p class="dw-muted-copy" data-detail-events-empty>No club events were recorded in this scoring window.</p></section>
+      <section class="dch-content-block"><div class="dw-section-header"><div><h3>Recent Events and Attendance</h3><p>Events inside the current scoring window</p></div></div><div class="dw-table-wrap"><table class="yn-table dw-table"><thead><tr><th>Event</th><th>Date</th><th>Status</th><th>Present</th><th>Attendance</th></tr></thead><tbody data-detail-events></tbody></table></div><p class="dw-muted-copy" data-detail-events-empty>No club events were recorded in this scoring window.</p></section>
     </div>
   </div>
   <section class="dch-section"><div class="dw-section-header"><div><h3>Health Score Detail</h3><p>The records and weights used for the current result</p></div></div><div class="dch-breakdown" data-detail-breakdown></div></section>
-  <section class="dch-section"><div class="dw-section-header"><div><h3>Financial Details</h3><p>Ledger activity, documentation, reconciliation, and audit findings</p></div></div><div class="dw-impact-grid" data-detail-finance-summary></div><div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Receipt</th><th>Reconciled</th><th>Status</th></tr></thead><tbody data-detail-finance-entries></tbody></table></div><p class="dw-muted-copy" data-detail-finance-empty>No club ledger entries were recorded in this scoring window.</p><div class="dch-subsection"><h4>Recent audits and financial flags</h4><div data-detail-audits></div></div></section>
-  <div class="dch-lower-grid"><section class="dch-section"><div class="dw-section-header"><div><h3>Six-Month Health History</h3><p>Monthly calculations used to detect sustained dormancy</p></div></div><div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Month</th><th>Events</th><th>Finance</th><th>Attendance</th><th>Overall</th><th>Status</th></tr></thead><tbody data-detail-history></tbody></table></div></section><section class="dch-section"><div class="dw-section-header"><div><h3>Health Concerns</h3><p>Automatic and officer-raised concerns requiring review</p></div></div><div data-detail-flags></div></section></div>
-</div><footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Close</button><button class="dw-button dw-button--danger" type="button" data-open-health-flag data-modal-open="club-health-flag"><?= $e($flagLabels[$actorRole] ?? 'Raise Concern') ?></button></footer></div></div>
+  <section class="dch-section"><div class="dw-section-header"><div><h3>Financial Details</h3><p>Ledger activity, documentation, reconciliation, and audit findings</p></div></div><div class="dw-impact-grid" data-detail-finance-summary></div><div class="dw-table-wrap"><table class="yn-table dw-table"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Receipt</th><th>Reconciled</th><th>Status</th></tr></thead><tbody data-detail-finance-entries></tbody></table></div><p class="dw-muted-copy" data-detail-finance-empty>No club ledger entries were recorded in this scoring window.</p><div class="dch-subsection"><h4>Recent audits and financial flags</h4><div data-detail-audits></div></div></section>
+  <div class="dch-lower-grid"><section class="dch-section"><div class="dw-section-header"><div><h3>Six-Month Health History</h3><p>Monthly calculations used to detect sustained dormancy</p></div></div><div class="dw-table-wrap"><table class="yn-table dw-table"><thead><tr><th>Month</th><th>Events</th><th>Finance</th><th>Attendance</th><th>Overall</th><th>Status</th></tr></thead><tbody data-detail-history></tbody></table></div></section><section class="dch-section"><div class="dw-section-header"><div><h3>Health Concerns</h3><p>Automatic and officer-raised concerns requiring review</p></div></div><div data-detail-flags></div></section></div>
+</div><footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Close</button><button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="button" data-open-health-flag data-modal-open="club-health-flag"><?= $e($flagLabels[$actorRole] ?? 'Raise Concern') ?></button></footer></div></div>
 
 <div class="dw-modal" id="club-health-flag" role="dialog" aria-modal="true" aria-hidden="true" hidden>
   <div class="dw-modal__backdrop" data-modal-close></div>
@@ -153,8 +153,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>This records a concern and notifies administrators. It does not change the calculated score or disband the club.</span></div>
     </div>
     <footer class="dw-modal__footer">
-      <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button dw-button--danger" type="submit">Submit Concern</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="submit">Submit Concern</button>
     </footer>
   </form>
 </div>

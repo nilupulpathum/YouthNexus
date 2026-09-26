@@ -25,8 +25,10 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1e40af">
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/tokens.css">
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/components.css">
   <?php foreach ($pageStyles as $pageStyle): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars((string) $pageStyle, ENT_QUOTES, 'UTF-8') ?>">
   <?php endforeach; ?>

@@ -5,7 +5,7 @@
  * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
  * Matches the pattern established by app/views/clubregistrationapproval/application-list.view.php.
  */
-$coordinatorName = $_SESSION['user_name'] ?? 'R. Perera';
+$coordinatorName = $_SESSION['user_name'] ?? 'Divisional Coordinator';
 
 $title                   = 'Approve Events — YouthNexus';
 $pageTitle               = 'Approve Events';
@@ -16,6 +16,7 @@ $pageStyles              = [
     ROOT . '/assets/css/eventapproval.css?v=' . time(),
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+$pageScripts             = [ROOT . '/assets/js/eventapproval.js?v=20260926'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -140,10 +141,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
-<script>
-    window.ROOT       = "<?= ROOT ?>";
-    window.CSRF_TOKEN = <?= json_encode($csrf_token ?? '') ?>;
-</script>
-<script src="<?= ROOT ?>/assets/js/eventapproval.js?v=<?= time() ?>"></script>
+<div id="eaPageConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-csrf-token="<?= htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

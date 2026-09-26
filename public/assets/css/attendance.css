@@ -4,6 +4,14 @@
    and Divisional Secretary.
    ===================================================================== */
 
+/* Detail-page presentation stays in CSS; live status updates reuse these hooks. */
+.am-roster-count { margin-left: auto; color: var(--yn-text-muted); font-size: 13px; }
+.am-empty-state--padded { padding: 40px 0; }
+.am-member-email { color: var(--yn-text-secondary); }
+.am-recorder-time { margin-top: 2px; color: var(--yn-text-disabled); font-size: 11px; }
+.am-modal--narrow { max-width: 440px; }
+.am-member-name { padding: 8px 0; color: var(--yn-text-primary); font-size: 14px; font-weight: 700; }
+
 /* ------------------------------------------------------------------
    PAGE CONTAINER
    ------------------------------------------------------------------ */

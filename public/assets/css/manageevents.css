@@ -1457,3 +1457,8 @@
     min-height: 5rem;
     flex: 1 1 24rem;
 }
+/* Shared form and review copy treatments used by both event views. */
+.me-form-hint { color: var(--yn-text-muted); font-weight: 400; }
+.me-rejection-title { color: var(--yn-danger-hover); }
+.me-rejection-reason { color: #991b1b; }
+.me-governance-title { display: block; margin-bottom: 4px; color: var(--yn-text-primary); }
