@@ -121,7 +121,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
         </header>
         <div class="dw-modal__body">
-            <p id="void-review-reference"></p>
+            <p id="void-review-reference" class="dw-field--span-2"></p>
             <form id="void-decision-form" method="post" data-base-action="<?= ROOT ?>/zonaltreasurer/">
                 <input type="hidden" name="csrf_token" value="<?= $e($csrf_token) ?>">
                 <input id="void-review-id" type="hidden" name="void_id">
@@ -130,7 +130,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <textarea id="void-remark" name="remark" rows="4" maxlength="1000" required></textarea>
                 </div>
             </form>
-            <div class="dw-alert dw-alert--warning" role="note"><strong>Decision effect</strong><p>Approval voids the requested divisional transaction in the future backend. Rejection leaves it unchanged. The division receives the decision remark.</p></div>
+            <div class="dw-alert dw-alert--warning dw-field--span-2" role="note"><strong>Decision effect</strong><p>Approval voids the requested divisional transaction in the future backend. Rejection leaves it unchanged. The division receives the decision remark.</p></div>
         </div>
         <footer class="dw-modal__footer">
             <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>

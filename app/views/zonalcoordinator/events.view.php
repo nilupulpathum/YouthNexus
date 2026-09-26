@@ -73,7 +73,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="event-queue-heading">
         <header class="dw-panel__header">
             <div>
-                <p>Gampaha Zone</p>
+                <p><?= $e($zoneName ?? 'Zone') ?></p>
                 <h2 id="event-queue-heading">Zonal event approvals</h2>
             </div>
             <span class="dw-count"><?= count($events) ?> <?= count($events) === 1 ? 'event' : 'events' ?></span>

@@ -362,6 +362,54 @@ document.addEventListener('DOMContentLoaded', () => {
             date.focus();
         }
     });
+
+    const editModal = document.getElementById('zonal-event-edit-modal');
+    const editForm = document.getElementById('zonal-event-edit-form');
+    const editError = document.getElementById('zonal-event-edit-error');
+    const closeEdit = () => { editModal.hidden = true; editModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
+    document.querySelectorAll('[data-edit-event]').forEach((button) => button.addEventListener('click', () => {
+        document.getElementById('zonal-event-edit-id').value = button.dataset.editEvent;
+        document.getElementById('zonal-event-edit-title-input').value = button.dataset.title || '';
+        document.getElementById('zonal-event-edit-type').value = button.dataset.type || '';
+        document.getElementById('zonal-event-edit-date').value = button.dataset.date || '';
+        document.getElementById('zonal-event-edit-time').value = button.dataset.time || '';
+        document.getElementById('zonal-event-edit-location').value = button.dataset.location || '';
+        document.getElementById('zonal-event-edit-audience').value = button.dataset.audience || 'All divisions';
+        editError.hidden = true;
+        editModal.hidden = false;
+        editModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }));
+    editModal.querySelectorAll('[data-modal-close]').forEach((button) => button.addEventListener('click', closeEdit));
+    editModal.addEventListener('click', (event) => { if (event.target === editModal) closeEdit(); });
+    editForm.addEventListener('submit', (event) => {
+        if (!editForm.checkValidity()) {
+            event.preventDefault();
+            editError.textContent = 'Complete all required fields.';
+            editError.hidden = false;
+            return;
+        }
+        const eventAt = new Date(
+            document.getElementById('zonal-event-edit-date').value + 'T' + document.getElementById('zonal-event-edit-time').value
+        );
+        if (Number.isNaN(eventAt.getTime()) || eventAt <= new Date()) {
+            event.preventDefault();
+            editError.textContent = 'Choose a date and time in the future.';
+            editError.hidden = false;
+        }
+    });
+
+    const deleteModal = document.getElementById('zonal-event-delete-modal');
+    const closeDelete = () => { deleteModal.hidden = true; deleteModal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
+    document.querySelectorAll('[data-delete-event]').forEach((button) => button.addEventListener('click', () => {
+        document.getElementById('zonal-event-delete-id').value = button.dataset.deleteEvent;
+        document.getElementById('zonal-event-delete-name').textContent = 'Delete "' + (button.dataset.title || '') + '"? Recorded attendance blocks deletion.';
+        deleteModal.hidden = false;
+        deleteModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }));
+    deleteModal.querySelectorAll('[data-modal-close]').forEach((button) => button.addEventListener('click', closeDelete));
+    deleteModal.addEventListener('click', (event) => { if (event.target === deleteModal) closeDelete(); });
 });
 
 }

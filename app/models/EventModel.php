@@ -751,6 +751,115 @@ class EventModel extends Model {
     }
 
     /**
+     * One own-zone zonal event for the secretary (edit/delete guards read
+     * the current status from this, never from posted data).
+     *
+     * @return object|false
+     */
+    public function getZonalEventForSecretary($zonalId, $eventId) {
+        return $this->single(
+            "SELECT e.*,
+                    GROUP_CONCAT(DISTINCT d.division_name ORDER BY d.division_name SEPARATOR ', ') AS target_divisions
+             FROM Event e
+             LEFT JOIN EventTarget et ON et.event_id = e.event_id
+             LEFT JOIN Division d ON d.division_id = et.target_division_id
+             WHERE e.event_id = ? AND e.organizer_zonal_id = ?
+             GROUP BY e.event_id
+             LIMIT 1",
+            [(int) $eventId, (int) $zonalId]
+        );
+    }
+
+    /**
+     * Secretary edits a PendingApproval, Approved or Rejected own-zone event.
+     * Pending stays pending; Approved/Rejected go back to PendingApproval so
+     * the coordinator decides again. Audience targets are replaced atomically.
+     * Returns affected rows (0 = wrong zone/id/status).
+     */
+    public function updateZonalEvent($zonalId, $eventId, array $data, $targetDivisionId = null) {
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $stmt = $this->query(
+                "UPDATE Event SET title = ?, event_type = ?, location = ?,
+                        start_datetime = ?, end_datetime = ?,
+                        target_scope = ?, status = 'PendingApproval',
+                        approved_by = NULL, rejection_remarks = NULL
+                 WHERE event_id = ? AND organizer_zonal_id = ?
+                   AND status IN ('PendingApproval', 'Approved', 'Rejected')",
+                [
+                    $data['title'], $data['type'], $data['location'],
+                    $data['start'], $data['end'],
+                    $targetDivisionId ? 'SelectedClubs' : 'AllInScope',
+                    (int) $eventId, (int) $zonalId,
+                ]
+            );
+            $rows = $stmt->rowCount();
+            if ($rows > 0) {
+                $this->query("DELETE FROM EventTarget WHERE event_id = ?", [(int) $eventId]);
+                if ($targetDivisionId) {
+                    require_once __DIR__ . '/EventTargetModel.php';
+                    $targetModel = new EventTargetModel();
+                    $targetModel->createTarget((int) $eventId, null, null, (int) $targetDivisionId, null);
+                }
+            }
+            $pdo->commit();
+            return $rows;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * Secretary deletes a Rejected own-zone event outright. The event's own
+     * EventTarget rows go with it; recorded attendance blocks the delete so
+     * nothing used downstream disappears silently. Audit rows survive
+     * (AuditLog.target_id has no FK).
+     *
+     * @return array{deleted: bool, blockers: array}
+     */
+    public function deleteRejectedZonalEvent($zonalId, $eventId) {
+        $target = $this->single(
+            "SELECT event_id FROM Event
+              WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'Rejected'
+              LIMIT 1",
+            [(int) $eventId, (int) $zonalId]
+        );
+        if (!$target) {
+            return ['deleted' => false, 'blockers' => []];
+        }
+
+        $attendance = (int) ($this->single(
+            "SELECT COUNT(*) AS total FROM Attendance WHERE event_id = ?",
+            [(int) $eventId]
+        )->total ?? 0);
+        if ($attendance > 0) {
+            return ['deleted' => false, 'blockers' => [['table' => 'Attendance', 'count' => $attendance]]];
+        }
+
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $this->query("DELETE FROM EventTarget WHERE event_id = ?", [(int) $eventId]);
+            $this->query(
+                "DELETE FROM Event
+                  WHERE event_id = ? AND organizer_zonal_id = ? AND status = 'Rejected'",
+                [(int) $eventId, (int) $zonalId]
+            );
+            $pdo->commit();
+            return ['deleted' => true, 'blockers' => []];
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    /**
      * Coordinator decision on a pending zonal event. Scoped. Returns rows.
      */
     public function decideZonalEvent($zonalId, $eventId, $userId, $decision, $remarks = '') {

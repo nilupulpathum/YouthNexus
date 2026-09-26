@@ -329,7 +329,7 @@ class Zonalcoordinator extends Controller {
             ];
         }
         $data = $this->shell('Approve Zonal Events — YouthNexus Pulse', 'Approve Zonal Events', 'Review events submitted by the Zonal Secretary.', 'zonalcoordinator/events');
-        $data += ['events' => $events, 'eventStats' => ['scheduled' => $pending, 'approved' => $approved, 'total' => count($events)], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $this->pullFlash()];
+        $data += ['events' => $events, 'eventStats' => ['scheduled' => $pending, 'approved' => $approved, 'total' => count($events)], 'csrf_token' => $this->coordinatorCsrf(), 'flash' => $this->pullFlash(), 'zoneName' => $this->zoneDisplayName($zonalId)];
         $this->view('zonalcoordinator/events', $data);
     }
 
@@ -349,7 +349,7 @@ class Zonalcoordinator extends Controller {
             $this->redirect('zonalcoordinator/events');
         }
         $this->model('AuditLogModel')->log($_SESSION['user_id'], $decision === 'approve' ? 'APPROVE_EVENT' : 'REJECT_EVENT', 'Event', $id, $remark);
-        $this->setFlash('success', $decision === 'approve' ? 'Event approved and the Zonal Secretary has been notified.' : 'Event returned to the Zonal Secretary with the requested changes.');
+        $this->setFlash('success', $decision === 'approve' ? 'Event approved. The decision is recorded in the event queue.' : 'Event returned to the Zonal Secretary with the requested changes.');
         $this->redirect('zonalcoordinator/events');
     }
 
