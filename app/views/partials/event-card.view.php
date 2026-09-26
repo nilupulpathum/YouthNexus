@@ -2,12 +2,23 @@
 /**
  * Event card partial — single event in the member events grid.
  * Expects $item (event array) and $escape (callable). Requires icons partial first.
+ * Filter keys live in data attributes for the client-side filters (events.js).
+ * $item['rsvp_status'] is the member's stored response ('' = undecided), so
+ * the served card already paints the correct active button.
  */
 $scopeClass = strtolower(str_replace(' ', '-', $item['scope'] ?? ''));
 $statusClass = strtolower($item['status'] ?? '');
+$filterStatus = $statusClass === 'pending' ? 'pending' : (($statusClass === 'upcoming' || $statusClass === 'ongoing') ? 'upcoming' : 'completed');
 $payload = htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8');
 ?>
-<article class="event-card" data-event="<?= $payload ?>">
+<article class="event-card" data-event="<?= $payload ?>"
+    data-level="<?= $escape(strtolower($item['scope'] ?? '')) ?>"
+    data-status="<?= $escape($filterStatus) ?>"
+    data-start="<?= $escape($item['start_iso'] ?? '') ?>"
+    data-posted="<?= $escape($item['posted_iso'] ?? '') ?>"
+    data-attendance="<?= (int) ($item['attendance'] ?? 0) ?>"
+    data-rsvp="<?= $escape($item['rsvp_status'] ?? '') ?>"
+    data-event-id="<?= (int) ($item['id'] ?? 0) ?>">
     <div class="card-header">
         <div class="header-left">
             <span class="scope-badge <?= $escape($scopeClass) ?>"><?= $escape($item['scope'] ?? '') ?></span>
@@ -23,7 +34,8 @@ $payload = htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8');
         </div>
     </div>
     <h3 class="card-title"><?= $escape($item['title'] ?? '') ?></h3>
-    <p class="card-summary"><?= $escape(mb_substr($item['description'] ?? '', 0, 80)) ?>...</p>
+    <?php $summary = trim(mb_substr((string) ($item['description'] ?? ''), 0, 80)); ?>
+    <p class="card-summary"><?= $summary !== '' ? $escape($summary) . '...' : 'No description provided.' ?></p>
 
     <div class="card-remaining"><?= $escape($item['remaining'] ?? '') ?></div>
 
