@@ -204,7 +204,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <label for="log-desc">Description</label>
                         <input id="log-desc" name="description" type="text" required maxlength="255" autocomplete="off" placeholder="e.g., Hall hire for workshop">
                     </div>
-                    <p id="log-file-name" hidden></p>
+                    <p id="log-file-name" class="dw-muted-copy" hidden></p>
                     <div class="dw-alert dw-alert--error" id="log-error" role="alert" hidden></div>
                 </form>
             </div>
@@ -226,7 +226,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p id="void-desc"></p>
+                <p id="void-desc" class="dw-muted-copy"></p>
                 <form id="club-void-form" action="<?= ROOT ?>/club/requestVoid" method="post" novalidate>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <input type="hidden" id="void-entry-id" name="entry_id" value="">

@@ -78,6 +78,8 @@ class Events extends Controller {
 
         $memberName = trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User';
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
+
         $data = [
             'title' => 'Events — YouthNexus Pulse',
             'pageTitle' => 'Events',
@@ -87,7 +89,8 @@ class Events extends Controller {
             'userName' => $memberName,
             'userEmail' => $_SESSION['user_email'] ?? '',
             'userInitials' => $_SESSION['user_initials'] ?? '',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
             'events' => $events
         ];
 

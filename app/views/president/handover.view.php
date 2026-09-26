@@ -165,7 +165,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p id="hc-summary"></p>
+                <p id="hc-summary" class="dw-muted-copy"></p>
                 <form id="handover-confirm-form" action="<?= ROOT ?>/president/confirmHandover" method="post">
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <input type="hidden" id="hc-successor-id" name="successor_id" value="">
