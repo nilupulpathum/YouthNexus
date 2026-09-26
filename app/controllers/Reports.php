@@ -26,6 +26,7 @@ class Reports extends Controller {
             if (empty($_SESSION['user_id'])) {
                 $this->redirect('auth/signin');
             }
+            $this->redirect('home');
         }
     }
 
