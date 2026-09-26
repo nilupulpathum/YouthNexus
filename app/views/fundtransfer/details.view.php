@@ -20,7 +20,7 @@ $isCompleted = ($transfer->status === 'Completed');
 <div class="fund-transfer-module">
 
     <div style="margin-bottom: 20px;">
-        <a href="<?= ROOT ?>/fundtransfer" class="ft-btn ft-btn-outline">
+        <a href="<?= ROOT ?>/fundtransfer" class="ft-btn ft-btn-outline db-secondary-action">
             &larr; Back to Fund Transfer Ledger
         </a>
     </div>
@@ -30,7 +30,7 @@ $isCompleted = ($transfer->status === 'Completed');
 
         <div class="ft-popup-header ft-details-header">
             <div class="ft-header-left">
-                <h1>Transaction Details</h1>
+                <h2>Transaction Details</h2>
                 <span class="ft-ref-chip"><?= htmlspecialchars($transfer->reference_no) ?></span>
                 <span class="ft-status-chip <?= $isCompleted ? 'ft-status-completed' : 'ft-status-processing' ?>">
                     &#9679; <?= htmlspecialchars($transfer->status) ?>

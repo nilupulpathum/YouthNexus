@@ -770,7 +770,8 @@
     padding: 22px 28px 18px;
 }
 
-.ft-header-left h1 {
+.ft-header-left h1,
+.ft-header-left h2 {
     font-size: 21px;
     font-weight: 700;
     color: #0f172a;

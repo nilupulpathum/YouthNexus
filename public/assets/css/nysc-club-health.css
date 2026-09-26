@@ -59,8 +59,8 @@
 .nysc-filter-group select:focus,
 .nysc-filter-group input:focus {
   outline: none;
-  border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  border-color: var(--dw-primary, #3154d8);
+  box-shadow: 0 0 0 3px rgba(49, 84, 216, 0.14);
 }
 
 .nysc-filter-buttons {
