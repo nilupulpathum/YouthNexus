@@ -86,13 +86,14 @@ final class ZoneOverview {
         if ($userId < 1) {
             return ['count' => 0, 'items' => []];
         }
+        $scope = self::effectiveScope($controller, $userId);
         try {
             $rows = $controller->model('AnnouncementModel')->findForUser(
                 $userId,
                 (string) ($_SESSION['user_role'] ?? ''),
-                isset($_SESSION['club_id']) ? (int) $_SESSION['club_id'] : null,
-                isset($_SESSION['division_id']) ? (int) $_SESSION['division_id'] : null,
-                isset($_SESSION['zonal_id']) ? (int) $_SESSION['zonal_id'] : null
+                $scope['club_id'],
+                $scope['division_id'],
+                $scope['zonal_id']
             );
         } catch (Throwable $e) {
             return ['count' => 0, 'items' => []];
@@ -120,6 +121,41 @@ final class ZoneOverview {
             }
         }
         return ['count' => $count, 'items' => $items];
+    }
+
+    /**
+     * Announcement scope for one user, resolved through the DB hierarchy
+     * (club -> division -> zone), not the raw session ids.
+     *
+     * Why: club members usually carry only club_id in the session, so the
+     * raw-session query silently drops every zonal/divisional announcement
+     * and the bell disagrees with the announcements list. Session values
+     * survive only as a fallback when the user row cannot be loaded.
+     *
+     * @return array{club_id: ?int, division_id: ?int, zonal_id: ?int}
+     */
+    public static function effectiveScope(Controller $controller, int $userId): array {
+        $fallback = [
+            'club_id' => isset($_SESSION['club_id']) ? (int) $_SESSION['club_id'] : null,
+            'division_id' => isset($_SESSION['division_id']) ? (int) $_SESSION['division_id'] : null,
+            'zonal_id' => isset($_SESSION['zonal_id']) ? (int) $_SESSION['zonal_id'] : null,
+        ];
+        try {
+            $viewer = $controller->model('UserModel')->findByUserIdWithHierarchy($userId);
+        } catch (Throwable $e) {
+            return $fallback;
+        }
+        if (!$viewer) {
+            return $fallback;
+        }
+        $clubId = (int) ($viewer->club_id ?? 0);
+        $divisionId = (int) ($viewer->effective_division_id ?? $viewer->division_id ?? 0);
+        $zonalId = (int) ($viewer->effective_zonal_id ?? $viewer->zonal_id ?? 0);
+        return [
+            'club_id' => $clubId > 0 ? $clubId : null,
+            'division_id' => $divisionId > 0 ? $divisionId : null,
+            'zonal_id' => $zonalId > 0 ? $zonalId : null,
+        ];
     }
 
     public static function funds(Controller $controller, int $zonalId): array {

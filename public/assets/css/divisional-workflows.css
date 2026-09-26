@@ -249,6 +249,9 @@
 .dw-alert p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
 /* Inline field errors, server- or JS-rendered (class added in markup). */
 .dw-field-error { grid-column: 1 / -1; margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--dw-danger); }
+/* Roster name links to member Social CVs. */
+.dw-cv-link { color: var(--dw-primary); font-weight: 600; text-decoration: none; }
+.dw-cv-link:hover { text-decoration: underline; }
 /* Club-tier modals: same eyebrow/intro/alert treatment as zonal above.
    Scoped to club roles so divisional/NYSC modals render exactly as before. */
 .dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__header p { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--dw-muted); }

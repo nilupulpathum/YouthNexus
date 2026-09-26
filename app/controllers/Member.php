@@ -43,11 +43,13 @@ class Member extends Controller {
 
         $attSummary = $this->model('AttendanceModel')->getClubMemberSummary($clubId, $userId);
         $upcoming = ClubOverview::upcoming($this, $clubId);
-        $annRows = ClubOverview::announcements($this, $clubId, $userId, $_SESSION['user_role'] ?? 'ClubMember', (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+        // Hierarchy-resolved scope (raw session ids drop zonal/divisional rows).
+        $annScope = ZoneOverview::effectiveScope($this, $userId);
+        $annRows = ClubOverview::announcements($this, $clubId, $userId, $_SESSION['user_role'] ?? 'ClubMember', $annScope['division_id'], $annScope['zonal_id']);
 
         $unread = 0;
         try {
-            $all = $this->model('AnnouncementModel')->findForUser($userId, $_SESSION['user_role'] ?? 'ClubMember', $clubId, (int) ($_SESSION['division_id'] ?? 0) ?: null, (int) ($_SESSION['zonal_id'] ?? 0) ?: null);
+            $all = $this->model('AnnouncementModel')->findForUser($userId, $_SESSION['user_role'] ?? 'ClubMember', $clubId, $annScope['division_id'], $annScope['zonal_id']);
             $readModel = $this->model('AnnouncementReadModel');
             foreach (is_array($all) ? $all : [] as $a) {
                 $row = is_array($a) ? (object) $a : $a;
