@@ -626,6 +626,11 @@ a.club-btn-secondary { text-decoration: none; }
 /* C6 searchable roster dropdown */
 .club-combo { position: relative; }
 
+/* The roster list is absolutely positioned and must escape the dw-panel
+   rounded-corner clip (overflow:hidden). Scoped to combo panels only —
+   every other panel keeps its clip. */
+.dw-panel:has(.club-combo) { overflow: visible; }
+
 .club-combo-search-icon {
     position: absolute;
     top: 50%;
