@@ -41,10 +41,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="cr-toolbar">
         <div class="cr-search-group">
             <div class="cr-search-input-wrapper">
+                <input type="text" id="crSearchInput" placeholder="Search applications...">
                 <span class="cr-search-icon">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </span>
-                <input type="text" id="crSearchInput" placeholder="Search applications...">
             </div>
         </div>
         <button type="button" class="cr-filter-btn" id="crFilterBtn" aria-expanded="false">

@@ -37,6 +37,8 @@ class Nationalanalytics extends Controller {
 
         $this->view('nationalanalytics/index', [
             'title'            => 'National Analytics — YouthNexus',
+            'pageTitle'        => 'National Performance Analytics',
+            'pageDescription'  => 'Executive performance, health metrics, and financial oversight across all youth clubs.',
             'currentRoute'     => 'nationalanalytics',
             'userRole'         => 'NYSCAdministrator',
             'userName'         => $_SESSION['user_name'] ?? 'National Admin',
