@@ -84,6 +84,34 @@ class ClubApplicationModel extends Model {
         );
     }
 
+    public function findByIdForDivision(int $applicationId, int $divisionId) {
+        $application = $this->findById($applicationId);
+        return $application && (int) $application->proposed_division_id === $divisionId ? $application : false;
+    }
+
+    /**
+     * Review-modal lookup scoped in SQL to the coordinator's division.
+     * This avoids optional geography joins that can differ between schemas.
+     */
+    public function findReviewByIdForDivision(int $applicationId, int $divisionId) {
+        return $this->single(
+            "SELECT a.*,
+                    CONCAT(proposer.first_name, ' ', proposer.last_name) AS proposer_name,
+                    proposer.email AS proposer_email,
+                    NULL AS proposer_phone,
+                    NULL AS division_name,
+                    NULL AS zone_name,
+                    CONCAT(reviewer.first_name, ' ', reviewer.last_name) AS reviewed_by_name
+             FROM ClubApplication a
+             INNER JOIN User proposer ON proposer.user_id = a.proposer_user_id
+             LEFT JOIN User reviewer ON reviewer.user_id = a.reviewed_by
+             WHERE a.application_id = ?
+               AND a.proposed_division_id = ?
+             LIMIT 1",
+            [$applicationId, $divisionId]
+        );
+    }
+
     /**
      * Which required document columns are still empty on this application.
      * Docs are fixed columns on ClubApplication, not a separate table.
@@ -109,17 +137,35 @@ class ClubApplicationModel extends Model {
     }
 
     public function markApproved($applicationId, $reviewerId) {
-        $this->query(
-            "UPDATE ClubApplication SET status = 'Approved', reviewed_by = ?, reviewed_at = NOW() WHERE application_id = ?",
+        $stmt = $this->query(
+            "UPDATE ClubApplication SET status = 'Approved', reviewed_by = ?, reviewed_at = NOW()
+             WHERE application_id = ? AND status = 'Pending'",
             [$reviewerId, $applicationId]
         );
+        return $stmt->rowCount() === 1;
     }
 
     public function markRejected($applicationId, $reviewerId, $remarks) {
-        $this->query(
-            "UPDATE ClubApplication SET status = 'Rejected', reviewed_by = ?, reviewed_at = NOW(), rejection_remarks = ? WHERE application_id = ?",
+        $stmt = $this->query(
+            "UPDATE ClubApplication SET status = 'Rejected', reviewed_by = ?, reviewed_at = NOW(), rejection_remarks = ?
+             WHERE application_id = ? AND status = 'Pending'",
             [$reviewerId, $remarks, $applicationId]
         );
+        return $stmt->rowCount() === 1;
+    }
+
+    public function archiveRejected(int $applicationId, int $divisionId, int $userId, string $reason): bool {
+        $reason = trim($reason);
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            throw new InvalidArgumentException('Provide an archive reason between 5 and 1000 characters.');
+        }
+        $stmt = $this->query(
+            "UPDATE ClubApplication
+             SET status = 'Archived', archived_by = ?, archived_at = NOW(), archive_reason = ?
+             WHERE application_id = ? AND proposed_division_id = ? AND status = 'Rejected'",
+            [$userId, $reason, $applicationId, $divisionId]
+        );
+        return $stmt->rowCount() === 1;
     }
 
     // -----------------------------------------------------------------
@@ -183,13 +229,11 @@ class ClubApplicationModel extends Model {
 
     /** Alias of markApproved() — matches feat-club_registration's naming. */
     public function approve($applicationId, $reviewerUserId) {
-        $this->markApproved($applicationId, $reviewerUserId);
-        return true;
+        return $this->markApproved($applicationId, $reviewerUserId);
     }
 
     /** Alias of markRejected() — matches feat-club_registration's naming. */
     public function reject($applicationId, $reviewerUserId, $remarks = '') {
-        $this->markRejected($applicationId, $reviewerUserId, $remarks);
-        return true;
+        return $this->markRejected($applicationId, $reviewerUserId, $remarks);
     }
 }

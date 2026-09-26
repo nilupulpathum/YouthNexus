@@ -16,6 +16,7 @@
     const decisionPanel    = modal.querySelector('.ea-decision-panel');
 
     let activeEventId = null;
+    let activeEventStatus = null;
 
     function escapeHtml(s) {
         return (s ?? '').toString()
@@ -87,7 +88,9 @@
                 if (data.error) throw new Error(data.error);
                 const ev = data.event;
                 const targets = data.targets;
-                const isPending = ev.status === 'PendingApproval';
+                const isPending = ev.status === 'PendingApproval' || ev.status === 'CancellationPending';
+                const isCancellation = ev.status === 'CancellationPending';
+                activeEventStatus = ev.status;
                 
                 modalTitle.textContent = ev.title || 'Event Review';
                 decisionPanel.hidden = !isPending;
@@ -149,6 +152,8 @@
                 `;
 
                 resultSelect.value = 'approve';
+                resultSelect.options[0].textContent = isCancellation ? 'Approve Cancellation' : 'Approve Event';
+                resultSelect.options[1].textContent = isCancellation ? 'Keep Event Approved' : 'Reject Event';
                 remarksField.value = '';
                 updateImpactAlert();
             })
@@ -160,6 +165,7 @@
     function closeReview() {
         modal.classList.remove('open');
         activeEventId = null;
+        activeEventStatus = null;
     }
 
     function updateImpactAlert() {
@@ -338,8 +344,8 @@
         const decision = resultSelect.value; // 'approve' | 'reject'
         const remarks   = remarksField.value.trim();
 
-        if (decision === 'reject' && !remarks) {
-            alert('Please provide remarks explaining the rejection.');
+        if ((decision === 'reject' || activeEventStatus === 'CancellationPending') && remarks.length < 5) {
+            alert('Please provide remarks of at least 5 characters.');
             remarksField.focus();
             return;
         }
@@ -347,10 +353,16 @@
         confirmBtn.disabled = true;
         confirmBtn.style.opacity = '0.7';
 
-        fetch((window.ROOT || '') + '/eventapproval/' + decision + '/' + activeEventId, {
+        const endpoint = activeEventStatus === 'CancellationPending'
+            ? '/eventapproval/cancellation/' + activeEventId
+            : '/eventapproval/' + decision + '/' + activeEventId;
+        const payload = activeEventStatus === 'CancellationPending'
+            ? { csrf_token: window.CSRF_TOKEN, remarks: remarks, decision: decision }
+            : { csrf_token: window.CSRF_TOKEN, remarks: remarks };
+        fetch((window.ROOT || '') + endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ csrf_token: window.CSRF_TOKEN, remarks: remarks })
+            body: new URLSearchParams(payload)
         })
         .then(r => r.json())
         .then(data => {

@@ -161,6 +161,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 </div>
 
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crArchiveModalBackdrop">
+    <form class="cr-modal" id="crArchiveForm" role="dialog" aria-modal="true" aria-labelledby="crArchiveTitle">
+        <div class="cr-modal-header"><h2 id="crArchiveTitle">Archive Rejected Application</h2><button type="button" class="cr-modal-close" data-archive-close aria-label="Close">Close</button></div>
+        <div class="cr-decision-panel"><div class="cr-decision-remarks-section"><label for="crArchiveReason">Archive reason</label><textarea id="crArchiveReason" name="reason" minlength="5" maxlength="1000" required></textarea></div></div>
+        <div class="cr-decision-actions"><button type="button" class="cr-btn" data-archive-close>Cancel</button><button type="submit" class="cr-btn cr-btn-primary">Archive Application</button></div>
+    </form>
+</div>
+
 <div class="cr-toast" id="crToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token) ?>">

@@ -88,6 +88,25 @@
     });
   });
 
+  document.querySelectorAll('[data-retire-asset]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.querySelector('[data-retire-id]').value = button.dataset.id;
+      document.querySelector('[data-retire-item]').textContent = button.dataset.item;
+      document.querySelector('[data-retire-available]').textContent = button.dataset.available + ' units available';
+      var input = document.querySelector('[data-retire-quantity]');
+      input.value = '';
+      input.max = button.dataset.available;
+    });
+  });
+
+  var withdrawForm = document.querySelector('[data-withdraw-asset-form]');
+  document.querySelectorAll('[data-withdraw-asset-request]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      withdrawForm.action = withdrawForm.dataset.actionBase + button.dataset.id;
+      document.querySelector('[data-withdraw-asset-ref]').textContent = button.dataset.ref;
+    });
+  });
+
   var reviewForm = document.querySelector('[data-review-form]');
   document.querySelectorAll('[data-review-request]').forEach(function (button) {
     button.addEventListener('click', function () {

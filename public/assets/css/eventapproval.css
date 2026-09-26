@@ -249,12 +249,13 @@
 .ea-modal {
     background: #ffffff;
     border-radius: 16px;
-    width: 100%;
-    max-width: 680px;
-    max-height: 90vh;
+    width: min(1120px, 100%);
+    height: min(92vh, 900px);
+    max-height: calc(100vh - 32px);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: eaModalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -272,6 +273,9 @@
     border-bottom: 1px solid var(--db-border, #e7e9f0);
     background: #ffffff;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 3;
 }
 
 .ea-modal-header-info {
@@ -312,8 +316,8 @@
 
 .ea-modal-body {
     padding: 24px;
-    overflow-y: auto;
-    flex: 1;
+    overflow: visible;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -406,7 +410,7 @@
     padding: 20px 24px;
     border-top: 1px solid var(--db-border, #e7e9f0);
     background: #f8fafc;
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
 
 .ea-section-header {
@@ -608,6 +612,22 @@
    6. Responsive Adaptations
    -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
+    .ea-modal-backdrop {
+        align-items: flex-start;
+        padding: 8px;
+    }
+    .ea-modal {
+        width: 100%;
+        height: calc(100vh - 16px);
+        max-height: calc(100vh - 16px);
+        border-radius: 12px;
+    }
+    .ea-modal-header,
+    .ea-modal-body,
+    .ea-decision-panel {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
     .ea-stats {
         flex-direction: column;
     }

@@ -78,7 +78,7 @@ class AnnouncementModel extends Model
             FROM Announcement a
             WHERE a.announcement_id = ?
               AND a.deleted_at IS NULL
-              AND a.status IN ('Draft', 'Published')
+              AND a.status IN ('Draft', 'Published', 'Retracted', 'Archived')
               AND {$scopeSql}
         ";
 
@@ -303,11 +303,41 @@ class AnnouncementModel extends Model
             SET deleted_at = NOW()
             WHERE announcement_id = ?
               AND deleted_at IS NULL
+              AND status = 'Draft'
             ",
             [(int)$id]
         );
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function transitionLifecycle(
+        int $id,
+        string $fromStatus,
+        string $toStatus,
+        int $userId,
+        string $reason
+    ): bool {
+        $allowed = [
+            'Published:Retracted',
+            'Retracted:Archived',
+            'Published:Archived',
+            'Archived:Retracted',
+        ];
+        if (!in_array($fromStatus . ':' . $toStatus, $allowed, true)) {
+            throw new InvalidArgumentException('This announcement transition is not permitted.');
+        }
+        $reason = trim($reason);
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            throw new InvalidArgumentException('Provide a reason between 5 and 1000 characters.');
+        }
+        $stmt = $this->query(
+            "UPDATE Announcement
+             SET status = ?, lifecycle_reason = ?, lifecycle_changed_by = ?, lifecycle_changed_at = NOW()
+             WHERE announcement_id = ? AND deleted_at IS NULL AND status = ?",
+            [$toStatus, $reason, $userId, $id, $fromStatus]
+        );
+        return $stmt->rowCount() === 1;
     }
 
     /**
@@ -632,7 +662,7 @@ class AnnouncementModel extends Model
         !empty($filters['status'])
         && in_array(
             $filters['status'],
-            ['Draft', 'Published'],
+            ['Draft', 'Published', 'Retracted', 'Archived'],
             true
         )
     ) {
@@ -792,7 +822,7 @@ class AnnouncementModel extends Model
             !empty($filters['status'])
             && in_array(
                 $filters['status'],
-                ['Draft', 'Published'],
+                ['Draft', 'Published', 'Retracted', 'Archived'],
                 true
             )
         ) {

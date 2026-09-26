@@ -57,7 +57,7 @@ class EventModel extends Model {
                     target_scope = ?
                 WHERE event_id = ?
                   AND created_by = ?
-                  AND (status = 'PendingApproval' OR status = 'Approved')";
+                  AND status IN ('Draft', 'PendingApproval')";
 
         $params = [
             $data['title'],
@@ -601,6 +601,114 @@ class EventModel extends Model {
         $params[] = $eventId;
 
         $this->query($sql, $params);
+    }
+
+    public function decidePendingEvent(
+        int $eventId,
+        int $divisionId,
+        int $userId,
+        string $status,
+        ?string $remarks
+    ): bool {
+        if (!in_array($status, ['Approved', 'Rejected'], true)) {
+            throw new InvalidArgumentException('Select a valid event decision.');
+        }
+        $stmt = $this->query(
+            "UPDATE Event e
+             LEFT JOIN Club c ON c.club_id = e.organizer_club_id
+             SET e.status = ?, e.approved_by = ?, e.rejection_remarks = ?
+             WHERE e.event_id = ? AND e.status = 'PendingApproval'
+               AND (e.organizer_division_id = ? OR c.division_id = ?)",
+            [$status, $userId, $remarks, $eventId, $divisionId, $divisionId]
+        );
+        return $stmt->rowCount() === 1;
+    }
+
+    public function transitionDivisionalEvent(
+        int $eventId,
+        int $divisionId,
+        int $userId,
+        string $fromStatus,
+        string $toStatus,
+        ?string $reason = null,
+        bool $requireOwnership = true
+    ): bool {
+        $allowed = [
+            'Draft:PendingApproval',
+            'Draft:Withdrawn',
+            'PendingApproval:Withdrawn',
+            'Approved:CancellationPending',
+        ];
+        if (!in_array($fromStatus . ':' . $toStatus, $allowed, true)) {
+            throw new InvalidArgumentException('This event transition is not permitted.');
+        }
+
+        $reason = trim((string) $reason);
+        if (in_array($toStatus, ['Withdrawn', 'CancellationPending'], true)
+            && (strlen($reason) < 5 || strlen($reason) > 1000)) {
+            throw new InvalidArgumentException('Provide a reason between 5 and 1000 characters.');
+        }
+
+        $ownershipSql = $requireOwnership ? ' AND created_by = ?' : '';
+        $params = [$toStatus, $reason !== '' ? $reason : null, $userId, $eventId, $divisionId, $fromStatus];
+        if ($requireOwnership) {
+            $params[] = $userId;
+        }
+        $stmt = $this->query(
+            "UPDATE Event
+             SET status = ?, lifecycle_reason = ?, lifecycle_requested_by = ?,
+                 lifecycle_requested_at = NOW(), lifecycle_decided_by = NULL,
+                 lifecycle_decided_at = NULL
+             WHERE event_id = ? AND organizer_division_id = ? AND status = ?{$ownershipSql}",
+            $params
+        );
+        return $stmt->rowCount() === 1;
+    }
+
+    public function deleteDivisionalDraft(int $eventId, int $divisionId, int $userId): bool {
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $select = $pdo->prepare(
+                "SELECT event_id FROM Event
+                 WHERE event_id = ? AND organizer_division_id = ? AND created_by = ? AND status = 'Draft'
+                 FOR UPDATE"
+            );
+            $select->execute([$eventId, $divisionId, $userId]);
+            if (!$select->fetchColumn()) {
+                $pdo->rollBack();
+                return false;
+            }
+            $pdo->prepare('DELETE FROM EventTarget WHERE event_id = ?')->execute([$eventId]);
+            $deleted = $pdo->prepare("DELETE FROM Event WHERE event_id = ? AND status = 'Draft'");
+            $deleted->execute([$eventId]);
+            $pdo->commit();
+            return $deleted->rowCount() === 1;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    public function decideDivisionalCancellation(
+        int $eventId,
+        int $divisionId,
+        int $userId,
+        bool $approve,
+        string $remarks
+    ): bool {
+        $remarks = trim($remarks);
+        if (strlen($remarks) < 5 || strlen($remarks) > 1000) {
+            throw new InvalidArgumentException('Provide decision remarks between 5 and 1000 characters.');
+        }
+        $status = $approve ? 'Cancelled' : 'Approved';
+        $stmt = $this->query(
+            "UPDATE Event
+             SET status = ?, lifecycle_reason = ?, lifecycle_decided_by = ?, lifecycle_decided_at = NOW()
+             WHERE event_id = ? AND organizer_division_id = ? AND status = 'CancellationPending'",
+            [$status, $remarks, $userId, $eventId, $divisionId]
+        );
+        return $stmt->rowCount() === 1;
     }
 
     // ---------------------------------------------------------------

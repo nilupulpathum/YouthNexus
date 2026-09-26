@@ -51,27 +51,66 @@ class ClubRegistrationApproval extends Controller {
         $this->requireCoordinator();
 
         $applicationModel = $this->model('ClubApplicationModel');
-        $nomineeModel      = $this->model('ExecutiveNomineeModel');
-        $assetModel         = $this->model('ClubAssetModel');
-        $photoModel           = $this->model('ClubApplicationPhotoModel');
-        $auditModel             = $this->model('AuditLogModel');
+        // Prevent PHP notices/warnings from corrupting the JSON response.
+        ob_start();
+        try {
+            $divisionId = (int) ($_SESSION['division_id'] ?? 0);
+            $application = $id
+                ? $applicationModel->findReviewByIdForDivision((int) $id, $divisionId)
+                : false;
 
-        $application = $id ? $applicationModel->findById((int)$id) : false;
+            if (!$application) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Application not found in your division.']);
+                exit();
+            }
 
-        header('Content-Type: application/json');
-        if (!$application) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Application not found.']);
-            exit();
+            $applicationId = (int) $application->application_id;
+            $payload = [
+                'application' => $application,
+                // Optional supporting records must not make the entire
+                // application unreadable when legacy data is incomplete.
+                'nominees' => $this->loadReviewCollection(
+                    'nominees',
+                    $applicationId,
+                    fn() => $this->model('ExecutiveNomineeModel')->findByApplication($applicationId)
+                ),
+                'assets' => $this->loadReviewCollection(
+                    'assets',
+                    $applicationId,
+                    fn() => $this->model('ClubAssetModel')->findByApplication($applicationId)
+                ),
+                'photos' => $this->loadReviewCollection(
+                    'photos',
+                    $applicationId,
+                    fn() => $this->model('ClubApplicationPhotoModel')->findByApplication($applicationId)
+                ),
+                'history' => $this->loadReviewCollection(
+                    'history',
+                    $applicationId,
+                    fn() => $this->model('AuditLogModel')->findForTarget('ClubApplication', $applicationId)
+                ),
+            ];
+
+            $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+            if ($json === false) {
+                throw new RuntimeException('Unable to encode the application review response.');
+            }
+            $unexpectedOutput = ob_get_clean();
+            if (trim((string) $unexpectedOutput) !== '') {
+                error_log('[YouthNexus] Suppressed output in club registration review: ' . trim($unexpectedOutput));
+            }
+            header('Content-Type: application/json');
+            echo $json;
+        } catch (Throwable $exception) {
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            error_log('[YouthNexus] Club registration review failed: ' . $exception->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'The application details could not be loaded. Please try again.']);
         }
-
-        echo json_encode([
-            'application' => $application,
-            'nominees'    => $nomineeModel->findByApplication($application->application_id),
-            'assets'      => $assetModel->findByApplication($application->application_id),
-            'photos'      => $photoModel->findByApplication($application->application_id),
-            'history'     => $auditModel->findForTarget('ClubApplication', $application->application_id),
-        ]);
         exit();
     }
 
@@ -212,6 +251,19 @@ class ClubRegistrationApproval extends Controller {
     // ---------------------------------------------------------------
     // PRIVATE HELPERS
     // ---------------------------------------------------------------
+
+    private function loadReviewCollection(string $collection, int $applicationId, callable $loader): array {
+        try {
+            $items = $loader();
+            return is_array($items) ? $items : [];
+        } catch (Throwable $exception) {
+            error_log(
+                "[YouthNexus] Club registration review {$collection} unavailable " .
+                "for application {$applicationId}: " . $exception->getMessage()
+            );
+            return [];
+        }
+    }
 
     private function jsonError($message) {
         header('Content-Type: application/json');

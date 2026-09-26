@@ -193,6 +193,7 @@ class DivisionalVoidApprovalModel extends Model {
             $select = $pdo->prepare(
                 "SELECT vr.void_request_id, vr.status AS request_status, vr.requested_by,
                         le.entry_id, le.status AS entry_status, le.amount, le.type,
+                        le.description, le.category,
                         l.ledger_id, l.status AS ledger_status,
                         c.club_name,
                         COALESCE(fa.reference_no, CONCAT('LDG-', LPAD(le.entry_id, 4, '0'))) AS reference_no
@@ -233,6 +234,25 @@ class DivisionalVoidApprovalModel extends Model {
                     throw new RuntimeException('The ledger entry is no longer eligible to be voided.');
                 }
 
+                $reversalType = $request->type === 'Income' ? 'Expense' : 'Income';
+                $reversal = $pdo->prepare(
+                    "INSERT INTO LedgerEntry
+                        (ledger_id, amount, type, category, description, status, reconciled,
+                         date, created_by, reversal_of_entry_id, void_request_id)
+                     VALUES (?, ?, ?, ?, ?, 'Approved', 0, CURDATE(), ?, ?, ?)"
+                );
+                $reversal->execute([
+                    $request->ledger_id,
+                    $request->amount,
+                    $reversalType,
+                    $request->category,
+                    'Reversal of ' . $request->reference_no . ': ' . (string) $request->description,
+                    $decidedBy,
+                    $request->entry_id,
+                    $requestId,
+                ]);
+                $reversalId = (int) $pdo->lastInsertId();
+
                 $balanceChange = $request->type === 'Income'
                     ? -(float) $request->amount
                     : (float) $request->amount;
@@ -244,6 +264,11 @@ class DivisionalVoidApprovalModel extends Model {
                 if ($ledgerUpdate->rowCount() !== 1) {
                     throw new RuntimeException('The club ledger is not active.');
                 }
+                $audit = $pdo->prepare(
+                    "INSERT INTO AuditLog (actor_user_id, action_type, target_entity, target_id, details)
+                     VALUES (?, 'APPROVE_VOID_WITH_REVERSAL', 'VoidRequest', ?, ?)"
+                );
+                $audit->execute([$decidedBy, $requestId, "Created reversal ledger entry {$reversalId} for entry {$request->entry_id}."]);
             }
 
             $requestUpdate = $pdo->prepare(

@@ -4,7 +4,9 @@ class Announcements extends Controller
 {
     private const MANAGER_LEVELS = [
         'ClubSecretary'       => 'Club',
+        'DivisionalCoordinator' => 'Divisional',
         'DivisionalSecretary' => 'Divisional',
+        'DivisionalTreasurer' => 'Divisional',
         'ZonalSecretary'      => 'Zonal',
         'NYSCAdministrator'   => 'NYSC',
     ];
@@ -25,6 +27,16 @@ class Announcements extends Controller
             'ClubSecretary',
             'ClubTreasurer',
             'ClubMember',
+        ],
+
+        'DivisionalCoordinator' => [
+            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
+            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
+        ],
+
+        'DivisionalTreasurer' => [
+            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
+            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
         ],
 
         'ZonalSecretary' => [
@@ -278,7 +290,7 @@ class Announcements extends Controller
                 403,
                 [
                     'error' =>
-                        'Only an authorized Secretary or NYSC Administrator can manage announcements.',
+                        'Only an authorized officer can manage announcements in this scope.',
                 ]
             );
         }
@@ -1897,11 +1909,13 @@ class Announcements extends Controller
                 as $attachment
             ) {
                 $attachmentModel
-                    ->deleteFromAnnouncement(
+                    ->archiveFromAnnouncement(
                         $attachment
                             ->attachment_id,
 
-                        $id
+                        $id,
+
+                        (int)$user->user_id
                     );
             }
 
@@ -1982,18 +1996,7 @@ class Announcements extends Controller
         }
 
 
-        /*
-         * Delete physical old files only
-         * after DB commit succeeds.
-         */
-        foreach (
-            $removedAttachments
-            as $attachment
-        ) {
-            $this->removeStoredAttachment(
-                $attachment->file_path
-            );
-        }
+        /* Removed attachments remain in version history and are not unlinked. */
 
 
         $this->jsonResponse(
@@ -2083,6 +2086,13 @@ class Announcements extends Controller
 
 
             if (
+                $announcement->status !== 'Draft'
+            ) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Only an unpublished draft can be deleted.']);
+            }
+
+            if (
                 !$model->softDelete(
                     $id
                 )
@@ -2145,9 +2155,69 @@ class Announcements extends Controller
                     true,
 
                 'message' =>
-                    'Announcement deleted successfully.',
+                    'Announcement draft deleted successfully.',
             ]
         );
+    }
+
+    public function retract($id = null)
+    {
+        $this->changeLifecycle($id, 'Published', 'Retracted', 'RETRACT_ANNOUNCEMENT', 'Announcement withdrawn from publication.');
+    }
+
+    public function archive($id = null)
+    {
+        $this->changeLifecycle($id, null, 'Archived', 'ARCHIVE_ANNOUNCEMENT', 'Announcement archived.');
+    }
+
+    public function restore($id = null)
+    {
+        $this->changeLifecycle($id, 'Archived', 'Retracted', 'RESTORE_ANNOUNCEMENT', 'Announcement restored as withdrawn from publication.');
+    }
+
+    private function changeLifecycle($id, $requiredStatus, $targetStatus, $auditAction, $message)
+    {
+        $user = $this->currentUser();
+        $scope = $this->requireManagerScope($user);
+        $this->requirePost();
+        $id = $this->positiveId($id);
+        $reason = trim((string) ($_POST['reason'] ?? ''));
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            $this->jsonResponse(422, ['error' => 'Provide a reason between 5 and 1000 characters.']);
+        }
+        $model = $this->model('AnnouncementModel');
+        $db = Database::getInstance()->getConnection();
+        try {
+            $db->beginTransaction();
+            $announcement = $model->findManageableById($id, $scope['level'], $scope['scope_id'], true);
+            if (!$announcement) {
+                $db->rollBack();
+                $this->jsonResponse(404, ['error' => 'Announcement not found.']);
+            }
+            $fromStatus = $requiredStatus ?? (string) $announcement->status;
+            if ($targetStatus === 'Archived' && !in_array($fromStatus, ['Published', 'Retracted'], true)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Only a published or withdrawn announcement can be archived.']);
+            }
+            if ((string) $announcement->status !== $fromStatus
+                || !$model->transitionLifecycle($id, $fromStatus, $targetStatus, (int) $user->user_id, $reason)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'The announcement status changed before this action was saved.']);
+            }
+            $this->model('AuditLogModel')->log(
+                (int) $user->user_id,
+                $auditAction,
+                'Announcement',
+                $id,
+                $reason
+            );
+            $db->commit();
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            error_log('Announcement lifecycle update failed: ' . $error->getMessage());
+            $this->jsonResponse(500, ['error' => 'Unable to update the announcement lifecycle.']);
+        }
+        $this->jsonResponse(200, ['success' => true, 'message' => $message]);
     }
 
 

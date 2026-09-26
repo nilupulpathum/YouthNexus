@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const submitBtn = form.querySelector('button[type="submit"]');
+            const submitBtn = event.submitter || form.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -265,6 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const formData = new FormData(form);
+                if (submitBtn && submitBtn.dataset.submissionMode) {
+                    formData.set('submission_mode', submitBtn.dataset.submissionMode);
+                }
                 const response = await fetch(form.action, {
                     method: 'POST',
                     body: formData,
@@ -311,6 +314,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupForm('createEventForm');
     setupForm('editEventForm');
+
+    document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!window.confirm(form.dataset.confirm || 'Continue with this action?')) {
+                event.preventDefault();
+            }
+        });
+    });
 
     // -------------------------------------------------------------
     // 6. Filter Panel Toggle (Filters Button)

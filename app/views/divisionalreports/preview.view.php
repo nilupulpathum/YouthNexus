@@ -30,7 +30,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </section>
 
       <div class="dr-verification-note"><?= yn_icon('info') ?><p><strong>Report snapshot:</strong> The values shown here were recorded when this report was generated for <?= $e($division->division_name) ?>.</p></div>
-      <?php if ($report->status === 'Archived'): ?><div class="dr-archive-note"><?= yn_icon('info') ?><p><strong>Archived report:</strong> Archived <?= $e($report->archived_at ? date('d M Y, H:i', strtotime($report->archived_at)) : 'previously') ?><?= trim((string) ($report->archived_by_name ?? '')) !== '' ? ' by ' . $e(trim((string) $report->archived_by_name)) : '' ?>. This historical snapshot remains available for review and download. Restore it to return it to Recent Reports.</p></div><?php endif; ?>
+      <?php if ($report->status === 'Archived'): ?><div class="dr-archive-note"><?= yn_icon('info') ?><p><strong>Archived report:</strong> Archived <?= $e($report->archived_at ? date('d M Y, H:i', strtotime($report->archived_at)) : 'previously') ?><?= trim((string) ($report->archived_by_name ?? '')) !== '' ? ' by ' . $e(trim((string) $report->archived_by_name)) : '' ?>. Reason: <?= $e($report->archive_reason ?: 'Not recorded') ?>. This historical snapshot remains available for review and download.</p></div><?php endif; ?>
     </div>
 
     <footer class="dr-document__footer">
@@ -38,12 +38,26 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <a class="dw-button dw-button--ghost db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
         <?php if ($report->status === 'Archived'): ?>
           <form method="post" action="<?= ROOT ?>/divisionalreports/restore/<?= (int) $report->report_id ?>" onsubmit="return confirm('Restore this report to the active report list?');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--primary db-confirm-action" type="submit">Restore Report</button></form>
-        <?php else: ?>
-          <form method="post" action="<?= ROOT ?>/divisionalreports/archive/<?= (int) $report->report_id ?>" onsubmit="return confirm('Archive this report? It will remain available under the Archived filter.');"><input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>"><button class="dw-button dw-button--danger" type="submit">Archive Report</button></form>
         <?php endif; ?>
       </div>
-      <div class="dr-document__footer-right"><a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="dw-button dw-button--primary" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
+      <div class="dr-document__footer-right"><?php if ($report->status !== 'Archived'): ?><button class="dw-button dw-button--danger" type="button" data-modal-open="archive-report-modal">Archive Report</button><?php endif; ?><a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download CSV</a><a class="dw-button dw-button--primary" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>"><?= yn_icon('download') ?> Download PDF</a></div>
     </footer>
   </article>
 </section>
+
+<?php if ($report->status !== 'Archived'): ?>
+<div class="dw-modal" id="archive-report-modal" role="dialog" aria-modal="true" aria-labelledby="archive-report-title" aria-hidden="true" hidden>
+  <div class="dw-modal__backdrop" data-modal-close></div>
+  <form class="dw-modal__dialog dr-archive-dialog" method="post" action="<?= ROOT ?>/divisionalreports/archive/<?= (int) $report->report_id ?>" data-report-archive-form novalidate>
+    <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
+    <header class="dw-modal__header"><div><h2 id="archive-report-title">Archive Report</h2><p>Move this report to the historical archive without deleting its snapshot.</p></div><button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button></header>
+    <div class="dw-modal__body dr-archive-modal__body">
+      <div class="dr-archive-summary"><span>Report</span><strong>RPT-<?= str_pad((string) $report->report_id, 4, '0', STR_PAD_LEFT) ?> · <?= $e($report->type_name) ?></strong><p>The report remains available under Archived Reports and can be restored later.</p></div>
+      <div class="dw-field dw-field--span-2"><label for="report-archive-reason">Reason for archiving <span aria-hidden="true">*</span></label><textarea id="report-archive-reason" name="reason" minlength="5" maxlength="1000" aria-required="true" aria-describedby="report-archive-help report-archive-error" placeholder="Explain why this report is being archived"></textarea><small id="report-archive-help">Enter at least 5 characters so the decision is clear in the audit history.</small><p class="dr-field-error" id="report-archive-error" role="alert" hidden>Please provide a reason of at least 5 characters.</p></div>
+      <div class="dw-alert dw-alert--warning dw-field--span-2"><?= yn_icon('info') ?><span>Archiving does not delete this report or its downloadable files.</span></div>
+    </div>
+    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--danger" type="submit">Archive Report</button></footer>
+  </form>
+</div>
+<?php endif; ?>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

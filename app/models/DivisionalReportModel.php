@@ -44,7 +44,7 @@ class DivisionalReportModel extends Model {
         $types = $this->allowedTypes($role);
         return $this->resultSet(
             "SELECT r.report_id, r.date_range_start, r.date_range_end, r.format, r.generated_at,
-                    r.status, r.archived_at, rtc.category, rtc.type_name,
+                    r.status, r.archived_at, r.archive_reason, r.restored_at, rtc.category, rtc.type_name,
                     CONCAT_WS(' ', u.first_name, u.last_name) AS generated_by_name,
                     CONCAT_WS(' ', archived_user.first_name, archived_user.last_name) AS archived_by_name
              FROM Report r
@@ -123,28 +123,32 @@ class DivisionalReportModel extends Model {
         );
     }
 
-    public function archiveReport(int $divisionId, int $reportId, int $userId, string $role): bool {
+    public function archiveReport(int $divisionId, int $reportId, int $userId, string $role, string $reason): bool {
+        $reason = trim($reason);
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            throw new InvalidArgumentException('Provide an archive reason between 5 and 1000 characters.');
+        }
         $types = $this->allowedTypes($role);
         $stmt = $this->query(
-            "UPDATE Report SET status = 'Archived', archived_at = NOW(), archived_by = ?
+            "UPDATE Report SET status = 'Archived', archived_at = NOW(), archived_by = ?, archive_reason = ?
              WHERE report_id = ? AND scope_level = 'Divisional' AND scope_id = ? AND status = 'Active'
                AND report_type_id IN (
                    SELECT report_type_id FROM ReportTypeCatalog WHERE type_name IN (" . $this->placeholders($types) . ")
                )",
-            array_merge([$userId, $reportId, $divisionId], $types)
+            array_merge([$userId, $reason, $reportId, $divisionId], $types)
         );
         return $stmt->rowCount() === 1;
     }
 
-    public function restoreReport(int $divisionId, int $reportId, string $role): bool {
+    public function restoreReport(int $divisionId, int $reportId, int $userId, string $role): bool {
         $types = $this->allowedTypes($role);
         $stmt = $this->query(
-            "UPDATE Report SET status = 'Active', archived_at = NULL, archived_by = NULL
+            "UPDATE Report SET status = 'Active', restored_at = NOW(), restored_by = ?
              WHERE report_id = ? AND scope_level = 'Divisional' AND scope_id = ? AND status = 'Archived'
                AND report_type_id IN (
                    SELECT report_type_id FROM ReportTypeCatalog WHERE type_name IN (" . $this->placeholders($types) . ")
                )",
-            array_merge([$reportId, $divisionId], $types)
+            array_merge([$userId, $reportId, $divisionId], $types)
         );
         return $stmt->rowCount() === 1;
     }
@@ -243,16 +247,17 @@ class DivisionalReportModel extends Model {
              LEFT JOIN User creator ON creator.user_id = e.created_by
              LEFT JOIN User approver ON approver.user_id = e.approved_by
              WHERE (e.organizer_division_id = ? OR c.division_id = ?)
-               AND e.status IN ('PendingApproval','Approved','Rejected')
+               AND e.status IN ('PendingApproval','Approved','Rejected','CancellationPending','Cancelled','Withdrawn')
                AND DATE(e.created_at) BETWEEN ? AND ?
              ORDER BY e.created_at DESC, e.event_id DESC",
             [$divisionId, $divisionId, $start, $end]
         );
-        $data = []; $pending = 0; $approved = 0; $rejected = 0;
+        $data = []; $pending = 0; $approved = 0; $rejected = 0; $cancelled = 0;
         foreach ($rows as $row) {
             if ($row->status === 'PendingApproval') $pending++;
             elseif ($row->status === 'Approved') $approved++;
             elseif ($row->status === 'Rejected') $rejected++;
+            elseif (in_array($row->status, ['Cancelled', 'Withdrawn'], true)) $cancelled++;
             $data[] = [
                 'event' => 'EVT-' . str_pad((string) $row->event_id, 4, '0', STR_PAD_LEFT),
                 'title' => $row->title,
@@ -269,6 +274,7 @@ class DivisionalReportModel extends Model {
             ['label' => 'Pending', 'value' => $pending],
             ['label' => 'Approved', 'value' => $approved],
             ['label' => 'Rejected', 'value' => $rejected],
+            ['label' => 'Cancelled or withdrawn', 'value' => $cancelled],
         ], [
             'event' => 'Event', 'title' => 'Title', 'type' => 'Type', 'organiser' => 'Organiser',
             'event_date' => 'Event date', 'created_by' => 'Created by', 'decided_by' => 'Decided by', 'status' => 'Status',
