@@ -67,8 +67,8 @@ class Fundtransfer extends Controller {
 
         $this->view('fundtransfer/index', [
             'title'           => 'Fund Transfer — YouthNexus',
-            'pageTitle'       => 'Fund Transfer',
-            'pageDescription' => 'NYSC National Administration — Colombo Division & Zonal Ledger',
+            'pageTitle'       => 'National Fund Disbursement & Zonal Ledger',
+            'pageDescription' => 'Manage inter-governmental grants, RTGS clearance, and zonal treasury allocations.',
             'currentRoute'    => 'fundtransfer',
             'userRole'        => $_SESSION['user_role'] ?? 'NYSCAdministrator',
             'userName'        => $_SESSION['user_name'] ?? 'N. Fernando',

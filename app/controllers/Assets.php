@@ -114,8 +114,8 @@ class Assets extends Controller {
 
         $this->view('manageassets/index', [
             'title'            => 'Manage Assets — YouthNexus',
-            'pageTitle'        => 'National Asset Management & Warehouse Logistics',
-            'pageDescription'  => 'National Youth Services Council — Central Logistics, Zonal Stock Allocation & Deficit Surveillance',
+            'pageTitle'        => 'National Asset Management & Logistics',
+            'pageDescription'  => 'Central logistics, zonal stock allocation, and inventory deficit surveillance.',
             'currentRoute'     => 'manageassets',
             'userRole'         => $_SESSION['user_role'] ?? 'NYSCAdministrator',
             'userName'         => ($_SESSION['first_name'] ?? 'National') . ' ' . ($_SESSION['last_name'] ?? 'Admin'),

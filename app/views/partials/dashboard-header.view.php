@@ -23,11 +23,11 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
 
   <div class="db-topbar-right dashboard-header__right">
     <label class="db-search-top" for="dashboard-global-search">
+      <input id="dashboard-global-search" type="search" placeholder="Search..." autocomplete="off">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <circle cx="11" cy="11" r="7.5"/><path d="m20 20-3.7-3.7" stroke-linecap="round"/>
       </svg>
       <span class="visually-hidden">Search this workspace</span>
-      <input id="dashboard-global-search" type="search" placeholder="Search..." autocomplete="off">
     </label>
 
     <div class="dashboard-notifications" data-notif-menu>

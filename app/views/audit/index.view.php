@@ -1,55 +1,17 @@
 <?php
 /**
- * Annual Financial Audit — NYSC Administration
- * Main dashboard view adhering 100% to annualAudit.php, approveAuditPopup.php & clarificationPopup.php
- * with YouthNexus project design system integration.
+ * Annual Financial Audit — Phase 1 dashboard
+ * Scope & financial-year selection plus the register of compiled audits.
  */
 
-$title                   = $title ?? 'Annual Financial Audit — YouthNexus';
+$title                   = $title ?? 'Annual Audit — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Annual Financial Audit';
-$pageDescription         = $pageDescription ?? 'National Youth Services Council — Statutory ledger reconciliation & fiscal compliance review';
+$pageDescription         = $pageDescription ?? 'Select an entity and financial year to compile its statutory audit.';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
-
-// Formatters matching screenshot
-$fmtCompact = function ($v) {
-    $num = (float)$v;
-    if (abs($num) >= 1000000) {
-        return 'LKR ' . number_format($num / 1000000, $num >= 10000000 ? 1 : 2) . 'M';
-    } elseif (abs($num) >= 1000) {
-        return 'LKR ' . number_format($num / 1000, 1) . 'K';
-    }
-    return 'LKR ' . number_format($num, 2);
-};
-
-$fmtExact = function ($v) {
-    return 'LKR ' . number_format((float)$v, 0);
-};
-
-// Preset demo figures from annualAudit.php / screenshot if scope is Kandy Zone
-$isKandyScope = ($selectedScope === 'Zonal' && ($selectedScopeId == 6 || empty($selectedScopeId)));
-
-$displayRevenue  = $isKandyScope ? "LKR 14.8M" : $fmtCompact($revenueVal);
-$displayExpenses = $isKandyScope ? "LKR 9.2M"  : $fmtCompact($expensesVal);
-$displayIdle     = $isKandyScope ? "LKR 3.4M"  : $fmtCompact($idleVal);
-$displayRedFlags = $isKandyScope ? 3 : max(1, $redFlagsCount);
-
-// Ledger steps matching screenshot
-$steps = [
-    ["label" => "Opening Balance",   "value" => ($isKandyScope ? "LKR 1.25M" : $fmtCompact($audit->opening_balance)), "color" => "normal"],
-    ["label" => "+ Total Income",    "value" => ($isKandyScope ? "LKR 3.85M" : $fmtCompact($audit->total_income)), "color" => "green"],
-    ["label" => "+ Transfers In",    "value" => ($isKandyScope ? "LKR 12.0M" : $fmtCompact($audit->total_transfers_received)), "color" => "green"],
-    ["label" => "– Expenses",        "value" => ($isKandyScope ? "LKR 9.2M"  : $fmtCompact($audit->total_expenses)), "color" => "red"],
-    ["label" => "– Transfers Out",   "value" => ($isKandyScope ? "LKR 2.4M"  : $fmtCompact($audit->total_transfers_distributed)), "color" => "red"],
-    ["label" => "= Expected Balance", "value" => ($isKandyScope ? "LKR 5.50M" : $fmtCompact($audit->expected_closing_balance)), "color" => "blue"],
-];
-
-// Actual and variance matching screenshot
-$displayActual   = $isKandyScope ? "LKR 5, 500, 000" : $fmtExact($audit->actual_closing_balance);
-$displayVariance = "LKR 0.00";
 ?>
 
 <div class="audit-content">
@@ -69,299 +31,122 @@ $displayVariance = "LKR 0.00";
         </div>
     <?php endif; ?>
 
-    <!-- Page head -->
-    <div class="audit-page-head">
-        <div>
-            <h1>Annual Financial Audit</h1>
-            <p>National Youth Services Council — Statutory ledger reconciliation &amp; fiscal compliance review</p>
-        </div>
-        <div class="audit-head-right">
-            <!-- FY Badge -->
-            <span class="audit-fy-badge">FY <b><?= (int)$audit->financial_year ?></b></span>
-
-            <!-- Export Audit Summary button -->
-            <a href="<?= ROOT ?>/audit/export?audit_id=<?= (int)$audit->audit_id ?>" class="audit-btn audit-btn-light">
-                <span>&#8681;</span> Export Audit Summary
-            </a>
-
-            <!-- Rerun Check button -->
-            <a href="<?= ROOT ?>/audit/rerun?scope_level=<?= urlencode($audit->scope_level) ?>&scope_id=<?= (int)$audit->scope_id ?>&year=<?= (int)$audit->financial_year ?>" class="audit-btn audit-btn-blue">
-                <span>&#8646;</span> Rerun Check
-            </a>
-        </div>
-    </div>
-
-    <!-- Stat cards (4 cards) -->
-    <div class="audit-stats">
-        <!-- 1. Verified Revenue -->
-        <div class="audit-stat-card">
-            <h3>Verified Revenue</h3>
-            <div class="num"><?= htmlspecialchars($displayRevenue) ?></div>
-            <div class="sub green">&#10003;&nbsp; 100% Reconciled</div>
-        </div>
-
-        <!-- 2. Operating Expenses -->
-        <div class="audit-stat-card">
-            <h3>Operating Expenses</h3>
-            <div class="num"><?= htmlspecialchars($displayExpenses) ?></div>
-            <div class="sub gray">62.1% Utilization</div>
-        </div>
-
-        <!-- 3. Unutilized / Idle Funds -->
-        <div class="audit-stat-card">
-            <h3>Unutilized / Idle Funds</h3>
-            <div class="num num-amber"><?= htmlspecialchars($displayIdle) ?></div>
-            <div class="sub amber">&#9888;&nbsp; Flagged unspent allocation</div>
-        </div>
-
-        <!-- 4. Audit Status (Action Required / Attention Needed) -->
-        <div class="audit-stat-card audit-stat-alert">
-            <h3>Audit Status &nbsp;<span class="tag">Action Required</span></h3>
-            <div class="attention">Attention Needed</div>
-            <div class="sub red">&#9679;&nbsp; <?= htmlspecialchars($displayRedFlags) ?> Red Flags Identified</div>
-        </div>
-    </div>
-
-    <!-- Core Mathematical Ledger Verification panel -->
+    <!-- ── Phase 1: Initiation & scope selection ─────────────────── -->
     <div class="audit-panel">
-        <h2>Core Mathematical Ledger Verification</h2>
+        <h2>Start an Annual Audit</h2>
+        <p class="audit-panel-sub">Choose the entity and financial year. The system compiles the ledger, runs the core math check and scans for red flags.</p>
 
-        <!-- Verification steps (6 steps) -->
-        <div class="audit-ledger-steps">
-            <?php foreach ($steps as $s): ?>
-                <div class="audit-step <?= ($s["color"] == "blue") ? "expected" : "" ?>">
-                    <div class="step-label"><?= htmlspecialchars($s["label"]) ?></div>
-                    <div class="step-value <?= htmlspecialchars($s["color"]) ?>"><?= htmlspecialchars($s["value"]) ?></div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+        <form method="POST" action="<?= ROOT ?>/audit/run" class="audit-compile-form" id="auditRunForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
 
-        <!-- Result line -->
-        <div class="audit-ledger-result">
-            Database Actual Closing: <b><?= htmlspecialchars($displayActual) ?></b>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            Variance: <b class="variance-ok"><?= htmlspecialchars($displayVariance) ?></b>
-        </div>
-    </div>
-
-    <!-- Exceptions section -->
-    <div class="audit-exceptions-head">
-        <div class="left">
-            <h2>Audit Exceptions &amp; Flagged Items</h2>
-            <span class="audit-count-badge">3 items</span>
-        </div>
-        <div class="right">
-            <button type="button" class="audit-btn audit-btn-light" onclick="openClarifyModal()">
-                Request Clarification
-            </button>
-            <!-- ALWAYS Approve & Sign-Off Audit button as explicitly instructed -->
-            <button type="button" class="audit-btn audit-btn-blue" onclick="openApproveModal()">
-                Approve &amp; Sign-Off Audit
-            </button>
-        </div>
-    </div>
-
-    <!-- Exception items (Matching screenshot & annualAudit.php 1:1) -->
-    <!-- Item 1: PA Sound Rental -->
-    <div class="audit-exception">
-        <div class="audit-exception-info">
-            <div class="top">
-                <span class="audit-ex-tag red">MISSING RECEIPT</span>
-                <span class="audit-ex-ref">#KND-2026-EXP-088</span>
-            </div>
-            <div class="title">PA Sound Rental &amp; Logistics — Provincial Youth Conference</div>
-            <div class="detail">Beneficiary: SoundKraft Audio Services • Expense: <b>LKR 48, 500</b> (Exceeds LKR 5,000 threshold)</div>
-        </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(1)">Request Receipt</button>
-    </div>
-
-    <!-- Item 2: Zonal Youth Sports Consumables -->
-    <div class="audit-exception">
-        <div class="audit-exception-info">
-            <div class="top">
-                <span class="audit-ex-tag red">MISSING RECEIPT</span>
-                <span class="audit-ex-ref">#KND-2026-EXP-114</span>
-            </div>
-            <div class="title">Zonal Youth Sports Consumables &amp; Hydration Units</div>
-            <div class="detail">Beneficiary: Metro Sports Supplies • Expense: <b>LKR 18, 200</b> (Exceeds LKR 5,000 threshold)</div>
-        </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(2)">Request Receipt</button>
-    </div>
-
-    <!-- Item 3: Youth Leadership Empowerment Grant -->
-    <div class="audit-exception">
-        <div class="audit-exception-info">
-            <div class="top">
-                <span class="audit-ex-tag orange">FUND HOARDING</span>
-                <span class="audit-ex-ref">#CPH-GRANT-89</span>
-            </div>
-            <div class="title">Youth Leadership Empowerment Grant</div>
-            <div class="detail">Disbursed: <b>LKR 2.50M</b> • Unspent: <b style="color:#b45309;">LKR 2.22M (88.8% idle margin &gt; 20% limit)</b></div>
-        </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(3)">View Justification</button>
-    </div>
-
-    <!-- Item 4: Discipline Notice -->
-    <div class="audit-exception">
-        <div class="audit-exception-info">
-            <div class="top">
-                <span class="audit-ex-tag gray">DISCIPLINE NOTICE</span>
-                <span class="audit-ex-ref">REG-DISC-VOIDS</span>
-            </div>
-            <div class="title">Kandy Zonal Sub-Ledger Void Rate: 14.2% (Permissible ceiling: 10%)</div>
-            <div class="detail">18 voided entries recorded out of 127 journal transactions</div>
-        </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(4)">Inspect Journal</button>
-    </div>
-
-</div><!-- /audit-content -->
-
-
-<!-- ============================================================
-     MODAL 1: Approve & Sign-Off Annual Audit Popup
-     (Matching approveAuditPopup.php 1:1)
-     ============================================================ -->
-<div class="audit-overlay" id="approveModal">
-    <div class="audit-modal audit-approve-modal">
-
-        <!-- Header -->
-        <div class="audit-modal-head">
-            <div>
-                <h1>Approve &amp; Sign-Off Annual Audit</h1>
-                <p>Formal certification and permanent ledger lock for FY <?= (int)$audit->financial_year ?></p>
-            </div>
-            <button type="button" class="audit-close-x" onclick="closeApproveModal()" aria-label="Close dialog">&times;</button>
-        </div>
-
-        <!-- Body -->
-        <form method="POST" action="<?= ROOT ?>/audit/signoff">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES) ?>">
-            <input type="hidden" name="audit_id" value="<?= (int)$audit->audit_id ?>">
-
-            <div class="audit-modal-body">
-
-                <!-- Summary: scope / status / math check -->
-                <div class="audit-summary">
-                    <div class="row">
-                        <span class="label">SCOPE</span>
-                        <span class="value">Kandy Zone — Central Province Hub (FY <?= (int)$audit->financial_year ?>)</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">STATUS</span>
-                        <span class="status-ok">&otimes; All Red Flags Resolved / Justifications Accepted</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">MATH CHECK</span>
-                        <span class="value math">Verified Passed • LKR 5,500,000 Actual Balance Reconciled</span>
-                    </div>
+            <div class="audit-compile-row">
+                <div class="audit-compile-field audit-compile-entity">
+                    <label for="auditEntity">Audit Scope <span class="audit-required">*</span></label>
+                    <select name="entity" id="auditEntity" required>
+                        <option value="National:0">National Summary — NYSC Central Ledger</option>
+                        <?php foreach (['Zonal' => 'Zones', 'Divisional' => 'Divisions', 'Club' => 'Clubs'] as $levelKey => $levelLabel): ?>
+                            <?php if (!empty($scopes[$levelKey])): ?>
+                                <optgroup label="<?= htmlspecialchars($levelLabel) ?>">
+                                    <?php foreach ($scopes[$levelKey] as $s): ?>
+                                        <option value="<?= htmlspecialchars($s['scope_level'] . ':' . (int)$s['scope_id']) ?>">
+                                            <?= htmlspecialchars($s['name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
-                <!-- Ledger lock notice -->
-                <div class="audit-lock-notice">
-                    <span class="lock">&#128274;</span>
-                    <span><b>Ledger Lock Notice:</b> Upon sign-off, the financial ledger for this entity will be permanently locked for FY <?= (int)$audit->financial_year ?>. No further vouchers, transfers, or adjustments can be recorded.</span>
+                <div class="audit-compile-field">
+                    <label for="auditYear">Financial Year <span class="audit-required">*</span></label>
+                    <select name="year" id="auditYear">
+                        <?php foreach ($years as $y): ?>
+                            <option value="<?= (int)$y ?>" <?= (int)$y === (int)date('Y') ? 'selected' : '' ?>>FY <?= (int)$y ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
-                <!-- Auditor field -->
-                <label class="audit-field-label">AUDITOR NAME &amp; DESIGNATION</label>
-                <div class="audit-auditor-box">
-                    <div>&#129530;&nbsp; <?= htmlspecialchars($auditorName ?? 'N. Fernando', ENT_QUOTES) ?> &mdash; <?= htmlspecialchars($auditorRole ?? 'Divisional Secretariat', ENT_QUOTES) ?></div>
-                    <div class="id-badge">VERIFIED ID</div>
-                </div>
-
-            </div><!-- /audit-modal-body -->
-
-            <!-- Footer -->
-            <div class="audit-modal-foot-approve">
-                <button type="button" class="audit-btn-cancel" onclick="closeApproveModal()">Cancel</button>
-                <button type="submit" class="audit-btn-confirm">
-                    &#128274; Confirm Sign-Off &amp; Lock Ledger
+                <button type="submit" class="audit-btn audit-btn-blue audit-compile-btn">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    Compile Audit
                 </button>
             </div>
         </form>
+    </div>
 
-    </div><!-- /audit-modal -->
-</div><!-- /audit-overlay -->
-
-
-<!-- ============================================================
-     MODAL 2: Request Audit Clarification Popup
-     (Matching clarificationPopup.php 1:1)
-     ============================================================ -->
-<div class="audit-overlay" id="clarifyModal">
-    <div class="audit-modal audit-clarify-modal">
-
-        <!-- Header -->
-        <div class="audit-modal-head">
-            <div>
-                <h1>Request Audit Clarification</h1>
-                <p>Issue official audit query to entity treasurer and regional coordinator</p>
-            </div>
-            <button type="button" class="audit-close-x" onclick="closeClarifyModal()" aria-label="Close dialog">&times;</button>
+    <!-- ── Audit reports register ─────────────────────────────────── -->
+    <div class="audit-exceptions-head">
+        <div class="left">
+            <h2>Audit Reports</h2>
+            <span class="audit-count-muted"><?= count($audits) ?> compiled</span>
         </div>
+    </div>
 
-        <!-- Body -->
-        <form method="POST" action="<?= ROOT ?>/audit/clarify">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES) ?>">
-            <input type="hidden" name="audit_id" value="<?= (int)$audit->audit_id ?>">
+    <?php if (empty($audits)): ?>
+        <div class="audit-empty-state">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <h3>No audits compiled yet</h3>
+            <p>Select an entity and financial year above, then click Compile Audit to produce the first report.</p>
+        </div>
+    <?php else: ?>
+        <div class="audit-table-card">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>FY</th>
+                        <th>ENTITY</th>
+                        <th>MATH CHECK</th>
+                        <th>RED FLAGS</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($audits as $a): ?>
+                        <tr>
+                            <td class="audit-td-strong"><?= (int)$a->financial_year ?></td>
+                            <td>
+                                <span class="audit-td-strong"><?= htmlspecialchars($a->scope_label) ?></span>
+                                <div class="audit-td-sub">
+                                    <?= $a->locked
+                                        ? 'Signed off ' . ($a->signed_off_at ? date('M j, Y', strtotime($a->signed_off_at)) : '')
+                                        : 'Initiated ' . ($a->initiated_at ? date('M j, Y', strtotime($a->initiated_at)) : '') ?>
+                                </div>
+                            </td>
+                            <td>
+                                <?php if ($a->math_check_status === 'Passed'): ?>
+                                    <span class="audit-pill audit-pill-green">Passed</span>
+                                <?php else: ?>
+                                    <span class="audit-pill audit-pill-red">Mismatch</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ((int)$a->total_flags === 0): ?>
+                                    <span class="audit-pill audit-pill-green">None</span>
+                                <?php elseif ((int)$a->open_flags === 0): ?>
+                                    <span class="audit-pill audit-pill-blue"><?= (int)$a->total_flags ?> resolved</span>
+                                <?php else: ?>
+                                    <span class="audit-pill audit-pill-red"><?= (int)$a->open_flags ?> open<?= ((int)$a->total_flags > (int)$a->open_flags) ? ' / ' . (int)$a->total_flags : '' ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($a->locked): ?>
+                                    <span class="audit-pill audit-pill-green">Completed</span>
+                                <?php else: ?>
+                                    <span class="audit-pill audit-pill-yellow">Pending</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <a class="audit-btn-outline" href="<?= ROOT ?>/audit/report/<?= (int)$a->audit_id ?>">View Report</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
 
-            <div class="audit-modal-body">
-
-                <!-- Flagged discrepancies box -->
-                <div class="audit-flag-box">
-                    <h3>FLAGGED AUDIT DISCREPANCIES</h3>
-                    <ul>
-                        <li>PA Sound Rental &amp; Logistics — <span class="amt">LKR 48,500</span> (Missing Receipt)</li>
-                        <li>Youth Leadership Empowerment Grant — <span class="amt">LKR 2,220,000</span> unspent (88.8% Idle Margin)</li>
-                    </ul>
-                </div>
-
-                <!-- Recipients -->
-                <label class="audit-field-label">Designated Recipients</label>
-                <div class="audit-recipients">
-                    <div><span class="mail">&#9993;</span> M. Perera (Zonal Treasurer) &amp; Kandy Regional Coordinator</div>
-                    <div class="verified">Verified Zonal Contacts</div>
-                </div>
-
-                <!-- Query text -->
-                <label class="audit-field-label">Audit Query Details</label>
-                <textarea name="query" class="audit-textarea" placeholder="Please provide valid tax invoices / vendor receipts for the flagged expenses and provide justification or reallocation timeline for unspent grant funds within 5 business days.">Please provide valid tax invoices / vendor receipts for the flagged expenses and provide justification or reallocation timeline for unspent grant funds within 5 business days.</textarea>
-
-                <!-- Deadline + Notice type -->
-                <div class="audit-two-row">
-                    <div class="audit-field-col">
-                        <label class="audit-field-label">Resolution Deadline</label>
-                        <div class="audit-field-box">7 Business Days (Default)</div>
-                    </div>
-                    <div class="audit-field-col">
-                        <label class="audit-field-label">Notice Type</label>
-                        <div class="audit-field-box">Official Quinquennial Audit Inquiry</div>
-                    </div>
-                </div>
-
-            </div><!-- /audit-modal-body -->
-
-            <!-- Footer -->
-            <div class="audit-modal-foot-clarify">
-                <div class="audit-foot-note">Note: Sending clarification will set audit status to Pending Review.</div>
-                <div class="audit-foot-btns">
-                    <button type="button" class="audit-btn-cancel-border" onclick="closeClarifyModal()">Cancel</button>
-                    <button type="submit" class="audit-btn-send">
-                        &#9655; Send Formal Clarification Query
-                    </button>
-                </div>
-            </div>
-        </form>
-
-    </div><!-- /audit-modal -->
-</div><!-- /audit-overlay -->
-
-<script>
-    window.YouthNexusAudit = {
-        rootUrl: '<?= ROOT ?>',
-        csrfToken: '<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES) ?>'
-    };
-</script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=<?= time() ?>" defer></script>
+</div><!-- /audit-content -->
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
