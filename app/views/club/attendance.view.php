@@ -134,7 +134,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <label for="att-bulk-remarks">Session remarks (optional)</label>
                             <input id="att-bulk-remarks" name="remark" type="text" maxlength="500" autocomplete="off">
                         </div>
-                        <p id="att-csv-name" hidden></p>
+                        <p id="att-csv-name" class="dw-muted-copy" hidden></p>
                         <div class="dw-alert dw-alert--error" id="att-bulk-error" role="alert" hidden></div>
                         <div class="dw-filter-actions">
                             <button type="submit" class="dw-button dw-button--primary">Upload CSV</button>

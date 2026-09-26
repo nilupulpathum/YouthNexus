@@ -14,11 +14,17 @@ $userRole = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
 $userName = $userName ?? ($_SESSION['user_name'] ?? 'YouthNexus User');
 $userEmail = $userEmail ?? ($_SESSION['user_email'] ?? '');
 $unreadNotificationCount = (int) ($unreadNotificationCount ?? 0);
-// Zonal actors have no Social CV: their avatar "My profile" link goes to
-// Settings, which opens on the Edit Profile pane. A page may still pass its
-// own $profileUrl to override this default.
+// Zonal, divisional and NYSC actors have no Social CV: their avatar
+// "My profile" link goes to Settings, which opens on the Edit Profile pane
+// (the CV page still serves a hardcoded mock person, including a NIC, to
+// every viewer). Club roles keep /profile. A page may still pass its own
+// $profileUrl to override this default.
+$roleKey = is_string($userRole) ? strtolower($userRole) : '';
+$roleHasNoCv = (is_string($userRole)
+    && (str_starts_with($userRole, 'Zonal') || str_starts_with($userRole, 'Divisional')))
+    || in_array($roleKey, ['nyscadministrator', 'nyscadmin', 'nysc', 'admin'], true);
 $profileDefault = (defined('ROOT') ? ROOT : '')
-    . ((is_string($userRole) && str_starts_with($userRole, 'Zonal')) ? '/settings' : '/profile');
+    . ($roleHasNoCv ? '/settings' : '/profile');
 $profileUrl = $profileUrl ?? $profileDefault;
 $notificationUrl = $notificationUrl ?? (defined('ROOT') ? ROOT . '/notifications' : '/notifications');
 $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
