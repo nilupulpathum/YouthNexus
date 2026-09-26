@@ -298,7 +298,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p id="transfer-asset"></p>
+                <p id="transfer-asset" class="dw-muted-copy"></p>
                 <form id="club-transfer-form" action="<?= ROOT ?>/club/transferAsset" method="post" novalidate>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <input type="hidden" id="transfer-item-id" name="catalog_item_id" value="">

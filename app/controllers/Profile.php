@@ -7,6 +7,8 @@ class Profile extends Controller {
             $this->redirect('auth/signin');
         }
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
+
         $data = [
             'title' => 'Social CV — YouthNexus Pulse',
             'pageTitle' => 'Social CV',
@@ -16,7 +18,8 @@ class Profile extends Controller {
             'userName' => $_SESSION['user_name'] ?? 'Nuwan Bandara',
             'userEmail' => $_SESSION['user_email'] ?? '',
             'userInitials' => $_SESSION['user_initials'] ?? 'NB',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
             'profile' => [
                 'name' => 'Nuwan Bandara',
                 'nic' => '199912345678',

@@ -7,6 +7,8 @@ class Settings extends Controller {
             $this->redirect('auth/signin');
         }
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
+
         $data = [
             'title' => 'Settings — YouthNexus Pulse',
             'pageTitle' => 'Settings',
@@ -16,7 +18,8 @@ class Settings extends Controller {
             'userName' => trim((string) ($_SESSION['user_name'] ?? '')) !== '' ? trim((string) $_SESSION['user_name']) : 'YouthNexus User',
             'userEmail' => $_SESSION['user_email'] ?? '',
             'userInitials' => $_SESSION['user_initials'] ?? 'YN',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
             'user' => $this->profileFormValues(),
         ];
 

@@ -109,6 +109,8 @@ class Member extends Controller {
             'recent_activity' => $recentActivity,
         ];
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
+
         $this->view('member/index', [
             'title'                   => 'Member Dashboard — YouthNexus Pulse',
             'pageTitle'               => 'Welcome back, ' . $memberName,
@@ -118,7 +120,8 @@ class Member extends Controller {
             'userName'                => $memberName,
             'userEmail'               => $_SESSION['user_email'] ?? '',
             'userInitials'            => $_SESSION['user_initials'] ?? $memberInitials,
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications'     => $headerNotif['items'],
             'memberDashboard'         => $memberDashboard,
             // Exec summary strips (same sources as the full overviews).
             'presidentSummary'        => in_array($_SESSION['user_role'] ?? '', ['ClubPresident', 'president'], true)

@@ -185,22 +185,22 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="dw-field dw-field--span-2">
                     <label for="zonal-event-title">Event title</label>
                     <input id="zonal-event-title" name="title" type="text" required maxlength="150" autocomplete="off" placeholder="Zone Youth Leadership Forum" value="<?= $e($old['title'] ?? '') ?>">
-                    <?php if (!empty($errors['title'])): ?><p><?= $e($errors['title']) ?></p><?php endif; ?>
+                    <?php if (!empty($errors['title'])): ?><p class="dw-field-error"><?= $e($errors['title']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-field">
                     <label for="zonal-event-date">Date</label>
                     <input id="zonal-event-date" name="event_date" type="date" required value="<?= $e($old['event_date'] ?? '') ?>">
-                    <p id="zonal-event-date-error"<?= !empty($errors['event_date']) ? '' : ' hidden' ?>><?= $e($errors['event_date'] ?? 'This date has already passed') ?></p>
+                    <p id="zonal-event-date-error" class="dw-field-error"<?= !empty($errors['event_date']) ? '' : ' hidden' ?>><?= $e($errors['event_date'] ?? 'This date has already passed') ?></p>
                 </div>
                 <div class="dw-field">
                     <label for="zonal-event-time">Time</label>
                     <input id="zonal-event-time" name="event_time" type="time" required value="<?= $e($old['event_time'] ?? '') ?>">
-                    <?php if (!empty($errors['event_time'])): ?><p><?= $e($errors['event_time']) ?></p><?php endif; ?>
+                    <?php if (!empty($errors['event_time'])): ?><p class="dw-field-error"><?= $e($errors['event_time']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-field dw-field--span-2">
                     <label for="zonal-event-location">Location</label>
                     <input id="zonal-event-location" name="location" type="text" required maxlength="255" autocomplete="off" placeholder="Venue or coordinates" value="<?= $e($old['location'] ?? '') ?>">
-                    <?php if (!empty($errors['location'])): ?><p><?= $e($errors['location']) ?></p><?php endif; ?>
+                    <?php if (!empty($errors['location'])): ?><p class="dw-field-error"><?= $e($errors['location']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-field">
                     <label for="zonal-event-type-input">Event type</label>
@@ -210,7 +210,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <option<?= ($old['event_type'] ?? '') === $type ? ' selected' : '' ?>><?= $e($type) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (!empty($errors['event_type'])): ?><p><?= $e($errors['event_type']) ?></p><?php endif; ?>
+                    <?php if (!empty($errors['event_type'])): ?><p class="dw-field-error"><?= $e($errors['event_type']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-field">
                     <label for="zonal-event-audience">Notify</label>
@@ -220,7 +220,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <option value="<?= $e($divisionName) ?>"<?= $selected($divisionName) ?>><?= $e($divisionName) ?> and its clubs</option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (!empty($errors['audience'])): ?><p><?= $e($errors['audience']) ?></p><?php endif; ?>
+                    <?php if (!empty($errors['audience'])): ?><p class="dw-field-error"><?= $e($errors['audience']) ?></p><?php endif; ?>
                 </div>
                 <div class="dw-alert dw-alert--error" id="zonal-event-error" role="alert" hidden></div>
             </form>

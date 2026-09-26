@@ -175,7 +175,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="dw-field">
                         <label for="ev-date">Date</label>
                         <input id="ev-date" name="date" type="date" required>
-                        <p id="ev-date-error" hidden><small>This date has already passed</small></p>
+                        <p id="ev-date-error" class="dw-field-error" hidden><small>This date has already passed</small></p>
                     </div>
                     <div class="dw-field">
                         <label for="ev-time">Time</label>
@@ -222,7 +222,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p id="cp-meta"></p>
+                <p id="cp-meta" class="dw-muted-copy"></p>
                 <form id="club-complete-form" action="<?= ROOT ?>/club/completeEvent" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <input type="hidden" id="cp-event-id" name="event_id" value="">
@@ -257,8 +257,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <button type="button" class="dw-modal__close" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
             </header>
             <div class="dw-modal__body">
-                <p id="ed-meta"></p>
-                <p id="ed-submitter"></p>
+                <p id="ed-meta" class="dw-muted-copy"></p>
+                <p id="ed-submitter" class="dw-muted-copy"></p>
                 <form id="event-decision-form" action="<?= ROOT ?>/president/eventDecision" method="post">
                     <input type="hidden" name="csrf_token" value="<?= $e($csrf_token ?? '') ?>">
                     <input type="hidden" id="ed-event-id" name="event_id" value="">

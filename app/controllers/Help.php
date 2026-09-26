@@ -22,6 +22,8 @@ class Help extends Controller {
             ]
         ];
 
+        $headerNotif = ZoneOverview::headerNotifications($this);
+
         $data = [
             'title' => 'Help — YouthNexus Pulse',
             'pageTitle' => 'Help Center',
@@ -31,7 +33,8 @@ class Help extends Controller {
             'userName' => trim((string) ($_SESSION['user_name'] ?? '')) ?: 'YouthNexus User',
             'userEmail' => $_SESSION['user_email'] ?? '',
             'userInitials' => $_SESSION['user_initials'] ?? '',
-            'unreadNotificationCount' => 2,
+            'unreadNotificationCount' => $headerNotif['count'],
+            'headerNotifications' => $headerNotif['items'],
             'faqs' => $faqs
         ];
 
