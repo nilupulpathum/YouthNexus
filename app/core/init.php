@@ -12,6 +12,7 @@ require 'Controller.php';
 require 'FinanceReceipt.php';
 require 'EventEvidence.php';
 require 'ClubOverview.php';
+require 'ZoneOverview.php';
 require 'CsvSecurity.php';
 require 'App.php';
 
