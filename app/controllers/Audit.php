@@ -29,7 +29,10 @@ class Audit extends Controller {
             session_start();
         }
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'NYSCAdministrator') {
-            $this->redirect('auth/signin');
+            if (empty($_SESSION['user_id'])) {
+                $this->redirect('auth/signin');
+            }
+            $this->redirect('home');
         }
     }
 

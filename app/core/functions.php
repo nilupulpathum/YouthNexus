@@ -5,3 +5,9 @@ function show($stuff){
     print_r($stuff);
     echo '</pre>';
 }
+
+if (!function_exists('e')) {
+    function e($value) {
+        return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
+    }
+}

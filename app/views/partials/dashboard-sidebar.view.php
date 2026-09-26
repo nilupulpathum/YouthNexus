@@ -57,10 +57,10 @@ $navigation = [
     ],
     'zonalcoordinator' => [
         ['label' => 'Overview', 'route' => 'zonalcoordinator', 'href' => $dashboardRoot . '/zonalcoordinator', 'icon' => 'grid'],
-        ['label' => 'Monitor Club Health', 'route' => 'zonalcoordinator/clubs', 'href' => $dashboardRoot . '/zonalcoordinator/clubs', 'icon' => 'chart'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
         ['label' => 'Approve Zonal Events', 'route' => 'zonalcoordinator/events', 'href' => $dashboardRoot . '/zonalcoordinator/events', 'icon' => 'calendar'],
-        ['label' => 'Aggregate Reports', 'route' => 'zonalcoordinator/reports', 'href' => $dashboardRoot . '/zonalcoordinator/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Aggregate Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -69,7 +69,7 @@ $navigation = [
         ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval',  'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
         ['label' => 'Approve Events',       'route' => 'eventapproval',     'href' => $dashboardRoot . '/eventapproval',     'icon' => 'calendar'],
         ['label' => 'Monitor Club Health',  'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
-        ['label' => 'Reports',              'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
+        ['label' => 'Manage Reports',       'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],
@@ -78,7 +78,7 @@ $navigation = [
         ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
         ['label' => 'Manage Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check'],
         ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
-        ['label' => 'Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
+        ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -95,21 +95,13 @@ $navigation = [
         ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
     ],
-    'coordinator' => [
-        ['label' => 'Overview',             'route' => 'home',             'href' => $dashboardRoot . '/home',              'icon' => 'grid'],
-        ['label' => 'Approve Registration', 'route' => 'clubregistrationapproval', 'href' => $dashboardRoot . '/clubregistrationapproval/index', 'icon' => 'clipboard'],
-        ['label' => 'Clubs',               'route' => 'clubs',            'href' => $dashboardRoot . '/clubs',             'icon' => 'users'],
-        ['label' => 'Reports',             'route' => 'reports',          'href' => $dashboardRoot . '/reports',           'icon' => 'chart'],
-        ['label' => 'Announcements',       'route' => 'announcements',    'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
-        ['label' => 'Help',                'route' => 'help',             'href' => $dashboardRoot . '/help',              'icon' => 'help'],
-    ],
     'zonalsecretary' => [
         ['label' => 'Overview', 'route' => 'zonalsecretary', 'href' => $dashboardRoot . '/zonalsecretary', 'icon' => 'grid'],
-        ['label' => 'Monitor Club Health', 'route' => 'zonalsecretary/clubs', 'href' => $dashboardRoot . '/zonalsecretary/clubs', 'icon' => 'chart'],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
         ['label' => 'Zonal Events', 'route' => 'zonalsecretary/events', 'href' => $dashboardRoot . '/zonalsecretary/events', 'icon' => 'calendar'],
         ['label' => 'Attendance', 'route' => 'zonalsecretary/attendance', 'href' => $dashboardRoot . '/zonalsecretary/attendance', 'icon' => 'check'],
-        ['label' => 'Reports', 'route' => 'zonalsecretary/reports', 'href' => $dashboardRoot . '/zonalsecretary/reports', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
@@ -120,22 +112,10 @@ $navigation = [
         ['label' => 'Zonal Assets', 'route' => 'zonaltreasurer/assets', 'href' => $dashboardRoot . '/zonaltreasurer/assets', 'icon' => 'briefcase'],
         ['label' => 'Zonal Ledger', 'route' => 'zonaltreasurer/ledger', 'href' => $dashboardRoot . '/zonaltreasurer/ledger', 'icon' => 'wallet'],
         ['label' => 'Void Requests', 'route' => 'zonaltreasurer/voids', 'href' => $dashboardRoot . '/zonaltreasurer/voids', 'icon' => 'clock'],
-        ['label' => 'Announcements', 'route' => 'zonalannouncements', 'href' => $dashboardRoot . '/zonalannouncements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
+        ['label' => 'Monitor Club Health', 'route' => 'zonalclubhealth', 'href' => $dashboardRoot . '/zonalclubhealth', 'icon' => 'chart'],
+        ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'reports'],
+        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
-    ],
-    'admin' => [
-        ['label' => 'Dashboard', 'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
-        ['label' => 'Manage Events', 'route' => 'manageevents', 'href' => $dashboardRoot . '/manageevents', 'icon' => 'calendar'],
-        ['label' => 'View Attendance', 'route' => 'attendance', 'href' => $dashboardRoot . '/attendance', 'icon' => 'check-square'],
-        ['label' => 'Manage Reports', 'route' => 'reports', 'href' => $dashboardRoot . '/reports', 'icon' => 'reports'],
-        ['label' => 'Annual Audit', 'route' => 'audit', 'href' => $dashboardRoot . '/audit', 'icon' => 'audit'],
-        ['label' => 'Club Applications', 'route' => 'applications', 'href' => $dashboardRoot . '/applications', 'icon' => 'clipboard'],
-        ['label' => 'All Clubs', 'route' => 'clubs', 'href' => $dashboardRoot . '/clubs', 'icon' => 'users'],
-        ['label' => 'All Members', 'route' => 'members', 'href' => $dashboardRoot . '/members', 'icon' => 'user'],
-        ['label' => 'Analytics', 'route' => 'analytics', 'href' => $dashboardRoot . '/analytics', 'icon' => 'chart'],
-        ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
-        ['label' => 'Audit Log', 'route' => 'audit-log', 'href' => $dashboardRoot . '/audit-log', 'icon' => 'shield'],
         ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'nyscadmin' => [
@@ -231,7 +211,7 @@ $icons = [
     <?php
     // Exact match wins: a parent entry (e.g. zonalcoordinator Overview)
     // must not stay highlighted when a child page (e.g.
-    // zonalcoordinator/clubs) is open. Prefix highlighting applies only
+    // zonalclubhealth) is open. Prefix highlighting applies only
     // when no entry matches exactly (e.g. president/handover keeps the
     // president Overview lit since handover has no entry of its own).
     $hasExactMatch = false;

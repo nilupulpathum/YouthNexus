@@ -5,6 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
+$pageStyles = [ROOT . '/assets/css/events.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -110,11 +111,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <main class="events-main">
         <header class="events-header">
             <div class="results-info">
-                Showing <strong><?= count($events) ?></strong> events
+                Showing <strong id="events-count"><?= count($events) ?></strong> events
             </div>
             <div class="sort-control">
                 <span>Sort by:</span>
-                <select class="sort-select">
+                <select class="sort-select" id="events-sort">
                     <option value="upcoming">Date (Upcoming first)</option>
                     <option value="recent">Date (Recently posted)</option>
                     <option value="attendance-high">Highest Attendance</option>
@@ -123,11 +124,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
         </header>
 
-        <div class="events-grid">
+        <div class="events-grid" id="events-grid" data-csrf="<?= $escape($csrf_token ?? '') ?>" data-rsvp-url="<?= ROOT ?>/events/rsvp">
             <?php foreach ($events as $item): ?>
                 <?php require __DIR__ . '/../partials/event-card.view.php'; ?>
             <?php endforeach; ?>
         </div>
+        <div class="events-empty" id="events-empty" hidden>No events match the current filters.</div>
     </main>
 </div>
 
@@ -158,17 +160,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <p id="popup-description"></p>
         </div>
         <div class="popup-footer">
-            <button type="button" class="btn-participate">
+            <button type="button" class="btn-participate" data-popup-rsvp="attending">
                 <span class="icon"><?= yn_icon('check') ?></span> Participate
             </button>
-            <button type="button" class="btn-not-participate">
+            <button type="button" class="btn-not-participate" data-popup-rsvp="declined">
                 <span class="icon"><?= yn_icon('close') ?></span> Not participate
             </button>
         </div>
     </div>
 </div>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/events.css">
 
 <script src="<?= ROOT ?>/assets/js/events.js"></script>
 
