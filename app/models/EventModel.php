@@ -656,6 +656,101 @@ class EventModel extends Model {
         );
     }
 
+    /**
+     * Scope + targeting predicate shared by getVisibleEvents() and
+     * findVisibleEvent(): appends the AND fragment and fills $params
+     * (unique placeholder names — native prepares forbid reuse).
+     */
+    private function visibleEventScopeSql($clubId, $divisionId, $zonalId, array &$params) {
+        $clubId = (int) $clubId ?: null;
+        $divisionId = (int) $divisionId ?: null;
+        $zonalId = (int) $zonalId ?: null;
+        if ($clubId === null && $divisionId === null && $zonalId === null) {
+            return '';
+        }
+        // One OR-term per known id only: a null id must never match
+        // (SQL NULL comparisons would leak other scopes' events).
+        $scopeTerms = [];
+        $targetTerms = [];
+        if ($clubId !== null) {
+            $scopeTerms[] = 'e.organizer_club_id = :club_s';
+            $targetTerms[] = 't.target_club_id = :club_t';
+            $params['club_s'] = $clubId;
+            $params['club_t'] = $clubId;
+        }
+        if ($divisionId !== null) {
+            $scopeTerms[] = 'e.organizer_division_id = :division_s';
+            // Club-organized events also belong to their club's division.
+            $scopeTerms[] = 'sc.division_id = :division_c';
+            $targetTerms[] = 't.target_division_id = :division_t';
+            $params['division_s'] = $divisionId;
+            $params['division_c'] = $divisionId;
+            $params['division_t'] = $divisionId;
+        }
+        if ($zonalId !== null) {
+            $scopeTerms[] = 'e.organizer_zonal_id = :zonal_s';
+            // ... and to their club's division's zone.
+            $scopeTerms[] = 'sd.zonal_id = :zonal_c';
+            $targetTerms[] = 't.target_zonal_id = :zonal_t';
+            $params['zonal_s'] = $zonalId;
+            $params['zonal_c'] = $zonalId;
+            $params['zonal_t'] = $zonalId;
+        }
+        $scopeTerms[] = '(e.organizer_club_id IS NULL
+                          AND e.organizer_division_id IS NULL
+                          AND e.organizer_zonal_id IS NULL)';
+        return ' AND (' . implode(' OR ', $scopeTerms) . ')'
+            . " AND (e.target_scope = 'AllInScope'
+                     OR EXISTS (SELECT 1 FROM EventTarget t
+                                WHERE t.event_id = e.event_id
+                                  AND (" . implode(' OR ', $targetTerms) . ')))';
+    }
+
+    /**
+     * Events browser source (fix/club-event-wiring): every non-draft,
+     * non-rejected event visible to the viewer, with live attendance
+     * counts for sorting. Scope = own club + own division + own zone +
+     * national rows; SelectedClubs targeting is enforced; NYSC (no scope
+     * at all) sees everything. Read-only.
+     *
+     * @return object[]  event rows + present_count + marked_count
+     */
+    public function getVisibleEvents($clubId, $divisionId, $zonalId, $limit = 60) {
+        $sql = "SELECT e.event_id, e.title, e.description, e.event_type,
+                       e.location, e.start_datetime, e.end_datetime,
+                       e.status, e.created_at,
+                       e.organizer_club_id, e.organizer_division_id, e.organizer_zonal_id,
+                       COUNT(CASE WHEN a.status = 'Present' THEN 1 END) AS present_count,
+                       COUNT(a.user_id) AS marked_count
+                FROM Event e
+                LEFT JOIN Attendance a ON a.event_id = e.event_id
+                LEFT JOIN Club sc ON sc.club_id = e.organizer_club_id
+                LEFT JOIN Division sd ON sd.division_id = sc.division_id
+                WHERE e.status IN ('PendingApproval', 'Approved', 'Completed')";
+        $params = [];
+        $sql .= $this->visibleEventScopeSql($clubId, $divisionId, $zonalId, $params);
+        $sql .= " GROUP BY e.event_id
+                  ORDER BY e.start_datetime ASC
+                  LIMIT " . max(1, (int) $limit);
+        return $this->resultSet($sql, $params);
+    }
+
+    /**
+     * Single event, same visibility rules as getVisibleEvents(). Used to
+     * authorize RSVP writes. Returns the row or false.
+     */
+    public function findVisibleEvent($eventId, $clubId, $divisionId, $zonalId) {
+        $sql = "SELECT e.event_id, e.title, e.start_datetime, e.end_datetime, e.status
+                FROM Event e
+                LEFT JOIN Club sc ON sc.club_id = e.organizer_club_id
+                LEFT JOIN Division sd ON sd.division_id = sc.division_id
+                WHERE e.event_id = :event_id
+                  AND e.status IN ('PendingApproval', 'Approved', 'Completed')";
+        $params = ['event_id' => (int) $eventId];
+        $sql .= $this->visibleEventScopeSql($clubId, $divisionId, $zonalId, $params);
+        return $this->single($sql . " LIMIT 1", $params);
+    }
+
     public function createClubEvent($clubId, $divisionId, $userId, $title, $type, $location, $start, $end) {
         return $this->createEvent([
             'title'                => $title,
