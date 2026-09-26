@@ -314,11 +314,12 @@ class Profile extends Controller {
         $eligible = $this->canEndorseTarget($viewer, $target);
         $data['isSelf'] = false;
         $data['canEndorse'] = $eligible;
-        // Scope-privileged viewers moderate every endorsement on an
-        // in-scope CV (author removals + moderation, both audit-logged).
+        // Delete is author-only (owner decision 2026-09-26): scope privilege
+        // lets you write and revise your own endorsement, never remove
+        // someone else's. Stale rows (author gone) are NYSC cleanup via DB.
         $data['deletableIds'] = [];
-        if ($eligible) {
-            foreach ($data['endorsements'] as $endorsement) {
+        foreach ($data['endorsements'] as $endorsement) {
+            if ((int) $endorsement['endorser_user_id'] === (int) $viewer->user_id) {
                 $data['deletableIds'][] = (int) $endorsement['id'];
             }
         }
@@ -360,7 +361,9 @@ class Profile extends Controller {
     }
 
     /**
-     * Delete an endorsement (author or scope-privileged viewer). POST only.
+     * Delete your own endorsement. POST only. Authors can only ever remove
+     * rows they wrote (owner decision 2026-09-26) — scope privilege grants
+     * no moderation power.
      */
     public function deleteEndorsement() {
         if (empty($_SESSION['user_id'])) {
@@ -374,18 +377,12 @@ class Profile extends Controller {
         if (!$row) {
             $this->redirect('home');
         }
-        $viewer = $this->model('UserModel')->findByUserIdWithHierarchy((int) $_SESSION['user_id']);
-        $target = $this->model('UserModel')->findByUserIdWithHierarchy((int) $row->member_user_id);
-        if (!$viewer || !$target) {
-            $this->redirect('home');
-        }
-        $isAuthor = (int) $row->endorser_user_id === (int) $viewer->user_id;
-        if (!$isAuthor && !$this->canEndorseTarget($viewer, $target)) {
+        if ((int) $row->endorser_user_id !== (int) $_SESSION['user_id']) {
             $this->redirect('home');
         }
         $this->model('EndorsementModel')->delete($endorsementId);
         $this->model('AuditLogModel')->log(
-            (int) $viewer->user_id, 'DELETE_ENDORSEMENT', 'User', (int) $row->member_user_id, 'Removed a CV endorsement'
+            (int) $_SESSION['user_id'], 'DELETE_ENDORSEMENT', 'User', (int) $row->member_user_id, 'Removed own CV endorsement'
         );
         $this->setFlash('success', 'Endorsement removed.');
         $this->redirect('profile/member/' . (int) $row->member_user_id);
