@@ -3,14 +3,21 @@
 /**
  * Audit Controller
  *
- * Handles the Annual Financial Audit feature under NYSC Administration.
+ * Annual Financial Audit feature for NYSC Administration, aligned to the workflow:
+ *   Phase 1 — index(): scope & financial-year selection + recent audit reports.
+ *   Phase 1 — run():   compiles financial data for the selected scope (creates/refreshes audit).
+ *   Phase 2–4 — report($id): math check panel, red flag table and auditor actions.
+ *   Phase 4 — clarify(): send clarification request; signoff(): approve & lock the year.
+ *
  * Routes:
- *   /audit                      → index()
- *   /audit/rerun                → rerun()   [GET/POST]
- *   /audit/clarify              → clarify() [POST]
- *   /audit/signoff              → signoff() [POST]
- *   /audit/resolveflag/{id}     → resolveflag($id) [POST/GET]
- *   /audit/export               → export()  [GET]
+ *   /audit                  → index()
+ *   /audit/run              → run()      [POST]
+ *   /audit/report/{id}      → report($id)
+ *   /audit/rerun            → rerun()    [POST]
+ *   /audit/clarify          → clarify()  [POST]
+ *   /audit/signoff          → signoff()  [POST]
+ *   /audit/resolveflag/{id} → resolveflag($id)
+ *   /audit/export           → export()   [GET]
  */
 class Audit extends Controller {
 
@@ -22,15 +29,10 @@ class Audit extends Controller {
             session_start();
         }
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'NYSCAdministrator') {
-            if (empty($_SESSION['user_id'])) {
-                $this->redirect('auth/signin');
-            }
+            $this->redirect('auth/signin');
         }
     }
 
-    /**
-     * Helper to detect AJAX or JSON requests.
-     */
     protected function isJsonRequest() {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $xReq   = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
@@ -39,8 +41,27 @@ class Audit extends Controller {
             || (isset($_GET['format']) && $_GET['format'] === 'json');
     }
 
+    private function auditorIdentity() {
+        $auditorName = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
+        if (empty($auditorName)) {
+            $auditorName = $_SESSION['user_name'] ?? 'NYSC Administrator';
+        }
+        $auditorRole = $_SESSION['user_role'] ?? 'NYSCAdministrator';
+        return [$auditorName, $auditorRole];
+    }
+
+    private function flash() {
+        $flash = [
+            'flashSuccess' => $_SESSION['audit_flash_success'] ?? null,
+            'flashError'   => $_SESSION['audit_flash_error'] ?? null,
+        ];
+        unset($_SESSION['audit_flash_success'], $_SESSION['audit_flash_error']);
+        return $flash;
+    }
+
     /**
-     * Main Annual Audit dashboard view.
+     * PHASE 1 — Audit dashboard: parameters, compile action and the register
+     * of audit reports already produced.
      */
     public function index() {
         $this->requireNYSCAdmin();
@@ -51,113 +72,141 @@ class Audit extends Controller {
 
         $model = $this->model('AuditModel');
 
-        // Capture scope & year parameters
-        $scopeLevel = trim($_GET['scope_level'] ?? 'Zonal');
-        $scopeId    = isset($_GET['scope_id']) ? (int)$_GET['scope_id'] : 6; // Default to Kandy Zone (6)
-        $year       = (int)($_GET['year'] ?? 2026);
-
-        // Get Available Scopes for dropdown
-        $availableScopes = $model->getAvailableScopes();
-
-        // Validate scope_id if Zonal
-        if ($scopeLevel === 'Zonal' && $scopeId === 0) {
-            $scopeId = 6;
-        }
-
-        $currentUserId = $_SESSION['user_id'] ?? 1;
-
-        // Fetch or compute audit
-        $audit = $model->getAudit($scopeLevel, $scopeId, $year, $currentUserId);
-
-        // Calculate visual stat numbers
-        $revenueVal  = $audit->total_income + $audit->total_transfers_received;
-        $expensesVal = $audit->total_expenses;
-        // Idle funds: transfers in - expenses (or 3.4M demo metric)
-        $idleVal     = max(0, $audit->total_transfers_received - $audit->total_expenses);
-        if ($idleVal == 0 && $scopeLevel === 'Zonal') {
-            $idleVal = 3400000.00;
-        }
-
-        $redFlagsCount = 0;
-        if (!empty($audit->red_flags)) {
-            foreach ($audit->red_flags as $rf) {
-                if ($rf->status !== 'Resolved') {
-                    $redFlagsCount++;
-                }
-            }
-        }
-
-        // Current auditor display
-        $auditorName = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-        if (empty($auditorName)) {
-            $auditorName = 'N. Fernando';
-        }
-        $auditorRole = $_SESSION['user_role'] ?? 'Divisional Secretariat';
-        if ($auditorRole === 'NYSCAdministrator') {
-            $auditorRole = 'NYSC National Administration';
-        }
-
-        // Flash message
-        $flashSuccess = $_SESSION['audit_flash_success'] ?? null;
-        $flashError   = $_SESSION['audit_flash_error'] ?? null;
-        unset($_SESSION['audit_flash_success'], $_SESSION['audit_flash_error']);
+        [$auditorName, $auditorRole] = $this->auditorIdentity();
 
         $this->view('audit/index', [
-            'title'           => 'Annual Financial Audit — YouthNexus',
+            'title'           => 'Annual Audit — YouthNexus',
             'pageTitle'       => 'Annual Financial Audit',
-            'pageDescription' => 'National Youth Services Council — Statutory ledger reconciliation & fiscal compliance review',
+            'pageDescription' => 'Select an entity and financial year to compile its statutory audit.',
+            'currentRoute'    => 'audit',
+            'userRole'        => $_SESSION['user_role'] ?? 'NYSCAdministrator',
+            'userName'        => $auditorName,
+            'auditorName'     => $auditorName,
+            'auditorRole'     => $auditorRole,
+            'scopes'          => $model->getAvailableScopes(),
+            'years'           => $model->getSelectableYears(),
+            'audits'          => $model->getAuditList(),
+        ] + $this->flash() + ['csrf_token' => $_SESSION['csrf_token']]);
+    }
+
+    /**
+     * PHASE 1 — Compile financial data for the selected scope & year,
+     * running the math check and red flag detection, then open the report.
+     */
+    public function run() {
+        $this->requireNYSCAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('audit');
+        }
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['audit_flash_error'] = 'Invalid session token. Please try again.';
+            $this->redirect('audit');
+        }
+
+        // Entity select posts "Level:ID" (e.g. "Zonal:6", "National:0").
+        $entity     = trim($_POST['entity'] ?? 'National:0');
+        $parts      = explode(':', $entity, 2);
+        $scopeLevel = ucfirst(strtolower(trim($parts[0] ?? 'National')));
+        $scopeId    = (int)($parts[1] ?? 0);
+        $year       = (int)($_POST['year'] ?? date('Y'));
+
+        if (!in_array($scopeLevel, ['National', 'Zonal', 'Divisional', 'Club'], true)) {
+            $_SESSION['audit_flash_error'] = 'Invalid audit scope selected.';
+            $this->redirect('audit');
+        }
+        if ($scopeLevel !== 'National' && $scopeId <= 0) {
+            $_SESSION['audit_flash_error'] = 'Please select the specific entity to audit.';
+            $this->redirect('audit');
+        }
+
+        $model = $this->model('AuditModel');
+        $auditId = $model->runAuditCheck($scopeLevel, $scopeId, $year, $_SESSION['user_id'] ?? 1);
+
+        $_SESSION['audit_flash_success'] = 'Audit compiled for ' . $model->scopeLabel($scopeLevel, $scopeId) . ' — FY ' . $year . '. Review the math check and red flags below.';
+        $this->redirect("audit/report/{$auditId}");
+    }
+
+    /**
+     * PHASE 2–4 — Audit report: math check, red flags and auditor actions.
+     */
+    public function report($auditId = null) {
+        $this->requireNYSCAdmin();
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        $model = $this->model('AuditModel');
+        $audit = $model->getAuditById((int)$auditId);
+
+        if (!$audit) {
+            $_SESSION['audit_flash_error'] = 'Audit report not found. Compile a new audit from the dashboard.';
+            $this->redirect('audit');
+        }
+
+        [$auditorName, $auditorRole] = $this->auditorIdentity();
+
+        // Sign-off eligibility per the workflow: math passed AND no unresolved flags.
+        $unresolvedCount = $model->countUnresolvedFlags($audit->audit_id);
+        $canSignOff = !$audit->locked
+            && $audit->math_check_status === 'Passed'
+            && $unresolvedCount === 0;
+
+        $this->view('audit/report', [
+            'title'           => 'Audit Report — YouthNexus',
+            'pageTitle'       => 'Annual Financial Audit Report',
+            'pageDescription' => 'Math verification, red flags and sign-off for the selected entity & financial year.',
             'currentRoute'    => 'audit',
             'userRole'        => $_SESSION['user_role'] ?? 'NYSCAdministrator',
             'userName'        => $auditorName,
             'auditorName'     => $auditorName,
             'auditorRole'     => $auditorRole,
             'audit'           => $audit,
-            'availableScopes' => $availableScopes,
-            'selectedScope'   => $scopeLevel,
-            'selectedScopeId' => $scopeId,
-            'selectedYear'    => $year,
-            'revenueVal'      => $revenueVal,
-            'expensesVal'     => $expensesVal,
-            'idleVal'         => $idleVal,
-            'redFlagsCount'   => $redFlagsCount,
-            'flashSuccess'    => $flashSuccess,
-            'flashError'      => $flashError,
-            'csrf_token'      => $_SESSION['csrf_token'],
-        ]);
+            'unresolvedCount' => $unresolvedCount,
+            'canSignOff'      => $canSignOff,
+        ] + $this->flash() + ['csrf_token' => $_SESSION['csrf_token']]);
     }
 
     /**
-     * Rerun the mathematical ledger check and red flag detection.
+     * Re-run math check & red flag detection for an existing audit.
      */
     public function rerun() {
         $this->requireNYSCAdmin();
 
-        $scopeLevel = trim($_REQUEST['scope_level'] ?? 'Zonal');
-        $scopeId    = isset($_REQUEST['scope_id']) ? (int)$_REQUEST['scope_id'] : 6;
-        $year       = (int)($_REQUEST['year'] ?? 2026);
-
-        $thresholds = [
-            'receipt_threshold' => (float)($_REQUEST['receipt_threshold'] ?? 5000.00),
-            'hoarding_margin'   => (float)($_REQUEST['hoarding_margin']   ?? 80.00),
-            'void_rate'         => (float)($_REQUEST['void_rate']         ?? 10.00),
-        ];
-
-        $currentUserId = $_SESSION['user_id'] ?? 1;
-        $model = $this->model('AuditModel');
-
-        $auditId = $model->runAuditCheck($scopeLevel, $scopeId, $year, $currentUserId, $thresholds);
-
-        if ($this->isJsonRequest()) {
-            echo json_encode(['success' => true, 'audit_id' => $auditId, 'message' => 'Audit check recalculated successfully.']);
-            exit;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('audit');
         }
 
-        $_SESSION['audit_flash_success'] = 'Audit check recalculated successfully. All ledger math and red flag exceptions refreshed.';
-        $this->redirect("audit?scope_level={$scopeLevel}&scope_id={$scopeId}&year={$year}");
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['audit_flash_error'] = 'Invalid session token. Please try again.';
+            $this->redirect('audit');
+        }
+
+        $auditId = (int)($_POST['audit_id'] ?? 0);
+        $model   = $this->model('AuditModel');
+        $audit   = $model->getAuditById($auditId);
+
+        if (!$audit) {
+            $_SESSION['audit_flash_error'] = 'Audit record not found.';
+            $this->redirect('audit');
+        }
+        if ($audit->locked) {
+            $_SESSION['audit_flash_error'] = 'This audit is signed off and locked; figures can no longer be recalculated.';
+            $this->redirect("audit/report/{$auditId}");
+        }
+
+        $model->runAuditCheck($audit->scope_level, $audit->scope_id, $audit->financial_year, $_SESSION['user_id'] ?? 1);
+
+        $_SESSION['audit_flash_success'] = 'Audit recalculated — math check and red flags refreshed from the current ledger data.';
+        $this->redirect("audit/report/{$auditId}");
     }
 
     /**
-     * Send Clarification Request to regional treasurer & coordinator.
+     * PHASE 4 — Send clarification request to the entity's officers.
      */
     public function clarify() {
         $this->requireNYSCAdmin();
@@ -166,32 +215,19 @@ class Audit extends Controller {
             $this->redirect('audit');
         }
 
-        // Validate CSRF
         $token = $_POST['csrf_token'] ?? '';
         if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
-            if ($this->isJsonRequest()) {
-                http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Invalid or expired session token.']);
-                exit;
-            }
             $_SESSION['audit_flash_error'] = 'Invalid session token. Please try again.';
             $this->redirect('audit');
         }
 
         $auditId      = (int)($_POST['audit_id'] ?? 0);
         $queryText    = trim($_POST['query'] ?? '');
-        $deadlineDays = (int)($_POST['deadline_days'] ?? 7);
+        $deadlineDays = max(1, (int)($_POST['deadline_days'] ?? 7));
         $flagIds      = !empty($_POST['flag_ids']) ? (array)$_POST['flag_ids'] : [];
 
-        $currentUserId = $_SESSION['user_id'] ?? 1;
-        $model = $this->model('AuditModel');
-
-        $result = $model->requestClarification($auditId, $flagIds, $queryText, $currentUserId, $deadlineDays);
-
-        if ($this->isJsonRequest()) {
-            echo json_encode($result);
-            exit;
-        }
+        $model  = $this->model('AuditModel');
+        $result = $model->requestClarification($auditId, $flagIds, $queryText, $_SESSION['user_id'] ?? 1, $deadlineDays);
 
         if ($result['success']) {
             $_SESSION['audit_flash_success'] = $result['message'];
@@ -199,16 +235,11 @@ class Audit extends Controller {
             $_SESSION['audit_flash_error'] = $result['message'];
         }
 
-        $audit = $model->getAuditById($auditId);
-        $scopeLevel = $audit ? $audit->scope_level : 'Zonal';
-        $scopeId    = $audit ? $audit->scope_id : 6;
-        $year       = $audit ? $audit->financial_year : 2026;
-
-        $this->redirect("audit?scope_level={$scopeLevel}&scope_id={$scopeId}&year={$year}");
+        $this->redirect("audit/report/{$auditId}");
     }
 
     /**
-     * Formal Sign-off and Ledger Lock.
+     * PHASE 4 — Formal sign-off & financial-year lock.
      */
     public function signoff() {
         $this->requireNYSCAdmin();
@@ -217,28 +248,15 @@ class Audit extends Controller {
             $this->redirect('audit');
         }
 
-        // Validate CSRF
         $token = $_POST['csrf_token'] ?? '';
         if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
-            if ($this->isJsonRequest()) {
-                http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Invalid or expired security token.']);
-                exit;
-            }
-            $_SESSION['audit_flash_error'] = 'Invalid security token.';
+            $_SESSION['audit_flash_error'] = 'Invalid session token. Please try again.';
             $this->redirect('audit');
         }
 
-        $auditId       = (int)($_POST['audit_id'] ?? 0);
-        $currentUserId = $_SESSION['user_id'] ?? 1;
-        $model = $this->model('AuditModel');
-
-        $result = $model->signOffAudit($auditId, $currentUserId);
-
-        if ($this->isJsonRequest()) {
-            echo json_encode($result);
-            exit;
-        }
+        $auditId = (int)($_POST['audit_id'] ?? 0);
+        $model   = $this->model('AuditModel');
+        $result  = $model->signOffAudit($auditId, $_SESSION['user_id'] ?? 1);
 
         if ($result['success']) {
             $_SESSION['audit_flash_success'] = $result['message'];
@@ -246,35 +264,32 @@ class Audit extends Controller {
             $_SESSION['audit_flash_error'] = $result['message'];
         }
 
-        $audit = $model->getAuditById($auditId);
-        $scopeLevel = $audit ? $audit->scope_level : 'Zonal';
-        $scopeId    = $audit ? $audit->scope_id : 6;
-        $year       = $audit ? $audit->financial_year : 2026;
-
-        $this->redirect("audit?scope_level={$scopeLevel}&scope_id={$scopeId}&year={$year}");
+        $this->redirect("audit/report/{$auditId}");
     }
 
     /**
-     * Resolve individual red flag.
+     * Mark an individual red flag as resolved / accepted.
      */
     public function resolveflag($flagId = null) {
         $this->requireNYSCAdmin();
 
         $flagId = (int)($flagId ?? $_POST['flag_id'] ?? 0);
         $model  = $this->model('AuditModel');
+
+        $auditIdForFlag = $model->getFlagAuditId($flagId);
         $success = $model->resolveFlag($flagId);
 
-        if ($this->isJsonRequest()) {
-            echo json_encode(['success' => $success, 'message' => $success ? 'Flag resolved.' : 'Unable to resolve flag.']);
-            exit;
+        if ($success) {
+            $_SESSION['audit_flash_success'] = 'Audit exception marked as resolved / accepted.';
+        } else {
+            $_SESSION['audit_flash_error'] = 'Unable to resolve the audit exception.';
         }
 
-        $_SESSION['audit_flash_success'] = 'Audit exception marked as resolved / accepted.';
-        $this->redirect('audit');
+        $this->redirect($auditIdForFlag ? "audit/report/{$auditIdForFlag}" : 'audit');
     }
 
     /**
-     * Export Audit Summary as CSV.
+     * Export the audit summary as CSV.
      */
     public function export() {
         $this->requireNYSCAdmin();
@@ -283,17 +298,16 @@ class Audit extends Controller {
         $model   = $this->model('AuditModel');
 
         if (!$auditId) {
-            $scopeLevel = trim($_GET['scope_level'] ?? 'Zonal');
-            $scopeId    = isset($_GET['scope_id']) ? (int)$_GET['scope_id'] : 6;
-            $year       = (int)($_GET['year'] ?? 2026);
-            $audit      = $model->getAudit($scopeLevel, $scopeId, $year);
-            $auditId    = $audit ? (int)$audit->audit_id : 0;
+            $this->redirect('audit');
         }
+
+        $audit = $model->getAuditById($auditId);
+        $year  = $audit ? $audit->financial_year : date('Y');
 
         $csv = $model->exportAuditCsv($auditId);
 
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="youthnexus_audit_summary_FY' . date('Y') . '.csv"');
+        header('Content-Disposition: attachment; filename="youthnexus_audit_summary_FY' . $year . '.csv"');
         echo $csv;
         exit;
     }

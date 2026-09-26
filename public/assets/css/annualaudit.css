@@ -1,23 +1,26 @@
 /* ============================================================
    annualaudit.css  -  Annual Financial Audit (YouthNexus)
    Faithful to annualAudit.php, approveAuditPopup.php & clarificationPopup.php
-   Styled to match YouthNexus project design system (fund transfer / dashboard)
+   Design system: matches fundtransfer.css & managereports.css
+   (Inter NOT used here — shared system UI font stack, #0f172a ink,
+   #1e5eff accent blue, #1e3fa0 navy, #e2e8f0 card borders)
    ============================================================ */
 
 /* Container */
 .audit-content {
     padding: 10px 0 30px;
-    max-width: 1150px;
+    max-width: 1300px;
     margin: 0 auto;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #333;
+    color: #1e293b;
 }
 
 /* Flash alerts */
 .audit-flash-alert {
-    padding: 12px 18px;
+    padding: 12px 16px;
     border-radius: 8px;
     font-size: 13.5px;
+    font-weight: 500;
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
@@ -34,24 +37,26 @@
     border: 1px solid #fecaca;
 }
 
-/* ---- Page head ---- */
-.audit-page-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 22px;
+/* ---- Page action row ---- */
+.audit-page-head,
+.audit-action-row {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center;
+    margin-bottom: 24px;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
+    width: 100%;
 }
 .audit-page-head h1 {
     font-size: 22px;
     font-weight: 700;
-    color: #111827;
+    color: #0f172a;
     margin: 0;
 }
 .audit-page-head p {
     font-size: 13px;
-    color: #6b7280;
+    color: #64748b;
     margin-top: 5px;
     max-width: 500px;
     line-height: 1.4;
@@ -59,64 +64,66 @@
 .audit-head-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    margin-left: auto;
 }
 .audit-fy-badge {
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
     border-radius: 6px;
     padding: 8px 14px;
     font-size: 13px;
-    color: #374151;
+    font-weight: 600;
+    color: #1e3fa0;
     display: inline-flex;
     align-items: center;
 }
 .audit-fy-badge b {
-    color: #111827;
+    color: #1e3fa0;
     margin-left: 6px;
     font-weight: 700;
 }
 
 /* Action buttons */
 .audit-btn {
-    padding: 9px 16px;
+    padding: 10px 18px;
     border: none;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     text-decoration: none;
     line-height: 1.2;
     transition: all 0.15s ease-in-out;
+    font-family: inherit;
 }
 .audit-btn-light {
-    background: #fff;
-    color: #374151;
-    border: 1px solid #e5e7eb;
+    background: #eef1fb;
+    color: #1e3fa0;
+    border: 1px solid #dce4f9;
 }
 .audit-btn-light:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    color: #111827;
+    background: #dfe6fa;
+    color: #162f7a;
 }
 .audit-btn-blue {
-    background: #1d4ed8;
+    background: #1e5eff;
     color: #fff;
 }
 .audit-btn-blue:hover {
-    background: #1e40af;
+    background: #164bd8;
     color: #fff;
 }
 
 /* ---- Stat cards ---- */
 .audit-stats {
     display: flex;
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 16px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
 }
 .audit-stat-card {
@@ -124,45 +131,47 @@
     min-width: 220px;
     background: #fff;
     border-radius: 10px;
-    padding: 18px;
-    border: 1px solid #eef0f4;
+    padding: 18px 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .audit-stat-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .audit-stat-card h3 {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: normal;
-    margin: 0 0 10px 0;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
+    margin: 0 0 8px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 .audit-stat-card .num {
-    font-size: 24px;
-    font-weight: bold;
-    color: #111827;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
     margin-bottom: 8px;
-    letter-spacing: -0.3px;
     line-height: 1.2;
 }
 .audit-stat-card .num-amber {
-    color: #d97706;
+    color: #b8860b;
 }
 .audit-stat-card .sub {
     font-size: 12px;
     margin-top: auto;
 }
-.audit-stat-card .sub.green { color: #059669; }
-.audit-stat-card .sub.gray  { color: #6b7280; }
-.audit-stat-card .sub.amber { color: #d97706; }
-.audit-stat-card .sub.red   { color: #dc2626; }
+.audit-stat-card .sub.green { color: #1e9e5a; }
+.audit-stat-card .sub.gray  { color: #64748b; }
+.audit-stat-card .sub.amber { color: #b8860b; }
+.audit-stat-card .sub.red   { color: #b91c1c; }
 
 /* audit status card is special */
 .audit-stat-alert {
@@ -172,31 +181,32 @@
 .audit-stat-alert .tag {
     display: inline-block;
     background: #fee2e2;
-    color: #dc2626;
+    color: #b91c1c;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 700;
     padding: 3px 10px;
-    border-radius: 4px;
+    border-radius: 12px;
 }
 .audit-stat-alert .attention {
-    font-size: 20px;
-    font-weight: bold;
-    color: #dc2626;
+    font-size: 22px;
+    font-weight: 700;
+    color: #b91c1c;
     margin: 10px 0;
 }
 
 /* ---- Ledger verification panel ---- */
 .audit-panel {
     background: #fff;
-    border-radius: 10px;
-    border: 1px solid #eef0f4;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     padding: 20px 24px;
     margin-bottom: 28px;
 }
 .audit-panel h2 {
     font-size: 15px;
     font-weight: 700;
-    color: #111827;
+    color: #0f172a;
     margin: 0 0 18px 0;
 }
 
@@ -210,45 +220,47 @@
     flex: 1;
     min-width: 120px;
     background: #fff;
-    border: 1px solid #eef0f4;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 14px 12px;
     text-align: center;
 }
 .audit-step .step-label {
     font-size: 11px;
-    color: #6b7280;
+    color: #94a3b8;
     margin-bottom: 6px;
-    font-weight: 500;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
     white-space: nowrap;
 }
 .audit-step .step-value {
     font-size: 15px;
-    font-weight: bold;
-    color: #111827;
+    font-weight: 700;
+    color: #0f172a;
 }
-.audit-step .green { color: #059669; }
-.audit-step .red   { color: #dc2626; }
-.audit-step .blue  { color: #2563eb; }
+.audit-step .green { color: #1e9e5a; }
+.audit-step .red   { color: #b91c1c; }
+.audit-step .blue  { color: #1e5eff; }
 .audit-step.expected {
-    background: #eff6ff;
-    border-color: #bfdbfe;
+    background: #eef2fb;
+    border-color: #dbe6ff;
 }
 
 .audit-ledger-result {
-    background: #f9fafb;
+    background: #f8fafc;
     border-radius: 8px;
     padding: 12px 16px;
     font-size: 13px;
-    color: #374151;
+    color: #475569;
 }
 .audit-ledger-result b {
-    color: #111827;
+    color: #0f172a;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     font-weight: 700;
 }
 .audit-ledger-result b.variance-ok {
-    color: #059669;
+    color: #1e9e5a;
 }
 
 /* ---- Exceptions section ---- */
@@ -266,18 +278,18 @@
     gap: 10px;
 }
 .audit-exceptions-head h2 {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: #111827;
+    color: #0f172a;
     margin: 0;
 }
 .audit-count-badge {
     background: #fee2e2;
-    color: #dc2626;
-    font-size: 12px;
-    font-weight: bold;
+    color: #b91c1c;
+    font-size: 11px;
+    font-weight: 700;
     padding: 3px 10px;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 .audit-exceptions-head .right {
     display: flex;
@@ -291,15 +303,16 @@
     justify-content: space-between;
     align-items: center;
     background: #fff;
-    border: 1px solid #eef0f4;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 16px 20px;
     margin-bottom: 10px;
     gap: 16px;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .audit-exception:hover {
-    border-color: #d1d5db;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 .audit-exception-info {
     flex: 1;
@@ -313,62 +326,65 @@
 }
 .audit-ex-tag {
     font-size: 10px;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
-.audit-ex-tag.red    { background: #fee2e2; color: #dc2626; }
-.audit-ex-tag.orange { background: #ffedd5; color: #d97706; }
-.audit-ex-tag.gray   { background: #f3f4f6; color: #6b7280; }
-.audit-ex-tag.green  { background: #d1fae5; color: #059669; }
+.audit-ex-tag.red    { background: #fee2e2; color: #b91c1c; }
+.audit-ex-tag.orange { background: #fdf3d7; color: #b8860b; }
+.audit-ex-tag.gray   { background: #f1f5f9; color: #64748b; }
+.audit-ex-tag.green  { background: #e0f5e9; color: #1e9e5a; }
 
 .audit-ex-ref {
-    font-size: 12px;
-    color: #9ca3af;
+    font-size: 11px;
+    color: #94a3b8;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-weight: 600;
 }
 .audit-exception-info .title {
     font-size: 14px;
-    font-weight: bold;
-    color: #111827;
+    font-weight: 700;
+    color: #0f172a;
     margin-bottom: 5px;
 }
 .audit-exception-info .detail {
     font-size: 12px;
-    color: #6b7280;
+    color: #64748b;
     line-height: 1.4;
 }
 .audit-exception-info .detail b {
-    color: #374151;
+    color: #334155;
 }
 .audit-btn-outline {
     background: #fff;
-    color: #374151;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 8px 16px;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 7px 16px;
     font-size: 13px;
     cursor: pointer;
     font-weight: 600;
     white-space: nowrap;
     transition: all 0.15s ease;
+    font-family: inherit;
 }
 .audit-btn-outline:hover {
-    background: #f9fafb;
+    background: #f4f5f7;
     border-color: #cbd5e1;
-    color: #111827;
+    color: #0f172a;
 }
 
 /* ============================================================
-   MODAL OVERLAY & POPUP BOXES (Pure 1:1 matching prototypes)
+   MODAL OVERLAY & POPUP BOXES (matching fundtransfer.css popups)
    ============================================================ */
 .audit-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
     z-index: 9999;
@@ -382,8 +398,8 @@
     max-width: 95%;
     max-height: 90vh;
     overflow-y: auto;
-    border-radius: 14px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -392,31 +408,34 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 22px 28px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 20px 28px;
+    border-bottom: 1px solid #eef2f6;
 }
 .audit-modal-head h1 {
     font-size: 19px;
     font-weight: 700;
-    color: #111827;
+    color: #0f172a;
     margin: 0;
 }
 .audit-modal-head p {
     font-size: 12px;
-    color: #9ca3af;
+    color: #64748b;
     margin-top: 4px;
 }
 .audit-close-x {
-    font-size: 18px;
-    color: #9ca3af;
+    font-size: 24px;
+    color: #64748b;
     cursor: pointer;
     background: none;
     border: none;
     line-height: 1;
-    padding: 2px 6px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
 }
 .audit-close-x:hover {
-    color: #111827;
+    color: #0f172a;
+    background: #f1f5f9;
 }
 
 .audit-modal-body {
@@ -428,7 +447,7 @@
     width: 620px;
 }
 .audit-summary {
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 6px 16px;
     margin-bottom: 16px;
@@ -438,48 +457,49 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid #f1f5f9;
 }
 .audit-summary .row:last-child {
     border-bottom: none;
 }
 .audit-summary .label {
-    font-size: 12px;
-    color: #6b7280;
-    letter-spacing: 0.5px;
-    font-weight: 600;
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 0.75px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 .audit-summary .value {
     font-size: 13px;
-    color: #111827;
-    font-weight: bold;
+    color: #0f172a;
+    font-weight: 700;
     text-align: right;
 }
 .audit-summary .status-ok {
     display: inline-block;
-    background: #d1fae5;
-    color: #059669;
+    background: #e0f5e9;
+    color: #1e9e5a;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 700;
     padding: 4px 12px;
     border-radius: 20px;
 }
 .audit-summary .math {
     font-weight: normal;
-    color: #374151;
+    color: #334155;
 }
 
 .audit-lock-notice {
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
+    background: #fdf3d7;
+    border: 1px solid #f0e0b0;
     border-radius: 8px;
     padding: 14px 16px;
     margin-bottom: 18px;
     font-size: 12px;
-    color: #92400e;
+    color: #8a6508;
     line-height: 1.6;
 }
 .audit-lock-notice .lock {
@@ -489,9 +509,9 @@
 .audit-field-label {
     display: block;
     font-size: 11px;
-    font-weight: bold;
-    color: #6b7280;
-    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.75px;
     margin-bottom: 8px;
     text-transform: uppercase;
 }
@@ -500,22 +520,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 6px;
     font-size: 13px;
-    color: #111827;
+    color: #0f172a;
     font-weight: 600;
 }
 .audit-auditor-box .id-badge {
-    background: #dbeafe;
-    color: #1e40af;
+    background: #e3ecff;
+    color: #1e3fa0;
     font-size: 10px;
-    font-weight: bold;
+    font-weight: 700;
     padding: 4px 10px;
-    border-radius: 4px;
+    border-radius: 6px;
     letter-spacing: 0.5px;
 }
 
@@ -525,35 +545,42 @@
     align-items: center;
     padding: 16px 28px;
     gap: 14px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid #eef2f6;
+    background: #f8fafc;
 }
 .audit-btn-cancel {
-    background: #fff;
-    color: #374151;
+    background: #e2e8f0;
+    color: #334155;
     border: none;
-    font-size: 13px;
-    font-weight: bold;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
     cursor: pointer;
-    padding: 11px 16px;
+    padding: 11px 20px;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
 }
 .audit-btn-cancel:hover {
-    color: #111827;
+    background: #cbd5e1;
+    color: #0f172a;
 }
 .audit-btn-confirm {
-    background: #1d4ed8;
+    background: #1e5eff;
     color: #fff;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 11px 20px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 700;
     border: none;
+    transition: background 0.15s;
+    font-family: inherit;
 }
 .audit-btn-confirm:hover {
-    background: #1e40af;
+    background: #164bd8;
 }
 
 /* ---- Clarification Modal Specifics (clarificationPopup.php) ---- */
@@ -561,7 +588,7 @@
     width: 700px;
 }
 .audit-flag-box {
-    background: #fef2f2;
+    background: #fee2e2;
     border: 1px solid #fecaca;
     border-radius: 8px;
     padding: 14px 18px;
@@ -570,9 +597,9 @@
 .audit-flag-box h3 {
     font-size: 11px;
     color: #b91c1c;
-    letter-spacing: 1px;
+    letter-spacing: 0.75px;
     margin: 0 0 8px 0;
-    font-weight: bold;
+    font-weight: 700;
     text-transform: uppercase;
 }
 .audit-flag-box ul {
@@ -581,34 +608,34 @@
 }
 .audit-flag-box li {
     font-size: 12px;
-    color: #374151;
+    color: #334155;
     margin-bottom: 5px;
 }
 .audit-flag-box li .amt {
-    color: #dc2626;
-    font-weight: bold;
+    color: #b91c1c;
+    font-weight: 700;
 }
 
 .audit-recipients {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 18px;
     font-size: 13px;
-    color: #111827;
-    font-weight: bold;
+    color: #0f172a;
+    font-weight: 700;
 }
 .audit-recipients .verified {
     font-size: 11px;
-    color: #6b7280;
+    color: #64748b;
     font-weight: normal;
 }
 .audit-recipients .mail {
-    color: #1e40af;
+    color: #1e3fa0;
     margin-right: 6px;
 }
 
@@ -616,16 +643,22 @@
     width: 100%;
     height: 100px;
     padding: 14px;
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
     border-radius: 8px;
     font-size: 13px;
-    color: #374151;
+    color: #334155;
     resize: none;
     outline: none;
     font-family: inherit;
     margin-bottom: 18px;
     box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.audit-textarea:focus {
+    background: #ffffff;
+    border-color: #1e5eff;
+    box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.15);
 }
 
 .audit-two-row {
@@ -637,25 +670,26 @@
     flex: 1;
 }
 .audit-field-box {
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
+    background: #eef2fb;
+    border: 1px solid #e0e6f5;
     border-radius: 8px;
     padding: 12px 14px;
     font-size: 13px;
-    color: #111827;
+    color: #0f172a;
 }
 
 .audit-modal-foot-clarify {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 28px;
+    padding: 16px 28px;
     gap: 12px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid #eef2f6;
+    background: #f8fafc;
 }
 .audit-foot-note {
     font-size: 11px;
-    color: #9ca3af;
+    color: #94a3b8;
     max-width: 320px;
     line-height: 1.5;
 }
@@ -664,31 +698,298 @@
     gap: 10px;
 }
 .audit-btn-send {
-    background: #1d4ed8;
+    background: #1e5eff;
     color: #fff;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 11px 22px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 700;
     border: none;
+    transition: background 0.15s;
+    font-family: inherit;
 }
 .audit-btn-send:hover {
-    background: #1e40af;
+    background: #164bd8;
 }
 .audit-btn-cancel-border {
-    background: #fff;
-    color: #374151;
-    border: 1px solid #d1d5db;
+    background: #e2e8f0;
+    color: #334155;
+    border: none;
     padding: 11px 22px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
 }
 .audit-btn-cancel-border:hover {
-    background: #f9fafb;
+    background: #cbd5e1;
+    color: #0f172a;
+}
+
+/* ============================================================
+   WORKFLOW UI — Phase 1 dashboard & Phase 2–4 report
+   (same design tokens as fundtransfer / managereports)
+   ============================================================ */
+
+/* Status pills (shared across dashboard register + report) */
+.audit-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.audit-pill-green  { background: #e0f5e9; color: #1e9e5a; }
+.audit-pill-yellow { background: #fdf3d7; color: #b8860b; }
+.audit-pill-red    { background: #fee2e2; color: #b91c1c; }
+.audit-pill-blue   { background: #e3ecff; color: #1e3fa0; }
+
+/* Phase 1 — compile form */
+.audit-panel-sub {
+    font-size: 13px;
+    color: #64748b;
+    margin: -12px 0 18px;
+}
+.audit-compile-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.audit-compile-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+.audit-compile-entity {
+    flex: 1;
+    min-width: 320px;
+}
+.audit-compile-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.audit-required {
+    color: #ef4444;
+}
+.audit-compile-field select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 500;
+    color: #334155;
+    background: #ffffff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.audit-compile-field select:focus {
+    border-color: #1e5eff;
+    box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.15);
+}
+.audit-compile-btn {
+    min-height: 42px;
+}
+
+.audit-count-muted {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+.audit-count-badge.audit-count-ok {
+    background: #e0f5e9;
+    color: #1e9e5a;
+}
+
+/* Shared data table (register + red flags) — matches ft-table */
+.audit-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+.audit-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+.audit-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: #334155;
+}
+.audit-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.audit-table tbody tr:hover td {
+    background: #f8fbff;
+}
+.audit-td-strong {
+    font-weight: 700;
+    color: #0f172a;
+}
+.audit-td-sub {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+.audit-flag-desc {
+    font-size: 13px;
+    color: #334155;
+    max-width: 640px;
+    line-height: 1.45;
+}
+
+/* Empty states */
+.audit-empty-state {
+    background: #fff;
+    border: 1.5px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 48px 40px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.audit-empty-state h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+.audit-empty-state p {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+/* Report header */
+.audit-report-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.audit-report-meta h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+}
+.audit-report-meta p {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+.audit-signed-line {
+    margin-top: 4px;
+    color: #1e9e5a;
+    font-weight: 600;
+}
+.audit-report-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.audit-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.audit-panel-head h2 {
+    margin: 0;
+}
+.variance-bad {
+    color: #b91c1c;
+}
+
+/* Disabled action button */
+.audit-btn-disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px dashed #cbd5e1;
+    cursor: not-allowed;
+}
+.audit-btn-disabled:hover {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+/* Clarification modal — flag checkbox list */
+.audit-flag-list {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: #fff;
+}
+.audit-flag-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12.5px;
+    color: #334155;
+    cursor: pointer;
+    line-height: 1.45;
+}
+.audit-flag-option:last-child {
+    border-bottom: none;
+}
+.audit-flag-option:hover {
+    background: #f8fbff;
+}
+.audit-flag-option input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: #1e5eff;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+.audit-field-select {
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: none;
+    padding-right: 14px;
 }
