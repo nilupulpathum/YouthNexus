@@ -242,6 +242,18 @@
 .dashboard[data-user-role^="Zonal"] .dw-modal__body form > .dw-alert { grid-column: 1 / -1; }
 .dashboard[data-user-role^="Zonal"] .dw-modal__header p { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--dw-muted); }
 .dashboard[data-user-role^="Zonal"] .dw-modal__body > p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+/* Record-card body copy (announcement/event summaries on the overviews).
+   Bare <p> elsewhere renders at UA size with zero margins (global reset). */
+.dw-record-card p { margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+/* Detail copy inside alert boxes (server-rendered messages). */
+.dw-alert p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+/* Inline field errors, server- or JS-rendered (class added in markup). */
+.dw-field-error { grid-column: 1 / -1; margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--dw-danger); }
+/* Club-tier modals: same eyebrow/intro/alert treatment as zonal above.
+   Scoped to club roles so divisional/NYSC modals render exactly as before. */
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__header p { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--dw-muted); }
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__body > p { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__body > .dw-alert { grid-column: 1 / -1; }
 .dw-modal__footer { justify-content: flex-end; border-top: 1px solid var(--dw-border); }
 .dw-modal-open { overflow: hidden; }
 
