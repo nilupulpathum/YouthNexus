@@ -82,16 +82,6 @@ function mu_status_badge(string $status): string {
     flex-wrap: wrap;
     width: 100%;
 }
-.mu-page-head__titles h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 4px;
-}
-.mu-page-head__titles p {
-    font-size: 13px;
-    color: var(--mu-gray);
-}
 .mu-head-actions {
     display: flex;
     gap: 10px;
@@ -647,7 +637,7 @@ function mu_status_badge(string $status): string {
      ============================================================ -->
 <div class="mu-page-head mu-action-row db-action-row">
     <div class="mu-head-actions">
-        <button class="mu-btn mu-btn-light" id="mu-export-btn" type="button">
+        <button class="mu-btn mu-btn-light db-secondary-action" id="mu-export-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
         </button>

@@ -5,9 +5,11 @@
  */
 
 $title                   = $title ?? 'Report Preview — YouthNexus';
+$pageTitle               = $pageTitle ?? 'Report Preview';
+$pageDescription         = $pageDescription ?? 'Review the compiled report before generating and distributing it.';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260927'];
 
 $report      = $report      ?? (object)[];
 $kpis        = $kpis        ?? [];
