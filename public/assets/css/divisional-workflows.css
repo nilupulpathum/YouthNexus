@@ -72,10 +72,10 @@
 .dw-filter-panel__heading { margin: 0 0 14px; font-size: 13px; }
 .dw-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .dw-filter-actions { display: flex; gap: 8px; margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--dw-border); }
-.dw-field { display: grid; gap: 6px; }
+.dw-field { display: grid; gap: 6px; min-width: 0; }
 .dw-field label, .dw-field__label { color: #4b5563; font-size: 10px; font-weight: 800; letter-spacing: .045em; text-transform: uppercase; }
 .dw-field input, .dw-field select, .dw-field textarea {
-  width: 100%; border: 1px solid var(--dw-border); border-radius: var(--dw-radius); background: #fff;
+  min-width: 0; width: 100%; border: 1px solid var(--dw-border); border-radius: var(--dw-radius); background: #fff;
   color: var(--dw-text); font: inherit; font-size: 13px;
 }
 .dw-field input, .dw-field select { height: 40px; padding: 0 11px; }
@@ -237,6 +237,26 @@
 .dw-modal__header h2 { margin: 0; font-size: 14px; }
 .dw-modal__close { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--dw-border); border-radius: 7px; background: #fff; color: var(--dw-muted); cursor: pointer; }
 .dw-modal__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; }
+.dashboard[data-user-role^="Zonal"] .dw-modal__body > form { grid-column: 1 / -1; min-width: 0; display: grid; gap: 13px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard[data-user-role^="Zonal"] .dw-modal__body form > .dw-filter-grid { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard[data-user-role^="Zonal"] .dw-modal__body form > .dw-alert { grid-column: 1 / -1; }
+.dashboard[data-user-role^="Zonal"] .dw-modal__header p { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--dw-muted); }
+.dashboard[data-user-role^="Zonal"] .dw-modal__body > p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+/* Record-card body copy (announcement/event summaries on the overviews).
+   Bare <p> elsewhere renders at UA size with zero margins (global reset). */
+.dw-record-card p { margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+/* Detail copy inside alert boxes (server-rendered messages). */
+.dw-alert p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+/* Inline field errors, server- or JS-rendered (class added in markup). */
+.dw-field-error { grid-column: 1 / -1; margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--dw-danger); }
+/* Roster name links to member Social CVs. */
+.dw-cv-link { color: var(--dw-primary); font-weight: 600; text-decoration: none; }
+.dw-cv-link:hover { text-decoration: underline; }
+/* Club-tier modals: same eyebrow/intro/alert treatment as zonal above.
+   Scoped to club roles so divisional/NYSC modals render exactly as before. */
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__header p { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: var(--dw-muted); }
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__body > p { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.55; color: var(--dw-muted); }
+.dashboard:is([data-user-role^="Club"], [data-user-role="Member"], [data-user-role="member"], [data-user-role="president"], [data-user-role="secretary"], [data-user-role="treasurer"]) .dw-modal__body > .dw-alert { grid-column: 1 / -1; }
 .dw-modal__footer { justify-content: flex-end; border-top: 1px solid var(--dw-border); }
 .dw-modal-open { overflow: hidden; }
 
@@ -265,6 +285,7 @@
   .dw-toolbar .dw-select { flex: 1; }
   .dw-field--span-2 { grid-column: span 1; }
   .dw-modal__body { grid-template-columns: 1fr; }
+  .dashboard[data-user-role^="Zonal"] .dw-modal__body > form { grid-template-columns: 1fr; }
   .dw-review-banner__actions, .dw-audit-decision, .dw-audit-decision .dw-row-actions { align-items: stretch; flex-direction: column; }
   .dw-audit-totals div, .dw-audit-totals div:nth-child(3n), .dw-audit-totals div:nth-last-child(-n+3) { border-right: 0; border-bottom: 1px solid var(--dw-border); }
   .dw-audit-totals div:last-child { border-bottom: 0; }

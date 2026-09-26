@@ -8,6 +8,7 @@ $pageTitle               = 'Transaction Details: ' . htmlspecialchars($transfer-
 $pageDescription         = 'Fund disbursement transaction voucher and audit record';
 $currentRoute            = 'fundtransfer';
 $unreadNotificationCount = 0;
+$pageStyles              = [ROOT . '/assets/css/fundtransfer.css'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -15,7 +16,6 @@ $hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_na
 $isCompleted = ($transfer->status === 'Completed');
 ?>
 
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/fundtransfer.css">
 
 <div class="fund-transfer-module">
 

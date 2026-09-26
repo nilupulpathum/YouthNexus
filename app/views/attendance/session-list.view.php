@@ -10,6 +10,10 @@ $pageDescription         = $pageDescription ?? 'Log and review attendance for ap
 $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
+$pageStyles              = [
+    ROOT . '/assets/css/attendance.css?v=' . time(),
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -383,8 +387,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     window.ROOT = "<?= ROOT ?>";
     window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
 </script>
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/attendance.css?v=<?= time() ?>">
-<link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-summary-standard.css?v=20260924">
 <script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
