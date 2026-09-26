@@ -980,6 +980,17 @@ class Announcements extends Controller
             $this->currentUser();
 
 
+        /*
+         * Shared-shell bell: true unread-announcement count + latest items
+         * (same helper the club/zonal shells use). Without these the header
+         * falls back to hardcoded demo items that contradict the count.
+         */
+        $headerNotif =
+            ZoneOverview::headerNotifications(
+                $this
+            );
+
+
         $scope =
             $this->managerScope($user);
 
@@ -1062,6 +1073,12 @@ class Announcements extends Controller
             [
                 'title' =>
                     'Announcements — YouthNexus',
+
+                'unreadNotificationCount' =>
+                    $headerNotif['count'],
+
+                'headerNotifications' =>
+                    $headerNotif['items'],
 
                 'announcements' =>
                     $announcements,
@@ -2224,12 +2241,28 @@ class Announcements extends Controller
         }
 
 
+        /*
+         * Shared-shell bell (see index()): real unread count + items so the
+         * header never falls back to the hardcoded demo items.
+         */
+        $headerNotif =
+            ZoneOverview::headerNotifications(
+                $this
+            );
+
+
         parent::view(
             'announcements/detail',
             [
                 'title' =>
                     $announcement->title
                     . ' — YouthNexus',
+
+                'unreadNotificationCount' =>
+                    $headerNotif['count'],
+
+                'headerNotifications' =>
+                    $headerNotif['items'],
 
                 'announcement' =>
                     $announcement,

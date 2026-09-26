@@ -57,6 +57,7 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
         <?php endforeach; ?>
         <?php endif; ?>
         <?php else: ?>
+        <?php if ($unreadNotificationCount > 0): ?>
         <a href="<?= $dashboardRoot ?>/announcements">
           <strong>Divisional Leadership Summit 2026</strong>
           <span>Confirm your attendance by Friday · 2 days ago</span>
@@ -65,6 +66,9 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
           <strong>Volunteer hour submission guidelines</strong>
           <span>Submit within 7 days of the activity · 4 days ago</span>
         </a>
+        <?php else: ?>
+        <span class="dashboard-notif__empty">No new announcements.</span>
+        <?php endif; ?>
         <?php endif; ?>
         <div class="dashboard-profile__menu-divider"></div>
         <a class="dashboard-notif__view-all" href="<?= $dashboardRoot ?>/announcements">
