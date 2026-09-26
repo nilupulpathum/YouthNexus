@@ -23,17 +23,20 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Audit summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
   </div>
 
   <div class="dw-toolbar" aria-label="Audit tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="audit-search">Search clubs</label>
-      <input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false">Filters</button>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="audit-filters" hidden>
@@ -44,7 +47,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-field"><label for="audit-flag-filter">Findings</label><select id="audit-flag-filter" data-audit-flag-filter><option value="">Any</option><option value="flagged">Open findings</option><option value="clear">No open findings</option></select></div>
       <div class="dw-field"><label for="audit-sort">Sort By</label><select id="audit-sort" data-audit-sort><option value="club">Club name</option><option value="recent">Most recently audited</option><option value="oldest">Oldest audit first</option></select></div>
     </div>
-    <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-audit-filter-reset>Reset all</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-audit-filter-apply>Apply Filters</button></div>
+    <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-audit-filter-reset>Clear filters</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-audit-filter-apply>Apply filters</button></div>
   </section>
 
   <div class="dw-section-header"><div><h2>Audit Queue</h2><p>Clubs within <?= $e($division->division_name) ?></p></div><span class="dw-count" data-audit-count><?= count($queue) ?> clubs</span></div>
@@ -82,7 +85,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </article>
     <?php endforeach; ?>
   </div>
-  <?php $emptyTitle = 'No clubs found'; $emptyMessage = 'Change the current search and filters.'; $emptyVisible = count($queue) === 0; require __DIR__ . '/../partials/divisional/empty-state.view.php'; ?>
+  <?php $emptyTitle = 'No clubs found'; $emptyMessage = 'Change the current search and filters.'; $emptyVisible = count($queue) === 0; require __DIR__ . '/../partials/empty-state.view.php'; ?>
 </section>
 
 <div class="dw-modal" id="start-audit" role="dialog" aria-modal="true" aria-labelledby="start-audit-title" aria-hidden="true" hidden>

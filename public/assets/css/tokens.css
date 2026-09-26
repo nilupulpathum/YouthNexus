@@ -57,6 +57,36 @@
   --yn-bg-surface-alt: #f1f5f9;
   --yn-bg-stripe: #fafbfc;
 
+  /* Additional semantic surfaces and states used by Divisional workflows. */
+  --yn-text-strong: #334155;
+  --yn-text-slate-700: #374151;
+  --yn-text-slate-600: #4b5563;
+  --yn-text-slate: #64748b;
+  --yn-text-placeholder: #9ca3af;
+  --yn-border-muted: #b9bfcb;
+  --yn-border-soft: #eef0f4;
+  --yn-border-slate: #e2e8f0;
+  --yn-bg-soft: #eef2f7;
+  --yn-bg-tint: #fafbff;
+  --yn-bg-document: #fbfcfe;
+  --yn-bg-lavender: #f8faff;
+  --yn-primary-border: #c7d2fe;
+  --yn-primary-tint: #f4f6ff;
+  --yn-info-border: #dbeafe;
+  --yn-info-strong: #1d4ed8;
+  --yn-success-border: #bbf7d0;
+  --yn-success-border-strong: #86efac;
+  --yn-warning-text: #92400e;
+  --yn-warning-dark: #d97706;
+  --yn-warning-accent: #f59e0b;
+  --yn-warning-border: #fef3c7;
+  --yn-danger-border: #fecaca;
+  --yn-danger-border-strong: #fca5a5;
+  --yn-danger-soft-strong: #fee2e2;
+  --yn-purple: #7c3aed;
+  --yn-purple-dark: #6d28d9;
+  --yn-purple-bg: #ede9fe;
+
   /* ── Radius ─────────────────────────────────────────────────────── */
   --yn-radius-sm: 6px;
   --yn-radius: 8px;

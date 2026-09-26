@@ -8,19 +8,33 @@
   var quantity = document.querySelector('[data-asset-quantity]');
   var sort = document.querySelector('[data-asset-sort]');
 
+  var panelControls = [category, status, quantity, sort];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function applyFilters() {
     var query = search ? search.value.trim().toLowerCase() : '';
-    var categoryValue = category ? category.value : '';
-    var statusValue = status ? status.value : '';
-    var minimum = quantity && quantity.value !== '' ? Number(quantity.value) : null;
+    var categoryValue = selected(category);
+    var statusValue = selected(status);
+    var minimum = selected(quantity) !== '' ? Number(selected(quantity)) : null;
     rows.forEach(function (row) {
       var visible = (!query || (row.dataset.search || '').indexOf(query) !== -1)
         && (!categoryValue || row.dataset.category === categoryValue)
         && (!statusValue || row.dataset.status === statusValue)
         && (minimum === null || Number(row.dataset.quantity || 0) >= minimum);
       row.hidden = !visible;
+      row.dataset.filterMatch = visible ? 'true' : 'false';
     });
     ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(updateSection);
+    if (window.ynPager) window.ynPager.update();
   }
 
   function updateSection(section) {
@@ -42,7 +56,7 @@
   }
 
   function sortRows() {
-    var mode = sort ? sort.value : 'name';
+    var mode = selected(sort) || 'name';
     ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(function (section) {
       var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
       if (!sectionRows.length) return;
@@ -58,13 +72,14 @@
 
   if (search) search.addEventListener('input', applyFilters);
   var apply = document.querySelector('[data-asset-apply]');
-  if (apply) apply.addEventListener('click', function () { sortRows(); applyFilters(); });
+  if (apply) apply.addEventListener('click', function () { captureFilters(); sortRows(); applyFilters(); });
   var reset = document.querySelector('[data-asset-reset]');
   if (reset) reset.addEventListener('click', function () {
     if (category) category.value = '';
     if (status) status.value = '';
     if (quantity) quantity.value = '';
     if (sort) sort.value = 'name';
+    captureFilters();
     sortRows();
     applyFilters();
   });
@@ -129,6 +144,12 @@
     var rejecting = decision && decision.value === 'reject';
     if (remarks) remarks.required = rejecting;
     if (required) required.hidden = !rejecting;
+    var submit = document.querySelector('[data-asset-submit-decision]');
+    if (submit) {
+      submit.classList.toggle('yn-btn--approve', !rejecting);
+      submit.classList.toggle('yn-btn--reject', !!rejecting);
+      submit.textContent = rejecting ? 'Reject Request' : 'Approve Request';
+    }
   }
   if (decision) decision.addEventListener('change', updateDecision);
   updateDecision();

@@ -2518,6 +2518,18 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
+  let appliedStatus = status?.value || '';
+  let appliedRole = roleFilter?.value || '';
+  let appliedPriority = priority?.value || '';
+
+  function commitPanelFilters() {
+    appliedStatus = status?.value || '';
+    appliedRole = roleFilter?.value || '';
+    appliedPriority = priority?.value || '';
+    if (tab) tab.value = appliedStatus === 'Draft' ? 'Drafts' : (appliedStatus || 'All Announcements');
+    applyFilters();
+  }
+
   function applyFilters() {
 
     /*
@@ -2537,7 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const active =
           card.dataset.annStatus
-          === status.value;
+          === appliedStatus;
 
 
         card.classList.toggle(
@@ -2608,25 +2620,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
           const matchesStatus =
-            !status.value
+            !appliedStatus
             ||
             card.dataset.status
-            === status.value;
+            === appliedStatus;
 
 
           const matchesRole =
-            !roleFilter?.value
+            !appliedRole
             ||
             targetRoles.includes(
-              roleFilter.value
+              appliedRole
             );
 
 
           const matchesPriority =
-            !priority?.value
+            !appliedPriority
             ||
             card.dataset.priority
-            === priority.value;
+            === appliedPriority;
 
 
           const matches =
@@ -2669,16 +2681,7 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 
 
-  roleFilter?.addEventListener(
-    'change',
-    applyFilters
-  );
 
-
-  priority?.addEventListener(
-    'change',
-    applyFilters
-  );
 
 
   function selectStatus(
@@ -2692,6 +2695,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     status.value =
       value;
+    appliedStatus = value;
 
 
     if (tab) {
@@ -2710,15 +2714,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  status?.addEventListener(
-    'change',
-    () => {
 
-      selectStatus(
-        status.value
-      );
-    }
-  );
 
 
   tab?.addEventListener(
@@ -2783,6 +2779,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
 
+          appliedRole = '';
+          appliedPriority = '';
           selectStatus(
             card.dataset.annStatus
             || ''
@@ -2829,6 +2827,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document
     .getElementById(
+      'annApplyFilterBtn'
+    )
+    ?.addEventListener(
+      'click',
+      commitPanelFilters
+    );
+
+  document
+    .getElementById(
       'annClearFilterBtn'
     )
     ?.addEventListener(
@@ -2853,6 +2860,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+        appliedRole = '';
+        appliedPriority = '';
         selectStatus(
           ''
         );

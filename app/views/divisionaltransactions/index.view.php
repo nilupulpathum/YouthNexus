@@ -28,6 +28,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-page-actions" aria-label="Page actions">
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Transaction summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -35,12 +39,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   </div>
 
   <div class="dw-toolbar" aria-label="Transaction tools">
-    <div class="dw-toolbar__search dw-search dw-search--plain">
+    <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="transaction-search">Search transactions</label>
-      <input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="transaction-filters" hidden>
@@ -98,8 +101,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-transaction-filter-reset>Reset all</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-transaction-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-transaction-filter-reset>Clear filters</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-transaction-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -167,7 +170,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   $emptyTitle = 'No transactions found';
   $emptyMessage = 'Add a transaction or change the current search and filters.';
   $emptyVisible = count($transactions) === 0;
-  require __DIR__ . '/../partials/divisional/empty-state.view.php';
+  require __DIR__ . '/../partials/empty-state.view.php';
   ?>
 </section>
 

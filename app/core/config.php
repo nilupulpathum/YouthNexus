@@ -19,6 +19,9 @@ if (($_SERVER['SERVER_NAME'] ?? 'localhost') === 'localhost') {
 
 date_default_timezone_set('Asia/Colombo');
 
+// Bump this value when shared assets change so browsers reload the new UI.
+define('ASSET_VERSION', '20260926-divisional-ui-final1');
+
 define('APP_ROOT', dirname(dirname(__FILE__))); // Points to /app
 
 define('DB_HOST', getenv('YN_DB_HOST') ?: 'localhost');

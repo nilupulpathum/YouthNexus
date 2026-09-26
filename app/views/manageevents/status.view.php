@@ -9,8 +9,8 @@ $title           = $title ?? 'Event Status — YouthNexus';
 $pageTitle       = 'Event Details & Submission Status';
 $pageDescription = 'Track review progress, governance hierarchy, and specifications for this event';
 $currentRoute    = 'manageevents';
-$pageStyles      = [ROOT . '/assets/css/manageevents.css?v=20260924'];
-$pageScripts     = [ROOT . '/assets/js/manageevents.js?v=20260924'];
+$pageStyles      = [ROOT . '/assets/css/manageevents.css'];
+$pageScripts     = [ROOT . '/assets/js/manageevents.js'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 

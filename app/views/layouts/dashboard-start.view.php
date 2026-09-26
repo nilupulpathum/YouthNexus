@@ -25,13 +25,17 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1e40af">
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/tokens.css">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/components.css">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/tokens.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/components.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
   <?php foreach ($pageStyles as $pageStyle): ?>
-    <link rel="stylesheet" href="<?= htmlspecialchars((string) $pageStyle, ENT_QUOTES, 'UTF-8') ?>">
+    <?php $styleUrl = (string) $pageStyle; ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars($styleUrl . (str_contains($styleUrl, '?') ? '&' : '?') . 'v=' . rawurlencode(ASSET_VERSION), ENT_QUOTES, 'UTF-8') ?>">
   <?php endforeach; ?>
+  <?php if (in_array($userRole, ['DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer'], true)): ?>
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-consistency.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <?php endif; ?>
 </head>
 <body class="dashboard dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
   <a class="dashboard-skip-link" href="#main-content">Skip to main content</a>

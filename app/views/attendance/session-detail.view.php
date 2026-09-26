@@ -10,10 +10,10 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=' . time(),
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/attendance.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/attendance.js?v=20260926'];
+$pageScripts             = [ROOT . '/assets/js/attendance.js'];
 require_once __DIR__ . '/../partials/icons.view.php';
 
 $orgHierarchy = [];
@@ -65,21 +65,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
          Stat Cards (Present / Absent / Attendance Rate)
          ============================================================ -->
     <div class="am-stats">
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon present">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <div class="am-stat-value" id="amPresentCount"><?= $present ?></div>
             <div class="am-stat-label">Present</div>
         </div>
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon absent">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </div>
             <div class="am-stat-value" id="amAbsentCount"><?= $absent ?></div>
             <div class="am-stat-label">Absent</div>
         </div>
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-icon rate">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" stroke-width="2"><path d="M5 19V9M12 19V5M19 19v-7" stroke-linecap="round"/><path d="M3 19h18" stroke-linecap="round"/></svg>
             </div>
@@ -91,7 +91,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- ============================================================
          Member Roster Table
          ============================================================ -->
-    <div class="am-table-wrapper">
+    <div class="yn-table-wrap am-table-wrapper">
         <div class="am-table-toolbar">
             <div class="am-table-search">
                 <span class="am-table-search-icon">
@@ -113,7 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <p>No member attendance records found for this event.</p>
             </div>
         <?php else: ?>
-        <table class="am-table" id="amRosterTable">
+        <table class="yn-table am-table" id="amRosterTable">
             <thead>
                 <tr>
                     <th>Member</th>

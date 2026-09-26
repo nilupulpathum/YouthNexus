@@ -63,14 +63,19 @@
     var filterPanel    = document.getElementById('crFilterPanel');
     var filterStatus   = document.getElementById('crFilterStatus');
     var filterDocs     = document.getElementById('crFilterDocs');
+    var submittedFrom  = document.getElementById('crFilterSubmittedFrom');
     var addFilterBtn   = document.getElementById('crAddFilterBtn');
     var clearFilterBtn = document.getElementById('crClearFilterBtn');
+
+    var appliedStatus = filterStatus ? filterStatus.value : '';
+    var appliedDocs = filterDocs ? filterDocs.value : '';
+    var appliedFrom = submittedFrom ? submittedFrom.value : '';
 
     function filterCards() {
         if (!grid) return;
         var query  = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        var status = filterStatus ? filterStatus.value : '';
-        var docs   = filterDocs ? filterDocs.value : '';
+        var status = appliedStatus;
+        var docs   = appliedDocs;
         var cards  = grid.querySelectorAll('.cr-card');
         var visibleCount = 0;
 
@@ -78,7 +83,8 @@
             var textMatch   = !query  || card.dataset.name.indexOf(query) !== -1 || (card.dataset.proposer || '').toLowerCase().indexOf(query) !== -1;
             var statusMatch = !status || card.dataset.status === status;
             var docsMatch   = !docs   || card.dataset.docstatus === docs;
-            var isVisible   = (textMatch && statusMatch && docsMatch);
+            var dateMatch   = !appliedFrom || (card.dataset.submittedDate || '') >= appliedFrom;
+            var isVisible   = (textMatch && statusMatch && docsMatch && dateMatch);
             card.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleCount++;
         });
@@ -110,12 +116,23 @@
     }
 
     if (addFilterBtn) {
-        addFilterBtn.addEventListener('click', filterCards);
+        addFilterBtn.addEventListener('click', function () {
+            appliedStatus = filterStatus ? filterStatus.value : '';
+            appliedDocs = filterDocs ? filterDocs.value : '';
+            appliedFrom = submittedFrom ? submittedFrom.value : '';
+            var tab = appliedStatus === 'Pending' ? statPending : (appliedStatus === 'Approved' ? statApproved : (appliedStatus === 'Rejected' ? statRejected : null));
+            if (tab && !tab.classList.contains('is-active')) tab.click();
+            else filterCards();
+        });
     }
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function () {
             if (filterStatus) filterStatus.value = '';
             if (filterDocs)   filterDocs.value   = '';
+            if (submittedFrom) submittedFrom.value = '';
+            appliedStatus = '';
+            appliedDocs = '';
+            appliedFrom = '';
             filterCards();
         });
     }
@@ -141,7 +158,7 @@
             var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
 
             html +=
-                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete" data-submitted-date="' + escapeHtml(String(app.submitted_at || '').slice(0, 10)) + '">' +
                     '<div class="cr-card-top">' +
                         '<div class="cr-card-icon complete" title="Approved">' +
                             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
@@ -184,7 +201,7 @@
             var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
 
             html +=
-                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete" data-submitted-date="' + escapeHtml(String(app.submitted_at || '').slice(0, 10)) + '">' +
                     '<div class="cr-card-top">' +
                         '<div class="cr-card-icon incomplete" title="Rejected">' +
                             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
@@ -251,7 +268,10 @@
         statPending.addEventListener('click', function () {
             setActiveStat(statPending);
             if (sortToggleBtn) sortToggleBtn.style.display = 'inline-flex';
-            if (filterStatus) filterStatus.value = '';
+            if (appliedStatus && appliedStatus !== 'Pending') {
+                appliedStatus = '';
+                if (filterStatus) filterStatus.value = '';
+            }
             if (pendingGridHtml !== null && grid) {
                 grid.innerHTML = pendingGridHtml;
                 filterCards();
@@ -263,7 +283,10 @@
         statApproved.addEventListener('click', function () {
             setActiveStat(statApproved);
             if (sortToggleBtn) sortToggleBtn.style.display = 'none';
-            if (filterStatus) filterStatus.value = '';
+            if (appliedStatus && appliedStatus !== 'Approved') {
+                appliedStatus = '';
+                if (filterStatus) filterStatus.value = '';
+            }
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
@@ -287,7 +310,10 @@
         statRejected.addEventListener('click', function () {
             setActiveStat(statRejected);
             if (sortToggleBtn) sortToggleBtn.style.display = 'none';
-            if (filterStatus) filterStatus.value = '';
+            if (appliedStatus && appliedStatus !== 'Rejected') {
+                appliedStatus = '';
+                if (filterStatus) filterStatus.value = '';
+            }
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
