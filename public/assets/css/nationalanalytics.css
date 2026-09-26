@@ -40,21 +40,6 @@
     width: 100%;
 }
 
-.page-head h1 {
-    margin: 0 0 6px 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.page-head p {
-    margin: 0;
-    max-width: 600px;
-    font-size: 13px;
-    color: #64748b;
-    line-height: 1.5;
-}
-
 .page-actions {
     display: flex;
     align-items: center;
@@ -951,34 +936,6 @@
     font-size: 13px;
     line-height: 1.35;
 }
-
-.status-pill {
-    display: inline-block;
-    padding: 7px 14px;
-    border-radius: 12px;
-    font-size: 12.5px;
-    font-weight: 600;
-    line-height: 1.3;
-    white-space: nowrap;
-}
-
-.pill-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    margin-right: 7px;
-    vertical-align: middle;
-}
-
-.pill-teal   { background: #ccfbf1; color: #0f766e; }
-.pill-teal .pill-dot   { background: #0d9488; }
-
-.pill-green  { background: #e0f5e9; color: #1e9e5a; }
-.pill-green .pill-dot  { background: #1e9e5a; }
-
-.pill-purple { background: #ede9fe; color: #6d28d9; }
-.pill-purple .pill-dot { background: #7c3aed; }
 
 .btn-notify {
     display: inline-flex;

@@ -11,7 +11,7 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=' . time(),
+    ROOT . '/assets/css/attendance.css?v=20260927',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 
@@ -387,6 +387,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     window.ROOT = "<?= ROOT ?>";
     window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
 </script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=<?= time() ?>"></script>
+<script src="<?= ROOT ?>/assets/js/attendance.js?v=20260927"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

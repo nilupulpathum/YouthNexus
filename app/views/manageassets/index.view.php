@@ -26,11 +26,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- Top Action Bar -->
     <div class="am-header-bar am-action-row db-action-row">
         <div class="am-header-actions">
-            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline" id="btnExportReport" title="Export Inventory to CSV">
+            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline db-secondary-action" id="btnExportReport" title="Export Inventory to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Inventory Report
             </a>
-            <button type="button" class="am-btn am-btn-sky" id="btnOpenDistribute">
+            <button type="button" class="am-btn am-btn-sky db-secondary-action" id="btnOpenDistribute">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                 Distribute to Zone
             </button>

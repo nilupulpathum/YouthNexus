@@ -45,7 +45,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
     <!-- Top Action Bar -->
     <div class="ft-header-bar ft-action-row db-action-row">
         <div class="ft-header-actions">
-            <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline" id="btnDownloadLedger" title="Export Ledger to CSV">
+            <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline db-secondary-action" id="btnDownloadLedger" title="Export Ledger to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Ledger
             </a>
@@ -162,7 +162,9 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                     <tr>
                         <td colspan="6" class="ft-empty-td">
                             <div class="ft-empty-state">
-                            <span class="ft-empty-icon" aria-hidden="true"></span>
+                            <span class="ft-empty-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </span>
                                 <h3>No fund transfers match your criteria</h3>
                                 <p>Try adjusting your search terms or filters above, or authorize a new allocation.</p>
                             </div>

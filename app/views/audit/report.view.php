@@ -10,7 +10,7 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit Report';
 $pageDescription         = $pageDescription ?? 'Math verification, red flags and sign-off for the selected entity & financial year.';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=20260927'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -64,7 +64,7 @@ $steps = [
     <!-- ── Report header bar ─────────────────────────────────────── -->
     <div class="audit-report-top">
         <div class="audit-report-meta">
-            <h1><?= htmlspecialchars($audit->scope_details->title) ?></h1>
+            <h2><?= htmlspecialchars($audit->scope_details->title) ?></h2>
             <p>
                 FY <?= (int)$audit->financial_year ?> &nbsp;&bull;&nbsp;
                 <?= htmlspecialchars($audit->scope_details->subtitle) ?> &nbsp;&bull;&nbsp;
@@ -79,8 +79,8 @@ $steps = [
             <?php endif; ?>
         </div>
         <div class="audit-report-actions">
-            <a href="<?= ROOT ?>/audit" class="audit-btn audit-btn-light">&larr; All Audits</a>
-            <a href="<?= ROOT ?>/audit/export?audit_id=<?= (int)$audit->audit_id ?>" class="audit-btn audit-btn-light">
+            <a href="<?= ROOT ?>/audit" class="audit-btn audit-btn-light db-secondary-action">&larr; All Audits</a>
+            <a href="<?= ROOT ?>/audit/export?audit_id=<?= (int)$audit->audit_id ?>" class="audit-btn audit-btn-light db-secondary-action">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Summary
             </a>
@@ -88,7 +88,7 @@ $steps = [
                 <form method="POST" action="<?= ROOT ?>/audit/rerun" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
                     <input type="hidden" name="audit_id" value="<?= (int)$audit->audit_id ?>">
-                    <button type="submit" class="audit-btn audit-btn-light">
+                    <button type="submit" class="audit-btn audit-btn-light db-secondary-action">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                         Re-run Check
                     </button>
@@ -275,7 +275,7 @@ $steps = [
 
         <div class="audit-modal-head">
             <div>
-                <h1>Request Clarification</h1>
+                <h2>Request Clarification</h2>
                 <p>Notify the entity's treasurer &amp; coordinator about the flagged items. The audit stays <b>Pending</b> until resolved.</p>
             </div>
             <button type="button" class="audit-close-x" onclick="closeClarifyModal()" aria-label="Close dialog">&times;</button>
@@ -347,7 +347,7 @@ $steps = [
 
         <div class="audit-modal-head">
             <div>
-                <h1>Approve &amp; Sign-Off Audit</h1>
+                <h2>Approve &amp; Sign-Off Audit</h2>
                 <p>Formal certification and financial-year lock for <?= htmlspecialchars($audit->scope_details->title) ?> — FY <?= (int)$audit->financial_year ?></p>
             </div>
             <button type="button" class="audit-close-x" onclick="closeApproveModal()" aria-label="Close dialog">&times;</button>
@@ -403,6 +403,6 @@ $steps = [
         csrfToken: <?= json_encode($csrf_token) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=<?= time() ?>" defer></script>
+<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=20260927" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

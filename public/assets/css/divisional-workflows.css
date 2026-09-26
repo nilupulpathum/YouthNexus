@@ -149,6 +149,7 @@
 .dw-status--pending, .dw-status--pendingapproval, .dw-status--processing, .dw-status--missing-receipt, .dw-status--receipt-review { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--inprogress, .dw-status--clarificationrequested { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--rejected, .dw-status--voided, .dw-status--unreconciled, .dw-status--open, .dw-status--overdue { background: var(--dw-danger-bg); color: var(--dw-danger); }
+.dw-status--yellow, .dw-status--at-risk { background: var(--dw-warning-bg); color: var(--dw-warning); }
 .dw-status--withdrawn { background: #f1f5f9; color: #64748b; }
 
 .dw-detail-box { display: grid; gap: 5px; padding: 12px; border-radius: var(--dw-radius); background: var(--dw-info-bg); }
