@@ -1,18 +1,15 @@
 <?php
 
 /**
- * ZonalCoordinator — zonal coordinator dashboards (Z0 scaffolding, Z1 monitor).
- *
- * Presentation-only: mock data comes from ZoneHealthMock (shared with the
- * zonal secretary monitor) mirroring the future backend contract. No
- * database reads or writes. Score bands follow the divisional Figma
- * standard (owner direction 2026-09-12): Healthy 85-100, At Risk 50-84,
- * Dormant below 50 or inactivity. Verification is outside zonal scope.
-
+ * ZonalCoordinator — zonal coordinator overview (D8, real zone aggregates)
+ * plus the zonal event approval queue (D9/Plan 02). Club health monitoring
+ * and reports live in Zonalclubhealth and Zonalreports (divisional workflow
+ * at zone scope).
  *
  * Routes:
  *   zonalcoordinator -> index()  (zonal coordinator only)
- *   zonalcoordinator/clubs -> clubs()  (monitor club health)
+ *   zonalcoordinator/events -> events()
+ *   zonalcoordinator/approveevent, zonalcoordinator/returnevent
  */
 class Zonalcoordinator extends Controller {
 
@@ -60,6 +57,8 @@ class Zonalcoordinator extends Controller {
         }
 
         $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $role = (string) ($_SESSION['user_role'] ?? 'ZonalCoordinator');
         $built = $this->buildMonitor($zonalId);
 
         $data = $this->shell(
@@ -70,80 +69,14 @@ class Zonalcoordinator extends Controller {
         );
         $data['zoneHealth'] = $built['zoneHealth'];
         $data['divisions'] = $built['divisions'];
-        $data['announcements'] = [];
-        $data['upcomingEvents'] = [];
+        $data['zoneName'] = $built['zone_name'];
+        $data['announcements'] = ZoneOverview::announcements(
+            $this, $userId, $role, $_SESSION['division_id'] ?? null, $zonalId
+        );
+        $data['upcomingEvents'] = ZoneOverview::upcoming($this, $zonalId);
         $data['flash'] = $this->pullFlash();
 
         $this->view('zonalcoordinator/index', $data);
-    }
-
-    /**
-     * Monitor club health (Z1): divisional Figma shape — band tiles, search
-     * + division filter + sort + export, division averages, club cards
-     * sorted highest first with detail + flag modals. Read-only mock.
-     */
-    public function clubs() {
-        $this->requireZonalCoordinator();
-
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $built = $this->buildMonitor($zonalId);
-
-        $data = $this->shell(
-            'Monitor Club Health — YouthNexus Pulse',
-            'Monitor Club Health',
-            'Monitor club health scores and identify clubs requiring intervention.',
-            'zonalcoordinator/clubs'
-        );
-        $data['zoneHealth'] = $built['bands'];
-        $data['divisions'] = $built['divisions'];
-        $data['clubs'] = $built['clubs'];
-        $data['csrf_token'] = $_SESSION['csrf_token'];
-        $data['flash'] = $this->pullFlash();
-
-        $this->view('zonalcoordinator/clubs', $data);
-    }
-
-    /**
-     * Flag a club for NYSC Admin review (D8).
-     */
-    public function flagClub() {
-        $this->requireZonalCoordinator();
-
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-            $this->redirect('zonalcoordinator/clubs');
-        }
-        if (!$this->verifyCsrf()) {
-            $this->setFlash('error', 'Invalid request. Please try again.');
-            $this->redirect('zonalcoordinator/clubs');
-        }
-
-        $clubId = (int) ($_POST['club_id'] ?? 0);
-        $category = trim($_POST['category'] ?? '');
-        $remarks = trim($_POST['remarks'] ?? '');
-        if ($clubId < 1) {
-            $this->setFlash('error', 'Invalid club.');
-            $this->redirect('zonalcoordinator/clubs');
-        }
-
-        try {
-            $flagId = $this->model('ZoneMonitorModel')->raiseZoneFlag(
-                (int) ($_SESSION['zonal_id'] ?? 0), $clubId, (int) $_SESSION['user_id'], $category, $remarks
-            );
-        } catch (InvalidArgumentException | RuntimeException $e) {
-            $this->setFlash('error', $e->getMessage());
-            $this->redirect('zonalcoordinator/clubs');
-        }
-        $this->setFlash('success', "Club flagged for NYSC Admin review (flag #{$flagId}).");
-        $this->redirect('zonalcoordinator/clubs');
-    }
-
-    private function verifyCsrf(): bool {
-        $token = (string) ($_POST['csrf_token'] ?? '');
-        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
     }
 
     private function setFlash(string $type, string $message): void {
@@ -281,16 +214,6 @@ class Zonalcoordinator extends Controller {
         return ['zone_name' => $zoneName, 'bands' => $bands, 'zoneHealth' => $zoneHealth, 'divisions' => $divisions, 'clubs' => $clubs];
     }
 
-    private function programmeState() {
-        if (!isset($_SESSION['zonal_secretary_demo']['gampaha'])) {
-            $_SESSION['zonal_secretary_demo']['gampaha'] = ['budget' => 2500000.00, 'spent' => 425000.00, 'notifications' => 2, 'events' => [
-                ['id' => 'ZE-101', 'title' => 'Zone Youth Leadership Forum', 'type' => 'Leadership', 'date' => '2026-10-10', 'time' => '09:00', 'location' => 'Gampaha Youth Centre', 'budget' => 225000.00, 'audience' => 'All divisions', 'status' => 'Approved'],
-                ['id' => 'ZE-102', 'title' => 'Digital Skills Workshop', 'type' => 'Training', 'date' => '2026-10-22', 'time' => '10:00', 'location' => 'Ja-Ela Community Hall', 'budget' => 200000.00, 'audience' => 'Ja-Ela Division', 'status' => 'Pending approval'],
-            ]];
-        }
-        return $_SESSION['zonal_secretary_demo']['gampaha'];
-    }
-
     private function coordinatorCsrf() {
         $_SESSION['zonal_coordinator_csrf'] = $_SESSION['zonal_coordinator_csrf'] ?? bin2hex(random_bytes(32));
         return $_SESSION['zonal_coordinator_csrf'];
@@ -356,73 +279,9 @@ class Zonalcoordinator extends Controller {
     public function approveevent() { $this->decideEvent('approve'); }
     public function returnevent() { $this->decideEvent('request-changes'); }
 
-    public function reports() {
-        $this->requireZonalCoordinator();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $reports = [];
-        foreach ($this->model('ZoneReportModel')->getReports($zonalId) as $r) {
-            $ts = strtotime((string) $r->generated_at);
-            $reports[] = [
-                'id' => (int) $r->report_id,
-                'title' => $r->type_name ?? '',
-                'division' => 'All divisions',
-                'date' => $ts ? date('M d, Y', $ts) : '—',
-            ];
-        }
-        $data = $this->shell('Aggregate Reports — YouthNexus Pulse', 'Aggregate Reports', 'Zone-generated rollups.', 'zonalcoordinator/reports');
-        $data += ['reports' => $reports, 'zoneName' => $this->zoneDisplayName($zonalId)]; $this->view('zonalcoordinator/reports', $data);
-    }
-
-    public function reportpreview($id = null) {
-        $this->requireZonalCoordinator();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
-        if (!$report) {
-            $this->redirect('zonalcoordinator/reports');
-        }
-        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', $report->type_name ?? 'Report', 'zonalcoordinator/reports');
-        $data['report'] = $report;
-        $data['snapshot'] = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
-        $data['zoneName'] = $this->zoneDisplayName($zonalId);
-        $data['backRoute'] = 'zonalcoordinator/reports';
-        $data['exportRoute'] = 'zonalcoordinator/exportreport/' . (int) $report->report_id;
-        $this->view('zonalcoordinator/reportpreview', $data);
-    }
-
-    public function exportreport($id = null) {
-        $this->requireZonalCoordinator();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
-        if (!$report) {
-            $this->redirect('zonalcoordinator/reports');
-        }
-        $snapshot = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="zone-report-' . (int) $report->report_id . '.csv"');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, $snapshot['columns'] ?? []);
-        foreach ($snapshot['rows'] ?? [] as $row) {
-            fputcsv($out, array_values(is_array($row) ? $row : (array) $row));
-        }
-        fclose($out);
-    }
-
     private function zoneDisplayName(int $zonalId): string {
         $zone = $this->model('ZoneFundModel')->getZone($zonalId);
         return $zone->zonal_name ?? 'Zone';
-    }
-
-    public function exportreports() {
-        $this->requireZonalCoordinator();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $model = $this->model('ZoneReportModel');
-        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $this->zoneDisplayName($zonalId));
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Reports.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Report', 'Category', 'Period', 'Format', 'Generated']);
-        foreach ($model->getReports($zonalId) as $r) {
-            fputcsv($out, [$r->type_name, $r->category, $r->date_range_start . ' to ' . $r->date_range_end, $r->format, $r->generated_at]);
-        }
-        fclose($out);
     }
 
 }

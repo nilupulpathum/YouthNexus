@@ -1,41 +1,18 @@
 <?php
 
 /**
- * Zonalsecretary — zonal secretary dashboards (Z0 scaffolding).
- *
- * Presentation-only: session data mirroring the future backend contract.
- * No database reads or writes. Event scheduling and attendance summaries
- * remain frontend demonstrations until the backend phase is unlocked.
+ * Zonalsecretary — zonal secretary overview, zonal event lifecycle (D9/Plan
+ * 02: create, edit, resubmit, delete) and read-only attendance rollups.
+ * Club health monitoring and reports live in Zonalclubhealth and
+ * Zonalreports (divisional workflow at zone scope).
  *
  * Routes:
  *   zonalsecretary -> index()  (zonal secretary only)
- *   zonalsecretary/clubs -> clubs()  (monitor club health, shared Z1 build)
  *   zonalsecretary/events -> events()
+ *   zonalsecretary/updateevent, zonalsecretary/deleteevent
  *   zonalsecretary/attendance -> attendance()
- *   zonalsecretary/reports -> reports()
  */
 class Zonalsecretary extends Controller {
-
-    private function demoState() {
-        $key = 'gampaha';
-        if (!isset($_SESSION['zonal_secretary_demo'][$key])) {
-            $_SESSION['zonal_secretary_demo'][$key] = [
-                'budget' => 2500000.00,
-                'spent' => 425000.00,
-                'notifications' => 2,
-                'events' => [
-                    ['id' => 'ZE-101', 'title' => 'Zone Youth Leadership Forum', 'type' => 'Leadership', 'date' => '2026-10-10', 'time' => '09:00', 'location' => 'Gampaha Youth Centre', 'budget' => 225000.00, 'audience' => 'All divisions', 'status' => 'Approved'],
-                    ['id' => 'ZE-102', 'title' => 'Digital Skills Workshop', 'type' => 'Training', 'date' => '2026-10-22', 'time' => '10:00', 'location' => 'Ja-Ela Community Hall', 'budget' => 200000.00, 'audience' => 'Ja-Ela Division', 'status' => 'Pending approval'],
-                ],
-            ];
-        }
-        return $_SESSION['zonal_secretary_demo'][$key];
-    }
-
-    private function saveDemoState(array $state) {
-        $key = 'gampaha';
-        $_SESSION['zonal_secretary_demo'][$key] = $state;
-    }
 
     private function eventCsrf() {
         if (empty($_SESSION['zonal_event_csrf'])) {
@@ -77,62 +54,41 @@ class Zonalsecretary extends Controller {
     }
 
     /**
-     * Secretary overview with zonal programme and attendance summary.
+     * Secretary overview: live zone programme, funds, attendance and feed.
      */
     public function index() {
         $this->requireZonalSecretary();
 
-        $state = $this->demoState();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $role = (string) ($_SESSION['user_role'] ?? 'ZonalSecretary');
+        $zoneName = ZoneOverview::zoneName($this, $zonalId);
+        $attendance = ZoneOverview::attendance($this, $zonalId);
+        $funds = ZoneOverview::funds($this, $zonalId);
         $data = $this->shell(
             'Zonal Secretary Overview — YouthNexus Pulse',
             'Zonal Secretary Overview',
-            'Zonal events, reports and attendance of Gampaha Zone.',
+            'Zonal events, reports and attendance of ' . $zoneName . '.',
             'zonalsecretary'
         );
-        $data['eventCount'] = count($state['events']);
-        $data['budget'] = $state['budget'];
-        $data['spent'] = $state['spent'];
-        $data['attendanceSummary'] = ['rate' => 78, 'present' => 486, 'sessions' => 18];
-        $data['announcements'] = [
-            ['title' => 'Quarterly reporting window', 'summary' => 'Division reports are due before the end of the current reporting period.', 'age' => '1 day ago', 'is_new' => true],
-            ['title' => 'NYSC leadership forum', 'summary' => 'Confirm the zone representative list before the programme deadline.', 'age' => '4 days ago', 'is_new' => false],
+        $data['zoneName'] = $zoneName;
+        $data['eventCount'] = ZoneOverview::eventCount($this, $zonalId);
+        $data['budget'] = $funds['available'] ?? 0;
+        $data['attendanceSummary'] = [
+            'rate' => $attendance['rate'],
+            'present' => $attendance['present'],
+            'sessions' => $attendance['sessions'],
         ];
-        $data['upcomingEvents'] = array_map(static function ($event) {
-            return ['title' => $event['title'], 'date' => date('M j, Y', strtotime($event['date'])), 'location' => $event['location'], 'status' => $event['status'], 'status_key' => 'attending'];
-        }, array_slice($state['events'], 0, 2));
+        $data['announcements'] = ZoneOverview::announcements(
+            $this, $userId, $role, $_SESSION['division_id'] ?? null, $zonalId
+        );
+        $data['upcomingEvents'] = ZoneOverview::upcoming($this, $zonalId);
 
         $this->view('zonalsecretary/index', $data);
     }
 
     /**
-     * Monitor club health (shared Z1 build with the coordinator monitor —
-     * same zone picture; secretary flags follow the same NYSC Admin path).
-     * Renders the shared monitor view under the secretary shell.
-     */
-    public function clubs() {
-        $this->requireZonalSecretary();
-
-        $mock = $this->model('ZoneHealthMock');
-        $clubs = $mock->zoneClubs();
-        usort($clubs, static function ($a, $b) {
-            return $b['score'] <=> $a['score'];
-        });
-
-        $data = $this->shell(
-            'Monitor Club Health — YouthNexus Pulse',
-            'Monitor Club Health',
-            'Monitor club health scores and identify clubs requiring intervention.',
-            'zonalsecretary/clubs'
-        );
-        $data['zoneHealth'] = $mock->zoneHealth($clubs);
-        $data['divisions'] = $mock->divisionAverages($clubs);
-        $data['clubs'] = $clubs;
-
-        $this->view('zonalcoordinator/clubs', $data);
-    }
-
-    /**
-     * Zonal events with a session-only budget guard and notifications.
+     * Zonal events on the real Event table (Plan 02 lifecycle).
      */
     public function events() {
         $this->requireZonalSecretary();
@@ -374,170 +330,63 @@ class Zonalsecretary extends Controller {
         $this->redirect('zonalsecretary/events');
     }
 
-    /**
-     * Report catalog + generated zone reports (D13: real Report rows).
-     */
-    public function reports() {
-        $this->requireZonalSecretary();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $model = $this->model('ZoneReportModel');
-        $catalog = $model->getCatalog();
-
-        $category = trim((string)($_GET['category'] ?? ''));
-        $search = strtolower(trim((string)($_GET['search'] ?? '')));
-        if ($category !== '' && !isset($catalog[$category])) $category = '';
-
-        $reports = [];
-        foreach ($model->getReports($zonalId) as $r) {
-            $ts = strtotime((string) $r->generated_at);
-            $reports[] = [
-                'id' => (int) $r->report_id,
-                'category' => $r->category ?? '',
-                'type' => $r->type_name ?? '',
-                'division' => 'All divisions',
-                'format' => $r->format ?? '',
-                'date' => $ts ? date('M d, Y', $ts) : '—',
-                'by' => $r->generated_by_name ?? '',
-            ];
-        }
-        $reports = array_values(array_filter($reports, static function ($report) use ($category, $search) {
-            return ($category === '' || $report['category'] === $category)
-                && ($search === '' || str_contains(strtolower($report['type']), $search));
-        }));
-
-        $data = $this->shell(
-            'Aggregate Reports - YouthNexus Pulse',
-            'Aggregate Reports',
-            'Division rollups across the zone.',
-            'zonalsecretary/reports'
-        );
-        $data += ['catalog' => $catalog, 'reports' => $reports, 'category' => $category, 'search' => $search,
-            'zoneName' => $this->zoneName($zonalId), 'flash' => $this->pullSecretaryFlash()];
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-        $this->view('zonalsecretary/reports', $data);
-    }
-
-    /**
-     * Generate a zone report from the catalog (secretary).
-     */    public function generateReport() {
-        $this->requireZonalSecretary();
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-            $this->redirect('zonalsecretary/reports');
-        }
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-        if (!is_string($_POST['csrf_token'] ?? null) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            $this->setSecretaryFlash('error', 'Refresh the page before generating a report.');
-            $this->redirect('zonalsecretary/reports');
-        }
-        try {
-            $reportId = $this->model('ZoneReportModel')->createReport(
-                (int) ($_SESSION['zonal_id'] ?? 0), (int) $_SESSION['user_id'],
-                (int) ($_POST['report_type_id'] ?? 0),
-                trim($_POST['start'] ?? ''), trim($_POST['end'] ?? ''),
-                trim($_POST['format'] ?? 'OnScreen')
-            );
-        } catch (InvalidArgumentException $e) {
-            $this->setSecretaryFlash('error', $e->getMessage());
-            $this->redirect('zonalsecretary/reports');
-        }
-        $this->setSecretaryFlash('success', "Report generated (ID {$reportId}).");
-        $this->redirect('zonalsecretary/reportpreview/' . $reportId);
-    }
-
     private function zoneName(int $zonalId): string {
         $zone = $this->model('ZoneFundModel')->getZone($zonalId);
         return $zone->zonal_name ?? 'Zone';
     }
 
-    private function setSecretaryFlash(string $type, string $message): void {        $_SESSION['zonal_secretary_flash'] = ['type' => $type, 'message' => $message];
-    }
-
-    private function pullSecretaryFlash(): ?array {
-        $flash = $_SESSION['zonal_secretary_flash'] ?? null;
-        unset($_SESSION['zonal_secretary_flash']);
-        return is_array($flash) ? $flash : null;
-    }
-
-    public function reportpreview($id = null) {
-        $this->requireZonalSecretary();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
-        if (!$report) {
-            $this->redirect('zonalsecretary/reports');
-        }
-        $data = $this->shell('Report Preview — YouthNexus Pulse', 'Report Preview', $report->type_name ?? 'Report', 'zonalsecretary/reports');
-        $data['report'] = $report;
-        $data['snapshot'] = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
-        $data['zoneName'] = $this->zoneName($zonalId);
-        $this->view('zonalsecretary/reportpreview', $data);
-    }
-
-    public function exportreport($id = null) {
-        $this->requireZonalSecretary();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $report = $this->model('ZoneReportModel')->getReport($zonalId, (int) $id);
-        if (!$report) {
-            $this->redirect('zonalsecretary/reports');
-        }
-        $snapshot = json_decode((string) ($report->data_snapshot ?? ''), true) ?? [];
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="zone-report-' . (int) $report->report_id . '.csv"');
-        $out = fopen('php://output', 'w');
-        fputcsv($out, $snapshot['columns'] ?? []);
-        foreach ($snapshot['rows'] ?? [] as $row) {
-            fputcsv($out, array_values(is_array($row) ? $row : (array) $row));
-        }
-        fclose($out);
-    }
-
-    public function exportreports() {
-        $this->requireZonalSecretary();
-        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
-        $model = $this->model('ZoneReportModel');
-        $zoneName = preg_replace('/[^A-Za-z0-9]+/', '_', $this->zoneName($zonalId));
-        header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="' . $zoneName . '_Aggregate_Reports.csv"');
-        $out = fopen('php://output', 'w'); fputcsv($out, ['Report', 'Category', 'Period', 'Format', 'Generated']);
-        foreach ($model->getReports($zonalId) as $r) {
-            fputcsv($out, [$r->type_name, $r->category, $r->date_range_start . ' to ' . $r->date_range_end, $r->format, $r->generated_at]);
-        }
-        fclose($out);
-    }
-
     /**
-     * Zone attendance statistics are read-only rollups by division.
+     * Zone attendance statistics are read-only rollups by division, computed
+     * live from division and club events in the period. Zonal-organized
+     * events belong to the zone rather than any division, so the summary
+     * always matches the displayed division rows.
      */
     public function attendance() {
         $this->requireZonalSecretary();
 
-        $state = $this->demoState();
+        $zonalId = (int) ($_SESSION['zonal_id'] ?? 0);
+        $monitor = $this->model('ZoneMonitorModel');
+        $divisionNames = array_map(
+            static fn($d) => $d->division_name,
+            $monitor->getDivisions($zonalId)
+        );
         $division = trim((string)($_GET['division'] ?? 'All divisions'));
-        $period = trim((string)($_GET['period'] ?? '90'));
-        $divisionRows = [
-            ['name' => 'Gampaha Division', 'clubs' => 8, 'sessions' => 7, 'present' => 214, 'possible' => 276, 'rate' => 78],
-            ['name' => 'Ja-Ela Division', 'clubs' => 6, 'sessions' => 6, 'present' => 165, 'possible' => 210, 'rate' => 79],
-            ['name' => 'Negombo Division', 'clubs' => 5, 'sessions' => 5, 'present' => 107, 'possible' => 144, 'rate' => 74],
-        ];
-        if (in_array($division, ['Gampaha Division', 'Ja-Ela Division', 'Negombo Division'], true)) {
-            $divisionRows = array_values(array_filter($divisionRows, static fn($row) => $row['name'] === $division));
-        } else {
+        if ($division !== 'All divisions' && !in_array($division, $divisionNames, true)) {
             $division = 'All divisions';
         }
+        $period = (string) ($_GET['period'] ?? '90');
+        if (!in_array($period, ['30', '90', '365'], true)) {
+            $period = '90';
+        }
 
+        $divisionRows = $monitor->getDivisionAttendance($zonalId, (int) $period);
+        if ($division !== 'All divisions') {
+            $divisionRows = array_values(array_filter(
+                $divisionRows, static fn($row) => $row['name'] === $division
+            ));
+        }
+        $present = array_sum(array_column($divisionRows, 'present'));
+        $possible = array_sum(array_column($divisionRows, 'possible'));
+
+        $zoneName = ZoneOverview::zoneName($this, $zonalId);
         $data = $this->shell(
             'Zone Attendance — YouthNexus Pulse',
             'Zone Attendance',
-            'Attendance statistics across Gampaha Zone.',
+            'Attendance statistics across ' . $zoneName . '.',
             'zonalsecretary/attendance'
         );
+        $data['zoneName'] = $zoneName;
+        $data['divisionNames'] = $divisionNames;
         $data['divisionRows'] = $divisionRows;
         $data['division'] = $division;
-        $data['period'] = in_array($period, ['30', '90', '365'], true) ? $period : '90';
-        $data['zoneAttendance'] = ['rate' => 78, 'present' => 486, 'possible' => 630, 'sessions' => 18, 'clubs' => 19];
-        $data['eventCount'] = count($state['events']);
+        $data['period'] = $period;
+        $data['zoneAttendance'] = [
+            'rate' => $possible > 0 ? round($present * 100 / $possible, 1) : 0,
+            'present' => $present,
+            'possible' => $possible,
+            'sessions' => array_sum(array_column($divisionRows, 'sessions')),
+            'clubs' => array_sum(array_column($divisionRows, 'clubs')),
+        ];
 
         $this->view('zonalsecretary/attendance', $data);
     }

@@ -26,14 +26,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <h1 id="zonal-attendance-heading" class="visually-hidden">Zone attendance</h1>
     <p><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/zonalsecretary"><span aria-hidden="true">‹</span> Back to Secretary Overview</a></p>
     <section class="dw-panel" aria-labelledby="zonal-attendance-panel-heading">
-        <header class="dw-panel__header"><div><p>Gampaha Zone</p><h2 id="zonal-attendance-panel-heading">Attendance statistics</h2></div></header>
+        <header class="dw-panel__header"><div><p><?= $e($zoneName ?? 'Zone') ?></p><h2 id="zonal-attendance-panel-heading">Attendance statistics</h2></div></header>
         <div class="dw-panel__body">
             <form class="dw-filter-panel" method="get" action="<?= ROOT ?>/zonalsecretary/attendance">
                 <h2 class="dw-filter-panel__heading">Filter Attendance</h2>
                 <div class="dw-filter-grid">
                     <div class="dw-field">
                         <label for="zonal-attendance-division">Division</label>
-                        <select id="zonal-attendance-division" name="division"><option <?= $division === 'All divisions' ? 'selected' : '' ?>>All divisions</option><option <?= $division === 'Gampaha Division' ? 'selected' : '' ?>>Gampaha Division</option><option <?= $division === 'Ja-Ela Division' ? 'selected' : '' ?>>Ja-Ela Division</option><option <?= $division === 'Negombo Division' ? 'selected' : '' ?>>Negombo Division</option></select>
+                        <select id="zonal-attendance-division" name="division"><option <?= $division === 'All divisions' ? 'selected' : '' ?>>All divisions</option><?php foreach ($divisionNames ?? [] as $divisionName): ?><option <?= $division === $divisionName ? 'selected' : '' ?>><?= $e($divisionName) ?></option><?php endforeach; ?></select>
                     </div>
                     <div class="dw-field">
                         <label for="zonal-attendance-period">Period</label>
