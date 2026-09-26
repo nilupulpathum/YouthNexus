@@ -7,9 +7,10 @@
 (function () {
     'use strict';
 
-    const ROOT       = window.ROOT || '';
+    const pageConfig = document.getElementById('attendanceConfig');
+    const ROOT       = pageConfig?.dataset.root || '';
     const CSRF_TOKEN = document.getElementById('csrfToken')?.value || '';
-    const isNYSCAdmin = !!window.isNYSCAdmin;
+    const isNYSCAdmin = pageConfig?.dataset.nyscAdmin === 'true';
 
     /* -----------------------------------------------------------------
        TOAST HELPER
@@ -424,7 +425,7 @@
             const normalizedStatus = status.toLowerCase();
 
             badge.className = `am-status-badge ${normalizedStatus}`;
-            badge.textContent = normalizedStatus === 'present' ? '● Present' : '✗ Absent';
+            badge.textContent = normalizedStatus === 'present' ? 'Present' : 'Absent';
             statusCell.replaceChildren(badge);
         }
 
@@ -441,7 +442,7 @@
 
         const recordedByCell = row.cells[5];
         if (recordedByCell) {
-            const user = window.currentAttendanceUser || {};
+            const user = { name: pageConfig?.dataset.userName, role: pageConfig?.dataset.userRole };
             const recorderName = document.createTextNode(user.name || 'Current user');
             recordedByCell.replaceChildren(recorderName);
 

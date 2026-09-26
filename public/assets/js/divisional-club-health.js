@@ -66,7 +66,8 @@
   }
 
   function statusPill(text, statusClass) {
-    return node('span', text, 'dw-status dw-status--' + String(statusClass || text).toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    const tone = String(statusClass || text).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return node('span', text, 'yn-status yn-status--' + tone + ' dw-status dw-status--' + tone);
   }
 
   function applyFilters() {
@@ -293,7 +294,8 @@
     document.querySelector('[data-detail-window]').textContent = 'Scoring window: ' + formatDate(record.score.window_start) + ' to ' + formatDate(record.score.window_end);
     var pill = document.querySelector('[data-detail-status]');
     pill.textContent = healthLabel(record.score.health_status);
-    pill.className = 'dw-status dw-status--' + record.score.health_status.toLowerCase();
+    const tone = record.score.health_status.toLowerCase();
+    pill.className = 'yn-status yn-status--' + tone + ' dw-status dw-status--' + tone;
     populateBreakdown(record);
     populateHistory(record);
     populateClubInfo(record);

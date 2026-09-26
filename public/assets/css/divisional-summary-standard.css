@@ -25,11 +25,11 @@
   flex-direction: row;
   gap: 13px;
   padding: 18px;
-  border: 1px solid var(--db-border, #e7e9f0);
+  border: 1px solid var(--db-border, var(--yn-border));
   border-radius: var(--db-radius-lg, 12px);
   background: #fff;
   box-shadow: 0 7px 22px rgba(15, 23, 42, .06);
-  color: var(--db-text-dark, #12141a);
+  color: var(--db-text-dark, var(--yn-text-primary));
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -50,7 +50,7 @@
 .dashboard .cr-stat-card.is-active {
   padding: 18px;
   border-width: 1px;
-  border-color: var(--db-sidebar-bg, #1e40af);
+  border-color: var(--db-sidebar-bg, var(--yn-primary));
   background: #fff;
   box-shadow: 0 7px 22px rgba(15, 23, 42, .06);
 }
@@ -86,7 +86,7 @@
 .dashboard .am-stat-value {
   display: block;
   margin: 0;
-  color: var(--db-text-dark, #12141a);
+  color: var(--db-text-dark, var(--yn-text-primary));
   font-size: 20px;
   font-weight: 800;
   line-height: 1.2;
@@ -100,7 +100,7 @@
 .dashboard .am-stat-label {
   display: block;
   margin-top: 6px;
-  color: var(--db-text-grey, #6b7280);
+  color: var(--db-text-grey, var(--yn-text-muted));
   font-size: 12px;
   font-weight: 400;
   line-height: 1.35;

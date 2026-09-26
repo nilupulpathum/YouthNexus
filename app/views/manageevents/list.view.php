@@ -245,8 +245,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     <div class="me-badges-group">
                                         <?php if ($isNational): ?>
                                             <span class="me-badge me-badge-national">
-                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:3px;vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                                National Event
+                                                National event
                                             </span>
                                         <?php elseif ($isZonal): ?>
                                             <span class="me-badge me-badge-zonal">Zonal: <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zone') ?></span>
@@ -387,7 +386,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                             <?= htmlspecialchars($club->club_name) ?>
                                             <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
                                             <?php if (!empty($club->division_name)): ?>
-                                                <small style="color:var(--db-text-grey);font-size:11px;">(<?= htmlspecialchars($club->division_name) ?>)</small>
+                                                <small class="yn-text-muted yn-text-xs">(<?= htmlspecialchars($club->division_name) ?>)</small>
                                             <?php endif; ?>
                                         </span>
                                     </div>
@@ -404,7 +403,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
+                        <label class="me-form-label">Max Attendees <small class="me-form-hint">(event-wide)</small></label>
                         <input type="number" name="max_attendance" class="me-form-input" placeholder="e.g., 500" min="1">
                     </div>
 

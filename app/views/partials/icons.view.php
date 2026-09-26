@@ -24,6 +24,8 @@ function yn_icon(string $name): string {
         'clipboard' => '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/>',
         'reports' => '<path d="M5 19V9M12 19V5M19 19v-7M3 19h18" stroke-linecap="round"/>',
         'search' => '<circle cx="11" cy="11" r="7.5"/><path d="m20 20-3.7-3.7" stroke-linecap="round"/>',
+        'arrow-left' => '<path d="m13.5 5-7 7 7 7M7 12h12" stroke-linecap="round" stroke-linejoin="round"/>',
+        'arrow-right' => '<path d="m10.5 5 7 7-7 7M17 12H5" stroke-linecap="round" stroke-linejoin="round"/>',
         'close' => '<path d="m6 6 12 12M18 6 6 18" stroke-linecap="round"/>',
         'eye' => '<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5"/>',
         'link' => '<path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1" stroke-linecap="round"/><path d="M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1" stroke-linecap="round"/>',

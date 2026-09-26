@@ -4,8 +4,14 @@ if (($_SERVER['SERVER_NAME'] ?? 'localhost') === 'localhost') {
     $port = $_SERVER['SERVER_PORT'] ?? '80';
     if (php_sapi_name() === 'cli-server') {
         define('ROOT', 'http://localhost:' . $port);
-    } else {
+    } elseif (php_sapi_name() === 'cli') {
         define('ROOT', 'http://localhost/YouthNexus/YouthNexus/public');
+    } else {
+        // Match the checkout Apache is serving, including a separate Git worktree.
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/YouthNexus/YouthNexus/public/index.php';
+        $basePath = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        $portSuffix = $port === '80' ? '' : ':' . (int) $port;
+        define('ROOT', 'http://localhost' . $portSuffix . $basePath);
     }
 } else {
     define('ROOT', 'https://websitename.com');

@@ -47,8 +47,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="void-request-search">Search ledger entries and requests</label>
       <input id="void-request-search" type="search" placeholder="Search by entry, description, or reason" data-void-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">Filters</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>>New Void Request</button>
   </div>
 
   <section class="dw-filter-panel" id="void-request-filters" hidden>
@@ -103,8 +103,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="dw-button dw-button--secondary" type="button" data-void-filter-reset>Reset all</button>
-      <button class="dw-button dw-button--primary" type="button" data-void-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-void-filter-reset>Reset all</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-void-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -117,7 +117,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-eligible-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Entry ID</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Action</th></tr></thead>
         <tbody data-eligible-body>
           <?php foreach ($entries as $entry): ?>
@@ -133,7 +133,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td class="dw-money"><?= $e($money($entry->amount)) ?></td>
               <td><?php $status = $entry->type; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
               <td>
-                <button class="dw-button dw-button--ghost" type="button"
+                <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button"
                         data-request-entry="<?= (int) $entry->entry_id ?>"
                         data-modal-open="new-void-request"<?= !$recipient ? ' disabled' : '' ?>>Request Void</button>
               </td>
@@ -158,7 +158,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-request-count><?= count($requests) ?> <?= count($requests) === 1 ? 'request' : 'requests' ?></span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Ledger Entry</th><th>Reason</th><th>Sent To</th><th>Date Sent</th><th>Status</th><th>Action</th></tr></thead>
         <tbody data-request-body>
           <?php foreach ($requests as $request): ?>
@@ -186,7 +186,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
               <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
               <td>
-                <button class="dw-button dw-button--ghost db-view-button" type="button"
+                <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" type="button"
                         data-request-status
                         data-request-id="<?= (int) $request->void_request_id ?>"
                         data-request-reference="<?= $e($requestReference($request->void_request_id)) ?>"
@@ -248,8 +248,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <footer class="dw-modal__footer">
-      <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button dw-button--primary" type="submit"<?= !$recipient ? ' disabled' : '' ?>>Submit to Zonal</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit"<?= !$recipient ? ' disabled' : '' ?>>Submit to Zonal</button>
     </footer>
   </form>
 </div>
@@ -280,9 +280,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <footer class="dw-modal__footer">
       <form method="post" action="" data-withdraw-form data-withdraw-base="<?= ROOT ?>/divisionalvoidrequest/withdraw/" hidden>
         <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
-        <button class="dw-button dw-button--secondary" type="submit" data-confirm="Withdraw this pending void request?">Withdraw Request</button>
+        <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="submit" data-confirm="Withdraw this pending void request?">Withdraw Request</button>
       </form>
-      <button class="dw-button dw-button--primary" type="button" data-modal-close>Close</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-modal-close>Close</button>
     </footer>
   </div>
 </div>

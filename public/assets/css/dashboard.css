@@ -43,10 +43,6 @@ body.dashboard {
   font: inherit;
 }
 
-.dashboard button {
-  color: inherit;
-}
-
 .dashboard [hidden] {
   display: none !important;
 }

@@ -1,0 +1,157 @@
+/**
+ * YouthNexus Design Tokens
+ * --------------------------------------------------------------------
+ * The single source of truth for design tokens across all 4 tiers.
+ * Loaded BEFORE common.css and dashboard.css so feature CSS files can
+ * reference these tokens.
+ *
+ * Naming: --yn-<concept>[-<variant>]
+ *   e.g. --yn-primary, --yn-primary-hover, --yn-success-bg
+ *
+ * Migration: --db-*, --dw-*, and landing.css's parallel palette are
+ * sunset in PR #9. Until then, feature CSS files may still reference
+ * the legacy tokens; this file keeps both alive via fallback aliases.
+ */
+
+:root {
+  /* ── Color: Primary ──────────────────────────────────────────────── */
+  --yn-primary: #1e40af;
+  --yn-primary-hover: #1d3a8a;
+  --yn-primary-soft: #eef4ff;
+  --yn-primary-bg: #eff6ff;
+
+  /* ── Color: Success ─────────────────────────────────────────────── */
+  --yn-success: #16a34a;
+  --yn-success-hover: #15803d;
+  --yn-success-bg: #dcfce7;
+  --yn-success-soft: #f0fdf4;
+
+  /* ── Color: Warning ─────────────────────────────────────────────── */
+  --yn-warning: #ea580c;
+  --yn-warning-hover: #c2410c;
+  --yn-warning-bg: #fff7ed;
+  --yn-warning-soft: #fffbeb;
+
+  /* ── Color: Danger ──────────────────────────────────────────────── */
+  --yn-danger: #dc2626;
+  --yn-danger-hover: #b91c1c;
+  --yn-danger-bg: #fef2f2;
+  --yn-danger-soft: #fff5f5;
+
+  /* ── Color: Info ────────────────────────────────────────────────── */
+  --yn-info: #2563eb;
+  --yn-info-bg: #eff6ff;
+
+  /* ── Color: Neutrals ────────────────────────────────────────────── */
+  --yn-text-primary: #12141a;
+  --yn-text-secondary: #475569;
+  --yn-text-muted: #6b7280;
+  --yn-text-disabled: #94a3b8;
+
+  --yn-border: #e7e9f0;
+  --yn-border-strong: #cbd5e1;
+  --yn-divider: #f1f5f9;
+
+  --yn-bg-page: #f8fafc;
+  --yn-bg-surface: #ffffff;
+  --yn-bg-surface-alt: #f1f5f9;
+  --yn-bg-stripe: #fafbfc;
+
+  /* ── Radius ─────────────────────────────────────────────────────── */
+  --yn-radius-sm: 6px;
+  --yn-radius: 8px;
+  --yn-radius-lg: 12px;
+  --yn-radius-pill: 999px;
+
+  /* ── Spacing (4px grid) ────────────────────────────────────────── */
+  --yn-space-1: 4px;
+  --yn-space-2: 8px;
+  --yn-space-3: 12px;
+  --yn-space-4: 16px;
+  --yn-space-5: 20px;
+  --yn-space-6: 24px;
+  --yn-space-8: 32px;
+  --yn-space-10: 40px;
+  --yn-space-12: 48px;
+
+  /* ── Typography ────────────────────────────────────────────────── */
+  --yn-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                     Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --yn-font-mono: 'Sarasa Mono SC', 'JetBrains Mono', 'Fira Code',
+                   Consolas, monospace;
+
+  --yn-font-xs: 11px;
+  --yn-font-sm: 12px;
+  --yn-font-md: 13px;
+  --yn-font-base: 14px;
+  --yn-font-lg: 16px;
+  --yn-font-xl: 18px;
+  --yn-font-2xl: 22px;
+  --yn-font-3xl: 28px;
+  --yn-font-4xl: 36px;
+
+  --yn-leading-tight: 1.15;
+  --yn-leading-snug: 1.35;
+  --yn-leading-normal: 1.5;
+  --yn-leading-relaxed: 1.65;
+
+  /* ── Shadows ───────────────────────────────────────────────────── */
+  --yn-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --yn-shadow: 0 7px 22px rgba(15, 23, 42, 0.06);
+  --yn-shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.25);
+  --yn-shadow-focus: 0 0 0 3px rgba(30, 64, 175, 0.15);
+
+  /* ── Sidebar (preserved as legacy tokens, will be removed in PR #9) */
+  --yn-sidebar-bg: var(--yn-primary);
+  --yn-sidebar-width: 240px;
+  --yn-topbar-height: 66px;
+
+  /* ── Legacy aliases (sunset in PR #9) ───────────────────────────── */
+  --db-sidebar-bg: var(--yn-primary);
+  --db-topbar-height: var(--yn-topbar-height);
+  --db-text-dark: var(--yn-text-primary);
+  --db-text-grey: var(--yn-text-muted);
+  --db-border: var(--yn-border);
+  --db-bg-page: var(--yn-bg-page);
+  --db-radius: var(--yn-radius);
+  --db-radius-lg: var(--yn-radius-lg);
+  --db-font-family: var(--yn-font-family);
+  --dw-primary: var(--yn-primary);
+  --dw-success: var(--yn-success);
+  --dw-warning: var(--yn-warning);
+  --dw-danger: var(--yn-danger);
+  --dw-border: var(--yn-border);
+  --dw-muted: var(--yn-text-muted);
+  --dw-text: var(--yn-text-primary);
+  --dw-radius: var(--yn-radius);
+  --dw-radius-lg: var(--yn-radius-lg);
+  --dw-shadow: var(--yn-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.yn-focus-ring:focus-visible {
+  outline: 2px solid var(--yn-primary);
+  outline-offset: 2px;
+}
+
+/* ── Utility classes (used by PR #11 inline style sweep) ─────────── */
+.yn-text-right  { text-align: right; }
+.yn-text-center { text-align: center; }
+.yn-text-muted  { color: var(--yn-text-muted); }
+.yn-text-danger { color: var(--yn-danger); }
+.yn-text-success { color: var(--yn-success); }
+.yn-text-warning { color: var(--yn-warning); }
+.yn-text-sm     { font-size: var(--yn-font-sm); }
+.yn-text-xs     { font-size: var(--yn-font-xs); }
+.yn-hidden      { display: none; }
+.yn-flex-end    { justify-content: flex-end; }
+.yn-mt-2        { margin-top: var(--yn-space-2); }
+.yn-mt-4        { margin-top: var(--yn-space-4); }
+.yn-mb-2        { margin-bottom: var(--yn-space-2); }
+.yn-mb-4        { margin-bottom: var(--yn-space-4); }

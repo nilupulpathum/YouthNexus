@@ -45,8 +45,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="allocation-search">Search allocations</label>
       <input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
   </div>
 
   <section class="dw-filter-panel" id="allocation-filters" hidden>
@@ -108,8 +108,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="dw-button dw-button--secondary" type="button" data-allocation-filter-reset>Reset all</button>
-      <button class="dw-button dw-button--primary" type="button" data-allocation-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-allocation-filter-reset>Reset all</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-allocation-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -119,7 +119,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-allocation-count="pending"><?= count($pendingRequests) ?> pending</span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Club</th><th>Purpose</th><th>Category</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
         <tbody data-allocation-rows="pending">
           <?php foreach ($pendingRequests as $request): ?>
@@ -139,7 +139,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($request->created_at))) ?></td>
               <td>
                 <div class="dw-row-actions">
-                  <button class="dw-button dw-button--primary" type="button"
+                  <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button"
                           data-review-allocation
                           data-modal-open="review-allocation"
                           data-action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>"
@@ -152,7 +152,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                   <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
                     <input type="hidden" name="decision" value="reject">
-                    <button class="dw-button dw-button--danger" type="submit">Reject</button>
+                    <button class="yn-btn yn-btn--danger dw-button dw-button--danger" type="submit">Reject</button>
                   </form>
                 </div>
               </td>
@@ -175,7 +175,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-allocation-count="history"><?= count($history) ?> records</span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
         <tbody data-allocation-rows="history">
           <?php foreach ($history as $allocation): ?>
@@ -240,7 +240,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong>
       </div>
     </div>
-    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
+    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
   </form>
 </div>
 
@@ -267,7 +267,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <span>Approving this request will deduct the amount from the division ledger and credit the club ledger.</span>
       </div>
     </div>
-    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Confirm Allocation</button></footer>
+    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Confirm Allocation</button></footer>
   </form>
 </div>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

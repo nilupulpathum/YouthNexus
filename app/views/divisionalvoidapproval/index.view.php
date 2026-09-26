@@ -53,8 +53,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="void-approval-search">Search club void requests</label>
       <input id="void-approval-search" type="search" placeholder="Search by request, club, ledger entry, or reason" data-approval-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-approval-filters" aria-expanded="false">Filters</button>
-    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalvoidapproval/export"><?= yn_icon('download') ?> Export</a>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-approval-filters" aria-expanded="false">Filters</button>
+    <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-btn-download" href="<?= ROOT ?>/divisionalvoidapproval/export"><?= yn_icon('download') ?> Export</a>
   </div>
 
   <section class="dw-filter-panel" id="void-approval-filters" hidden>
@@ -117,8 +117,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="dw-button dw-button--secondary" type="button" data-approval-filter-reset>Reset all</button>
-      <button class="dw-button dw-button--primary" type="button" data-approval-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-approval-filter-reset>Reset all</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-approval-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -128,7 +128,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-pending-count><?= count($pendingRequests) ?> <?= count($pendingRequests) === 1 ? 'request' : 'requests' ?></span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead>
         <tbody data-pending-body>
           <?php foreach ($pendingRequests as $request): ?>
@@ -151,7 +151,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td class="dw-table__description"><?= $e($request->reason) ?></td>
               <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
               <td>
-                <button class="dw-button dw-button--primary" type="button"
+                <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button"
                         data-review-request
                         data-request-id="<?= (int) $request->void_request_id ?>"
                         data-request-reference="<?= $e($reference) ?>"
@@ -183,7 +183,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <span class="dw-count" data-decided-count><?= count($decidedRequests) ?> <?= count($decidedRequests) === 1 ? 'request' : 'requests' ?></span>
     </header>
     <div class="dw-table-wrap">
-      <table class="dw-table">
+      <table class="yn-table dw-table">
         <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Decided On</th><th>Decision</th><th>Remarks</th></tr></thead>
         <tbody data-decided-body>
           <?php foreach ($decidedRequests as $request): ?>
@@ -243,7 +243,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <section class="dw-evidence-section dw-field--span-2" aria-labelledby="entry-evidence-title">
         <div class="dw-section-header">
           <div><h3 id="entry-evidence-title">Ledger Entry Evidence</h3><p>Confirm the entry and its supporting record before deciding</p></div>
-          <a class="dw-button dw-button--ghost db-view-button" href="#" target="_blank" rel="noopener" data-review-receipt hidden><?= yn_icon('eye') ?> View Receipt</a>
+          <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="#" target="_blank" rel="noopener" data-review-receipt hidden><?= yn_icon('eye') ?> View Receipt</a>
         </div>
         <dl class="dw-review-list">
           <div><dt>Category</dt><dd data-evidence-category></dd></div>
@@ -262,7 +262,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <section class="dw-evidence-section dw-field--span-2" aria-labelledby="nearby-entries-title">
         <div class="dw-section-header"><div><h3 id="nearby-entries-title">Nearby Ledger Entries</h3><p>Entries recorded within three days of the requested transaction</p></div></div>
         <div class="dw-table-wrap">
-          <table class="dw-table">
+          <table class="yn-table dw-table">
             <thead><tr><th>Reference</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Check</th></tr></thead>
             <tbody data-nearby-entries></tbody>
           </table>
@@ -294,8 +294,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <footer class="dw-modal__footer">
-      <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button dw-button--primary" type="submit" data-submit-decision>Submit Decision</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit" data-submit-decision>Submit Decision</button>
     </footer>
   </form>
 </div>

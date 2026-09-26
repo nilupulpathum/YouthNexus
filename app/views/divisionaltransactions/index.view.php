@@ -39,8 +39,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="transaction-search">Search transactions</label>
       <input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
+    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
   </div>
 
   <section class="dw-filter-panel" id="transaction-filters" hidden>
@@ -98,8 +98,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="dw-button dw-button--secondary" type="button" data-transaction-filter-reset>Reset all</button>
-      <button class="dw-button dw-button--primary" type="button" data-transaction-filter-apply>Apply filters</button>
+      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-transaction-filter-reset>Reset all</button>
+      <button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="button" data-transaction-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -153,10 +153,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <span class="dw-record-card__reference"><?= $e($transaction->reference_no) ?></span>
           <div class="dw-record-card__actions">
             <?php if ($hasReceipt): ?>
-              <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $transaction->entry_id ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
+              <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/financereceipt/show/<?= (int) $transaction->entry_id ?>" target="_blank" rel="noopener"><?= yn_icon('eye') ?> View Receipt</a>
             <?php endif; ?>
             <?php if ($canEdit): ?>
-              <button class="dw-button dw-button--ghost db-secondary-action" type="button" data-edit-transaction data-modal-open="edit-transaction"><?= yn_icon('pen') ?> Edit</button>
+              <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-secondary-action" type="button" data-edit-transaction data-modal-open="edit-transaction"><?= yn_icon('pen') ?> Edit</button>
             <?php endif; ?>
           </div>
         </footer>
@@ -191,7 +191,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <small>Maximum file size: 5 MB.</small>
       </div>
     </div>
-    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Save Transaction</button></footer>
+    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Save Transaction</button></footer>
   </form>
 </div>
 
@@ -215,7 +215,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <label class="dw-checkbox dw-field--span-2" data-remove-receipt-row hidden><input type="checkbox" name="remove_receipt" value="1">Remove the current receipt</label>
     </div>
-    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Save Changes</button></footer>
+    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Save Changes</button></footer>
   </form>
 </div>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
