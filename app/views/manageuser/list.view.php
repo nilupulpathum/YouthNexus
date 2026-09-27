@@ -173,68 +173,240 @@ function mu_status_badge(string $status): string {
     box-shadow: var(--mu-shadow);
 }
 
-/* ---- filters ---- */
-.mu-filters {
+/* ---- filters (attendance-style toolbar + collapsible panel) ---- */
+.mu-toolbar {
+    width: 100%;
     display: flex;
-    gap: 10px;
-    padding: 16px 20px;
-    border-bottom: 1px solid #f0f0f0;
-    flex-wrap: wrap;
     align-items: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-bottom: 16px;
 }
-.mu-search-wrap {
-    flex: 1;
-    min-width: 200px;
+.mu-search-group {
     position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--mu-border, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.mu-search-wrap svg {
-    position: absolute;
-    right: 12px;
-    left: auto;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--mu-gray);
+.mu-search-group:hover { border-color: #cbd5e1; }
+.mu-search-group:focus-within {
+    border-color: #5b82df;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.10);
+}
+.mu-search-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 18px;
+    color: #94a3b8;
     pointer-events: none;
 }
-.mu-search {
+.mu-search-icon svg { width: 16px; height: 16px; }
+.mu-search-input-wrapper {
+    flex: 1 1 auto;
     width: 100%;
-    padding: 9px 36px 9px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #f9fafb;
-    font-size: 13.5px;
-    color: #374151;
-    outline: none;
-    transition: border-color .15s;
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 10px 0 14px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
-.mu-search:focus { border-color: var(--mu-blue-lt); background: #fff; }
-.mu-filter-select {
-    padding: 9px 30px 9px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fff;
-    font-size: 13px;
-    color: #374151;
-    cursor: pointer;
-    outline: none;
+.dashboard .mu-search-input,
+.dashboard .mu-search-input:hover,
+.dashboard .mu-search-input:focus,
+.dashboard .mu-search-input:focus-visible,
+.dashboard .mu-search-input:active {
+    position: static !important;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0 !important;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: border-color .15s;
+    -webkit-appearance: none;
+    background: transparent !important;
+    color: var(--db-text-dark, #111827);
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-family: var(--db-font-family) !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: normal !important;
+    transform: none !important;
+    transition: none !important;
 }
-.mu-filter-select:focus { border-color: var(--mu-blue-lt); }
-.mu-reset-btn {
-    background: none;
-    border: none;
-    color: var(--mu-blue-lt);
+.dashboard .mu-search-input::placeholder { color: #94a3b8; opacity: 1; }
+.mu-filter-btn {
+    flex: 0 0 auto;
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0 16px;
+    background: #ffffff;
+    color: var(--db-text-dark, #111827);
+    border: 1px solid var(--mu-border, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+    font-family: var(--db-font-family);
     font-size: 13px;
-    cursor: pointer;
-    padding: 6px 4px;
+    font-weight: 600;
+    line-height: 1;
     white-space: nowrap;
-    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
-.mu-reset-btn:hover { text-decoration: underline; }
+.mu-filter-btn:hover,
+.mu-filter-btn[aria-expanded="true"] {
+    color: var(--db-sidebar-bg, #1e40af);
+    background: #f8fafc;
+    border-color: #b9c8ee;
+}
+.mu-filter-count {
+    min-width: 19px;
+    height: 19px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    background: var(--db-sidebar-bg, #1e40af);
+    color: #ffffff;
+    border-radius: 999px;
+    font-family: var(--db-font-family);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+}
+.mu-filter-count.hidden { display: none; }
+.mu-filter-panel {
+    display: none;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid var(--mu-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 0 0 16px;
+}
+.mu-filter-panel.open { display: flex; }
+.mu-filter-grid {
+    flex: 1 1 560px;
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.mu-filter-field {
+    flex: 1 1 180px;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.mu-filter-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--db-text-grey, #64748b);
+    text-transform: uppercase;
+}
+.mu-filter-field select {
+    height: 38px;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid var(--mu-border, #e2e8f0);
+    border-radius: 8px;
+    font-family: var(--db-font-family);
+    font-size: 13px;
+    background: #ffffff;
+    color: var(--db-text-dark, #111827);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mu-filter-field select:focus {
+    border-color: #5b82df;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.10);
+}
+.mu-filter-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+}
+.mu-filter-actions .mu-filter-apply {
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    background: var(--mu-blue, #1e40af);
+    color: #ffffff !important;
+    border: 1px solid var(--mu-blue, #1e40af);
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--db-font-family);
+}
+.mu-filter-actions .mu-filter-apply:hover {
+    background: #1d3c9f;
+    border-color: #1d3c9f;
+}
+.mu-filter-reset {
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 7px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #ffffff;
+    color: var(--db-text-dark, #111827);
+    border: 1px solid var(--mu-border, #e2e8f0);
+    border-radius: 8px;
+    font-family: var(--db-font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.mu-filter-reset:hover { background: #f8fafc; border-color: #cbd5e1; }
 
 /* ---- table summary ---- */
 .mu-showing {
@@ -630,6 +802,7 @@ function mu_status_badge(string $status): string {
 .mu-toast.show { opacity: 1; transform: translateY(0); }
 .mu-toast-success { background: #065f46; color: #fff; }
 .mu-toast-error   { background: #991b1b; color: #fff; }
+.mu-toast-warning { background: #b45309; color: #fff; }
 </style>
 
 <!-- ============================================================
@@ -702,51 +875,86 @@ function mu_status_badge(string $status): string {
      ============================================================ -->
 <div class="mu-panel">
 
-    <!-- filter bar -->
+    <!-- search + collapsible filters (attendance-style) -->
+    <?php
+    $muActiveFilters = 0;
+    foreach (['level', 'position', 'status'] as $muKey) {
+        if ($filters[$muKey] !== '') {
+            $muActiveFilters++;
+        }
+    }
+    ?>
     <form method="GET" action="<?= ROOT ?>/manageuser" id="mu-filter-form">
-        <div class="mu-filters">
-            <!-- search -->
-            <div class="mu-search-wrap">
-                <input type="text"
-                       name="search"
-                       class="mu-search"
-                       placeholder="Search by name, NIC, or email…"
-                       value="<?= htmlspecialchars($filters['search'], ENT_QUOTES, 'UTF-8') ?>"
-                       id="mu-search-input">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="mu-toolbar">
+            <div class="mu-search-group">
+                <div class="mu-search-input-wrapper">
+                    <input type="text"
+                           name="search"
+                           class="mu-search-input"
+                           placeholder="Search by name, NIC, or email…"
+                           value="<?= htmlspecialchars($filters['search'], ENT_QUOTES, 'UTF-8') ?>"
+                           id="mu-search-input"
+                           aria-label="Search users"
+                           autocomplete="off">
+                </div>
+                <span class="mu-search-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
             </div>
 
-            <!-- level -->
-            <select name="level" class="mu-filter-select" id="mu-filter-level">
-                <option value="">All Levels</option>
-                <?php foreach (array_keys($levelRoles) as $lvl): ?>
-                    <option value="<?= htmlspecialchars($lvl) ?>" <?= $filters['level'] === $lvl ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($lvl) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <!-- position -->
-            <select name="position" class="mu-filter-select" id="mu-filter-position">
-                <option value="">All Positions</option>
-                <?php foreach ($allRoles as $r): ?>
-                    <option value="<?= $r ?>" <?= $filters['position'] === $r ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($roleLabels[$r] ?? $r) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <!-- status -->
-            <select name="status" class="mu-filter-select" id="mu-filter-status">
-                <option value="">All Statuses</option>
-                <option value="Active"   <?= $filters['status'] === 'Active'   ? 'selected' : '' ?>>Active</option>
-                <option value="Inactive" <?= $filters['status'] === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-            </select>
-
-            <button type="button" class="mu-reset-btn" id="mu-reset-btn">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align:-2px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-                Reset
+            <button type="button"
+                    class="mu-filter-btn"
+                    id="muFilterBtn"
+                    aria-expanded="<?= $muActiveFilters > 0 ? 'true' : 'false' ?>"
+                    aria-controls="muFilterPanel">
+                Filters
+                <span class="mu-filter-count<?= $muActiveFilters > 0 ? '' : ' hidden' ?>" id="muFilterCount"><?= $muActiveFilters ?></span>
             </button>
+        </div>
+
+        <div class="mu-filter-panel<?= $muActiveFilters > 0 ? ' open' : '' ?>" id="muFilterPanel">
+            <div class="mu-filter-grid">
+                <div class="mu-filter-field">
+                    <label for="mu-filter-level">Level</label>
+                    <select name="level" id="mu-filter-level">
+                        <option value="">All Levels</option>
+                        <?php foreach (array_keys($levelRoles) as $lvl): ?>
+                            <option value="<?= htmlspecialchars($lvl) ?>" <?= $filters['level'] === $lvl ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($lvl) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mu-filter-field">
+                    <label for="mu-filter-position">Position</label>
+                    <select name="position" id="mu-filter-position">
+                        <option value="">All Positions</option>
+                        <?php foreach ($allRoles as $r): ?>
+                            <option value="<?= $r ?>" <?= $filters['position'] === $r ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($roleLabels[$r] ?? $r) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mu-filter-field">
+                    <label for="mu-filter-status">Status</label>
+                    <select name="status" id="mu-filter-status">
+                        <option value="">All Statuses</option>
+                        <option value="Active"   <?= $filters['status'] === 'Active'   ? 'selected' : '' ?>>Active</option>
+                        <option value="Inactive" <?= $filters['status'] === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mu-filter-actions">
+                <button type="submit" class="mu-btn mu-btn-submit mu-filter-apply">Apply Filters</button>
+                <button type="button" class="mu-filter-reset" id="mu-reset-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                    Reset
+                </button>
+            </div>
         </div>
     </form>
 
@@ -981,7 +1189,7 @@ function mu_status_badge(string $status): string {
                     <label for="add-nic">National Identity Card (NIC) <span class="req">*</span></label>
                     <div class="mu-input-wrap">
                         <span class="mu-field-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
-                        <input type="text" id="add-nic" name="nic" placeholder="e.g. 199028403912 or 902843912V">
+                        <input type="text" id="add-nic" name="nic" maxlength="12" placeholder="e.g. 199028403912 or 902843912V">
                     </div>
                     <div class="mu-field-helper">12-digit NIC or 9-digit + V/X (Sri Lanka).</div>
                     <div class="mu-field-error" id="err-add-NIC"></div>
@@ -1121,7 +1329,7 @@ function mu_status_badge(string $status): string {
                     <label for="edit-nic">National Identity Card (NIC)</label>
                     <div class="mu-input-wrap">
                         <span class="mu-field-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
-                        <input type="text" id="edit-nic" name="nic">
+                        <input type="text" id="edit-nic" name="nic" maxlength="12">
                     </div>
                     <div class="mu-field-error" id="err-edit-NIC"></div>
                 </div>
@@ -1570,6 +1778,9 @@ function mu_status_badge(string $status): string {
                     if (data.success) {
                         showToast(data.message, 'success');
                         setTimeout(() => location.reload(), 1200);
+                    } else if (data.suspended) {
+                        showToast(data.message, 'warning');
+                        setTimeout(() => location.reload(), 1600);
                     } else {
                         showToast(data.message || 'Delete failed.', 'error');
                     }
@@ -1579,14 +1790,19 @@ function mu_status_badge(string $status): string {
     });
 
     // ----------------------------------------------------------------
-    // FILTER FORM — auto-submit on select change
+    // FILTER PANEL — attendance-style toggle
     // ----------------------------------------------------------------
-    ['mu-filter-level', 'mu-filter-position', 'mu-filter-status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', () => document.getElementById('mu-filter-form').submit());
-    });
+    const muFilterBtn   = document.getElementById('muFilterBtn');
+    const muFilterPanel = document.getElementById('muFilterPanel');
 
-    // Search on Enter
+    if (muFilterBtn && muFilterPanel) {
+        muFilterBtn.addEventListener('click', () => {
+            const open = muFilterPanel.classList.toggle('open');
+            muFilterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    }
+
+    // Search with debounce (submits the GET form)
     const searchInput = document.getElementById('mu-search-input');
     if (searchInput) {
         let searchTimer;
