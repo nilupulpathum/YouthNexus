@@ -5,7 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/events.css'];
+$pageStyles = [ROOT . '/assets/css/events.css?v=20261001'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';

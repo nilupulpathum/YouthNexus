@@ -5,7 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/profile.css'];
+$pageStyles = [ROOT . '/assets/css/profile.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/profile.js'];
 $isSelf = $isSelf ?? true;
 $canEndorse = ($canEndorse ?? false) && !$isSelf;

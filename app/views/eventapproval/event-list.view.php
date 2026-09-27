@@ -13,7 +13,7 @@ $pageDescription         = 'Review club-level events submitted within your divis
 $currentRoute            = 'eventapproval';
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/eventapproval.css?v=' . time(),
+    ROOT . '/assets/css/eventapproval.css?v=20261001' . time(),
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 
