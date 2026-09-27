@@ -12,6 +12,7 @@ $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
+$pageScripts = [ROOT . '/assets/js/annualaudit.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // ── Formatters ───────────────────────────────────────────────────
@@ -50,14 +51,14 @@ $steps = [
     <?php if (!empty($flashSuccess)): ?>
         <div class="audit-flash-alert audit-flash-success" role="alert">
             <div>&#10003;&nbsp; <?= htmlspecialchars($flashSuccess, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($flashError)): ?>
         <div class="audit-flash-alert audit-flash-error" role="alert">
             <div>&#9888;&nbsp; <?= htmlspecialchars($flashError, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
@@ -85,7 +86,7 @@ $steps = [
                 Export Summary
             </a>
             <?php if (!$locked): ?>
-                <form method="POST" action="<?= ROOT ?>/audit/rerun" style="display:inline;">
+                <form method="POST" action="<?= ROOT ?>/audit/rerun" class="audit-inline-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
                     <input type="hidden" name="audit_id" value="<?= (int)$audit->audit_id ?>">
                     <button type="submit" class="audit-btn audit-btn-light">
@@ -129,10 +130,10 @@ $steps = [
                 <?php endif; ?>
             </h3>
             <?php if ($locked): ?>
-                <div class="num" style="color:#1e9e5a;">Signed Off</div>
+                <div class="num" class="audit-num-success">Signed Off</div>
                 <div class="sub green">&#10003;&nbsp; Ledger locked for FY <?= (int)$audit->financial_year ?></div>
             <?php elseif ($unresolvedCount > 0): ?>
-                <div class="num" style="color:#b91c1c;"><?= (int)$unresolvedCount ?></div>
+                <div class="num" class="audit-num-danger"><?= (int)$unresolvedCount ?></div>
                 <div class="sub red">&#9679;&nbsp; Unresolved red flag<?= $unresolvedCount !== 1 ? 's' : '' ?></div>
             <?php else: ?>
                 <div class="num">Ready</div>
@@ -209,7 +210,7 @@ $steps = [
 
     <?php if (empty($audit->red_flags)): ?>
         <div class="audit-empty-state">
-            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" class="audit-empty-icon"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <h3>No red flags detected</h3>
             <p>The ledger scan found no missing receipts, idle funds, or void-rate anomalies for this scope and year.</p>
         </div>
@@ -248,7 +249,7 @@ $steps = [
                             <?php if (!$locked): ?>
                                 <td>
                                     <?php if ($rf->status !== 'Resolved'): ?>
-                                        <form method="POST" action="<?= ROOT ?>/audit/resolveflag/<?= (int)$rf->red_flag_id ?>" style="display:inline;">
+                                        <form method="POST" action="<?= ROOT ?>/audit/resolveflag/<?= (int)$rf->red_flag_id ?>" class="audit-inline-form">
                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
                                             <button type="submit" class="audit-btn-outline">Resolve / Accept</button>
                                         </form>
@@ -403,6 +404,4 @@ $steps = [
         csrfToken: <?= json_encode($csrf_token) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=<?= time() ?>" defer></script>
-
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
