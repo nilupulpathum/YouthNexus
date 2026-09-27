@@ -130,7 +130,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <textarea id="void-remark" name="remark" rows="4" maxlength="1000" required></textarea>
                 </div>
             </form>
-            <div class="dw-alert dw-alert--warning dw-field--span-2" role="note"><strong>Decision effect</strong><p>Approval voids the requested divisional transaction in the future backend. Rejection leaves it unchanged. The division receives the decision remark.</p></div>
+            <div class="dw-alert dw-alert--warning dw-field--span-2" role="note"><strong>Decision effect</strong><p>Approval voids the requested divisional transaction and reverses its ledger balance. Rejection leaves it unchanged. The division receives the decision remark.</p></div>
         </div>
         <footer class="dw-modal__footer">
             <button type="button" class="dw-button dw-button--secondary" data-modal-close>Cancel</button>
