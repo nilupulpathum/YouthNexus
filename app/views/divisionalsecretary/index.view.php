@@ -9,7 +9,7 @@ $title = 'Dashboard - YouthNexus';
 $pageTitle = 'Dashboard';
 $pageDescription = $division->division_name . ' - events, attendance, and club activity';
 $currentRoute = 'divisionalsecretary';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
     ['value' => $summary['upcoming_events'], 'label' => 'Upcoming Events', 'note' => 'Approved future events', 'icon' => 'calendar', 'tone' => 'blue'],

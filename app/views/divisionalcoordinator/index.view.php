@@ -9,7 +9,7 @@ $title = 'Dashboard - YouthNexus';
 $pageTitle = 'Dashboard';
 $pageDescription = $division->division_name . ' - approvals, clubs, and health monitoring';
 $currentRoute = 'divisionalcoordinator';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
     ['value' => $summary['clubs'], 'label' => 'Active Clubs', 'note' => 'Clubs in this division', 'icon' => 'users', 'tone' => 'blue'],
