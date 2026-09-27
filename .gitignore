@@ -1,5 +1,6 @@
 public/_dev_login.php
 public/_local_login.php
+public/_demo_logins.php
 app/core/config.local.php
 
 # Runtime-generated ledger receipts

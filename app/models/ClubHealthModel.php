@@ -232,16 +232,16 @@ class ClubHealthModel extends DivisionalClubHealthModel {
         $audits = $this->resultSet(
             "SELECT audit_id, financial_year, audit_status, math_check_status,
                     expected_closing_balance, actual_closing_balance
-             FROM Audit WHERE (scope_level = 'Club' AND scope_id = ?) OR club_id = ?
+             FROM Audit WHERE scope_level = 'Club' AND scope_id = ?
              ORDER BY audit_id DESC LIMIT 6",
-            [$clubId, $clubId]
+            [$clubId]
         );
         $redFlags = $this->resultSet(
             "SELECT rf.red_flag_id, rf.flag_type, rf.description, rf.status, rf.flagged_at
              FROM RedFlag rf INNER JOIN Audit a ON a.audit_id = rf.audit_id
-             WHERE (a.scope_level = 'Club' AND a.scope_id = ?) OR a.club_id = ?
+             WHERE a.scope_level = 'Club' AND a.scope_id = ?
              ORDER BY rf.flagged_at DESC LIMIT 10",
-            [$clubId, $clubId]
+            [$clubId]
         );
         return ['ledger' => $ledger, 'totals' => $totals, 'entries' => $entries, 'audits' => $audits, 'red_flags' => $redFlags];
     }
