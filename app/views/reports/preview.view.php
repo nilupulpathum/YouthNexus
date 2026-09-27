@@ -13,8 +13,43 @@ $pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
 $report      = $report      ?? (object)[];
 $kpis        = $kpis        ?? [];
-$summaryRows = $summaryRows ?? [];
-$rawRows     = $rawRows     ?? [];
+$summary     = $summary     ?? ['headers' => [], 'rows' => []];
+$raw         = $raw         ?? ['headers' => [], 'rows' => []];
+$syncLabel   = $syncLabel   ?? 'Zonal Hubs Synced';
+$noteTitle   = $noteTitle   ?? 'Statutory Ledger Compliance Verification:';
+$note        = $note        ?? '';
+
+// Render a generic data table: last column is the status pill, first column gets the row dot.
+$renderTableRows = function (array $table) {
+    $headers = $table['headers'] ?? [];
+    $rows    = $table['rows']    ?? [];
+    $last    = count($headers) - 1;
+    if (empty($rows)) {
+        echo '<tr><td colspan="' . max(count($headers), 1) . '" style="text-align:center;padding:28px;color:#9ca3af;">'
+           . 'No records found for the selected range and scope.</td></tr>';
+        return;
+    }
+    foreach ($rows as $row) {
+        echo '<tr>';
+        $cells = $row['cells'] ?? [];
+        foreach ($cells as $ci => $cell) {
+            if ($ci === 0) {
+                echo '<td><span class="rpt-row-dot"></span><span class="rpt-zone-name">' . htmlspecialchars((string)$cell) . '</span></td>';
+            } elseif ($ci === $last && isset($row['status']) && $row['status'] !== '') {
+                echo '<td class="td-right"><span class="rpt-status-pill">' . htmlspecialchars((string)$row['status'])
+                   . '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+            } else {
+                echo '<td class="td-center">' . htmlspecialchars((string)$cell) . '</td>';
+            }
+        }
+        // Safety net: if a row has fewer cells than headers, close with an empty status cell.
+        if (count($cells) <= $last) {
+            echo '<td class="td-right"><span class="rpt-status-pill">' . htmlspecialchars((string)($row['status'] ?? '—'))
+               . '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+        }
+        echo '</tr>';
+    }
+};
 
 $reportId    = (int)($report->report_id     ?? 0);
 $category    = htmlspecialchars($report->category   ?? 'Financial');
@@ -89,7 +124,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="rpt-sync-note">
                 <span class="rpt-green-dot"></span>
-                <b><?= count($summaryRows) ?> of <?= count($summaryRows) ?></b>&nbsp;Zonal Hubs Synced
+                <b><?= count($summary['rows']) ?> of <?= count($summary['rows']) ?></b>&nbsp;<?= htmlspecialchars($syncLabel) ?>
             </div>
         </div>
 
@@ -99,31 +134,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <table>
                     <thead>
                         <tr>
-                            <th>Province / Zone</th>
-                            <th class="td-center">Allocated (LKR)</th>
-                            <th class="td-center">Disbursed (LKR)</th>
-                            <th class="td-center">Expenses Logged</th>
-                            <th class="td-center">Void Count</th>
-                            <th class="td-right">Status</th>
+                            <?php foreach ($summary['headers'] as $hi => $h): ?>
+                                <th class="<?= $hi === 0 ? '' : ($hi === count($summary['headers']) - 1 ? 'td-right' : 'td-center') ?>"><?= htmlspecialchars((string)$h) ?></th>
+                            <?php endforeach; ?>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($summaryRows as $row): ?>
-                            <tr>
-                                <td><span class="rpt-row-dot"></span><span class="rpt-zone-name"><?= htmlspecialchars($row['zone']) ?></span></td>
-                                <td class="td-center"><?= htmlspecialchars($row['allocated']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['disbursed']) ?></td>
-                                <td class="td-center td-bold"><?= htmlspecialchars($row['expenses']) ?></td>
-                                <td class="td-center"><?= (int)$row['voids'] ?></td>
-                                <td class="td-right">
-                                    <span class="rpt-status-pill">
-                                        <?= htmlspecialchars($row['status']) ?>
-                                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
+                    <tbody><?php $renderTableRows($summary); ?></tbody>
                 </table>
             </div>
         </div>
@@ -134,35 +150,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <table>
                     <thead>
                         <tr>
-                            <th>Division</th>
-                            <th>Zone (Hub)</th>
-                            <th class="td-center">Allocated (LKR)</th>
-                            <th class="td-center">Disbursed (LKR)</th>
-                            <th class="td-center">Expenses</th>
-                            <th class="td-center">Voids</th>
-                            <th class="td-center">Submitted By</th>
-                            <th class="td-right">Status</th>
+                            <?php foreach ($raw['headers'] as $hi => $h): ?>
+                                <th class="<?= $hi === 0 ? '' : ($hi === count($raw['headers']) - 1 ? 'td-right' : 'td-center') ?>"><?= htmlspecialchars((string)$h) ?></th>
+                            <?php endforeach; ?>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($rawRows as $row): ?>
-                            <tr>
-                                <td class="td-bold"><?= htmlspecialchars($row['division']) ?></td>
-                                <td><?= htmlspecialchars($row['zone']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['allocated']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['disbursed']) ?></td>
-                                <td class="td-center td-bold"><?= htmlspecialchars($row['expenses']) ?></td>
-                                <td class="td-center"><?= (int)$row['voids'] ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['by']) ?></td>
-                                <td class="td-right">
-                                    <span class="rpt-status-pill">
-                                        <?= htmlspecialchars($row['status']) ?>
-                                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
+                    <tbody><?php $renderTableRows($raw); ?></tbody>
                 </table>
             </div>
         </div>
@@ -173,9 +166,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.5 14 15.5 9.5"/></svg>
             </div>
             <p class="rpt-note-text">
-                <b>Statutory Ledger Compliance Verification:</b>
-                Verified statutory aggregation rolled up from <?= count($rawRows) ?> Divisional reports submitted by Zonal Secretaries.
-                Data sealed under NYSC FinAct <?= date('Y') ?>.
+                <b><?= htmlspecialchars($noteTitle) ?></b>
+                <?= htmlspecialchars($note) ?>
             </p>
         </div>
     </div><!-- /.rpt-preview__body -->

@@ -18,7 +18,7 @@ $currentRoute    = 'clubhealth';
 $pageStyles = [
     ROOT . '/assets/css/divisional-workflows.css',
     ROOT . '/assets/css/divisional-club-health.css',
-    ROOT . '/assets/css/nysc-club-health.css?v=20260930'
+    ROOT . '/assets/css/nysc-club-health.css?v=20261001'
 ];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',

@@ -8,7 +8,7 @@ $pageTitle               = $pageTitle ?? 'National Asset Management & Logistics'
 $pageDescription         = $pageDescription ?? 'Central logistics, zonal stock allocation, and inventory deficit surveillance.';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/manageassets.css?v=20260929'];
+$pageStyles              = [ROOT . '/assets/css/manageassets.css?v=20261001'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -77,6 +77,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php endif; ?>
 
     <!-- Filter & Search Toolbar -->
+    <?php
+    $amActiveFilters = 0;
+    if ($selCategory !== '' && $selCategory !== 'All Categories') { $amActiveFilters++; }
+    if ($selZoneVal !== '' && $selZoneVal !== 'All Zones') { $amActiveFilters++; }
+    ?>
     <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" style="margin: 0;">
         <div class="am-filter-bar">
             <div class="am-search-wrap">
@@ -88,23 +93,50 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </span>
             </div>
 
-            <select name="category" id="filterCategory" class="am-select" onchange="document.getElementById('filterForm').submit()">
-                <option value="All Categories" <?= ($selCategory === 'All Categories') ? 'selected' : '' ?>>All Categories</option>
-                <?php foreach ($categories as $cat): ?>
-                    <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>" <?= ($selCategory === $cat) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <button type="button"
+                    class="am-filter-btn"
+                    id="amFilterBtn"
+                    aria-expanded="<?= $amActiveFilters > 0 ? 'true' : 'false' ?>"
+                    aria-controls="amFilterPanel">
+                Filters
+                <span class="am-filter-count<?= $amActiveFilters > 0 ? '' : ' hidden' ?>" id="amFilterCount"><?= $amActiveFilters ?></span>
+            </button>
+        </div>
 
-            <select name="zone" id="filterZone" class="am-select" onchange="document.getElementById('filterForm').submit()">
-                <option value="All Zones" <?= ($selZoneVal === 'All Zones') ? 'selected' : '' ?>>All Zones (National)</option>
-                <?php foreach ($zones as $z): ?>
-                    <option value="<?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>" <?= ($selZoneVal === $z->zonal_name || (int)$selectedZoneId === (int)$z->zonal_id) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+        <div class="am-filter-panel<?= $amActiveFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
+            <div class="am-filter-grid">
+                <div class="am-filter-field">
+                    <label for="filterCategory">Category</label>
+                    <select name="category" id="filterCategory">
+                        <option value="All Categories" <?= ($selCategory === 'All Categories') ? 'selected' : '' ?>>All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>" <?= ($selCategory === $cat) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="am-filter-field">
+                    <label for="filterZone">Zone</label>
+                    <select name="zone" id="filterZone">
+                        <option value="All Zones" <?= ($selZoneVal === 'All Zones') ? 'selected' : '' ?>>All Zones (National)</option>
+                        <?php foreach ($zones as $z): ?>
+                            <option value="<?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>" <?= ($selZoneVal === $z->zonal_name || (int)$selectedZoneId === (int)$z->zonal_id) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="am-filter-actions">
+                <button type="submit" class="am-filter-apply">Apply Filters</button>
+                <button type="button" class="am-filter-reset" id="am-reset-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                    Reset
+                </button>
+            </div>
         </div>
     </form>
 
@@ -458,6 +490,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         ];
     }, $allCatalogItems)) ?>;
 </script>
-<script src="<?= ROOT ?>/assets/js/manageassets.js" defer></script>
+<script src="<?= ROOT ?>/assets/js/manageassets.js?v=20261001" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
