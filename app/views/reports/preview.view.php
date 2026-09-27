@@ -30,6 +30,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
 <div class="rpt-content rpt-preview-wrap">
+
+    <div class="rpt-preview-back">
+        <a href="<?= ROOT ?>/reports" class="rpt-btn rpt-btn--outline db-secondary-action">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back to Reports
+        </a>
+    </div>
+
 <div class="rpt-preview-modal">
 
     <!-- ── Header ────────────────────────────────────────────── -->

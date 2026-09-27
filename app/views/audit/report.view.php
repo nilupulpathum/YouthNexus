@@ -195,7 +195,8 @@ $steps = [
                     </button>
                 <?php elseif ($mathPassed): ?>
                     <button type="button" class="audit-btn audit-btn-blue" onclick="openApproveModal()">
-                        &#128274; Approve &amp; Sign-Off Audit
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                        Approve &amp; Sign-Off Audit
                     </button>
                 <?php else: ?>
                     <button type="button" class="audit-btn audit-btn-disabled" disabled
@@ -389,7 +390,10 @@ $steps = [
 
             <div class="audit-modal-foot-approve">
                 <button type="button" class="audit-btn-cancel" onclick="closeApproveModal()">Cancel</button>
-                <button type="submit" class="audit-btn-confirm">&#128274; Confirm Sign-Off &amp; Lock FY <?= (int)$audit->financial_year ?></button>
+                <button type="submit" class="audit-btn-confirm">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    Confirm Sign-Off &amp; Lock FY <?= (int)$audit->financial_year ?>
+                </button>
             </div>
         </form>
 
