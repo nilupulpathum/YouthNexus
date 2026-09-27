@@ -203,42 +203,29 @@
   gap: 10px;
 }
 
-.nysc-btn-warning {
-  background: #d97706;
-  color: #ffffff;
-  border: none;
-  font-weight: 700;
-}
-
-.nysc-btn-warning:hover {
-  background: #b45309;
-}
-
-.nysc-btn-funds {
-  background: #059669;
-  color: #ffffff;
-  border: none;
-  font-weight: 700;
-}
-
-.nysc-btn-funds:hover {
-  background: #047857;
-}
-
+/* Governance action buttons use the project-wide primary palette
+   (navy #1e40af, white text) — same look as the shared db-primary-action
+   hook. White text is forced with !important to beat dashboard.css's
+   `.dashboard button { color: inherit; }`. */
+.nysc-btn-warning,
+.nysc-btn-funds,
 .nysc-btn-disband {
-  background: #dc2626;
-  color: #ffffff;
-  border: none;
+  background: #1e40af;
+  color: #ffffff !important;
+  border: 1px solid #1e40af;
   font-weight: 700;
 }
 
+.nysc-btn-warning:hover,
+.nysc-btn-funds:hover,
 .nysc-btn-disband:hover:not(:disabled) {
-  background: #b91c1c;
+  background: #1d3698;
+  border-color: #1d3698;
+  color: #ffffff !important;
 }
 
 .nysc-btn-disband:disabled {
-  background: #cbd5e1;
-  color: #94a3b8;
+  opacity: .55;
   cursor: not-allowed;
 }
 
