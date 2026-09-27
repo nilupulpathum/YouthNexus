@@ -12,12 +12,12 @@
 .events-filters {
     width: 260px;
     flex-shrink: 0;
-    background: #fff;
+    background: var(--yn-bg-surface);
     border-radius: 12px;
     padding: 20px;
-    border: 1px solid var(--db-border);
+    border: 1px solid var(--yn-border);
     position: sticky;
-    top: calc(var(--db-topbar-height) + 20px);
+    top: calc(var(--yn-topbar-height) + 20px);
 }
 
 .filter-group {
@@ -27,7 +27,7 @@
 .filter-group h3 {
     font-size: 11px;
     font-weight: 800;
-    color: var(--db-text-grey);
+    color: var(--yn-text-muted);
     letter-spacing: 0.05em;
     margin-bottom: 12px;
     text-transform: uppercase;
@@ -40,29 +40,29 @@
     margin-bottom: 8px;
     cursor: pointer;
     font-size: 13.5px;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
     padding: 8px 12px;
     border-radius: 8px;
     transition: all 0.2s ease;
 }
 
 .filter-option:hover {
-    background: #f8fafc;
+    background: var(--yn-bg-page);
 }
 
 .filter-option.is-active {
-    background: var(--db-sidebar-bg);
-    color: #fff;
+    background: var(--yn-sidebar-bg);
+    color: var(--yn-bg-surface);
 }
 
 .filter-option input {
     width: 16px;
     height: 16px;
-    accent-color: var(--db-sidebar-bg);
+    accent-color: var(--yn-sidebar-bg);
 }
 
 .filter-option.is-active input {
-    accent-color: #fff;
+    accent-color: var(--yn-bg-surface);
 }
 
 .clear-filters-btn {
@@ -94,7 +94,7 @@
 
 .results-info {
     font-size: 14px;
-    color: var(--db-text-grey);
+    color: var(--yn-text-muted);
 }
 
 .sort-control {
@@ -102,14 +102,14 @@
     align-items: center;
     gap: 12px;
     font-size: 13px;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
 }
 
 .sort-select {
     padding: 8px 16px;
-    border: 1px solid var(--db-border);
+    border: 1px solid var(--yn-border);
     border-radius: 8px;
-    background: #fff;
+    background: var(--yn-bg-surface);
     font-weight: 600;
 }
 
@@ -122,10 +122,10 @@
 
 /* Event Card */
 .event-card {
-    background: #fff;
+    background: var(--yn-bg-surface);
     border-radius: 16px;
     padding: 24px;
-    border: 1px solid var(--db-border);
+    border: 1px solid var(--yn-border);
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -157,8 +157,8 @@
 }
 
 .scope-badge.divisional { background: #ffedd5; color: #9a3412; }
-.scope-badge.national { background: #dbeafe; color: #1e40af; }
-.scope-badge.club-specific { background: #f3f4f6; color: #4b5563; }
+.scope-badge.national { background: var(--yn-info-border); color: var(--yn-primary); }
+.scope-badge.club-specific { background: #f3f4f6; color: var(--yn-text-slate-600); }
 
 .status-badge {
     font-size: 10px;
@@ -190,7 +190,7 @@
 .event-meta {
     text-align: right;
     font-size: 12px;
-    color: var(--db-text-grey);
+    color: var(--yn-text-muted);
 }
 
 .meta-item {
@@ -204,14 +204,14 @@
 .card-title {
     font-size: 19px;
     font-weight: 800;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
     margin: 0 0 12px;
     line-height: 1.3;
 }
 
 .card-summary {
     font-size: 14px;
-    color: var(--db-text-grey);
+    color: var(--yn-text-muted);
     margin-bottom: 16px;
     line-height: 1.5;
     flex-grow: 1;
@@ -228,7 +228,7 @@
     display: flex;
     gap: 12px;
     padding-top: 20px;
-    border-top: 1px solid var(--db-border);
+    border-top: 1px solid var(--yn-border);
 }
 
 .card-footer button {
@@ -244,15 +244,15 @@
 }
 
 .btn-view-details {
-    background: var(--db-sidebar-bg);
-    color: #fff;
+    background: var(--yn-sidebar-bg);
+    color: var(--yn-bg-surface);
     border: none;
 }
 
 .btn-participate, .btn-not-participate {
-    background: #fff;
-    border: 1px solid var(--db-border);
-    color: var(--db-text-dark);
+    background: var(--yn-bg-surface);
+    border: 1px solid var(--yn-border);
+    color: var(--yn-text-primary);
 }
 
 .btn-participate.is-active {
@@ -262,14 +262,14 @@
 }
 
 .btn-not-participate.is-active {
-    background: #fef2f2;
+    background: var(--yn-danger-bg);
     border-color: #ef4444;
     color: #ef4444;
 }
 
 /* Popup */
 .popup-content {
-    background: #fff;
+    background: var(--yn-bg-surface);
     width: 100%;
     max-width: 600px;
     max-height: 90vh;
@@ -291,7 +291,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--db-text-grey);
+    color: var(--yn-text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -300,8 +300,8 @@
 }
 
 .popup-close:hover {
-    background: #f1f5f9;
-    color: var(--db-text-dark);
+    background: var(--yn-bg-surface-alt);
+    color: var(--yn-text-primary);
 }
 
 .popup-close svg {
@@ -313,7 +313,7 @@
     font-size: 22px;
     font-weight: 800;
     margin-bottom: 16px;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
     padding-right: 40px;
 }
 
@@ -326,7 +326,7 @@
 .popup-body {
     font-size: 15px;
     line-height: 1.6;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
     margin-bottom: 32px;
 }
 
@@ -354,7 +354,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 24px;
-    background: #f8fafc;
+    background: var(--yn-bg-page);
     padding: 16px;
     border-radius: 12px;
 }
@@ -364,7 +364,7 @@
     align-items: center;
     gap: 10px;
     font-size: 14px;
-    color: var(--db-text-dark);
+    color: var(--yn-text-primary);
     font-weight: 600;
 }
 
@@ -402,7 +402,7 @@
 }
 
 /* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
-.dashboard .btn-view-details { color: #fff; }
+.dashboard .btn-view-details { color: var(--yn-bg-surface); }
 .dashboard .btn-participate.is-active { color: #10b981; }
 .dashboard .btn-not-participate.is-active { color: #ef4444; }
 

@@ -13,13 +13,18 @@ $pageDescription         = $isNyscAdmin
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/manageevents.css?v=20260924',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/manageevents.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260924'];
+$pageScripts             = [ROOT . '/assets/js/manageevents.js'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
+
+            <?php if (!empty($flash)): ?>
+                <div class="me-validation-alert is-visible" role="status"><span class="me-validation-msg"><?= htmlspecialchars($flash['message']) ?></span></div>
+            <?php endif; ?>
 
             <!-- Action Row -->
             <div class="me-header-row me-header-row-actions">
@@ -30,17 +35,15 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <!-- Stat Cards -->
             <div class="me-stats-grid<?= $isNyscAdmin ? ' me-stats-grid-admin' : '' ?>">
-                <div class="me-stat-card">
-                    <div class="me-stat-icon awaiting">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
+                <div class="yn-stat-card me-stat-card">
+                    <div class="me-stat-icon awaiting"><?= yn_icon('clock') ?></div>
                     <div class="me-stat-info">
                         <div class="me-stat-value"><?= (int)$stats['awaiting_approval'] ?></div>
                         <div class="me-stat-label">Awaiting Approval</div>
                     </div>
                 </div>
 
-                <div class="me-stat-card">
+                <div class="yn-stat-card me-stat-card">
                     <div class="me-stat-icon approved">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
@@ -50,10 +53,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                 </div>
 
-                <div class="me-stat-card">
-                    <div class="me-stat-icon hosted">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
+                <div class="yn-stat-card me-stat-card">
+                    <div class="me-stat-icon hosted"><?= yn_icon('calendar') ?></div>
                     <div class="me-stat-info">
                         <div class="me-stat-value"><?= (int)$stats['hosted_this_year'] ?></div>
                         <div class="me-stat-label">Hosted This Year</div>
@@ -61,7 +62,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
 
                 <?php if ($isNyscAdmin && isset($stats['national_events'])): ?>
-                    <div class="me-stat-card">
+                    <div class="yn-stat-card me-stat-card">
                         <div class="me-stat-icon national">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         </div>
@@ -92,12 +93,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <div class="me-search-input-wrapper">
                             <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, type..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                             <span class="me-search-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <?= yn_icon('search') ?>
                             </span>
                         </div>
                     </div>
-                    <button type="button" class="me-filter-btn" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                    <button type="button" class="me-filter-btn yn-filter-toggle" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
+                        <?= yn_icon('filter') ?>
                         Filters
                         <?php if ($activeFilters > 0): ?>
                             <span class="me-filter-count"><?= $activeFilters ?></span>
@@ -107,6 +108,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                 <!-- Expandable Filter Panel -->
                 <div class="me-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="meFilterPanel">
+                    <h2 class="yn-filter-heading">Advanced Filters for Events</h2>
                     
                     <?php if ($isNyscAdmin): ?>
                         <!-- Event Level (Admin Only) -->
@@ -176,8 +178,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <label for="meFilterStatus">Event Status</label>
                         <select id="meFilterStatus" name="status">
                             <option value="All" <?= ($filters['status'] ?? 'All') === 'All' ? 'selected' : '' ?>>All Statuses</option>
+                            <option value="Draft" <?= ($filters['status'] ?? '') === 'Draft' ? 'selected' : '' ?>>Draft</option>
                             <option value="PendingApproval" <?= ($filters['status'] ?? '') === 'PendingApproval' ? 'selected' : '' ?>>Pending Approval</option>
                             <option value="Approved" <?= ($filters['status'] ?? '') === 'Approved' ? 'selected' : '' ?>>Approved</option>
+                            <option value="CancellationPending" <?= ($filters['status'] ?? '') === 'CancellationPending' ? 'selected' : '' ?>>Cancellation Pending</option>
+                            <option value="Cancelled" <?= ($filters['status'] ?? '') === 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                            <option value="Withdrawn" <?= ($filters['status'] ?? '') === 'Withdrawn' ? 'selected' : '' ?>>Withdrawn</option>
                             <option value="Rejected" <?= ($filters['status'] ?? '') === 'Rejected' ? 'selected' : '' ?>>Rejected</option>
                             <option value="Completed" <?= ($filters['status'] ?? '') === 'Completed' ? 'selected' : '' ?>>Completed</option>
                         </select>
@@ -206,8 +212,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
 
                     <div class="me-filter-actions">
-                        <a href="<?= ROOT ?>/manageevents" class="me-btn" id="meClearFilterBtn">Clear Filters</a>
-                        <button type="submit" class="me-btn me-btn-primary" id="meAddFilterBtn">Apply Filters</button>
+                        <a href="<?= ROOT ?>/manageevents" class="me-btn yn-filter-clear" id="meClearFilterBtn">Clear filters</a>
+                        <button type="submit" class="me-btn me-btn-primary yn-filter-apply" id="meAddFilterBtn">Apply filters</button>
                     </div>
                 </div>
             </form>
@@ -215,9 +221,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <!-- Events List Grid -->
             <?php if (empty($events)): ?>
                 <div class="me-empty-state">
-                    <div class="me-empty-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
+                    <div class="me-empty-icon"><?= yn_icon('calendar') ?></div>
                     <h3>No events found</h3>
                     <p><?= $isNyscAdmin ? 'No events match your current filter criteria or no events have been created yet.' : 'No events match your current filter criteria or no events have been scheduled yet in this division.' ?></p>
                     <button type="button" class="me-btn-primary db-primary-action" onclick="document.getElementById('btnOpenCreateModal').click()">
@@ -237,8 +241,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     <div class="me-badges-group">
                                         <?php if ($isNational): ?>
                                             <span class="me-badge me-badge-national">
-                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:3px;vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                                National Event
+                                                National event
                                             </span>
                                         <?php elseif ($isZonal): ?>
                                             <span class="me-badge me-badge-zonal">Zonal: <?= htmlspecialchars($event->organizer_zonal_name ?? 'Zone') ?></span>
@@ -268,17 +271,17 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
                                     <div class="me-card-meta">
                                         <div class="me-meta-item">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            <?= yn_icon('clock') ?>
                                             <span><?= date('M d, Y • h:i A', strtotime($event->start_datetime)) ?></span>
                                         </div>
                                         <?php if (!empty($event->location)): ?>
                                             <div class="me-meta-item">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                <?= yn_icon('pin') ?>
                                                 <span><?= htmlspecialchars($event->location) ?></span>
                                             </div>
                                         <?php endif; ?>
                                         <div class="me-meta-item">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            <?= yn_icon('users') ?>
                                             <?php if ($event->target_scope === 'AllInScope'): ?>
                                                 <span><?= $isNational ? 'All Clubs Nationwide' : 'All Clubs in Division' ?></span>
                                             <?php elseif (!empty($event->target_club_names)): ?>
@@ -291,7 +294,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         </div>
                                         <?php if (!empty($event->max_attendance)): ?>
                                             <div class="me-meta-item">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                                <?= yn_icon('info') ?>
                                                 <span>Max: <?= (int)$event->max_attendance ?></span>
                                             </div>
                                         <?php endif; ?>
@@ -316,7 +319,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="me-modal-header">
             <h3><?= $isNyscAdmin ? 'Create National Event' : 'Create Divisional Event' ?></h3>
             <button type="button" class="me-modal-close" aria-label="Close modal">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </button>
         </div>
 
@@ -356,14 +359,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <label class="me-toggle-option">
                                 <input type="radio" name="target_scope" value="AllInScope" checked>
                                 <span class="me-toggle-btn">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    <?= yn_icon('users') ?>
                                     <?= $isNyscAdmin ? 'All Clubs Nationwide' : 'All Clubs' ?>
                                 </span>
                             </label>
                             <label class="me-toggle-option">
                                 <input type="radio" name="target_scope" value="SelectedClubs">
                                 <span class="me-toggle-btn">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                    <?= yn_icon('info') ?>
                                     Specific Clubs
                                 </span>
                             </label>
@@ -379,7 +382,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                             <?= htmlspecialchars($club->club_name) ?>
                                             <small class="me-club-code"><?= htmlspecialchars($club->club_code) ?></small>
                                             <?php if (!empty($club->division_name)): ?>
-                                                <small style="color:var(--db-text-grey);font-size:11px;">(<?= htmlspecialchars($club->division_name) ?>)</small>
+                                                <small class="yn-text-muted yn-text-xs">(<?= htmlspecialchars($club->division_name) ?>)</small>
                                             <?php endif; ?>
                                         </span>
                                     </div>
@@ -396,7 +399,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
 
                     <div class="me-form-group">
-                        <label class="me-form-label">Max Attendees <small style="font-weight:400;color:var(--db-text-grey)">(event-wide)</small></label>
+                        <label class="me-form-label">Max Attendees <small class="me-form-hint">(event-wide)</small></label>
                         <input type="number" name="max_attendance" class="me-form-input" placeholder="e.g., 500" min="1">
                     </div>
 
@@ -413,7 +416,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <!-- Inline Datetime Alert Box -->
                     <div class="me-form-group me-form-full">
                         <div class="me-validation-alert" id="createDateAlert">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <?= yn_icon('info') ?>
                             <span class="me-validation-msg">Event start must be after now, and end must be after start</span>
                         </div>
                     </div>
@@ -432,6 +435,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <div class="me-modal-footer">
                 <button type="button" class="me-btn-secondary me-btn-cancel">Cancel</button>
+                <?php if (!$isNyscAdmin): ?>
+                    <button type="submit" class="me-btn-secondary" data-submission-mode="draft">Save Draft</button>
+                <?php endif; ?>
                 <button type="submit" class="me-btn-primary"><?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?></button>
             </div>
         </form>

@@ -4,14 +4,23 @@ if (($_SERVER['SERVER_NAME'] ?? 'localhost') === 'localhost') {
     $port = $_SERVER['SERVER_PORT'] ?? '80';
     if (php_sapi_name() === 'cli-server') {
         define('ROOT', 'http://localhost:' . $port);
-    } else {
+    } elseif (php_sapi_name() === 'cli') {
         define('ROOT', 'http://localhost/YouthNexus/YouthNexus/public');
+    } else {
+        // Match the checkout Apache is serving, including a separate Git worktree.
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/YouthNexus/YouthNexus/public/index.php';
+        $basePath = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        $portSuffix = $port === '80' ? '' : ':' . (int) $port;
+        define('ROOT', 'http://localhost' . $portSuffix . $basePath);
     }
 } else {
     define('ROOT', 'https://websitename.com');
 }
 
 date_default_timezone_set('Asia/Colombo');
+
+// Bump this value when shared assets change so browsers reload the new UI.
+define('ASSET_VERSION', '20260926-divisional-ui-final1');
 
 define('APP_ROOT', dirname(dirname(__FILE__))); // Points to /app
 
