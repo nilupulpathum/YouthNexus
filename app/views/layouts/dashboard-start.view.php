@@ -6,6 +6,11 @@
  * $title, $pageTitle, $pageDescription, $currentRoute, $userRole,
  * $userName, $userEmail, and $unreadNotificationCount.
  */
+
+// yn_icon() must exist for every dashboard page — views (e.g. manageevents)
+// call it in their bodies but some forget their own require. The helper
+// guards itself with function_exists, so this is safe to run always.
+require_once __DIR__ . '/../partials/icons.view.php';
 $title = $title ?? 'Dashboard — YouthNexus';
 $pageTitle = $pageTitle ?? 'Dashboard';
 $pageDescription = $pageDescription ?? '';
@@ -55,6 +60,14 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
         sessionStorage.removeItem('yn-sidebar-navigation');
       }
     } catch (error) { /* Navigation still works when storage is unavailable. */ }
+
+    // Hard cap: this inline timer is independent of every stylesheet and
+    // deferred script, so a slow external asset (e.g. the Google Fonts
+    // @import) or a failed dashboard.js can never hold the cover open
+    // for more than 3 seconds.
+    window.setTimeout(function () {
+      document.documentElement.classList.remove('yn-nav-loading');
+    }, 3000);
   </script>
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
