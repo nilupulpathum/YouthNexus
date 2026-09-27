@@ -12,7 +12,7 @@ $currentRoute    = 'clubregistrationapproval';
 
 $unreadNotificationCount = (int)($counts['Pending'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/clubregistrationapproval.css',
+    ROOT . '/assets/css/clubregistrationapproval.css?v=20261001',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 
