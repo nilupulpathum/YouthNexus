@@ -18,7 +18,7 @@ $currentRoute    = 'clubhealth';
 $pageStyles = [
     ROOT . '/assets/css/divisional-workflows.css',
     ROOT . '/assets/css/divisional-club-health.css',
-    ROOT . '/assets/css/nysc-club-health.css?v=20260930'
+    ROOT . '/assets/css/nysc-club-health.css'
 ];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
@@ -425,17 +425,17 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           </div>
           <div class="nysc-disband-actions__buttons">
             <!-- Issue Disband Warning Button -->
-            <button class="dw-button db-primary-action nysc-btn-warning" type="button" data-open-disband-warning>
+            <button class="dw-button nysc-btn-warning" type="button" data-open-disband-warning>
               Issue Disband Warning
             </button>
 
             <!-- Retrieve Remaining Funds Button (if Balance > 0) -->
-            <button class="dw-button db-primary-action nysc-btn-funds" type="button" data-btn-retrieve-funds hidden>
+            <button class="dw-button nysc-btn-funds" type="button" data-btn-retrieve-funds hidden>
               Retrieve Remaining Funds
             </button>
 
             <!-- Execute Disband Button -->
-            <button class="dw-button db-primary-action nysc-btn-disband" type="button" data-btn-execute-disband>
+            <button class="dw-button nysc-btn-disband" type="button" data-btn-execute-disband>
               Execute Disband
             </button>
           </div>
@@ -613,7 +613,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button db-primary-action nysc-btn-warning" type="submit">Send Warning Notification</button>
+      <button class="dw-button nysc-btn-warning" type="submit">Send Warning Notification</button>
     </footer>
   </form>
 </div>
@@ -647,7 +647,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button db-primary-action nysc-btn-funds" type="submit">Confirm &amp; Retrieve Funds</button>
+      <button class="dw-button nysc-btn-funds" type="submit">Confirm &amp; Retrieve Funds</button>
     </footer>
   </form>
 </div>
@@ -683,7 +683,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>No, Return to Dashboard</button>
-      <button class="dw-button db-primary-action nysc-btn-disband" type="submit">Yes, Execute Disband</button>
+      <button class="dw-button nysc-btn-disband" type="submit">Yes, Execute Disband</button>
     </footer>
   </form>
 </div>

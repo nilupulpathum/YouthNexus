@@ -1,12 +1,5 @@
 <?php
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require_once APP_ROOT . '/core/phpmailer/Exception.php';
-require_once APP_ROOT . '/core/phpmailer/PHPMailer.php';
-require_once APP_ROOT . '/core/phpmailer/SMTP.php';
-
 /**
  * Manageuser Controller
  * ============================================================
@@ -102,18 +95,12 @@ class Manageuser extends Controller {
             $errors['last_name'] = 'Last name is required.';
         }
 
-        // NIC: optional, format + plausibility validated, unique if provided
+        // NIC: optional but unique if provided
         if (!empty($data['NIC'])) {
             if (!preg_match('/^(\d{12}|\d{9}[VvXx])$/', $data['NIC'])) {
                 $errors['NIC'] = 'NIC must be 12 digits or 9 digits followed by V/X.';
-            } else {
-                $nicIssue = $this->validateSriLankanNic($data['NIC']);
-
-                if ($nicIssue !== null) {
-                    $errors['NIC'] = $nicIssue;
-                } elseif ($model->nicExists($data['NIC'], $excludeId)) {
-                    $errors['NIC'] = 'This NIC is already registered.';
-                }
+            } elseif ($model->nicExists($data['NIC'], $excludeId)) {
+                $errors['NIC'] = 'This NIC is already registered.';
             }
         }
 
@@ -141,45 +128,6 @@ class Manageuser extends Controller {
         }
 
         return $errors;
-    }
-
-    /**
-     * Plausibility validation for Sri Lankan NIC numbers.
-     *
-     * New format (12 digits):  YYYY + day-of-year (3) + serial (4) + check.
-     * Old format (9 digits + V/X): YY + day-of-year (3) + serial (3) + letter.
-     *
-     * The birth year must be a real, living-person year, and the day-of-year
-     * window follows the official rule: 001-366 (male) / 501-866 (female);
-     * 367-500 and 867-999 are never issued.
-     *
-     * @return string|null  Error message, or null when plausible.
-     */
-    private function validateSriLankanNic(string $nic): ?string {
-        $currentYear = (int) date('Y');
-
-        if (preg_match('/^\d{12}$/', $nic)) {
-            $birthYear = (int) substr($nic, 0, 4);
-            $dayOfYear = (int) substr($nic, 4, 3);
-        } else {
-            $yy        = (int) substr($nic, 0, 2);
-            $birthYear = $yy <= (int) date('y') ? 2000 + $yy : 1900 + $yy;
-            $dayOfYear = (int) substr($nic, 2, 3);
-        }
-
-        if ($birthYear < 1900 || $birthYear > $currentYear) {
-            return "The birth year in this NIC ({$birthYear}) is outside the valid "
-                . 'Sri Lankan NIC range (1900-' . $currentYear . ').';
-        }
-
-        if (!($dayOfYear >= 1 && $dayOfYear <= 366)
-            && !($dayOfYear >= 501 && $dayOfYear <= 866)
-        ) {
-            return 'The day-of-year digits in this NIC are outside the valid '
-                . 'Sri Lankan NIC range (001-366 or 501-866).';
-        }
-
-        return null;
     }
 
     // ================================================================
@@ -287,82 +235,12 @@ class Manageuser extends Controller {
             "NYSC Admin created user: {$data['first_name']} {$data['last_name']} ({$data['email']}), Role: {$data['role']}"
         );
 
-        // Email the login credentials to the new user. On localhost the
-        // bundled SMTP has no credentials, so log them for QA instead
-        // (same pragmatism as Settings::sendPasswordCodeEmail). The account
-        // is already created at this point, so a send failure never fails
-        // the request — the admin still sees the temp password in the modal.
-        $fullName = $data['first_name'] . ' ' . $data['last_name'];
-        $emailSent = $this->sendAccountCreatedEmail($data['email'], $fullName, $data['role'], $tempPassword);
-        if (!$emailSent && $this->isLocalRequest()) {
-            error_log('[YouthNexus] LOCAL-ONLY new-account credentials for ' . $data['email'] . ': ' . $tempPassword);
-        }
-
         $this->json([
             'success'      => true,
             'message'      => "User {$data['first_name']} {$data['last_name']} created successfully.",
             'tempPassword' => $tempPassword,
             'userId'       => $newUserId,
-            'emailSent'    => $emailSent,
         ]);
-    }
-
-    // ================================================================
-    // OUTBOUND EMAIL — account-created credentials
-    // ================================================================
-
-    private function isLocalRequest(): bool {
-        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
-        return (bool) preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/', $host)
-            || php_sapi_name() === 'cli-server';
-    }
-
-    private function sendAccountCreatedEmail(string $email, string $name, string $role, string $tempPassword): bool {
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host       = MAIL_HOST;
-            $mail->SMTPAuth   = true;
-            $mail->Username   = MAIL_USER;
-            $mail->Password   = MAIL_PASS;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 465;
-
-            $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
-            $mail->addAddress($email);
-
-            $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-            $safeRole  = htmlspecialchars($role, ENT_QUOTES, 'UTF-8');
-            $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-
-            $mail->isHTML(true);
-            $mail->Subject = 'Your YouthNexus account has been created';
-            $mail->Body = '
-            <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#f4f7fb;padding:20px;">
-              <div style="background:#fff;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);text-align:center;">
-                <h2 style="color:#002d72;margin-top:0;">YouthNexus Pulse</h2>
-                <p>Hello ' . $safeName . ',</p>
-                <p>Your YouthNexus account has been created with the position <strong>' . $safeRole . '</strong>.
-                   Use the credentials below to sign in:</p>
-                <div style="margin:25px 0;text-align:left;background:#f0f4f8;padding:15px;border-radius:8px;font-size:14px;">
-                  <p style="margin:0 0 8px;"><strong>Sign in at:</strong> <a href="' . ROOT . '/auth/signin">' . ROOT . '/auth/signin</a></p>
-                  <p style="margin:0 0 8px;"><strong>Email:</strong> ' . $safeEmail . '</p>
-                  <p style="margin:0;"><strong>Temporary password:</strong> <span style="font-size:18px;font-weight:bold;letter-spacing:2px;color:#002d72;">' . htmlspecialchars($tempPassword, ENT_QUOTES, 'UTF-8') . '</span></p>
-                </div>
-                <p style="color:#666;font-size:13px;">For security, you will be asked to change this temporary password the first time you sign in. If you were not expecting this account, please ignore this email.</p>
-              </div>
-            </div>';
-            $mail->AltBody = "Hello $name,\n\nYour YouthNexus account ($role) has been created.\n"
-                . "Sign in at: " . ROOT . "/auth/signin\n"
-                . "Email: $email\n"
-                . "Temporary password: $tempPassword\n\n"
-                . "You will be asked to change this password the first time you sign in.";
-            $mail->send();
-            return true;
-        } catch (Exception $e) {
-            error_log('[YouthNexus] sendAccountCreatedEmail SMTP error for ' . $email . ': ' . $mail->ErrorInfo);
-            return false;
-        }
     }
 
     // ================================================================
@@ -552,28 +430,14 @@ class Manageuser extends Controller {
         }
 
         // Preserve the soft-delete policy: accounts with any financial,
-        // audit, or operational history keep their records. Such accounts
-        // are marked Suspended instead — they vanish from the management
-        // list (only Active/Disabled are listed) while history stays intact.
+        // audit, or operational history must stay for traceability.
         $blockers = $model->getDeletionBlockers($userId);
         if (!empty($blockers)) {
-            $model->setStatus($userId, 'Suspended');
-
-            $auditModel = $this->model('AuditLogModel');
-            $auditModel->log(
-                $_SESSION['user_id'],
-                'USER_SUSPENDED',
-                'User',
-                $userId,
-                "NYSC Admin suspended user ID {$userId}: {$user->first_name} {$user->last_name} (permanent delete blocked: {$blockers[0]})"
-            );
-
             $this->json([
-                'success'   => false,
-                'suspended' => true,
-                'message'   => "This account cannot be permanently deleted because it has {$blockers[0]}. "
-                    . 'It has been marked as Suspended instead and will no longer appear in the user list.',
-            ]);
+                'success' => false,
+                'message' => 'This account cannot be permanently deleted because it has '
+                    . $blockers[0] . '. Deactivate it instead to retain the audit history.',
+            ], 409);
         }
 
         try {

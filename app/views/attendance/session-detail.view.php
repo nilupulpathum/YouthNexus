@@ -10,8 +10,8 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=20260929',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
+    ROOT . '/assets/css/attendance.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
 $pageScripts             = [ROOT . '/assets/js/attendance.js'];
 require_once __DIR__ . '/../partials/icons.view.php';

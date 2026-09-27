@@ -8,7 +8,7 @@ $pageTitle               = $pageTitle ?? 'National Asset Management & Logistics'
 $pageDescription         = $pageDescription ?? 'Central logistics, zonal stock allocation, and inventory deficit surveillance.';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/manageassets.css?v=20260929'];
+$pageStyles              = [ROOT . '/assets/css/manageassets.css'];
 
 $pageScripts = [ROOT . '/assets/js/manageassets.js'];
 require_once __DIR__ . '/../partials/icons.view.php';
@@ -26,15 +26,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="asset-module">
 
     <!-- Top Action Bar -->
-    <div class="am-header-bar am-action-row db-action-row">
-        <div class="am-header-actions">
-            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline db-secondary-action" id="btnExportReport" title="Export Inventory to CSV">
+    <div class="am-header-bar">
+        <div class="am-header-actions yn-ml-auto">
+            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline" id="btnExportReport" title="Export Inventory to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Inventory Report
             </a>
-            <button type="button" class="am-btn am-btn-sky db-secondary-action" id="btnOpenDistribute">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                Distribute to Zone
+            <button type="button" class="yn-btn yn-btn--secondary am-btn am-btn-sky" id="btnOpenDistribute">
+                <span>🎯</span> Distribute to Zone
             </button>
             <button type="button" class="yn-btn yn-btn--primary am-btn am-btn-primary" id="btnOpenAddStock">
                 <span>+</span> Add National Stock

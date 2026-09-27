@@ -13,10 +13,10 @@ $pageDescription         = $isNyscAdmin
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/manageevents.css?v=20260929',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260929',
+    ROOT . '/assets/css/manageevents.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
 ];
-$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260929'];
+$pageScripts             = [ROOT . '/assets/js/manageevents.js'];
 
 require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -29,7 +29,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <!-- Action Row -->
             <div class="me-header-row me-header-row-actions">
                 <button type="button" class="me-btn-primary db-primary-action" id="btnOpenCreateModal">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     <?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?>
                 </button>
             </div>
