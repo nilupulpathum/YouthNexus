@@ -2,7 +2,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr);
   gap: 14px;
-  align-items: start;
+  /* Each pair shares a row height, aligning all four inner corners. */
+  align-items: stretch;
 }
 
 .dtd-panel { min-width: 0; }

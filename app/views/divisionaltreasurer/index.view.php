@@ -26,7 +26,7 @@ $title = 'Dashboard - YouthNexus';
 $pageTitle = 'Dashboard';
 $pageDescription = $division->division_name . ' - finance, club health, and pending work';
 $currentRoute = 'divisionaltreasurer';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Divisional Balance', 'note' => 'Current ledger balance', 'icon' => 'file', 'tone' => 'blue'],
