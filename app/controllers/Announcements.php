@@ -510,6 +510,22 @@ class Announcements extends Controller
 
 
         /*
+         * National oversight: the NYSC administrator may open the detail
+         * view of any stored announcement (draft or published, any level).
+         * Manage controls on the detail page stay limited to their own
+         * NYSC-level announcements via canManageAnnouncement().
+         */
+        $viewerScope =
+            $this->managerScope($user);
+
+        if (
+            ($viewerScope['level'] ?? null) === 'NYSC'
+        ) {
+            return $announcement;
+        }
+
+
+        /*
          * Managers may view Draft and Published
          * announcements belonging to their own scope.
          */
