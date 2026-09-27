@@ -8,7 +8,7 @@ $pageTitle               = 'Transaction Details: ' . htmlspecialchars($transfer-
 $pageDescription         = 'Fund disbursement transaction voucher and audit record';
 $currentRoute            = 'fundtransfer';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/fundtransfer.css'];
+$pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
 
 $pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -20,8 +20,8 @@ $isCompleted = ($transfer->status === 'Completed');
 
 <div class="fund-transfer-module">
 
-    <div class="yn-mb-5">
-        <a href="<?= ROOT ?>/fundtransfer" class="ft-btn ft-btn-outline">
+    <div style="margin-bottom: 20px;">
+        <a href="<?= ROOT ?>/fundtransfer" class="ft-btn ft-btn-outline db-secondary-action">
             &larr; Back to Fund Transfer Ledger
         </a>
     </div>
@@ -31,7 +31,7 @@ $isCompleted = ($transfer->status === 'Completed');
 
         <div class="ft-popup-header ft-details-header">
             <div class="ft-header-left">
-                <h1>Transaction Details</h1>
+                <h2>Transaction Details</h2>
                 <span class="ft-ref-chip"><?= htmlspecialchars($transfer->reference_no) ?></span>
                 <span class="ft-status-chip <?= $isCompleted ? 'ft-status-completed' : 'ft-status-processing' ?>">
                     &#9679; <?= htmlspecialchars($transfer->status) ?>

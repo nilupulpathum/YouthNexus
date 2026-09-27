@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Reports Management';
 $pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports across all youth clubs, divisions, and zones';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css'];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
 $pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -57,10 +57,10 @@ $formatColors = [
         </div>
     <?php endif; ?>
 
-    <!-- ── Page header ─────────────────────────────────────────── -->
-    <div class="rpt-header-bar">
-        <div class="rpt-header-actions yn-ml-auto">
-            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline" id="btn-aggregate">
+    <!-- ── Page action row ─────────────────────────────────────────── -->
+    <div class="rpt-header-bar rpt-action-row db-action-row">
+        <div class="rpt-header-actions">
+            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline db-secondary-action" id="btn-aggregate">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Aggregate Reports
             </a>
@@ -71,42 +71,57 @@ $formatColors = [
         </div>
     </div>
 
-    <!-- ── Toolbar: filters ────────────────────────────────────── -->
-    <form method="get" action="<?= ROOT ?>/reports" class="rpt-toolbar" id="filter-form">
+    <!-- ── Toolbar: search + collapsible filters (attendance-style) ── -->
+    <form method="get" action="<?= ROOT ?>/reports" id="filter-form">
+        <?php $rptActiveFilters = ($selectedCategory !== '' ? 1 : 0) + ($selectedType !== '' ? 1 : 0); ?>
 
-        <!-- Combined category dropdown + keyword search pill -->
-        <div class="rpt-filter-pill">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="rpt-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <span class="rpt-select-wrap">
-                <select name="category" id="categorySelect" onchange="this.form.submit()">
-                    <option value="">All Reports</option>
-                    <?php foreach ($catalog as $catName => $types): ?>
-                        <option value="<?= htmlspecialchars($catName) ?>" <?= $selectedCategory === $catName ? 'selected' : '' ?>><?= htmlspecialchars($catName) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="rpt-select-arrow"><polyline points="6 9 12 15 18 9"/></svg>
-            </span>
-            <span class="rpt-pill-divider"></span>
-            <input class="rpt-pill-input" type="text" name="search" id="searchInput"
-                   placeholder="Search reports..." value="<?= htmlspecialchars($searchText) ?>">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="rpt-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="rpt-toolbar">
+            <div class="rpt-search-group">
+                <div class="rpt-search-input-wrapper">
+                    <input type="text" name="search" id="searchInput" class="rpt-search-input"
+                           placeholder="Search reports..." aria-label="Search reports"
+                           autocomplete="off" value="<?= htmlspecialchars($searchText) ?>">
+                </div>
+                <span class="rpt-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+            </div>
+            <button type="button" class="rpt-filter-btn" id="rptFilterBtn"
+                    aria-expanded="<?= $rptActiveFilters > 0 ? 'true' : 'false' ?>"
+                    aria-controls="rptFilterPanel">
+                Filters
+                <span class="rpt-filter-count<?= $rptActiveFilters > 0 ? '' : ' hidden' ?>" id="rptFilterCount"><?= $rptActiveFilters ?></span>
+            </button>
         </div>
 
-        <!-- Report Type dropdown (depends on category) -->
-        <div class="rpt-small-pill">
-            <select name="type" id="typeSelect" <?= $selectedCategory === '' ? 'disabled' : '' ?>>
-                <option value="">All Types</option>
-                <?php foreach ($typeOptions as $typeName): ?>
-                    <option value="<?= htmlspecialchars($typeName) ?>" <?= $selectedType === $typeName ? 'selected' : '' ?>><?= htmlspecialchars($typeName) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="rpt-select-arrow"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
+        <div class="rpt-filter-panel<?= $rptActiveFilters > 0 ? ' open' : '' ?>" id="rptFilterPanel">
+            <div class="rpt-filter-grid">
+                <div class="rpt-filter-field">
+                    <label for="categorySelect">CATEGORY</label>
+                    <select name="category" id="categorySelect">
+                        <option value="">All Reports</option>
+                        <?php foreach ($catalog as $catName => $types): ?>
+                            <option value="<?= htmlspecialchars($catName) ?>" <?= $selectedCategory === $catName ? 'selected' : '' ?>><?= htmlspecialchars($catName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-        <button type="submit" class="yn-btn yn-btn--ghost rpt-btn rpt-btn--ghost" id="btn-filter">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            Filter Options
-        </button>
+                <div class="rpt-filter-field">
+                    <label for="typeSelect">REPORT TYPE</label>
+                    <select name="type" id="typeSelect" <?= $selectedCategory === '' ? 'disabled' : '' ?>>
+                        <option value="">All Types</option>
+                        <?php foreach ($typeOptions as $typeName): ?>
+                            <option value="<?= htmlspecialchars($typeName) ?>" <?= $selectedType === $typeName ? 'selected' : '' ?>><?= htmlspecialchars($typeName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="rpt-filter-actions">
+                <button type="submit" class="rpt-btn rpt-btn--primary" id="btn-filter">Apply Filters</button>
+                <a href="<?= ROOT ?>/reports" class="rpt-btn rpt-btn--ghost">Reset</a>
+            </div>
+        </div>
     </form>
 
     <!-- ── Section heading ────────────────────────────────────── -->
@@ -180,5 +195,19 @@ $formatColors = [
     <?php endif; ?>
 
 </div><!-- /.rpt-content -->
+
+<script>
+    // Filter panel toggle (attendance-style)
+    (function () {
+        var filterBtn   = document.getElementById('rptFilterBtn');
+        var filterPanel = document.getElementById('rptFilterPanel');
+        if (filterBtn && filterPanel) {
+            filterBtn.addEventListener('click', function () {
+                var open = filterPanel.classList.toggle('open');
+                filterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+    })();
+</script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
