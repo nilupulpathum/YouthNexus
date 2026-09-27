@@ -66,28 +66,15 @@
   }
 
   function statusPill(text, statusClass) {
-    const tone = String(statusClass || text).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return node('span', text, 'yn-status yn-status--' + tone + ' dw-status dw-status--' + tone);
+    return node('span', text, 'dw-status dw-status--' + String(statusClass || text).toLowerCase().replace(/[^a-z0-9]+/g, '-'));
   }
-
-  var panelControls = [statusFilter, flagFilter, minScore, maxScore, sort];
-  var appliedValues = new Map();
-  function captureFilters() {
-    panelControls.forEach(function (control) {
-      if (control) appliedValues.set(control, control.value);
-    });
-  }
-  function selected(control) {
-    return control ? String(appliedValues.get(control) || '') : '';
-  }
-  captureFilters();
 
   function applyFilters() {
     var query = search ? search.value.trim().toLowerCase() : '';
-    var selectedStatus = selected(statusFilter);
-    var selectedFlag = selected(flagFilter);
-    var minimum = selected(minScore) !== '' ? Number(selected(minScore)) : null;
-    var maximum = selected(maxScore) !== '' ? Number(selected(maxScore)) : null;
+    var selectedStatus = statusFilter ? statusFilter.value : '';
+    var selectedFlag = flagFilter ? flagFilter.value : '';
+    var minimum = minScore && minScore.value !== '' ? Number(minScore.value) : null;
+    var maximum = maxScore && maxScore.value !== '' ? Number(maxScore.value) : null;
     var visible = 0;
     cards.forEach(function (card) {
       var score = Number(card.dataset.score || 0);
@@ -108,7 +95,7 @@
 
   function sortCards() {
     var grid = document.querySelector('[data-health-grid]');
-    var mode = selected(sort) || 'score-high';
+    var mode = sort ? sort.value : 'score-high';
     cards.sort(function (a, b) {
       if (mode === 'score-low') return Number(a.dataset.score) - Number(b.dataset.score);
       if (mode === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
@@ -118,14 +105,13 @@
   }
 
   if (search) search.addEventListener('input', applyFilters);
-  document.querySelector('[data-health-apply]').addEventListener('click', function () { captureFilters(); sortCards(); applyFilters(); });
+  document.querySelector('[data-health-apply]').addEventListener('click', function () { sortCards(); applyFilters(); });
   document.querySelector('[data-health-reset]').addEventListener('click', function () {
     statusFilter.value = '';
     flagFilter.value = '';
     minScore.value = '';
     maxScore.value = '';
     sort.value = 'score-high';
-    captureFilters();
     sortCards();
     applyFilters();
   });
@@ -307,8 +293,7 @@
     document.querySelector('[data-detail-window]').textContent = 'Scoring window: ' + formatDate(record.score.window_start) + ' to ' + formatDate(record.score.window_end);
     var pill = document.querySelector('[data-detail-status]');
     pill.textContent = healthLabel(record.score.health_status);
-    const tone = record.score.health_status.toLowerCase();
-    pill.className = 'yn-status yn-status--' + tone + ' dw-status dw-status--' + tone;
+    pill.className = 'dw-status dw-status--' + record.score.health_status.toLowerCase();
     populateBreakdown(record);
     populateHistory(record);
     populateClubInfo(record);

@@ -16,49 +16,40 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page dtn-audit-page" aria-label="Club finance audit queue">
+<section class="dw-page" aria-label="Club finance audit queue">
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span>
     </div>
   <?php endif; ?>
 
-  <section class="dw-panel dtn-audit-start" aria-labelledby="audit-start-heading">
-    <div>
-      <h2 id="audit-start-heading">Start a Club Finance Audit</h2>
-      <p>Choose a club and audit period to review its ledger, receipts, and findings.</p>
-    </div>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
-  </section>
-
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Audit summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
   </div>
 
   <div class="dw-toolbar" aria-label="Audit tools">
-    <div class="dw-toolbar__search yn-search dw-search">
+    <div class="dw-toolbar__search dw-search dw-search--plain">
       <label class="visually-hidden" for="audit-search">Search clubs</label>
-      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="audit-search" type="search" placeholder="Search audits by club name" data-audit-search>
+      <input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false">Filters</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
   </div>
 
   <section class="dw-filter-panel" id="audit-filters" hidden>
     <h2 class="dw-filter-panel__heading">Advanced Filters for Club Audits</h2>
     <div class="dw-filter-grid">
       <div class="dw-field"><label for="audit-type-filter">Audit Type</label><select id="audit-type-filter" data-audit-type-filter><option value="">All types</option><option value="weekly">Weekly</option><option value="biweekly">Bi-weekly</option><option value="monthly">Monthly</option><option value="notassigned">Not assigned</option></select></div>
-      <div class="dw-field"><label for="audit-status-filter">Audit Status</label><select id="audit-status-filter" data-audit-status-filter><option value="">All statuses</option><option value="notstarted">Not started</option><option value="pending">Pending</option><option value="inprogress">In progress</option><option value="clarificationrequested">Clarification requested</option><option value="reopened">Reopened</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="overdue">Overdue</option></select></div>
+      <div class="dw-field"><label for="audit-status-filter">Audit Status</label><select id="audit-status-filter" data-audit-status-filter><option value="">All statuses</option><option value="notstarted">Not started</option><option value="pending">Pending</option><option value="inprogress">In progress</option><option value="clarificationrequested">Clarification requested</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select></div>
       <div class="dw-field"><label for="audit-flag-filter">Findings</label><select id="audit-flag-filter" data-audit-flag-filter><option value="">Any</option><option value="flagged">Open findings</option><option value="clear">No open findings</option></select></div>
       <div class="dw-field"><label for="audit-sort">Sort By</label><select id="audit-sort" data-audit-sort><option value="club">Club name</option><option value="recent">Most recently audited</option><option value="oldest">Oldest audit first</option></select></div>
     </div>
-    <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-audit-filter-reset>Clear filters</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-audit-filter-apply>Apply filters</button></div>
+    <div class="dw-filter-actions"><button class="dw-button dw-button--secondary" type="button" data-audit-filter-reset>Reset all</button><button class="dw-button dw-button--primary" type="button" data-audit-filter-apply>Apply Filters</button></div>
   </section>
 
-  <section class="dw-panel dtn-audit-register" aria-labelledby="audit-register-heading">
-    <header class="dw-panel__header"><div><h2 id="audit-register-heading">Club Audit Register</h2><p>Finance reviews for clubs in <?= $e($division->division_name) ?></p></div><span class="dw-count" data-audit-count><?= count($queue) ?> clubs</span></header>
-    <div class="yn-table-wrap dw-table-wrap"><table class="yn-table dw-table">
-      <thead><tr><th>Club</th><th>Audit cycle</th><th>Last activity</th><th>Findings</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody data-audit-grid>
+  <div class="dw-section-header"><div><h2>Audit Queue</h2><p>Clubs within <?= $e($division->division_name) ?></p></div><span class="dw-count" data-audit-count><?= count($queue) ?> clubs</span></div>
+
+  <div class="dw-audit-grid" data-audit-grid>
     <?php foreach ($queue as $item): ?>
       <?php
       $statusText = $item->audit_id ? $item->audit_status : 'Not Started';
@@ -67,33 +58,31 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           : 'Not assigned';
       $lastDate = $item->signed_off_at ?: $item->initiated_at;
       ?>
-      <tr class="<?= (int) $item->open_flags > 0 ? 'dtn-audit-row--flagged' : '' ?>"
+      <article class="dw-audit-card<?= (int) $item->open_flags > 0 ? ' dw-audit-card--flagged' : '' ?>"
                data-audit-card
                data-search="<?= $e(strtolower($item->club_name)) ?>"
                data-type="<?= $e(strtolower($item->audit_type ?: 'notassigned')) ?>"
                data-status="<?= $e(strtolower(str_replace(' ', '', $statusText))) ?>"
                data-flags="<?= (int) $item->open_flags > 0 ? 'flagged' : 'clear' ?>"
                data-date="<?= $lastDate ? $e(date('Y-m-d', strtotime($lastDate))) : '' ?>">
-        <td class="dw-table__description"><?= $e($item->club_name) ?></td>
-        <td><?= $e($typeText) ?></td>
-        <td><?= $lastDate ? $e(date('d M Y', strtotime($lastDate))) : 'No audit recorded' ?></td>
-        <td><?= (int) $item->open_flags ?> open <?= (int) $item->open_flags === 1 ? 'finding' : 'findings' ?></td>
-        <td><?php $status = $statusText; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-        <td>
+        <header class="dw-audit-card__header"><div><span class="dw-audit-card__cycle"><?= $e($typeText) ?></span><h3><?= $e($item->club_name) ?></h3></div><?php $status = $statusText; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></header>
+        <div class="dw-audit-card__details">
+          <span><?= $lastDate ? 'Last activity ' . $e(date('d M Y', strtotime($lastDate))) : 'No audit recorded' ?></span>
+          <span><?= (int) $item->open_flags ?> open <?= (int) $item->open_flags === 1 ? 'finding' : 'findings' ?></span>
+        </div>
+        <footer class="dw-audit-card__footer">
           <?php if ($item->audit_id): ?>
-            <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
+            <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
           <?php elseif ((int) $item->has_active_ledger === 1): ?>
-            <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-start-club="<?= (int) $item->club_id ?>" data-modal-open="start-audit">Start Audit</button>
+            <button class="dw-button dw-button--primary db-primary-action" type="button" data-start-club="<?= (int) $item->club_id ?>" data-modal-open="start-audit">Start Audit</button>
           <?php else: ?>
-            <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-secondary-action" type="button" disabled>Ledger Unavailable</button>
+            <button class="dw-button dw-button--ghost db-secondary-action" type="button" disabled>Ledger Unavailable</button>
           <?php endif; ?>
-        </td>
-      </tr>
+        </footer>
+      </article>
     <?php endforeach; ?>
-      </tbody>
-    </table></div>
-  </section>
-  <?php $emptyTitle = 'No clubs found'; $emptyMessage = 'Change the current search and filters.'; $emptyVisible = count($queue) === 0; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+  </div>
+  <?php $emptyTitle = 'No clubs found'; $emptyMessage = 'Change the current search and filters.'; $emptyVisible = count($queue) === 0; require __DIR__ . '/../partials/divisional/empty-state.view.php'; ?>
 </section>
 
 <div class="dw-modal" id="start-audit" role="dialog" aria-modal="true" aria-labelledby="start-audit-title" aria-hidden="true" hidden>
@@ -107,7 +96,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-field"><label for="audit-period-end">Period End</label><input id="audit-period-end" name="period_end" type="date" value="<?= date('Y-m-d') ?>" required></div>
       <div class="dw-field dw-field--span-2"><label for="audit-period-start">Period Start</label><input id="audit-period-start" name="period_start" type="date" value="<?= date('Y-m-01') ?>" required></div>
     </div>
-    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Start Audit</button></footer>
+    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Start Audit</button></footer>
   </form>
 </div>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

@@ -608,6 +608,11 @@
     border-color: var(--yn-danger);
 }
 
+.dashboard .ea-btn-submit-decision.db-confirm-action.is-reject {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
 .ea-btn-submit-decision.is-reject:hover {
     background: var(--yn-danger-hover);
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
@@ -616,6 +621,12 @@
 .dashboard .ea-btn-submit-decision.db-confirm-action.is-reject:hover {
     background: var(--yn-danger-hover);
     border-color: var(--yn-danger-hover);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+.dashboard .ea-btn-submit-decision.db-confirm-action.is-reject:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
 

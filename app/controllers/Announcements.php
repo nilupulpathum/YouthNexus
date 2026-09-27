@@ -4,9 +4,7 @@ class Announcements extends Controller
 {
     private const MANAGER_LEVELS = [
         'ClubSecretary'       => 'Club',
-        'DivisionalCoordinator' => 'Divisional',
         'DivisionalSecretary' => 'Divisional',
-        'DivisionalTreasurer' => 'Divisional',
         'ZonalSecretary'      => 'Zonal',
         'NYSCAdministrator'   => 'NYSC',
     ];
@@ -27,16 +25,6 @@ class Announcements extends Controller
             'ClubSecretary',
             'ClubTreasurer',
             'ClubMember',
-        ],
-
-        'DivisionalCoordinator' => [
-            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
-            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
-        ],
-
-        'DivisionalTreasurer' => [
-            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
-            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
         ],
 
         'ZonalSecretary' => [
@@ -290,7 +278,7 @@ class Announcements extends Controller
                 403,
                 [
                     'error' =>
-                        'Only an authorized officer can manage announcements in this scope.',
+                        'Only an authorized Secretary or NYSC Administrator can manage announcements.',
                 ]
             );
         }
@@ -723,10 +711,39 @@ class Announcements extends Controller
      * target_users[ClubSecretary][] = 14
      * target_users[ClubSecretary][] = 29
      */
+    /**
+     * Zone filter for national-level broadcasts.
+     *
+     * Only meaningful for the NYSC manager level: an empty value means a
+     * national broadcast (every zone), a validated id narrows the broadcast
+     * to that zone. Ignored for club/divisional/zonal managers, whose scope
+     * already pins the zone.
+     */
+    private function broadcastZoneFilter($scope) {
+        if (($scope['level'] ?? null) !== 'NYSC') {
+            return null;
+        }
+
+        $raw = $_GET['zone_id'] ?? $_POST['broadcast_zone_id'] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $zoneId = filter_var(
+            $raw,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]
+        );
+
+        return $zoneId === false ? null : $zoneId;
+    }
+
     private function validateAudienceTargets(
         $user,
         array $scope,
-        $requireAtLeastOne
+        $requireAtLeastOne,
+        $zoneId = null
     ) {
         $modes =
             $_POST['target_modes']
@@ -895,7 +912,8 @@ class Announcements extends Controller
                         ->findAnnouncementRecipients(
                             $role,
                             $scope['level'],
-                            $scope['scope_id']
+                            $scope['scope_id'],
+                            $zoneId
                         );
 
 
@@ -1123,6 +1141,11 @@ class Announcements extends Controller
                         $user->role
                     ]
                     ?? [],
+
+                'zones' =>
+                    ($scope['level'] ?? null) === 'NYSC'
+                        ? $this->model('ManageUserModel')->getZones()
+                        : [],
             ]
         );
     }
@@ -1329,7 +1352,8 @@ class Announcements extends Controller
                 ->findAnnouncementRecipients(
                     $role,
                     $scope['level'],
-                    $scope['scope_id']
+                    $scope['scope_id'],
+                    $this->broadcastZoneFilter($scope)
                 );
 
 
@@ -1414,6 +1438,15 @@ class Announcements extends Controller
         $category =
             $this->formText('category');
 
+        /*
+         * National managers may narrow the broadcast to one zone.
+         * Empty = national broadcast (every zone).
+         */
+        $broadcastZoneId =
+            ($scope['level'] ?? null) === 'NYSC'
+                ? $this->broadcastZoneFilter($scope)
+                : null;
+
 
         if (
             $title === ''
@@ -1467,7 +1500,8 @@ class Announcements extends Controller
             $this->validateAudienceTargets(
                 $user,
                 $scope,
-                $publish
+                $publish,
+                $broadcastZoneId
             );
 
 
@@ -1567,9 +1601,10 @@ class Announcements extends Controller
                 ],
 
             'organizer_zonal_id' =>
-                $scope[
-                    'organizer_zonal_id'
-                ],
+                $broadcastZoneId
+                    ?: $scope[
+                        'organizer_zonal_id'
+                    ],
 
             'created_by' =>
                 (int)$user->user_id,
@@ -1926,13 +1961,11 @@ class Announcements extends Controller
                 as $attachment
             ) {
                 $attachmentModel
-                    ->archiveFromAnnouncement(
+                    ->deleteFromAnnouncement(
                         $attachment
                             ->attachment_id,
 
-                        $id,
-
-                        (int)$user->user_id
+                        $id
                     );
             }
 
@@ -2013,7 +2046,18 @@ class Announcements extends Controller
         }
 
 
-        /* Removed attachments remain in version history and are not unlinked. */
+        /*
+         * Delete physical old files only
+         * after DB commit succeeds.
+         */
+        foreach (
+            $removedAttachments
+            as $attachment
+        ) {
+            $this->removeStoredAttachment(
+                $attachment->file_path
+            );
+        }
 
 
         $this->jsonResponse(
@@ -2103,13 +2147,6 @@ class Announcements extends Controller
 
 
             if (
-                $announcement->status !== 'Draft'
-            ) {
-                $db->rollBack();
-                $this->jsonResponse(409, ['error' => 'Only an unpublished draft can be deleted.']);
-            }
-
-            if (
                 !$model->softDelete(
                     $id
                 )
@@ -2172,69 +2209,9 @@ class Announcements extends Controller
                     true,
 
                 'message' =>
-                    'Announcement draft deleted successfully.',
+                    'Announcement deleted successfully.',
             ]
         );
-    }
-
-    public function retract($id = null)
-    {
-        $this->changeLifecycle($id, 'Published', 'Retracted', 'RETRACT_ANNOUNCEMENT', 'Announcement withdrawn from publication.');
-    }
-
-    public function archive($id = null)
-    {
-        $this->changeLifecycle($id, null, 'Archived', 'ARCHIVE_ANNOUNCEMENT', 'Announcement archived.');
-    }
-
-    public function restore($id = null)
-    {
-        $this->changeLifecycle($id, 'Archived', 'Retracted', 'RESTORE_ANNOUNCEMENT', 'Announcement restored as withdrawn from publication.');
-    }
-
-    private function changeLifecycle($id, $requiredStatus, $targetStatus, $auditAction, $message)
-    {
-        $user = $this->currentUser();
-        $scope = $this->requireManagerScope($user);
-        $this->requirePost();
-        $id = $this->positiveId($id);
-        $reason = trim((string) ($_POST['reason'] ?? ''));
-        if (strlen($reason) < 5 || strlen($reason) > 1000) {
-            $this->jsonResponse(422, ['error' => 'Provide a reason between 5 and 1000 characters.']);
-        }
-        $model = $this->model('AnnouncementModel');
-        $db = Database::getInstance()->getConnection();
-        try {
-            $db->beginTransaction();
-            $announcement = $model->findManageableById($id, $scope['level'], $scope['scope_id'], true);
-            if (!$announcement) {
-                $db->rollBack();
-                $this->jsonResponse(404, ['error' => 'Announcement not found.']);
-            }
-            $fromStatus = $requiredStatus ?? (string) $announcement->status;
-            if ($targetStatus === 'Archived' && !in_array($fromStatus, ['Published', 'Retracted'], true)) {
-                $db->rollBack();
-                $this->jsonResponse(409, ['error' => 'Only a published or withdrawn announcement can be archived.']);
-            }
-            if ((string) $announcement->status !== $fromStatus
-                || !$model->transitionLifecycle($id, $fromStatus, $targetStatus, (int) $user->user_id, $reason)) {
-                $db->rollBack();
-                $this->jsonResponse(409, ['error' => 'The announcement status changed before this action was saved.']);
-            }
-            $this->model('AuditLogModel')->log(
-                (int) $user->user_id,
-                $auditAction,
-                'Announcement',
-                $id,
-                $reason
-            );
-            $db->commit();
-        } catch (Throwable $error) {
-            if ($db->inTransaction()) $db->rollBack();
-            error_log('Announcement lifecycle update failed: ' . $error->getMessage());
-            $this->jsonResponse(500, ['error' => 'Unable to update the announcement lifecycle.']);
-        }
-        $this->jsonResponse(200, ['success' => true, 'message' => $message]);
     }
 
 
