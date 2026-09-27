@@ -6,6 +6,10 @@
  * $title, $pageTitle, $pageDescription, $currentRoute, $userRole,
  * $userName, $userEmail, and $unreadNotificationCount.
  */
+
+// yn_icon() must exist for every dashboard page — views (e.g. manageevents)
+// call it in their bodies but some forget their own require. The helper
+// guards itself with function_exists, so this is safe to run always.
 require_once __DIR__ . '/../partials/icons.view.php';
 $title = $title ?? 'Dashboard — YouthNexus';
 $pageTitle = $pageTitle ?? 'Dashboard';
@@ -37,20 +41,48 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1e40af">
   <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/tokens.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/components.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <style>
+    /* Keep the navigation cover usable while the page's larger stylesheets load. */
+    .yn-route-overlay { display: none; position: fixed; inset: 0; z-index: 2147483647; align-items: center; justify-content: center; background: #f4f7fb; color: #1e3a8a; font: 600 15px system-ui, sans-serif; }
+    .yn-nav-loading .yn-route-overlay { display: flex; }
+    .yn-route-overlay__content { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; text-align: center; }
+    .yn-route-overlay__spinner { width: 36px; height: 36px; border: 3px solid #cbd5e1; border-top-color: #1e40af; border-radius: 50%; animation: yn-route-spin .7s linear infinite; }
+    @keyframes yn-route-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .yn-route-overlay__spinner { animation-duration: 1.5s; } }
+  </style>
+  <script>
+    // Carry the indicator across full-page sidebar navigations when possible.
+    try {
+      var started = Number(sessionStorage.getItem('yn-sidebar-navigation'));
+      if (started && Date.now() - started < 60000) {
+        document.documentElement.classList.add('yn-nav-loading');
+      } else {
+        sessionStorage.removeItem('yn-sidebar-navigation');
+      }
+    } catch (error) { /* Navigation still works when storage is unavailable. */ }
+
+    // Hard cap: this inline timer is independent of every stylesheet and
+    // deferred script, so a slow external asset (e.g. the Google Fonts
+    // @import) or a failed dashboard.js can never hold the cover open
+    // for more than 3 seconds.
+    window.setTimeout(function () {
+      document.documentElement.classList.remove('yn-nav-loading');
+    }, 3000);
+  </script>
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
   <?php foreach ($pageStyles as $pageStyle): ?>
-    <?php $styleUrl = (string) $pageStyle; ?>
-    <link rel="stylesheet" href="<?= htmlspecialchars($styleUrl . (str_contains($styleUrl, '?') ? '&' : '?') . 'v=' . rawurlencode(ASSET_VERSION), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars((string) $pageStyle, ENT_QUOTES, 'UTF-8') ?>">
   <?php endforeach; ?>
-  <?php if (in_array($userRole, ['DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer'], true)): ?>
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-consistency.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
-  <?php endif; ?>
 </head>
 <body class="dashboard dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
   <a class="dashboard-skip-link" href="#main-content">Skip to main content</a>
+  <div class="yn-route-overlay" role="status" aria-live="polite" aria-label="Loading page">
+    <div class="yn-route-overlay__content">
+      <span class="yn-route-overlay__spinner" aria-hidden="true"></span>
+      <span>Loading your workspace…</span>
+    </div>
+  </div>
 
   <div class="db-app dashboard-app">
     <?php require __DIR__ . '/../partials/dashboard-sidebar.view.php'; ?>

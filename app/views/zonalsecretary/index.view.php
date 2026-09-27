@@ -22,7 +22,7 @@ $title = 'Zonal Secretary Overview - YouthNexus';
 $pageTitle = 'Zonal Secretary Overview';
 $pageDescription = 'Zone programme, announcements and upcoming events';
 $currentRoute = 'zonalsecretary';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 
 $summaryCards = [

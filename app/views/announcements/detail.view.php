@@ -18,10 +18,10 @@ $pageTitle       = 'Announcement Details';
 $pageDescription = 'View announcement information, recipients and attachments';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css',
-    ROOT . '/assets/css/divisional-summary-standard.css',
+    ROOT . '/assets/css/announcements.css?v=20260929',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
-$pageScripts     = [ROOT . '/assets/js/announcements.js'];
+$pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';
@@ -42,10 +42,6 @@ $roleLabel = function ($role) {
             (string)$role
         )
     );
-};
-
-$statusLabel = static function ($status) {
-    return $status === 'Retracted' ? 'Withdrawn from Publication' : (string) $status;
 };
 
 
@@ -160,22 +156,18 @@ switch ($announcement->level ?? '') {
             <?php endif; ?>
 
 
-            <?php if ($announcement->status === 'Draft'): ?>
+            <?php if (
+                $announcement->status === 'Draft'
+            ): ?>
 
                 <span class="ann-badge ann-badge-draft">
                     DRAFT
                 </span>
 
-            <?php elseif ($announcement->status === 'Published'): ?>
+            <?php else: ?>
 
                 <span class="ann-badge ann-badge-published">
                     PUBLISHED
-                </span>
-
-            <?php else: ?>
-
-                <span class="ann-badge ann-badge-draft">
-                    <?= htmlspecialchars(strtoupper($statusLabel($announcement->status)), ENT_QUOTES, 'UTF-8') ?>
                 </span>
 
             <?php endif; ?>
@@ -394,11 +386,12 @@ switch ($announcement->level ?? '') {
         <!-- Actions                                            -->
         <!-- ================================================== -->
 
+        <?php if (!empty($canManage) || (!empty($isRecipient) && $announcement->status === 'Published')): ?>
+
         <div class="ann-side-card">
 
             <?php if (!empty($canManage)): ?>
 
-                <?php if (in_array($announcement->status, ['Draft', 'Published'], true)): ?>
                 <a
                     class="ann-btn ann-btn-secondary db-secondary-action"
                     href="<?= ROOT ?>/announcements?edit=<?= (int)$announcement->announcement_id ?>"
@@ -411,23 +404,23 @@ switch ($announcement->level ?? '') {
                         : 'Edit Announcement' ?>
 
                 </a>
-                <?php endif; ?>
 
-                <?php if ($announcement->status === 'Draft'): ?>
+
                 <button
                     type="button"
                     class="ann-btn ann-btn-danger"
                     onclick="deleteAnnouncement(<?= (int)$announcement->announcement_id ?>)"
                 >
-                    Delete Draft
+                    Delete Announcement
                 </button>
-                <?php elseif ($announcement->status === 'Published'): ?>
-                    <button type="button" class="ann-btn ann-btn-danger" data-ann-lifecycle-action="retract" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Withdraw from Publication</button>
+
+                <?php if ($announcement->status === 'Published'): ?>
                     <button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-action="archive" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Archive Announcement</button>
-                <?php elseif ($announcement->status === 'Retracted'): ?>
-                    <button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-action="archive" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Archive Announcement</button>
-                <?php elseif ($announcement->status === 'Archived'): ?>
+                <?php elseif (in_array($announcement->status, ['Archived', 'Retracted'], true)): ?>
                     <button type="button" class="ann-btn ann-btn-primary" data-ann-lifecycle-action="restore" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Restore Announcement</button>
+                    <?php if ($announcement->status === 'Retracted'): ?>
+                        <button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-action="archive" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Archive Announcement</button>
+                    <?php endif; ?>
                 <?php endif; ?>
 
             <?php endif; ?>
@@ -473,6 +466,8 @@ switch ($announcement->level ?? '') {
             <?php endif; ?>
 
         </div>
+
+        <?php endif; ?>
 
 
         <!-- ================================================== -->

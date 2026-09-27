@@ -8,10 +8,8 @@ $pageTitle               = $pageTitle ?? 'National Asset Management & Logistics'
 $pageDescription         = $pageDescription ?? 'Central logistics, zonal stock allocation, and inventory deficit surveillance.';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/manageassets.css'];
+$pageStyles              = [ROOT . '/assets/css/manageassets.css?v=20261001'];
 
-$pageScripts = [ROOT . '/assets/js/manageassets.js'];
-require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -26,17 +24,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <div class="asset-module">
 
     <!-- Top Action Bar -->
-    <div class="am-header-bar">
-        <div class="am-header-actions yn-ml-auto">
-            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline" id="btnExportReport" title="Export Inventory to CSV">
+    <div class="am-header-bar am-action-row db-action-row">
+        <div class="am-header-actions">
+            <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline db-secondary-action" id="btnExportReport" title="Export Inventory to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Inventory Report
             </a>
-            <button type="button" class="yn-btn yn-btn--secondary am-btn am-btn-sky" id="btnOpenDistribute">
-                <span>🎯</span> Distribute to Zone
+            <button type="button" class="am-btn am-btn-sky db-secondary-action" id="btnOpenDistribute">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                Distribute to Zone
             </button>
-            <button type="button" class="yn-btn yn-btn--primary am-btn am-btn-primary" id="btnOpenAddStock">
-                <span>+</span> Add National Stock
+            <button type="button" class="am-btn am-btn-primary db-primary-action" id="btnOpenAddStock">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add National Stock
             </button>
         </div>
     </div>
@@ -45,7 +45,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php if (!$isZoneView): ?>
     <div class="am-stats-grid">
         <!-- 1. Total Stock -->
-        <div class="yn-stat-card am-stat-card">
+        <div class="am-stat-card">
             <div class="am-stat-head">
                 <span class="am-stat-title">TOTAL ITEMS IN STOCK</span>
             </div>
@@ -60,7 +60,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <!-- 2. Total Distributed -->
-        <div class="yn-stat-card am-stat-card">
+        <div class="am-stat-card">
             <div class="am-stat-head">
                 <span class="am-stat-title">TOTAL DISTRIBUTED ASSETS</span>
             </div>
@@ -77,7 +77,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php endif; ?>
 
     <!-- Filter & Search Toolbar -->
-    <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" class="yn-m-0">
+    <?php
+    $amActiveFilters = 0;
+    if ($selCategory !== '' && $selCategory !== 'All Categories') { $amActiveFilters++; }
+    if ($selZoneVal !== '' && $selZoneVal !== 'All Zones') { $amActiveFilters++; }
+    ?>
+    <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" style="margin: 0;">
         <div class="am-filter-bar">
             <div class="am-search-wrap">
                 <input type="text" name="search" id="assetSearchInput" class="am-search-input"
@@ -88,23 +93,50 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </span>
             </div>
 
-            <select name="category" id="filterCategory" class="am-select" onchange="document.getElementById('filterForm').submit()">
-                <option value="All Categories" <?= ($selCategory === 'All Categories') ? 'selected' : '' ?>>All Categories</option>
-                <?php foreach ($categories as $cat): ?>
-                    <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>" <?= ($selCategory === $cat) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <button type="button"
+                    class="am-filter-btn"
+                    id="amFilterBtn"
+                    aria-expanded="<?= $amActiveFilters > 0 ? 'true' : 'false' ?>"
+                    aria-controls="amFilterPanel">
+                Filters
+                <span class="am-filter-count<?= $amActiveFilters > 0 ? '' : ' hidden' ?>" id="amFilterCount"><?= $amActiveFilters ?></span>
+            </button>
+        </div>
 
-            <select name="zone" id="filterZone" class="am-select" onchange="document.getElementById('filterForm').submit()">
-                <option value="All Zones" <?= ($selZoneVal === 'All Zones') ? 'selected' : '' ?>>All Zones (National)</option>
-                <?php foreach ($zones as $z): ?>
-                    <option value="<?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>" <?= ($selZoneVal === $z->zonal_name || (int)$selectedZoneId === (int)$z->zonal_id) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+        <div class="am-filter-panel<?= $amActiveFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
+            <div class="am-filter-grid">
+                <div class="am-filter-field">
+                    <label for="filterCategory">Category</label>
+                    <select name="category" id="filterCategory">
+                        <option value="All Categories" <?= ($selCategory === 'All Categories') ? 'selected' : '' ?>>All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>" <?= ($selCategory === $cat) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="am-filter-field">
+                    <label for="filterZone">Zone</label>
+                    <select name="zone" id="filterZone">
+                        <option value="All Zones" <?= ($selZoneVal === 'All Zones') ? 'selected' : '' ?>>All Zones (National)</option>
+                        <?php foreach ($zones as $z): ?>
+                            <option value="<?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>" <?= ($selZoneVal === $z->zonal_name || (int)$selectedZoneId === (int)$z->zonal_id) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($z->zonal_name, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="am-filter-actions">
+                <button type="submit" class="am-filter-apply">Apply Filters</button>
+                <button type="button" class="am-filter-reset" id="am-reset-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                    Reset
+                </button>
+            </div>
         </div>
     </form>
 
@@ -119,28 +151,28 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <span class="am-badge-count">Showing <?= count($inventory) ?> of <?= count($allCatalogItems) ?> Items</span>
             </div>
             <a href="#" class="am-link" id="btnRunReconcile">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="am-inline-icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 Run Zonal Reconciliation
             </a>
         </div>
 
         <div class="am-table-responsive">
-            <table class="yn-table am-table">
+            <table class="am-table">
                 <thead>
                     <tr>
-                        <th class="yn-table__col-check"><input type="checkbox" aria-label="Select all items"></th>
+                        <th style="width: 32px;"><input type="checkbox" aria-label="Select all items"></th>
                         <th>Item Identifier &amp; Specification</th>
                         <th>Category</th>
                         <th>Warehouse Qty</th>
                         <th>Threshold</th>
                         <th>Status</th>
-                        <th class="yn-text-right">Actions</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($inventory)): ?>
                         <tr>
-                            <td colspan="7" class="am-empty-cell">
+                            <td colspan="7" style="text-align: center; padding: 36px; color: #9ca3af;">
                                 No catalog assets matched your search filters.
                             </td>
                         </tr>
@@ -168,16 +200,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="am-status-badge optimal">Optimal</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="yn-text-right">
-                                    <div class="am-actions yn-flex-end">
-                                        <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-distribute <?= ($item->quantity <= 0) ? 'disabled' : '' ?>"
+                                <td style="text-align: right;">
+                                    <div class="am-actions" style="justify-content: flex-end;">
+                                        <button type="button" class="am-btn-sm am-btn-distribute <?= ($item->quantity <= 0) ? 'disabled' : '' ?>"
                                                 data-action="distribute-row"
                                                 data-item-id="<?= (int)$item->catalog_item_id ?>"
                                                 data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>"
                                                 <?= ($item->quantity <= 0) ? 'disabled' : '' ?>>
                                             Distribute
                                         </button>
-                                        <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-addstock"
+                                        <button type="button" class="am-btn-sm am-btn-addstock"
                                                 data-action="add-stock-row"
                                                 data-item-id="<?= (int)$item->catalog_item_id ?>"
                                                 data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>">
@@ -215,7 +247,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <div class="am-panel">
         <div class="am-table-responsive">
-            <table class="yn-table am-table">
+            <table class="am-table">
                 <thead>
                     <tr>
                         <th>Asset Name</th>
@@ -223,7 +255,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <th>Allocated Qty</th>
                         <th>Available Qty</th>
                         <th>Status</th>
-                        <th class="yn-text-right">Actions</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -233,7 +265,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     ?>
                     <?php if (empty($inventory)): ?>
                         <tr>
-                            <td colspan="6" class="am-empty-cell">
+                            <td colspan="6" style="text-align: center; padding: 36px; color: #9ca3af;">
                                 No asset allocations found for this zone.
                             </td>
                         </tr>
@@ -264,8 +296,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="am-status-badge optimal">Optimal</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="yn-text-right">
-                                    <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-distribute"
+                                <td style="text-align: right;">
+                                    <button type="button" class="am-btn-sm am-btn-distribute"
                                             data-action="distribute-row"
                                             data-item-id="<?= (int)$item->catalog_item_id ?>"
                                             data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>">
@@ -347,8 +379,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <div class="am-popup-footer">
-                <button type="button" class="yn-btn yn-btn--secondary am-btn-cancel" data-close-modal="addStockModal">Cancel</button>
-                <button type="submit" class="yn-btn yn-btn--primary am-btn-confirm">
+                <button type="button" class="am-btn-cancel" data-close-modal="addStockModal">Cancel</button>
+                <button type="submit" class="am-btn-confirm">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="10.5" cy="13.5" r="8.5"></circle>
                         <path d="M7 13.5l2.5 2.5 5-5"></path>
@@ -431,8 +463,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <div class="am-popup-footer">
-                <button type="button" class="yn-btn yn-btn--secondary am-btn-cancel" data-close-modal="distributeModal">Cancel</button>
-                <button type="submit" class="yn-btn yn-btn--primary am-btn-confirm">Confirm Distribution</button>
+                <button type="button" class="am-btn-cancel" data-close-modal="distributeModal">Cancel</button>
+                <button type="submit" class="am-btn-confirm">Confirm Distribution</button>
             </div>
         </form>
     </div>
@@ -458,5 +490,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         ];
     }, $allCatalogItems)) ?>;
 </script>
+<script src="<?= ROOT ?>/assets/js/manageassets.js?v=20261001" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

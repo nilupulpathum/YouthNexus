@@ -112,11 +112,11 @@
 }
 .audit-btn-blue {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
 }
 .audit-btn-blue:hover {
     background: #164bd8;
-    color: #fff;
+    color: #fff !important;
 }
 
 /* ---- Stat cards ---- */
@@ -130,7 +130,7 @@
     flex: 1;
     min-width: 220px;
     background: #fff;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 18px 20px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -361,7 +361,7 @@
     background: #fff;
     color: #334155;
     border: 1px solid #e2e8f0;
-    border-radius: 7px;
+    border-radius: 8px;
     padding: 7px 16px;
     font-size: 13px;
     cursor: pointer;
@@ -411,7 +411,8 @@
     padding: 20px 28px;
     border-bottom: 1px solid #eef2f6;
 }
-.audit-modal-head h1 {
+.audit-modal-head h1,
+.audit-modal-head h2 {
     font-size: 19px;
     font-weight: 700;
     color: #0f172a;
@@ -566,7 +567,7 @@
 }
 .audit-btn-confirm {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -699,7 +700,7 @@
 }
 .audit-btn-send {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -903,7 +904,7 @@
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
-.audit-report-meta h1 {
+.audit-report-meta h2 {
     font-size: 20px;
     font-weight: 700;
     color: #0f172a;
@@ -993,10 +994,3 @@
     background-image: none;
     padding-right: 14px;
 }
-
-/* Shared audit presentation for both the audit register and report. */
-.audit-flash-close { background: none; border: 0; cursor: pointer; font-size: 16px; color: inherit; }
-.audit-empty-icon { color: #d1d5db; margin-bottom: 12px; }
-.audit-inline-form { display: inline; }
-.audit-num-success { color: #1e9e5a; }
-.audit-num-danger { color: #b91c1c; }

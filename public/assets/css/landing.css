@@ -15,7 +15,7 @@
   --cyan-bg: #ACEDFF;
 
   /* Neutral Colors */
-  --white: var(--yn-bg-surface);
+  --white: #FFFFFF;
   --off-white: #F8F9FF;
   --light-bg: #EFF4FF;
   --card-border: #D3E4FE;
@@ -1579,14 +1579,14 @@ ul {
   height: 38px;
   border-radius: 50%;
   background: linear-gradient(135deg, #002d72 0%, #0056b3 100%);
-  color: var(--yn-bg-surface);
+  color: #ffffff;
   font-weight: 700;
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 45, 114, 0.25);
-  border: 2px solid var(--yn-bg-surface);
+  border: 2px solid #ffffff;
 }
 
 .navbar__profile-name {
@@ -1597,8 +1597,8 @@ ul {
 
 .btn--outline-danger {
   background: transparent;
-  color: var(--yn-danger);
-  border: 1.5px solid var(--yn-danger);
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 600;
@@ -1608,8 +1608,8 @@ ul {
 }
 
 .btn--outline-danger:hover {
-  background: var(--yn-danger);
-  color: var(--yn-bg-surface);
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .btn--sm {

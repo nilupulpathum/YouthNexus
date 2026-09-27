@@ -13,10 +13,6 @@
     var modalContent            = document.getElementById('crModalContent');
     var toast                     = document.getElementById('crToast');
     var csrfToken                    = document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '';
-    // The view supplies escaped data attributes; scripts load through the shared footer.
-    var pageConfig = document.getElementById('crPageConfig');
-    var ROOT_URL = pageConfig ? pageConfig.dataset.root : '';
-    var COORDINATOR_NAME = pageConfig ? pageConfig.dataset.coordinatorName : 'Divisional Coordinator';
 
     function updateNotifCount(count) {
         if (notifCountEl) {
@@ -63,19 +59,14 @@
     var filterPanel    = document.getElementById('crFilterPanel');
     var filterStatus   = document.getElementById('crFilterStatus');
     var filterDocs     = document.getElementById('crFilterDocs');
-    var submittedFrom  = document.getElementById('crFilterSubmittedFrom');
     var addFilterBtn   = document.getElementById('crAddFilterBtn');
     var clearFilterBtn = document.getElementById('crClearFilterBtn');
-
-    var appliedStatus = filterStatus ? filterStatus.value : '';
-    var appliedDocs = filterDocs ? filterDocs.value : '';
-    var appliedFrom = submittedFrom ? submittedFrom.value : '';
 
     function filterCards() {
         if (!grid) return;
         var query  = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        var status = appliedStatus;
-        var docs   = appliedDocs;
+        var status = filterStatus ? filterStatus.value : '';
+        var docs   = filterDocs ? filterDocs.value : '';
         var cards  = grid.querySelectorAll('.cr-card');
         var visibleCount = 0;
 
@@ -83,8 +74,7 @@
             var textMatch   = !query  || card.dataset.name.indexOf(query) !== -1 || (card.dataset.proposer || '').toLowerCase().indexOf(query) !== -1;
             var statusMatch = !status || card.dataset.status === status;
             var docsMatch   = !docs   || card.dataset.docstatus === docs;
-            var dateMatch   = !appliedFrom || (card.dataset.submittedDate || '') >= appliedFrom;
-            var isVisible   = (textMatch && statusMatch && docsMatch && dateMatch);
+            var isVisible   = (textMatch && statusMatch && docsMatch);
             card.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleCount++;
         });
@@ -96,8 +86,11 @@
                 if (!noMatchEl) {
                     var msg = document.createElement('div');
                     msg.id = 'crNoFilterMatch';
-                    msg.className = 'cr-empty cr-empty--full-row';
-                    msg.innerHTML = '<p>No applications match the current search or filters.</p>';
+                    msg.className = 'cr-empty';
+                    msg.style.gridColumn = '1 / -1';
+                    msg.innerHTML =
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+                        '<p>No applications match your search/filters.</p>';
                     grid.appendChild(msg);
                 }
             } else if (noMatchEl) {
@@ -116,23 +109,12 @@
     }
 
     if (addFilterBtn) {
-        addFilterBtn.addEventListener('click', function () {
-            appliedStatus = filterStatus ? filterStatus.value : '';
-            appliedDocs = filterDocs ? filterDocs.value : '';
-            appliedFrom = submittedFrom ? submittedFrom.value : '';
-            var tab = appliedStatus === 'Pending' ? statPending : (appliedStatus === 'Approved' ? statApproved : (appliedStatus === 'Rejected' ? statRejected : null));
-            if (tab && !tab.classList.contains('is-active')) tab.click();
-            else filterCards();
-        });
+        addFilterBtn.addEventListener('click', filterCards);
     }
     if (clearFilterBtn) {
         clearFilterBtn.addEventListener('click', function () {
             if (filterStatus) filterStatus.value = '';
             if (filterDocs)   filterDocs.value   = '';
-            if (submittedFrom) submittedFrom.value = '';
-            appliedStatus = '';
-            appliedDocs = '';
-            appliedFrom = '';
             filterCards();
         });
     }
@@ -146,7 +128,8 @@
         if (!grid) return;
         if (!apps || apps.length === 0) {
             grid.innerHTML =
-                '<div class="cr-empty cr-empty--full-row">' +
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><path d="M20 6 9 17l-5-5"/></svg>' +
                     '<p>No approved applications found in this division.</p>' +
                 '</div>';
             return;
@@ -158,7 +141,7 @@
             var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
 
             html +=
-                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete" data-submitted-date="' + escapeHtml(String(app.submitted_at || '').slice(0, 10)) + '">' +
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Approved" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
                     '<div class="cr-card-top">' +
                         '<div class="cr-card-icon complete" title="Approved">' +
                             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' +
@@ -189,7 +172,8 @@
         if (!grid) return;
         if (!apps || apps.length === 0) {
             grid.innerHTML =
-                '<div class="cr-empty cr-empty--full-row">' +
+                '<div class="cr-empty" style="grid-column: 1 / -1;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="margin-bottom:12px;opacity:0.4;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
                     '<p>No rejected applications found in this division.</p>' +
                 '</div>';
             return;
@@ -201,7 +185,7 @@
             var reviewerText = app.reviewed_by_name ? ' BY ' + escapeHtml(app.reviewed_by_name.toUpperCase()) : '';
 
             html +=
-                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete" data-submitted-date="' + escapeHtml(String(app.submitted_at || '').slice(0, 10)) + '">' +
+                '<div class="cr-card" data-name="' + escapeHtml((app.club_name || '').toLowerCase()) + '" data-status="Rejected" data-proposer="' + escapeHtml((app.proposer_name || '').toLowerCase()) + '" data-docstatus="complete">' +
                     '<div class="cr-card-top">' +
                         '<div class="cr-card-icon incomplete" title="Rejected">' +
                             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
@@ -253,11 +237,11 @@
         sortToggleBtn.addEventListener('click', function () {
             if (currentSortOrder === 'asc') {
                 currentSortOrder = 'desc';
-                sortToggleBtn.textContent = 'Sort: Newest First';
+                sortToggleBtn.textContent = 'Sort: Newest First ▾';
                 sortToggleBtn.setAttribute('data-sort', 'desc');
             } else {
                 currentSortOrder = 'asc';
-                sortToggleBtn.textContent = 'Sort: Oldest First';
+                sortToggleBtn.textContent = 'Sort: Oldest First ▾';
                 sortToggleBtn.setAttribute('data-sort', 'asc');
             }
             sortPendingCards(currentSortOrder);
@@ -268,10 +252,7 @@
         statPending.addEventListener('click', function () {
             setActiveStat(statPending);
             if (sortToggleBtn) sortToggleBtn.style.display = 'inline-flex';
-            if (appliedStatus && appliedStatus !== 'Pending') {
-                appliedStatus = '';
-                if (filterStatus) filterStatus.value = '';
-            }
+            if (filterStatus) filterStatus.value = '';
             if (pendingGridHtml !== null && grid) {
                 grid.innerHTML = pendingGridHtml;
                 filterCards();
@@ -283,15 +264,12 @@
         statApproved.addEventListener('click', function () {
             setActiveStat(statApproved);
             if (sortToggleBtn) sortToggleBtn.style.display = 'none';
-            if (appliedStatus && appliedStatus !== 'Approved') {
-                appliedStatus = '';
-                if (filterStatus) filterStatus.value = '';
-            }
+            if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
             }
-            grid.innerHTML = '<p class="cr-grid-feedback">Loading approved applications…</p>';
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading approved applications…</p>';
             fetch(ROOT_URL + '/clubregistrationapproval/approved', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
@@ -301,7 +279,7 @@
                 })
                 .catch(function () {
                     if (!statApproved.classList.contains('is-active')) return;
-                    grid.innerHTML = '<p class="cr-grid-feedback cr-grid-feedback--error">Failed to load approved applications.</p>';
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load approved applications.</p>';
                 });
         });
     }
@@ -310,15 +288,12 @@
         statRejected.addEventListener('click', function () {
             setActiveStat(statRejected);
             if (sortToggleBtn) sortToggleBtn.style.display = 'none';
-            if (appliedStatus && appliedStatus !== 'Rejected') {
-                appliedStatus = '';
-                if (filterStatus) filterStatus.value = '';
-            }
+            if (filterStatus) filterStatus.value = '';
             // Cache current pending HTML if not yet cached
             if (pendingGridHtml === null && grid) {
                 pendingGridHtml = grid.innerHTML;
             }
-            grid.innerHTML = '<p class="cr-grid-feedback">Loading rejected applications…</p>';
+            grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #6b7280; text-align: center;">Loading rejected applications…</p>';
             fetch(ROOT_URL + '/clubregistrationapproval/rejected', { credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
@@ -328,7 +303,7 @@
                 })
                 .catch(function () {
                     if (!statRejected.classList.contains('is-active')) return;
-                    grid.innerHTML = '<p class="cr-grid-feedback cr-grid-feedback--error">Failed to load rejected applications.</p>';
+                    grid.innerHTML = '<p style="grid-column: 1 / -1; padding: 20px; color: #b91c1c; text-align: center;">Failed to load rejected applications.</p>';
                 });
         });
     }
@@ -452,16 +427,17 @@
         return '<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
     }
 
-    function renderImg(src, alt, cssClass, fallbackType) {
+    function renderImg(src, alt, cssClass, fallbackType, extraStyle) {
         var type = fallbackType || 'photo';
         if (!src) {
             return '<div class="cr-fallback-box ' + type + '">' + getFallbackSvg(type) + '</div>';
         }
         var fullSrc = (src.indexOf('://') === -1 && src.indexOf('data:') !== 0) ? (ROOT_URL + src) : src;
         var clsAttr = cssClass ? (' class="' + escapeHtml(cssClass) + '"') : '';
+        var styleAttr = extraStyle ? (' style="' + escapeHtml(extraStyle) + '"') : '';
         var svgEscaped = getFallbackSvg(type).replace(/"/g, '&quot;').replace(/'/g, "\\'");
 
-        return '<img src="' + escapeHtml(fullSrc) + '" alt="' + escapeHtml(alt || '') + '"' + clsAttr +
+        return '<img src="' + escapeHtml(fullSrc) + '" alt="' + escapeHtml(alt || '') + '"' + clsAttr + styleAttr +
             ' onerror="this.onerror=null;this.outerHTML=\'<div class=&quot;cr-fallback-box ' + type + '&quot;>' + svgEscaped + '</div>\';">';
     }
 
@@ -473,22 +449,21 @@
         var nic = nominee ? (nominee.NIC || '—') : '—';
         var dob = nominee ? formatDOB(nominee.date_of_birth) : '—';
 
-        // Show only uploaded evidence. A missing side uses renderImg's empty state.
-        var front = frontPath || '';
-        var back  = backPath || '';
+        var front = frontPath || (nominee ? nominee.photo_path : null) || '/uploads/club_demo/nic_pres_front.svg';
+        var back  = backPath || (front ? front.replace('_front.', '_back.').replace('president.', 'nic_pres_back.').replace('secretary.', 'nic_sec_back.').replace('treasurer.', 'nic_tres_back.') : null) || '/uploads/club_demo/nic_pres_back.svg';
 
         nicModalContent.innerHTML =
             '<div class="cr-nic-modal-header">' +
                 '<div class="cr-nic-modal-title-group">' +
                     '<h3>National Identity Card (NIC) Verification</h3>' +
-                    '<p>' + escapeHtml(name) + ', ' + escapeHtml(role) + '</p>' +
+                    '<p>' + escapeHtml(name) + ' &bull; ' + escapeHtml(role) + '</p>' +
                 '</div>' +
-                '<button type="button" class="cr-nic-modal-close" id="crNicCloseBtn" aria-label="Close photo details">Close</button>' +
+                '<button type="button" class="cr-nic-modal-close" id="crNicCloseBtn">&times;</button>' +
             '</div>' +
             '<div class="cr-nic-modal-body">' +
                 '<div class="cr-nic-meta-banner">' +
                     '<div class="cr-nic-meta-item"><label>FULL NAME</label><span>' + escapeHtml(name) + '</span></div>' +
-                    '<div class="cr-nic-meta-item"><label>NIC NUMBER</label><span class="cr-nic-val-mono cr-nic-val-emphasis">' + escapeHtml(nic) + '</span></div>' +
+                    '<div class="cr-nic-meta-item"><label>NIC NUMBER</label><span class="cr-nic-val-mono" style="color:#1e40af;font-size:14px;font-weight:700;">' + escapeHtml(nic) + '</span></div>' +
                     '<div class="cr-nic-meta-item"><label>DATE OF BIRTH</label><span>' + escapeHtml(dob) + '</span></div>' +
                 '</div>' +
                 '<div class="cr-nic-dual-grid">' +
@@ -536,15 +511,15 @@
             '<div class="cr-nic-modal-header">' +
                 '<div class="cr-nic-modal-title-group">' +
                     '<h3>' + escapeHtml(item.galleryTitle || 'Photo Inspection') + '</h3>' +
-                    '<p>' + escapeHtml(item.title || '') + (item.meta ? ', ' + escapeHtml(item.meta) : '') + ', item ' + (currentGalleryIndex + 1) + ' of ' + total + '</p>' +
+                    '<p>' + escapeHtml(item.title || '') + (item.meta ? ' &bull; ' + escapeHtml(item.meta) : '') + ' &bull; Item ' + (currentGalleryIndex + 1) + ' of ' + total + '</p>' +
                 '</div>' +
-                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn" aria-label="Close photo gallery">Close</button>' +
+                '<button type="button" class="cr-nic-modal-close" id="crGalleryCloseBtn">&times;</button>' +
             '</div>' +
-            '<div class="cr-nic-modal-body cr-nic-modal-body--compact">' +
+            '<div class="cr-nic-modal-body" style="padding: 16px;">' +
                 '<div class="cr-gallery-stage">' +
                     renderImg(item.path, item.title || 'Image', '', 'stage') +
-                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">Previous</button>' : '') +
-                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">Next</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn prev" id="crGalleryPrevBtn">&#10094;</button>' : '') +
+                    (total > 1 ? '<button type="button" class="cr-gallery-nav-btn next" id="crGalleryNextBtn">&#10095;</button>' : '') +
                 '</div>' +
                 (total > 1 ? '<div class="cr-gallery-thumbs">' + thumbsHtml + '</div>' : '') +
             '</div>';
@@ -632,7 +607,7 @@
 
         return '<div class="cr-nic-copy-card">' +
             '<div class="cr-nic-placeholder-box">' +
-                renderImg(path, 'NIC Preview', 'cr-nic-preview-image', 'nic') +
+                renderImg(path, 'NIC Preview', '', 'nic', 'width:100%;height:100%;object-fit:cover;border-radius:4px;') +
             '</div>' +
             '<div class="cr-nic-copy-footer">' +
                 '<span class="cr-nic-role-label">' + roleLabel + '</span>' +
@@ -647,18 +622,14 @@
                 renderImg(n.photo_path, n.name || 'Nominee', '', 'avatar') +
             '</div>';
         }
-        var initial = n && n.name ? String(n.name).charAt(0) : '?';
-        return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + escapeHtml(initial) + '</div>';
+        return '<div class="cr-avatar-circle-placeholder size-' + size + '">' + (n ? escapeHtml(n.name.charAt(0)) : '?') + '</div>';
     }
 
     function renderModal(data) {
-        if (!data || !data.application) {
-            throw new Error('The server response does not contain an application record.');
-        }
         var app = data.application;
-        var nominees = Array.isArray(data.nominees) ? data.nominees : [];
-        var assets = Array.isArray(data.assets) ? data.assets : [];
-        var photos = Array.isArray(data.photos) ? data.photos : [];
+        var nominees = data.nominees || [];
+        var assets = data.assets || [];
+        var photos = data.photos || [];
 
         var estDate = formatDOB(app.date_establishment);
         var submittedDate = formatDOB(app.submitted_at);
@@ -682,9 +653,9 @@
                         '<span class="cr-header-phase-tag">REGISTRATION PHASE 1-7</span>' +
                         '<h2>Review Full Club Application</h2>' +
                     '</div>' +
-                    '<p>' + escapeHtml(app.club_name) + ', application ID: ' + escapeHtml(app.application_ref || ('APP-' + app.application_id)) + ', submitted ' + escapeHtml(submittedDate) + '</p>' +
+                    '<p>' + escapeHtml(app.club_name) + ' &bull; Application ID: ' + escapeHtml(app.application_ref || ('APP-' + app.application_id)) + ' &bull; Submitted ' + escapeHtml(submittedDate) + '</p>' +
                 '</div>' +
-                '<button type="button" class="cr-modal-close" id="crModalCloseBtn" aria-label="Close application review">Close</button>' +
+                '<button type="button" class="cr-modal-close" id="crModalCloseBtn">&times;</button>' +
             '</div>' +
 
             // Section 1: Basic Information
@@ -721,7 +692,7 @@
                                 '<span class="cr-field-val-bold">' + escapeHtml(estDate) + '</span>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="cr-detail-row cr-detail-row--spaced">' +
+                        '<div class="cr-detail-row" style="margin-top: 12px;">' +
                             '<div class="cr-field">' +
                                 '<label>CLUB CATEGORY</label>' +
                                 '<div><span class="cr-category-tag">' + escapeHtml(app.category || 'Uncategorized') + '</span></div>' +
@@ -776,6 +747,7 @@
                     '<div class="cr-nominee-horizontal-card">' +
                         '<div class="cr-nominee-horizontal-header">' +
                             '<span class="cr-role-title">' +
+                                '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
                                 'PRESIDENT / PRIMARY OFFICER' +
                             '</span>' +
                         '</div>' +
@@ -798,7 +770,8 @@
                         // Secretary
                         '<div class="cr-nominee-subcard">' +
                             '<div class="cr-nominee-subcard-header">' +
-                                '<div class="cr-nominee-role-name">' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
                                     'SECRETARY' +
                                 '</div>' +
                             '</div>' +
@@ -818,7 +791,8 @@
                         // Treasurer
                         '<div class="cr-nominee-subcard">' +
                             '<div class="cr-nominee-subcard-header">' +
-                                '<div class="cr-nominee-role-name">' +
+                                '<div style="display:flex;align-items:center;font-size:12px;font-weight:800;color:#1e40af;">' +
+                                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
                                     'TREASURER' +
                                 '</div>' +
                             '</div>' +
@@ -857,13 +831,11 @@
                             '</thead>' +
                             '<tbody>' +
                                 (assets.length > 0 ? assets.map(function(ast) {
-                                    var padQty = String(ast.quantity == null ? 0 : ast.quantity).padStart(2, '0');
-                                    var condition = String(ast.condition || 'Not recorded');
-                                    var conditionClass = condition.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                                    var padQty = String(ast.quantity).padStart(2, '0');
                                     return '<tr>' +
-                                        '<td class="cr-asset-table-name">' + escapeHtml(ast.asset_name || 'Unnamed asset') + '</td>' +
+                                        '<td class="cr-asset-table-name">' + escapeHtml(ast.asset_name) + '</td>' +
                                         '<td class="cr-asset-table-qty">' + escapeHtml(padQty) + '</td>' +
-                                        '<td><span class="cr-asset-table-condition-pill ' + escapeHtml(conditionClass) + '">' + escapeHtml(condition) + '</span></td>' +
+                                        '<td><span class="cr-asset-table-condition-pill ' + escapeHtml(ast.condition.toLowerCase()) + '">' + escapeHtml(ast.condition) + '</span></td>' +
                                         '</tr>';
                                 }).join('') : '<tr><td colspan="3" class="cr-table-empty">No assets listed</td></tr>') +
                             '</tbody>' +
@@ -883,8 +855,8 @@
                                                 renderImg(asset.photo_path, 'Asset Photo', 'cr-asset-photo-img', 'photo') +
                                                 '<div class="cr-asset-more-overlay">' +
                                                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
-                                                    '<span class="cr-photo-count-value">+' + remainingCount + '</span>' +
-                                                    '<span class="cr-photo-count-label">REMAINING</span>' +
+                                                    '<span style="font-size:15px;font-weight:900;">+' + remainingCount + '</span>' +
+                                                    '<span style="font-size:9.5px;letter-spacing:0.5px;">REMAINING</span>' +
                                                 '</div>' +
                                             '</div>';
                                 } else if (asset) {
@@ -946,6 +918,7 @@
                     '</div>' +
                     '<div class="cr-nic-copies-section">' +
                         '<h4 class="cr-sub-section-title-grey">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:6px;"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 13h4m-4 3h4m-10-1a3 3 0 0 1 6 0"/></svg>' +
                             'NIC COPIES OF KEY OFFICIALS' +
                         '</h4>' +
                         '<div class="cr-nic-copies-grid">' +
@@ -956,6 +929,7 @@
                     '</div>' +
                     '<div class="cr-photos-section-container">' +
                         '<h4 class="cr-sub-section-title-grey">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:6px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
                             'CLUB ACTIVITY PHOTOS' +
                         '</h4>' +
                         '<div class="cr-photos-dashed-container">' +
@@ -963,7 +937,7 @@
                                 var photosCount = photos.length;
                                 var photosStackedHtml = '';
                                 if (photosCount > 0) {
-                                    photosStackedHtml = '<div class="cr-photos-stacked-container" onclick="window._openActivityGallery(0)">';
+                                    photosStackedHtml = '<div class="cr-photos-stacked-container" onclick="window._openActivityGallery(0)" style="cursor:pointer;">';
                                     var limit = Math.min(photosCount, 3);
                                     for (var pIdx = 0; pIdx < limit; pIdx++) {
                                         photosStackedHtml += '<div class="cr-photo-stacked-circle" style="z-index: ' + (10 - pIdx) + ';">' +
@@ -971,7 +945,7 @@
                                         '</div>';
                                     }
                                     if (photosCount > 3) {
-                                        photosStackedHtml += '<div class="cr-photo-stacked-circle count-more">+' + (photosCount - 3) + '</div>';
+                                        photosStackedHtml += '<div class="cr-photo-stacked-circle count-more" style="z-index: 5;">+' + (photosCount - 3) + '</div>';
                                     }
                                     photosStackedHtml += '</div>';
                                     photosStackedHtml += '<div class="cr-photos-count-label">' + photosCount + ' Photos Uploaded</div>';
@@ -1042,7 +1016,11 @@
                         '<div class="cr-decision-fields-row">' +
                             '<div class="cr-field">' +
                                 '<label>REVIEW RESULT</label>' +
-                                '<p class="cr-decision-guidance">Choose an action below after reviewing the application.</p>' +
+                                '<select id="crReviewResultSelect">' +
+                                    '<option value="">Select a decision</option>' +
+                                    '<option value="approve">Approve Registration</option>' +
+                                    '<option value="reject">Reject Registration</option>' +
+                                '</select>' +
                             '</div>' +
                             '<div class="cr-field">' +
                                 '<label>REVIEWED BY</label>' +
@@ -1053,7 +1031,7 @@
                             '<label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>' +
                             '<textarea id="crRemarks" placeholder="Provide detailed feedback for the club executives..."></textarea>' +
                         '</div>' +
-                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert">' +
+                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert" hidden>' +
                             '<div class="cr-impact-icon-circle approve">' +
                                 '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
                             '</div>' +
@@ -1065,8 +1043,7 @@
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
                                 '<button type="button" class="cr-btn-cancel-link db-close-action" id="crCancelReviewBtn">Cancel Review</button>' +
-                                '<button type="button" class="yn-btn yn-btn--reject" data-cr-submit-decision="reject">Reject Registration</button>' +
-                                '<button type="button" class="yn-btn yn-btn--approve" data-cr-submit-decision="approve">Approve Registration</button>' +
+                                '<button type="button" class="cr-btn cr-btn-submit-decision db-confirm-action" id="crConfirmSubmitBtn" disabled>Confirm &amp; Submit Decision</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1093,7 +1070,7 @@
                             '</div>' +
                         '</div>' +
                         (app.rejection_remarks ?
-                        '<div class="cr-decision-remarks-section cr-decision-remarks-section--spaced">' +
+                        '<div class="cr-decision-remarks-section" style="margin-top:14px;">' +
                             '<label>REVIEW REMARKS</label>' +
                             '<div class="cr-readonly-remarks-box">' + escapeHtml(app.rejection_remarks) + '</div>' +
                         '</div>' : '') +
@@ -1126,12 +1103,17 @@
         }
 
         if (app.status === 'Pending') {
-            var decisionButtons = modalContent.querySelectorAll('[data-cr-submit-decision]');
+            var selectEl = document.getElementById('crReviewResultSelect');
             var alertEl = document.getElementById('crDecisionImpactAlert');
 
-            function showDecisionImpact(action) {
-                    if (!alertEl) return;
-                    if (action === 'approve') {
+            if (selectEl && alertEl) {
+                selectEl.addEventListener('change', function () {
+                    var decision = selectEl.value;
+                    var actionButton = document.getElementById('crConfirmSubmitBtn');
+                    if (actionButton) actionButton.disabled = !decision;
+                    alertEl.hidden = !decision;
+                    if (!decision) return;
+                    if (selectEl.value === 'approve') {
                         alertEl.className = 'cr-decision-impact-alert approve';
                         alertEl.innerHTML = 
                             '<div class="cr-impact-icon-circle approve">' +
@@ -1152,19 +1134,22 @@
                                 '<p>Rejecting this application will notify the proposer and nominees with the provided remarks. They will need to correct and resubmit the application.</p>' +
                             '</div>';
                     }
+                });
             }
 
             var cancelBtn = document.getElementById('crCancelReviewBtn');
             if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-            decisionButtons.forEach(function (button) {
-                button.addEventListener('mouseenter', function () { showDecisionImpact(button.dataset.crSubmitDecision); });
-                button.addEventListener('focus', function () { showDecisionImpact(button.dataset.crSubmitDecision); });
-                button.addEventListener('click', function () {
-                    showDecisionImpact(button.dataset.crSubmitDecision);
-                    submitDecision(app.application_id, button.dataset.crSubmitDecision, app.club_name);
+            var confirmBtn = document.getElementById('crConfirmSubmitBtn');
+            if (confirmBtn && selectEl) {
+                confirmBtn.addEventListener('click', function () {
+                    if (selectEl.value !== 'approve' && selectEl.value !== 'reject') {
+                        selectEl.focus();
+                        return;
+                    }
+                    submitDecision(app.application_id, selectEl.value, app.club_name);
                 });
-            });
+            }
         } else {
             var closeReadonlyBtn = document.getElementById('crCloseReadonlyBtn');
             if (closeReadonlyBtn) closeReadonlyBtn.addEventListener('click', closeModal);
@@ -1222,35 +1207,19 @@
 
     function openReview(applicationId) {
         modalBackdrop.classList.add('open');
-        modalContent.innerHTML = '<p class="cr-modal-feedback">Loading application…</p>';
+        modalContent.innerHTML = '<p style="padding:20px;font-size:13px;color:#6b7280;">Loading application…</p>';
 
         fetch(ROOT_URL + '/clubregistrationapproval/review/' + applicationId, { credentials: 'same-origin' })
-            .then(function (res) {
-                return res.text().then(function (body) {
-                    var data;
-                    try {
-                        data = JSON.parse(body);
-                    } catch (error) {
-                        throw new Error('The server returned an invalid response while loading this application.');
-                    }
-                    if (!res.ok) {
-                        throw new Error(data.error || 'The application could not be loaded.');
-                    }
-                    return data;
-                });
-            })
+            .then(function (res) { return res.json(); })
             .then(function (data) {
                 if (data.error) {
-                    modalContent.innerHTML = '<p class="cr-modal-feedback cr-modal-feedback--error">' + escapeHtml(data.error) + '</p>';
+                    modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">' + escapeHtml(data.error) + '</p>';
                     return;
                 }
                 renderModal(data);
             })
-            .catch(function (error) {
-                console.error('Club registration application review failed:', error);
-                modalContent.innerHTML = '<p class="cr-modal-feedback cr-modal-feedback--error">' +
-                    escapeHtml(error.message || 'Something went wrong loading this application.') +
-                    '</p>';
+            .catch(function () {
+                modalContent.innerHTML = '<p style="padding:20px;color:#b91c1c;">Something went wrong loading this application.</p>';
             });
     }
 
@@ -1281,8 +1250,8 @@
             return;
         }
 
-        var submitButtons = modalContent.querySelectorAll('[data-cr-submit-decision]');
-        submitButtons.forEach(function (button) { button.disabled = true; });
+        var submitBtn = document.getElementById('crConfirmSubmitBtn');
+        if (submitBtn) submitBtn.disabled = true;
 
         var body = new URLSearchParams();
         body.set('csrf_token', csrfToken);
@@ -1298,7 +1267,7 @@
             .then(function (data) {
                 if (data.error) {
                     showToast(data.error, true);
-                    submitButtons.forEach(function (button) { button.disabled = false; });
+                    if (submitBtn) submitBtn.disabled = false;
                     return;
                 }
                 if (action === 'approve') {
@@ -1328,7 +1297,7 @@
             })
             .catch(function () {
                 showToast('Something went wrong. Please try again.', true);
-                submitButtons.forEach(function (button) { button.disabled = false; });
+                if (submitBtn) submitBtn.disabled = false;
             });
     }
 

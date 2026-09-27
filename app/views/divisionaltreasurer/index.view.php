@@ -26,7 +26,7 @@ $title = 'Dashboard - YouthNexus';
 $pageTitle = 'Dashboard';
 $pageDescription = $division->division_name . ' - finance, club health, and pending work';
 $currentRoute = 'divisionaltreasurer';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Divisional Balance', 'note' => 'Current ledger balance', 'icon' => 'file', 'tone' => 'blue'],
@@ -45,11 +45,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-void-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-void-title">Pending Void Requests</h2><p>Club ledger entries requiring a decision</p></div>
-        <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalvoidapproval">Review All</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalvoidapproval">Review All</a>
       </header>
       <?php if ($pendingVoidRequests): ?>
-        <div class="yn-table-wrap dw-table-wrap">
-          <table class="yn-table dw-table">
+        <div class="dw-table-wrap">
+          <table class="dw-table">
             <thead><tr><th>Request</th><th>Club</th><th>Entry</th><th>Reason</th><th>Requested</th></tr></thead>
             <tbody>
               <?php foreach ($pendingVoidRequests as $request): ?>
@@ -65,14 +65,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           </table>
         </div>
       <?php else: ?>
-        <?php $emptyTitle = 'No pending void requests'; $emptyMessage = 'New requests from clubs will appear here.'; $emptyVisible = true; $emptyIcon = 'check'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+        <div class="dtd-empty"><span><?= yn_icon('check') ?></span><strong>No pending void requests</strong><p>New requests from clubs will appear here.</p></div>
       <?php endif; ?>
     </section>
 
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-allocation-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-allocation-title">Recent Allocations</h2><p>Latest fund activity for clubs in this division</p></div>
-        <a class="yn-btn yn-btn--ghost yn-btn-viewall dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalallocations">View All</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalallocations">View All</a>
       </header>
       <?php if ($recentAllocations): ?>
         <div class="dtd-list">
@@ -85,14 +85,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <?php $emptyTitle = 'No fund allocations'; $emptyMessage = 'Completed and pending club allocations will appear here.'; $emptyVisible = true; $emptyIcon = 'file'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+        <div class="dtd-empty"><span><?= yn_icon('file') ?></span><strong>No fund allocations</strong><p>Completed and pending club allocations will appear here.</p></div>
       <?php endif; ?>
     </section>
 
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-health-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-health-title">Club Health Overview</h2><p>Lowest current health scores are shown first</p></div>
-        <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalclubhealth">View Details</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalclubhealth">View Details</a>
       </header>
       <?php if ($clubHealth): ?>
         <div class="dtd-health-list">
@@ -109,14 +109,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <?php $emptyTitle = 'No club health results'; $emptyMessage = 'Run the Club Health workflow to calculate current scores.'; $emptyVisible = true; $emptyIcon = 'info'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+        <div class="dtd-empty"><span><?= yn_icon('info') ?></span><strong>No club health results</strong><p>Run the Club Health workflow to calculate current scores.</p></div>
       <?php endif; ?>
     </section>
 
     <section class="dw-panel dtd-panel" aria-labelledby="dashboard-audit-title">
       <header class="dw-panel__header">
         <div><h2 id="dashboard-audit-title">Audit Reminders</h2><p>Clubs with audits or findings that need attention</p></div>
-        <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits">Open Audits</a>
+        <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits">Open Audits</a>
       </header>
       <?php if ($auditReminders): ?>
         <div class="dtd-reminders">
@@ -129,7 +129,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php endforeach; ?>
         </div>
       <?php else: ?>
-        <?php $emptyTitle = 'No audit reminders'; $emptyMessage = 'There are no pending audits or open findings.'; $emptyVisible = true; $emptyIcon = 'check'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+        <div class="dtd-empty"><span><?= yn_icon('check') ?></span><strong>No audit reminders</strong><p>There are no pending audits or open findings.</p></div>
       <?php endif; ?>
     </section>
   </div>

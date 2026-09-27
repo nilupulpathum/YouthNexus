@@ -4,9 +4,7 @@ class Announcements extends Controller
 {
     private const MANAGER_LEVELS = [
         'ClubSecretary'       => 'Club',
-        'DivisionalCoordinator' => 'Divisional',
         'DivisionalSecretary' => 'Divisional',
-        'DivisionalTreasurer' => 'Divisional',
         'ZonalSecretary'      => 'Zonal',
         'NYSCAdministrator'   => 'NYSC',
     ];
@@ -27,16 +25,6 @@ class Announcements extends Controller
             'ClubSecretary',
             'ClubTreasurer',
             'ClubMember',
-        ],
-
-        'DivisionalCoordinator' => [
-            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
-            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
-        ],
-
-        'DivisionalTreasurer' => [
-            'DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer',
-            'ClubPresident', 'ClubSecretary', 'ClubTreasurer', 'ClubMember',
         ],
 
         'ZonalSecretary' => [
@@ -290,7 +278,7 @@ class Announcements extends Controller
                 403,
                 [
                     'error' =>
-                        'Only an authorized officer can manage announcements in this scope.',
+                        'Only an authorized Secretary or NYSC Administrator can manage announcements.',
                 ]
             );
         }
@@ -522,6 +510,22 @@ class Announcements extends Controller
 
 
         /*
+         * National oversight: the NYSC administrator may open the detail
+         * view of any stored announcement (draft or published, any level).
+         * Manage controls on the detail page stay limited to their own
+         * NYSC-level announcements via canManageAnnouncement().
+         */
+        $viewerScope =
+            $this->managerScope($user);
+
+        if (
+            ($viewerScope['level'] ?? null) === 'NYSC'
+        ) {
+            return $announcement;
+        }
+
+
+        /*
          * Managers may view Draft and Published
          * announcements belonging to their own scope.
          */
@@ -723,10 +727,39 @@ class Announcements extends Controller
      * target_users[ClubSecretary][] = 14
      * target_users[ClubSecretary][] = 29
      */
+    /**
+     * Zone filter for national-level broadcasts.
+     *
+     * Only meaningful for the NYSC manager level: an empty value means a
+     * national broadcast (every zone), a validated id narrows the broadcast
+     * to that zone. Ignored for club/divisional/zonal managers, whose scope
+     * already pins the zone.
+     */
+    private function broadcastZoneFilter($scope) {
+        if (($scope['level'] ?? null) !== 'NYSC') {
+            return null;
+        }
+
+        $raw = $_GET['zone_id'] ?? $_POST['broadcast_zone_id'] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $zoneId = filter_var(
+            $raw,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]
+        );
+
+        return $zoneId === false ? null : $zoneId;
+    }
+
     private function validateAudienceTargets(
         $user,
         array $scope,
-        $requireAtLeastOne
+        $requireAtLeastOne,
+        $zoneId = null
     ) {
         $modes =
             $_POST['target_modes']
@@ -895,7 +928,8 @@ class Announcements extends Controller
                         ->findAnnouncementRecipients(
                             $role,
                             $scope['level'],
-                            $scope['scope_id']
+                            $scope['scope_id'],
+                            $zoneId
                         );
 
 
@@ -1123,6 +1157,11 @@ class Announcements extends Controller
                         $user->role
                     ]
                     ?? [],
+
+                'zones' =>
+                    ($scope['level'] ?? null) === 'NYSC'
+                        ? $this->model('ManageUserModel')->getZones()
+                        : [],
             ]
         );
     }
@@ -1329,7 +1368,8 @@ class Announcements extends Controller
                 ->findAnnouncementRecipients(
                     $role,
                     $scope['level'],
-                    $scope['scope_id']
+                    $scope['scope_id'],
+                    $this->broadcastZoneFilter($scope)
                 );
 
 
@@ -1414,6 +1454,15 @@ class Announcements extends Controller
         $category =
             $this->formText('category');
 
+        /*
+         * National managers may narrow the broadcast to one zone.
+         * Empty = national broadcast (every zone).
+         */
+        $broadcastZoneId =
+            ($scope['level'] ?? null) === 'NYSC'
+                ? $this->broadcastZoneFilter($scope)
+                : null;
+
 
         if (
             $title === ''
@@ -1467,7 +1516,8 @@ class Announcements extends Controller
             $this->validateAudienceTargets(
                 $user,
                 $scope,
-                $publish
+                $publish,
+                $broadcastZoneId
             );
 
 
@@ -1567,9 +1617,10 @@ class Announcements extends Controller
                 ],
 
             'organizer_zonal_id' =>
-                $scope[
-                    'organizer_zonal_id'
-                ],
+                $broadcastZoneId
+                    ?: $scope[
+                        'organizer_zonal_id'
+                    ],
 
             'created_by' =>
                 (int)$user->user_id,
@@ -1667,8 +1718,7 @@ class Announcements extends Controller
 
 
                 $wasPublished =
-                    $existing->status
-                    === 'Published';
+                    in_array($existing->status, ['Published', 'Retracted', 'Archived'], true);
 
 
                 /*
@@ -1926,13 +1976,11 @@ class Announcements extends Controller
                 as $attachment
             ) {
                 $attachmentModel
-                    ->archiveFromAnnouncement(
+                    ->deleteFromAnnouncement(
                         $attachment
                             ->attachment_id,
 
-                        $id,
-
-                        (int)$user->user_id
+                        $id
                     );
             }
 
@@ -2013,7 +2061,18 @@ class Announcements extends Controller
         }
 
 
-        /* Removed attachments remain in version history and are not unlinked. */
+        /*
+         * Delete physical old files only
+         * after DB commit succeeds.
+         */
+        foreach (
+            $removedAttachments
+            as $attachment
+        ) {
+            $this->removeStoredAttachment(
+                $attachment->file_path
+            );
+        }
 
 
         $this->jsonResponse(
@@ -2103,13 +2162,6 @@ class Announcements extends Controller
 
 
             if (
-                $announcement->status !== 'Draft'
-            ) {
-                $db->rollBack();
-                $this->jsonResponse(409, ['error' => 'Only an unpublished draft can be deleted.']);
-            }
-
-            if (
                 !$model->softDelete(
                     $id
                 )
@@ -2172,15 +2224,11 @@ class Announcements extends Controller
                     true,
 
                 'message' =>
-                    'Announcement draft deleted successfully.',
+                    'Announcement deleted successfully.',
             ]
         );
     }
 
-    public function retract($id = null)
-    {
-        $this->changeLifecycle($id, 'Published', 'Retracted', 'RETRACT_ANNOUNCEMENT', 'Announcement withdrawn from publication.');
-    }
 
     public function archive($id = null)
     {
@@ -2189,7 +2237,7 @@ class Announcements extends Controller
 
     public function restore($id = null)
     {
-        $this->changeLifecycle($id, 'Archived', 'Retracted', 'RESTORE_ANNOUNCEMENT', 'Announcement restored as withdrawn from publication.');
+        $this->changeLifecycle($id, null, 'Published', 'RESTORE_ANNOUNCEMENT', 'Announcement restored and published.');
     }
 
     private function changeLifecycle($id, $requiredStatus, $targetStatus, $auditAction, $message)
@@ -2214,7 +2262,16 @@ class Announcements extends Controller
             $fromStatus = $requiredStatus ?? (string) $announcement->status;
             if ($targetStatus === 'Archived' && !in_array($fromStatus, ['Published', 'Retracted'], true)) {
                 $db->rollBack();
-                $this->jsonResponse(409, ['error' => 'Only a published or withdrawn announcement can be archived.']);
+                $this->jsonResponse(409, ['error' => 'Only a published or previously inactive announcement can be archived.']);
+            }
+            if ($targetStatus === 'Published' && !in_array($fromStatus, ['Archived', 'Retracted'], true)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Only an archived or previously inactive announcement can be restored.']);
+            }
+            if ($targetStatus === 'Published'
+                && !$this->model('AnnouncementAudienceModel')->findTargets($id)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Choose a target audience before restoring this announcement.']);
             }
             if ((string) $announcement->status !== $fromStatus
                 || !$model->transitionLifecycle($id, $fromStatus, $targetStatus, (int) $user->user_id, $reason)) {

@@ -3,27 +3,19 @@
  * Divisional Coordinator Dashboard
  */
 (function () {
-    const pageConfig = document.getElementById('eaPageConfig');
-    const rootUrl = pageConfig?.dataset.root || '';
-    const csrfToken = pageConfig?.dataset.csrfToken || '';
-    const icons = {
-        user: document.getElementById('eaIconUser')?.innerHTML || '',
-        calendar: document.getElementById('eaIconCalendar')?.innerHTML || '',
-        pin: document.getElementById('eaIconPin')?.innerHTML || ''
-    };
     const modal            = document.getElementById('eaReviewModal');
     const modalBody        = document.getElementById('eaModalBody');
     const modalTitle       = document.getElementById('eaModalEventTitle');
     const closeBtn         = document.getElementById('eaModalClose');
     const backBtn          = document.getElementById('eaBackToEventsBtn');
     const cancelBtn        = document.getElementById('eaCancelReviewBtn');
-    const decisionButtons  = modal.querySelectorAll('[data-ea-decision]');
+    const resultSelect     = document.getElementById('eaReviewResultSelect');
     const remarksField     = document.getElementById('eaRemarks');
     const impactAlert      = document.getElementById('eaImpactAlert');
+    const confirmBtn       = document.getElementById('eaConfirmSubmitBtn');
     const decisionPanel    = modal.querySelector('.ea-decision-panel');
 
     let activeEventId = null;
-    let activeEventStatus = null;
 
     function escapeHtml(s) {
         return (s ?? '').toString()
@@ -82,11 +74,11 @@
     function openReview(eventId) {
         activeEventId = eventId;
         modalTitle.textContent = 'Loading Event Details...';
-        modalBody.innerHTML = '<div class="ea-modal-feedback"><p>Loading event information...</p></div>';
+        modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#6b7280;"><p>Loading event information...</p></div>';
         decisionPanel.hidden = true;
         modal.classList.add('open');
         
-        fetch(rootUrl + '/eventapproval/review/' + eventId)
+        fetch((window.ROOT || '') + '/eventapproval/review/' + eventId)
             .then(response => {
                 if (!response.ok) throw new Error('Failed to load event details.');
                 return response.json();
@@ -95,9 +87,7 @@
                 if (data.error) throw new Error(data.error);
                 const ev = data.event;
                 const targets = data.targets;
-                const isPending = ev.status === 'PendingApproval' || ev.status === 'CancellationPending';
-                const isCancellation = ev.status === 'CancellationPending';
-                activeEventStatus = ev.status;
+                const isPending = ev.status === 'PendingApproval';
                 
                 modalTitle.textContent = ev.title || 'Event Review';
                 decisionPanel.hidden = !isPending;
@@ -105,8 +95,8 @@
                 const isDivisionalEvent = Boolean(ev.organizer_division_id);
                 const organizerLabel    = isDivisionalEvent ? 'Organizing Body' : 'Organizing Club';
                 const organizerValue    = isDivisionalEvent 
-                    ? `Divisional Secretariat <small class="ea-organizer-note">(${escapeHtml(ev.organizer_division_name || 'Division')})</small>`
-                    : `${escapeHtml(ev.organizer_club_name || 'Club')} <small class="ea-organizer-note">(${escapeHtml(ev.organizer_club_code || '')})</small>`;
+                    ? `Divisional Secretariat <small style="color:#64748b; font-weight:normal;">(${escapeHtml(ev.organizer_division_name || 'Division')})</small>`
+                    : `${escapeHtml(ev.organizer_club_name || 'Club')} <small style="color:#64748b; font-weight:normal;">(${escapeHtml(ev.organizer_club_code || '')})</small>`;
 
                 const timeRangeDisplay = formatTimeRange(ev.start_datetime, ev.end_datetime);
                 const targetDisplay    = renderTargetSummary(ev.target_scope, targets);
@@ -152,54 +142,54 @@
 
                     <div class="ea-modal-section">
                         <div class="ea-submitter-badge-bar">
-                            ${icons.user}
-                            <span>Submitted by <strong>${escapeHtml(ev.creator_name || 'Club Officer')}</strong>, role: <strong>${escapeHtml(ev.creator_role || 'Club Leader')}</strong></span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span>Submitted by <strong>${escapeHtml(ev.creator_name || 'Club Officer')}</strong> &bull; Role: <strong>${escapeHtml(ev.creator_role || 'Club Leader')}</strong></span>
                         </div>
                     </div>
                 `;
 
-                decisionButtons.forEach(button => {
-                    const approval = button.dataset.eaDecision === 'approve';
-                    button.textContent = isCancellation
-                        ? (approval ? 'Approve Cancellation' : 'Keep Event Approved')
-                        : (approval ? 'Approve Event' : 'Reject Event');
-                    // Approving a cancellation ends the event; keeping it preserves approval.
-                    button.classList.toggle('yn-btn--approve', isCancellation ? !approval : approval);
-                    button.classList.toggle('yn-btn--reject', isCancellation ? approval : !approval);
-                });
+                resultSelect.value = '';
                 remarksField.value = '';
-                updateImpactAlert('approve');
+                impactAlert.hidden = true;
+                confirmBtn.disabled = true;
             })
             .catch(err => {
-                modalBody.innerHTML = '<div class="ea-modal-feedback ea-modal-feedback--error"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
+                modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#dc2626;"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
             });
     }
 
     function closeReview() {
         modal.classList.remove('open');
         activeEventId = null;
-        activeEventStatus = null;
     }
 
-    function updateImpactAlert(decision) {
-        const isReject = decision === 'reject';
-        const isCancellation = activeEventStatus === 'CancellationPending';
-        const disruptive = isCancellation ? !isReject : isReject;
-        impactAlert.classList.toggle('approve', !disruptive);
-        impactAlert.classList.toggle('reject', disruptive);
+    function updateImpactAlert() {
+        const isReject = resultSelect.value === 'reject';
+        impactAlert.classList.toggle('approve', !isReject);
+        impactAlert.classList.toggle('reject', isReject);
         
         const titleEl = impactAlert.querySelector('strong');
         const textEl  = impactAlert.querySelector('p');
 
-        titleEl.textContent = isCancellation
-            ? (isReject ? 'IMPACT OF KEEPING THE EVENT' : 'IMPACT OF CANCELLATION')
-            : (isReject ? 'IMPACT OF REJECTION' : 'IMPACT OF APPROVAL');
-        textEl.textContent = isCancellation
-            ? (isReject ? 'The event stays approved and the cancellation request is declined.' : 'The cancellation is approved and the event is removed from the approved calendar.')
-            : (isReject
-                ? 'The submitting club will receive your remarks. The event will remain unapproved.'
-                : "The event will appear on the division calendar and be eligible for attendance tracking.");
+        if (isReject) {
+            titleEl.textContent = 'IMPACT OF REJECTION';
+            textEl.textContent = 'Rejecting this event will notify the submitting club with your official remarks. The event will remain unapproved and will not be published to the division calendar.';
+            confirmBtn.classList.add('is-reject');
+            confirmBtn.textContent = 'Confirm & Reject Event';
+        } else {
+            titleEl.textContent = 'IMPACT OF APPROVAL';
+            textEl.textContent = "Approving this event will publish it to the division's event calendar and notify the submitting club. This event will then be visible to the Divisional Secretary and eligible for attendance tracking once it occurs.";
+            confirmBtn.classList.remove('is-reject');
+            confirmBtn.textContent = 'Confirm & Approve Event';
+        }
     }
+
+    resultSelect.addEventListener('change', () => {
+        const decision = resultSelect.value;
+        confirmBtn.disabled = !decision;
+        impactAlert.hidden = !decision;
+        if (decision) updateImpactAlert();
+    });
 
     function attachReviewButtons() {
         document.querySelectorAll('.ea-btn-review').forEach(btn => {
@@ -222,59 +212,7 @@
     const statApproved = document.getElementById('statApproved');
     const statRejected = document.getElementById('statRejected');
     const eaList       = document.getElementById('eaPendingList');
-    const searchInput  = document.getElementById('eaSearchInput');
-    const filterBtn    = document.getElementById('eaFilterBtn');
-    const filterPanel  = document.getElementById('eaFilterPanel');
-    const filterLevel  = document.getElementById('eaFilterLevel');
-    const dateFrom = document.getElementById('eaFilterDateFrom');
-    const dateTo = document.getElementById('eaFilterDateTo');
-    const clearFilters = document.getElementById('eaClearFilters');
-    const applyFiltersButton = document.getElementById('eaApplyFilters');
-    let appliedLevel = filterLevel.value;
-    let appliedFrom = dateFrom.value;
-    let appliedTo = dateTo.value;
-    const filterEmpty  = document.getElementById('eaFilterEmpty');
     let pendingListHtml = null;
-
-    function applyEventFilters() {
-        const query = searchInput.value.trim().toLocaleLowerCase();
-        const level = appliedLevel;
-        const cards = [...eaList.querySelectorAll('.ea-card')];
-        let visible = 0;
-        cards.forEach(card => {
-            const matchesText = card.textContent.toLocaleLowerCase().includes(query);
-            const matchesLevel = level === 'all' || Boolean(card.querySelector('.ea-badge.' + level));
-            const eventDate = card.dataset.eventDate || '';
-            const matchesDate = (!appliedFrom || eventDate >= appliedFrom) && (!appliedTo || eventDate <= appliedTo);
-            card.hidden = !(matchesText && matchesLevel && matchesDate);
-            if (!card.hidden) visible++;
-        });
-        filterEmpty.hidden = cards.length === 0 || visible > 0;
-        filterEmpty.classList.toggle('is-visible', !filterEmpty.hidden);
-    }
-
-    searchInput.addEventListener('input', applyEventFilters);
-    applyFiltersButton.addEventListener('click', () => {
-        appliedLevel = filterLevel.value;
-        appliedFrom = dateFrom.value;
-        appliedTo = dateTo.value;
-        applyEventFilters();
-    });
-    filterBtn.addEventListener('click', () => {
-        filterPanel.hidden = !filterPanel.hidden;
-        filterBtn.setAttribute('aria-expanded', String(!filterPanel.hidden));
-    });
-    clearFilters.addEventListener('click', () => {
-        searchInput.value = '';
-        filterLevel.value = 'all';
-        dateFrom.value = '';
-        dateTo.value = '';
-        appliedLevel = 'all';
-        appliedFrom = '';
-        appliedTo = '';
-        applyEventFilters();
-        searchInput.focus();
-    });
 
     function setActiveStat(targetCard) {
         [statPending, statApproved, statRejected].forEach(card => {
@@ -287,7 +225,6 @@
         if (!eaList) return;
         if (!events || !events.length) {
             eaList.innerHTML = '<div class="ea-empty-state"><p>No ' + type.toLowerCase() + ' events found in this division.</p></div>';
-            applyEventFilters();
             return;
         }
 
@@ -312,7 +249,7 @@
                 : '';
 
             return `
-                <div class="ea-card" data-event-id="${ev.event_id}" data-event-date="${escapeHtml(String(ev.start_datetime || '').slice(0, 10))}">
+                <div class="ea-card" data-event-id="${ev.event_id}">
                     <div class="ea-card-top">
                         <span class="ea-badge ${badgeTypeClass}">${badgeTypeLabel}</span>
                         <span class="ea-badge ${badgeClass}">${badgeLabel}</span>
@@ -324,22 +261,21 @@
                     </p>
                     <div class="ea-card-meta">
                         <div class="ea-meta-item">
-                            ${icons.calendar}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             <span>${dateDisplay}</span>
                         </div>
                         <div class="ea-meta-item">
-                            ${icons.pin}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                             <span>${escapeHtml(ev.location || '—')}</span>
                         </div>
                     </div>
                     <div class="ea-card-footer">
-                        <span class="ea-card-submitter">Submitted by ${escapeHtml(ev.creator_name || '—')}, <strong class="ea-card-extra-note">${extraNote}</strong></span>
+                        <span class="ea-card-submitter">Submitted by ${escapeHtml(ev.creator_name || '—')} &bull; <strong style="color:#4b5563;">${extraNote}</strong></span>
                         <button type="button" class="ea-btn ea-btn-review db-view-button" data-event-id="${ev.event_id}">View Details</button>
                     </div>
                 </div>
             `;
         }).join('');
-        applyEventFilters();
     }
 
     if (statPending) {
@@ -349,7 +285,6 @@
                 eaList.innerHTML = pendingListHtml;
                 attachReviewButtons();
             }
-            applyEventFilters();
         });
     }
 
@@ -360,9 +295,7 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading approved events...</p></div>';
-            filterEmpty.hidden = true;
-            filterEmpty.classList.remove('is-visible');
-            fetch(rootUrl + '/eventapproval/approved')
+            fetch((window.ROOT || '') + '/eventapproval/approved')
                 .then(r => r.json())
                 .then(data => {
                     if (!statApproved.classList.contains('is-active')) return;
@@ -371,7 +304,7 @@
                 })
                 .catch(err => {
                     if (!statApproved.classList.contains('is-active')) return;
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state ea-empty-state--error"><p>Failed to load approved events.</p></div>';
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load approved events.</p></div>';
                 });
         });
     }
@@ -383,9 +316,7 @@
                 pendingListHtml = eaList.innerHTML;
             }
             if (eaList) eaList.innerHTML = '<div class="ea-empty-state"><p>Loading rejected events...</p></div>';
-            filterEmpty.hidden = true;
-            filterEmpty.classList.remove('is-visible');
-            fetch(rootUrl + '/eventapproval/rejected')
+            fetch((window.ROOT || '') + '/eventapproval/rejected')
                 .then(r => r.json())
                 .then(data => {
                     if (!statRejected.classList.contains('is-active')) return;
@@ -394,7 +325,7 @@
                 })
                 .catch(err => {
                     if (!statRejected.classList.contains('is-active')) return;
-                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state ea-empty-state--error"><p>Failed to load rejected events.</p></div>';
+                    if (eaList) eaList.innerHTML = '<div class="ea-empty-state" style="color:#dc2626;"><p>Failed to load rejected events.</p></div>';
                 });
         });
     }
@@ -406,41 +337,35 @@
         }
     });
 
-    // Keep the existing review and server routes, but make each decision explicit.
-    decisionButtons.forEach(button => button.addEventListener('click', function () {
+    // Submit Decision
+    confirmBtn.addEventListener('click', function () {
         if (!activeEventId) return;
-
-        const decision = button.dataset.eaDecision;
-        updateImpactAlert(decision);
+        
+        const decision = resultSelect.value; // 'approve' | 'reject'
+        if (decision !== 'approve' && decision !== 'reject') {
+            resultSelect.focus();
+            return;
+        }
         const remarks   = remarksField.value.trim();
 
-        if ((decision === 'reject' || activeEventStatus === 'CancellationPending') && remarks.length < 5) {
-            alert('Please provide remarks of at least 5 characters.');
+        if (decision === 'reject' && !remarks) {
+            alert('Please provide remarks explaining the rejection.');
             remarksField.focus();
             return;
         }
 
-        const message = activeEventStatus === 'CancellationPending'
-            ? (decision === 'approve' ? 'Approve the cancellation of this event?' : 'Decline the cancellation and keep the event approved?')
-            : (decision === 'approve' ? 'Approve this event?' : 'Reject this event?');
-        if (!window.confirm(message)) return;
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.7';
 
-        decisionButtons.forEach(action => { action.disabled = true; });
-
-        const endpoint = activeEventStatus === 'CancellationPending'
-            ? '/eventapproval/cancellation/' + activeEventId
-            : '/eventapproval/' + decision + '/' + activeEventId;
-        const payload = activeEventStatus === 'CancellationPending'
-            ? { csrf_token: csrfToken, remarks: remarks, decision: decision }
-            : { csrf_token: csrfToken, remarks: remarks };
-        fetch(rootUrl + endpoint, {
+        fetch((window.ROOT || '') + '/eventapproval/' + decision + '/' + activeEventId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(payload)
+            body: new URLSearchParams({ csrf_token: window.CSRF_TOKEN, remarks: remarks })
         })
         .then(r => r.json())
         .then(data => {
-            decisionButtons.forEach(action => { action.disabled = false; });
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
             if (data.success) {
                 closeReview();
                 location.reload();
@@ -449,10 +374,11 @@
             }
         })
         .catch(err => {
-            decisionButtons.forEach(action => { action.disabled = false; });
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
             alert('Error: ' + err.message);
         });
-    }));
+    });
 
     // Approved events are the coordinator's default landing view.
     if (statApproved) statApproved.click();

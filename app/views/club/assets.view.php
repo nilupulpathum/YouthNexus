@@ -107,7 +107,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span class="dw-count"><?= count($assets) ?> <?= count($assets) === 1 ? 'asset' : 'assets' ?></span>
         </header>
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Asset</th>
@@ -170,7 +170,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </header>
 
             <div class="dw-table-wrap">
-                <table class="yn-table dw-table">
+                <table class="dw-table">
                     <thead>
                         <tr>
                             <th>Item</th>

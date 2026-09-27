@@ -6,7 +6,7 @@ $pageTitle = 'Manage Reports';
 $pageDescription = 'Generate and review reports for your division';
 $currentRoute = 'divisionalreports';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-reports.css'];
-$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-reports.js'];
+$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-reports.js?v=secretary-aggregate-1'];
 $categoryPresentation = [
     'Financial' => ['tone' => 'blue', 'icon' => 'file'],
     'Assets' => ['tone' => 'amber', 'icon' => 'award'],
@@ -32,14 +32,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
   <div class="dr-library-actions">
     <?php if ($userRole === 'DivisionalSecretary' && $aggregateTypeAvailable): ?>
-      <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary db-secondary-action" href="<?= ROOT ?>/divisionalreports/create?mode=aggregate">Aggregate Reports</a>
+      <a class="dw-button dw-button--secondary db-secondary-action" href="<?= ROOT ?>/divisionalreports/create?mode=aggregate">Aggregate Reports</a>
     <?php endif; ?>
-    <a class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" href="<?= ROOT ?>/divisionalreports/create">Generate Report</a>
+    <a class="dw-button dw-button--primary db-primary-action" href="<?= ROOT ?>/divisionalreports/create"><?= yn_icon('plus') ?> Generate Report</a>
   </div>
 
   <div class="dw-toolbar" aria-label="Report tools">
-    <div class="dw-toolbar__search yn-search dw-search"><label class="visually-hidden" for="report-search">Search reports</label><span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="report-search" type="search" placeholder="Search by report type, category, or creator" data-report-search></div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="report-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
+    <div class="dw-toolbar__search dw-search dw-search--plain"><label class="visually-hidden" for="report-search">Search reports</label><input id="report-search" type="search" placeholder="Search by report type, category, or creator" data-report-search></div>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="report-filters" aria-expanded="false">Filters</button>
   </div>
 
   <section class="dw-filter-panel" id="report-filters" hidden>
@@ -51,7 +51,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div class="dw-field"><label for="report-date-from">Generated from</label><input id="report-date-from" type="date" data-report-from></div>
       <div class="dw-field"><label for="report-sort">Sort by</label><select id="report-sort" data-report-sort><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="type">Report type</option></select></div>
     </div>
-    <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-report-reset>Clear filters</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-report-apply>Apply filters</button></div>
+    <div class="dw-filter-actions"><button class="dw-button dw-button--secondary" type="button" data-report-reset>Reset all</button><button class="dw-button dw-button--primary" type="button" data-report-apply>Apply filters</button></div>
   </section>
 
   <section class="dr-library" aria-labelledby="report-library-title">
@@ -80,14 +80,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <footer class="dr-report-card__footer">
             <span>Generated <?= $e(date('d M Y', strtotime($report->generated_at))) ?></span>
             <div class="dr-report-card__actions">
-              <?php if ($report->format === 'PDF'): ?><a class="yn-btn yn-btn--ghost yn-btn-download dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as PDF"><?= yn_icon('download') ?> PDF</a><?php elseif ($report->format === 'CSV'): ?><a class="yn-btn yn-btn--ghost yn-btn-download dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as CSV"><?= yn_icon('download') ?> CSV</a><?php endif; ?>
-              <a class="yn-btn yn-btn--secondary dw-button dw-button--secondary db-view-button" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View Details</a>
+              <?php if ($report->format === 'PDF'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as PDF"><?= yn_icon('download') ?> PDF</a><?php elseif ($report->format === 'CSV'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as CSV"><?= yn_icon('download') ?> CSV</a><?php endif; ?>
+              <a class="dw-button dw-button--secondary db-view-button dr-report-card__details" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View Details</a>
             </div>
           </footer>
         </article>
       <?php endforeach; ?>
     </div>
-    <?php $emptyTitle = 'No reports found'; $emptyMessage = 'Generate a report or change the current filters.'; $emptyVisible = false; $emptyIcon = 'file'; $emptyAttribute = 'data-report-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
+    <div class="dw-empty-state" data-report-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No reports found</strong><p>Generate a report or change the current filters.</p></div>
   </section>
 </section>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

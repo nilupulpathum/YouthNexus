@@ -18,10 +18,10 @@ $pageTitle       = 'Announcements';
 $pageDescription = 'View communications relevant to your role and organisational scope';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css',
-    ROOT . '/assets/css/divisional-summary-standard.css',
+    ROOT . '/assets/css/announcements.css?v=20260929',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
-$pageScripts     = [ROOT . '/assets/js/announcements.js'];
+$pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
 require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -54,10 +54,6 @@ $roleLabel = function ($role) {
         )
     );
 };
-
-$statusLabel = static function ($status) {
-    return $status === 'Retracted' ? 'Withdrawn from Publication' : (string) $status;
-};
 ?>
 
 
@@ -70,7 +66,7 @@ $statusLabel = static function ($status) {
             class="ann-btn ann-btn-primary db-primary-action"
             id="annOpenCreateBtn"
         >
-            New Announcement
+            <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> New Announcement
         </button>
 
     </div>
@@ -82,7 +78,7 @@ $statusLabel = static function ($status) {
 <!-- Summary cards                                             -->
 <!-- ========================================================= -->
 
-<div class="ann-stats<?= $canManageAnnouncements ? '' : ' ann-stats--two' ?>">
+<div class="ann-stats">
 
     <?php
     $statCards = [
@@ -112,7 +108,7 @@ $statusLabel = static function ($status) {
 
         <button
             type="button"
-            class="yn-stat-card ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
+            class="ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
             data-ann-status="<?= htmlspecialchars(
                 $statusValue,
                 ENT_QUOTES,
@@ -189,12 +185,12 @@ $statusLabel = static function ($status) {
     <div class="ann-filter-actions">
         <button
             type="button"
-            class="ann-btn ann-btn-secondary yn-filter-toggle"
+            class="ann-btn ann-btn-secondary"
             id="annFilterBtn"
             aria-expanded="false"
             aria-controls="annFilterPanel"
         >
-            <?= yn_icon('filter') ?>
+            <?= $annIcon('filter') ?>
             Filters
         </button>
 
@@ -207,8 +203,6 @@ $statusLabel = static function ($status) {
     class="ann-filter-panel"
     id="annFilterPanel"
 >
-
-    <h2 class="yn-filter-heading">Advanced Filters for Announcements</h2>
 
     <div class="ann-filter-field">
 
@@ -231,14 +225,49 @@ $statusLabel = static function ($status) {
                 <option value="Draft">
                     Draft
                 </option>
-                <option value="Retracted">Withdrawn from Publication</option>
                 <option value="Archived">Archived</option>
+                <option value="Retracted">Inactive (legacy)</option>
 
             <?php endif; ?>
 
         </select>
 
     </div>
+
+
+    <?php if ($managerLevel === 'NYSC'): ?>
+
+        <div class="ann-filter-field">
+
+            <label for="annFilterZone">
+                Zone
+            </label>
+
+            <select id="annFilterZone">
+
+                <option value="">
+                    All Zones
+                </option>
+
+                <?php foreach (($zones ?? []) as $z): ?>
+
+                    <option
+                        value="<?= (int)$z->zonal_id ?>"
+                    >
+                        <?= htmlspecialchars(
+                            $z->zonal_name,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </option>
+
+                <?php endforeach; ?>
+
+            </select>
+
+        </div>
+
+    <?php endif; ?>
 
 
     <?php if (
@@ -312,10 +341,13 @@ $statusLabel = static function ($status) {
     </div>
 
 
-    <div class="yn-filter-actions">
-        <button type="button" class="ann-btn ann-btn-secondary yn-filter-clear" id="annClearFilterBtn">Clear filters</button>
-        <button type="button" class="ann-btn ann-btn-primary yn-filter-apply" id="annApplyFilterBtn">Apply filters</button>
-    </div>
+    <button
+        type="button"
+        class="ann-btn ann-btn-secondary"
+        id="annClearFilterBtn"
+    >
+        Clear Filter
+    </button>
 
 </div>
 
@@ -342,7 +374,7 @@ $statusLabel = static function ($status) {
                 class="ann-btn ann-btn-primary db-primary-action"
                 onclick="document.getElementById('annOpenCreateBtn')?.click()"
             >
-                New Announcement
+                <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> New Announcement
             </button>
 
         <?php endif; ?>
@@ -453,6 +485,7 @@ $statusLabel = static function ($status) {
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>"
+                data-zone="<?= (int)($a->organizer_zonal_id ?? 0) ?>"
             >
 
                 <div class="ann-card-top">
@@ -476,7 +509,7 @@ $statusLabel = static function ($status) {
                                 : 'ann-badge-published' ?>"
                         >
                             <?= htmlspecialchars(
-                                $statusLabel($a->status),
+                                $a->status,
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -620,7 +653,9 @@ $statusLabel = static function ($status) {
                     </span>
 
 
-                    <?php if (!empty($a->can_manage) && in_array($a->status, ['Draft', 'Published'], true)): ?>
+                    <?php if (
+                        !empty($a->can_manage)
+                    ): ?>
 
                         <button
                             type="button"
@@ -773,6 +808,50 @@ $statusLabel = static function ($status) {
                     ></textarea>
 
                 </div>
+
+
+                <!-- ================================================= -->
+                <!-- Broadcast scope (NYSC only)                       -->
+                <!-- ================================================= -->
+
+                <?php if ($managerLevel === 'NYSC'): ?>
+
+                    <div class="ann-field">
+
+                        <label for="annBroadcastZone">
+                            Broadcast Scope
+                        </label>
+
+                        <p class="ann-field-help">
+                            National broadcasts reach every zone.
+                            Choose a zone to target only that zone's users.
+                        </p>
+
+                        <select id="annBroadcastZone" name="broadcast_zone_id">
+
+                            <option value="">
+                                National — all zones
+                            </option>
+
+                            <?php foreach (($zones ?? []) as $z): ?>
+
+                                <option
+                                    value="<?= (int)$z->zonal_id ?>"
+                                >
+                                    <?= htmlspecialchars(
+                                        $z->zonal_name,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </option>
+
+                            <?php endforeach; ?>
+
+                        </select>
+
+                    </div>
+
+                <?php endif; ?>
 
 
                 <!-- ================================================= -->
