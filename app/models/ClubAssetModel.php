@@ -7,6 +7,42 @@
  */
 class ClubAssetModel extends Model {
 
+    /**
+     * Assets declared during club registration. These rows belong to the
+     * application and are separate from the operational AssetStock ledger.
+     */
+    public function findByApplication($applicationId) {
+        return $this->resultSet(
+            "SELECT * FROM ClubAsset WHERE application_id = ? ORDER BY asset_id",
+            [(int) $applicationId]
+        );
+    }
+
+    public function createAsset($data) {
+        $applicationId = (int) ($data['application_id'] ?? 0);
+        $assetName = trim((string) ($data['asset_name'] ?? ''));
+        $quantity = (int) ($data['quantity'] ?? 0);
+        $condition = (string) ($data['condition'] ?? 'Good');
+        if ($applicationId < 1 || $assetName === '' || $quantity < 1
+            || !in_array($condition, ['Excellent', 'Good', 'Fair', 'Poor'], true)) {
+            throw new InvalidArgumentException('Provide valid club asset details.');
+        }
+        $this->query(
+            "INSERT INTO ClubAsset (application_id, asset_name, quantity, `condition`) VALUES (?, ?, ?, ?)",
+            [$applicationId, $assetName, $quantity, $condition]
+        );
+        return true;
+    }
+
+    public function getByApplication($applicationId) {
+        return $this->findByApplication($applicationId);
+    }
+
+    public function deleteAsset($assetId) {
+        $this->query("DELETE FROM ClubAsset WHERE asset_id = ?", [(int) $assetId]);
+        return true;
+    }
+
     public function getCatalog(): array {
         return $this->resultSet(
             "SELECT catalog_item_id, category, item_name, sku, unit

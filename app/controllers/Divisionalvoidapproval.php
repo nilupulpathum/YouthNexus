@@ -86,7 +86,7 @@ class Divisionalvoidapproval extends Controller {
             );
             $message = 'The void request was rejected.';
             if ($decision === 'approve') {
-                $message = 'The void request was approved and the club ledger balance was updated.';
+                $message = 'The void request was approved and a compensating ledger entry was recorded.';
             }
             $this->setFlash('success', $message);
         } catch (Throwable $exception) {

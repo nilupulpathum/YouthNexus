@@ -6,7 +6,7 @@ $pageTitle = 'Create New Report';
 $pageDescription = 'Configure a report for your division';
 $currentRoute = 'divisionalreports';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-reports.css'];
-$pageScripts = [ROOT . '/assets/js/divisional-report-create.js?v=1'];
+$pageScripts = [ROOT . '/assets/js/divisional-report-create.js'];
 
 $preferredTypeName = $aggregateMode ? 'Club Activity Aggregate' : '';
 $selectedType = null;
@@ -31,7 +31,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <header class="dr-create-card__header">
       <div>
-        <h2><?= $isAggregate ? 'Aggregate Club Reports' : 'Create New Report' ?></h2>
+        <h2><?= $isAggregate ? 'Aggregate club reports' : 'Report configuration' ?></h2>
         <p>Select the report, reporting period, and output format.</p>
       </div>
       <a class="dr-create-card__close" href="<?= ROOT ?>/divisionalreports" aria-label="Close report configuration"><?= yn_icon('close') ?></a>
@@ -116,7 +116,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 
     <footer class="dr-create-card__footer">
-      <a class="dw-button dw-button--secondary db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
+      <a class="yn-btn yn-btn--secondary yn-btn-back dw-button dw-button--secondary db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
       <button class="dw-button dw-button--primary db-confirm-action" type="submit" data-create-submit>Generate Report</button>
     </footer>
   </form>
