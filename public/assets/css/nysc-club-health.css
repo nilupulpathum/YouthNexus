@@ -240,7 +240,10 @@
   line-height: 1.5;
 }
 
-.nysc-confirm-box strong {
+/* Only the box heading is a block; strongs inside list items stay
+   inline so sentences like "Club status is set to Disbanded and
+   archived." read on one line. */
+.nysc-confirm-box > strong {
   display: block;
   font-size: 14px;
   margin-bottom: 4px;
