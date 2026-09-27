@@ -1,0 +1,7 @@
+public/_dev_login.php
+public/_local_login.php
+app/core/config.local.php
+
+# Runtime-generated ledger receipts
+public/uploads/ledger-receipts/*
+!public/uploads/ledger-receipts/.htaccess

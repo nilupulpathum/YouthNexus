@@ -1,0 +1,91 @@
+(function () {
+  'use strict';
+
+  var rows = Array.prototype.slice.call(document.querySelectorAll('[data-report-row]'));
+  var search = document.querySelector('[data-report-search]');
+  var category = document.querySelector('[data-report-category]');
+  var format = document.querySelector('[data-report-format]');
+  var status = document.querySelector('[data-report-status]');
+  var from = document.querySelector('[data-report-from]');
+  var sort = document.querySelector('[data-report-sort]');
+  var body = document.querySelector('[data-report-body]');
+  var count = document.querySelector('[data-report-count]');
+  var empty = document.querySelector('[data-report-empty]');
+  var libraryTitle = document.querySelector('[data-report-library-title]');
+
+  var panelControls = [category, format, status, from, sort];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
+  function applyFilters() {
+    var term = search ? search.value.trim().toLowerCase() : '';
+    var categoryValue = selected(category);
+    var formatValue = selected(format);
+    var statusValue = selected(status).trim().toLowerCase();
+    var fromValue = selected(from);
+    var visible = rows.filter(function (row) {
+      return (!term || row.dataset.search.indexOf(term) !== -1) &&
+        (!categoryValue || row.dataset.category === categoryValue) &&
+        (!formatValue || row.dataset.format === formatValue) &&
+        (!statusValue || (row.dataset.status || 'active').trim().toLowerCase() === statusValue) &&
+        (!fromValue || row.dataset.date >= fromValue);
+    });
+    rows.forEach(function (row) { row.hidden = visible.indexOf(row) === -1; });
+    if (body && sort) {
+      visible.sort(function (a, b) {
+        if (selected(sort) === 'oldest') return a.dataset.date.localeCompare(b.dataset.date);
+        if (selected(sort) === 'type') return a.dataset.type.localeCompare(b.dataset.type);
+        return b.dataset.date.localeCompare(a.dataset.date);
+      }).forEach(function (row) { body.appendChild(row); });
+    }
+    if (count) count.textContent = visible.length + (visible.length === 1 ? ' report' : ' reports');
+    if (empty) empty.classList.toggle('is-visible', visible.length === 0);
+    if (libraryTitle) {
+      libraryTitle.textContent = statusValue === 'archived' ? 'Archived Reports'
+        : (statusValue === 'active' ? 'Recent Reports' : 'All Reports');
+    }
+  }
+
+  if (search) search.addEventListener('input', applyFilters);
+  var apply = document.querySelector('[data-report-apply]');
+  if (apply) apply.addEventListener('click', function () { captureFilters(); applyFilters(); });
+  var reset = document.querySelector('[data-report-reset]');
+  if (reset) reset.addEventListener('click', function () {
+    [category, format, from].forEach(function (field) { if (field) field.value = ''; });
+    if (status) status.value = '';
+    if (sort) sort.value = 'newest';
+    if (search) search.value = '';
+    captureFilters();
+    applyFilters();
+  });
+
+  applyFilters();
+
+  var archiveForm = document.querySelector('[data-report-archive-form]');
+  if (archiveForm) {
+    var archiveReason = archiveForm.querySelector('textarea[name="reason"]');
+    var archiveError = document.getElementById('report-archive-error');
+
+    function clearArchiveError() {
+      if (archiveError) archiveError.hidden = true;
+      if (archiveReason) archiveReason.removeAttribute('aria-invalid');
+    }
+
+    archiveReason.addEventListener('input', clearArchiveError);
+    archiveForm.addEventListener('submit', function (event) {
+      if (archiveReason.value.trim().length >= 5) return;
+      event.preventDefault();
+      if (archiveError) archiveError.hidden = false;
+      archiveReason.setAttribute('aria-invalid', 'true');
+      archiveReason.focus();
+    });
+  }
+}());
