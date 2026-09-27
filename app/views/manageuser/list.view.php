@@ -590,10 +590,10 @@ function mu_status_badge(string $status): string {
 }
 .mu-btn-submit {
     background: var(--mu-blue);
-    color: #fff;
+    color: #fff !important;
     box-shadow: 0 2px 6px rgba(30,64,175,.2);
 }
-.mu-btn-submit:hover { background: #1d3c9f; }
+.mu-btn-submit:hover { background: #1d3c9f; color: #fff !important; }
 .mu-btn-submit:disabled { opacity: .6; cursor: not-allowed; }
 
 /* spinner inside button */
