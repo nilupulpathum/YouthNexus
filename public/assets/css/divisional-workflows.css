@@ -95,6 +95,21 @@
 .dw-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 
 .dw-content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; align-items: start; }
+/* The ten-column ledger needs its own row; status panels remain below it. */
+.dw-content-grid--ledger { grid-template-columns: minmax(0, 1fr); }
+.dw-content-grid--ledger > .dw-panel { min-width: 0; }
+.dw-content-grid--ledger > .dw-side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dw-ledger-table { min-width: 1420px; }
+.dw-ledger-table th:nth-child(1) { min-width: 100px; }
+.dw-ledger-table th:nth-child(2) { min-width: 130px; }
+.dw-ledger-table th:nth-child(3) { min-width: 250px; }
+.dw-ledger-table th:nth-child(4) { min-width: 125px; }
+.dw-ledger-table th:last-child { min-width: 150px; }
+.dw-ledger-table td { overflow-wrap: normal; }
+.dw-ledger-table .dw-table__description { overflow-wrap: break-word; }
+@media (max-width: 720px) {
+  .dw-content-grid--ledger > .dw-side-stack { grid-template-columns: 1fr; }
+}
 .dw-side-stack { display: grid; gap: 14px; }
 .dw-panel { border: 1px solid var(--dw-border); border-radius: var(--dw-radius-lg); background: #fff; box-shadow: var(--dw-shadow); overflow: hidden; }
 .dw-panel__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 17px 12px; }

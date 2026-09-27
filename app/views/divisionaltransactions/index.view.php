@@ -40,7 +40,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction">Add Transaction</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction"><?= yn_icon('plus') ?> Add Transaction</button>
   </div>
 
   <section class="dw-filter-panel" id="transaction-filters" hidden>

@@ -20,7 +20,6 @@ $navigation = [
         ['label' => 'Assets', 'route' => 'club/assets', 'href' => $dashboardRoot . '/club/assets', 'icon' => 'briefcase'],
         ['label' => 'Ledger', 'route' => 'club/ledger', 'href' => $dashboardRoot . '/club/ledger', 'icon' => 'wallet'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'secretary' => [
         ['label' => 'Overview', 'route' => 'secretary', 'href' => $dashboardRoot . '/secretary', 'icon' => 'grid'],
@@ -33,7 +32,6 @@ $navigation = [
         ['label' => 'Assets', 'route' => 'club/assets', 'href' => $dashboardRoot . '/club/assets', 'icon' => 'briefcase'],
         ['label' => 'Manage Attendance', 'route' => 'club/attendance', 'href' => $dashboardRoot . '/club/attendance', 'icon' => 'check'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'treasurer' => [
         ['label' => 'Overview', 'route' => 'treasurer', 'href' => $dashboardRoot . '/treasurer', 'icon' => 'grid'],
@@ -44,7 +42,6 @@ $navigation = [
         ['label' => 'Assets', 'route' => 'club/assets', 'href' => $dashboardRoot . '/club/assets', 'icon' => 'briefcase'],
         ['label' => 'Ledger', 'route' => 'club/ledger', 'href' => $dashboardRoot . '/club/ledger', 'icon' => 'wallet'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'member' => [
         ['label' => 'Dashboard', 'route' => 'member', 'href' => $dashboardRoot . '/member', 'icon' => 'grid'],
@@ -53,7 +50,6 @@ $navigation = [
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Social CV', 'route' => 'profile', 'href' => $dashboardRoot . '/profile', 'icon' => 'certificate'],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'zonalcoordinator' => [
         ['label' => 'Overview', 'route' => 'zonalcoordinator', 'href' => $dashboardRoot . '/zonalcoordinator', 'icon' => 'grid'],
@@ -62,7 +58,6 @@ $navigation = [
         ['label' => 'Aggregate Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionalcoordinator' => [
         ['label' => 'Dashboard',            'route' => 'divisionalcoordinator', 'href' => $dashboardRoot . '/divisionalcoordinator', 'icon' => 'grid'],
@@ -71,7 +66,6 @@ $navigation = [
         ['label' => 'Monitor Club Health',  'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Manage Reports',       'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
         ['label' => 'Announcements',        'route' => 'announcements',     'href' => $dashboardRoot . '/announcements',     'icon' => 'megaphone'],
-        ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],
     'divisionalsecretary' => [
         ['label' => 'Dashboard', 'route' => 'divisionalsecretary', 'href' => $dashboardRoot . '/divisionalsecretary', 'icon' => 'grid'],
@@ -80,7 +74,6 @@ $navigation = [
         ['label' => 'Monitor Club Health', 'route' => 'divisionalclubhealth', 'href' => $dashboardRoot . '/divisionalclubhealth', 'icon' => 'chart'],
         ['label' => 'Manage Reports', 'route' => 'divisionalreports', 'href' => $dashboardRoot . '/divisionalreports', 'icon' => 'reports'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'divisionaltreasurer' => [
         ['label' => 'Dashboard', 'route' => 'divisionaltreasurer', 'href' => $dashboardRoot . '/divisionaltreasurer', 'icon' => 'grid'],
@@ -103,7 +96,6 @@ $navigation = [
         ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'chart'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'zonaltreasurer' => [
         ['label' => 'Overview', 'route' => 'zonaltreasurer', 'href' => $dashboardRoot . '/zonaltreasurer', 'icon' => 'grid'],
@@ -116,7 +108,6 @@ $navigation = [
         ['label' => 'Reports', 'route' => 'zonalreports', 'href' => $dashboardRoot . '/zonalreports', 'icon' => 'reports'],
         ['label' => 'Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone', 'badge' => (int) ($unreadNotificationCount ?? 0)],
         ['label' => 'Settings', 'route' => 'settings', 'href' => $dashboardRoot . '/settings', 'icon' => 'settings'],
-        ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
     ],
     'nyscadmin' => [
         ['label' => 'Dashboard',           'route' => 'nationaldashboard', 'href' => $dashboardRoot . '/nationaldashboard', 'icon' => 'grid'],
@@ -131,7 +122,6 @@ $navigation = [
         ['label' => 'Monitor Club Health',  'route' => 'clubhealth',        'href' => $dashboardRoot . '/clubhealth',        'icon' => 'club-health'],
         ['label' => 'Broadcast Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Settings',             'route' => 'settings',          'href' => $dashboardRoot . '/settings',          'icon' => 'settings'],
-        ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],
 ];
 
@@ -157,7 +147,6 @@ if ($normalisedRoleKey === 'member') {
 $sidebarBrandLabel = $normalisedRoleKey === 'member' ? 'Pulse' : $sidebarRoleLabel;
 $roleItems = $navigation[$normalisedRoleKey] ?? [
     ['label' => 'Overview', 'route' => 'home', 'href' => $dashboardRoot . '/home', 'icon' => 'grid'],
-    ['label' => 'Help', 'route' => 'help', 'href' => $dashboardRoot . '/help', 'icon' => 'help'],
 ];
 
 $icons = [

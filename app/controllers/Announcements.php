@@ -1702,8 +1702,7 @@ class Announcements extends Controller
 
 
                 $wasPublished =
-                    $existing->status
-                    === 'Published';
+                    in_array($existing->status, ['Published', 'Retracted', 'Archived'], true);
 
 
                 /*
@@ -2212,6 +2211,71 @@ class Announcements extends Controller
                     'Announcement deleted successfully.',
             ]
         );
+    }
+
+
+    public function archive($id = null)
+    {
+        $this->changeLifecycle($id, null, 'Archived', 'ARCHIVE_ANNOUNCEMENT', 'Announcement archived.');
+    }
+
+    public function restore($id = null)
+    {
+        $this->changeLifecycle($id, null, 'Published', 'RESTORE_ANNOUNCEMENT', 'Announcement restored and published.');
+    }
+
+    private function changeLifecycle($id, $requiredStatus, $targetStatus, $auditAction, $message)
+    {
+        $user = $this->currentUser();
+        $scope = $this->requireManagerScope($user);
+        $this->requirePost();
+        $id = $this->positiveId($id);
+        $reason = trim((string) ($_POST['reason'] ?? ''));
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            $this->jsonResponse(422, ['error' => 'Provide a reason between 5 and 1000 characters.']);
+        }
+        $model = $this->model('AnnouncementModel');
+        $db = Database::getInstance()->getConnection();
+        try {
+            $db->beginTransaction();
+            $announcement = $model->findManageableById($id, $scope['level'], $scope['scope_id'], true);
+            if (!$announcement) {
+                $db->rollBack();
+                $this->jsonResponse(404, ['error' => 'Announcement not found.']);
+            }
+            $fromStatus = $requiredStatus ?? (string) $announcement->status;
+            if ($targetStatus === 'Archived' && !in_array($fromStatus, ['Published', 'Retracted'], true)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Only a published or previously inactive announcement can be archived.']);
+            }
+            if ($targetStatus === 'Published' && !in_array($fromStatus, ['Archived', 'Retracted'], true)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Only an archived or previously inactive announcement can be restored.']);
+            }
+            if ($targetStatus === 'Published'
+                && !$this->model('AnnouncementAudienceModel')->findTargets($id)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'Choose a target audience before restoring this announcement.']);
+            }
+            if ((string) $announcement->status !== $fromStatus
+                || !$model->transitionLifecycle($id, $fromStatus, $targetStatus, (int) $user->user_id, $reason)) {
+                $db->rollBack();
+                $this->jsonResponse(409, ['error' => 'The announcement status changed before this action was saved.']);
+            }
+            $this->model('AuditLogModel')->log(
+                (int) $user->user_id,
+                $auditAction,
+                'Announcement',
+                $id,
+                $reason
+            );
+            $db->commit();
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            error_log('Announcement lifecycle update failed: ' . $error->getMessage());
+            $this->jsonResponse(500, ['error' => 'Unable to update the announcement lifecycle.']);
+        }
+        $this->jsonResponse(200, ['success' => true, 'message' => $message]);
     }
 
 

@@ -65,7 +65,7 @@ $roleLabel = function ($role) {
             class="ann-btn ann-btn-primary db-primary-action"
             id="annOpenCreateBtn"
         >
-            New Announcement
+            <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> New Announcement
         </button>
 
     </div>
@@ -224,6 +224,8 @@ $roleLabel = function ($role) {
                 <option value="Draft">
                     Draft
                 </option>
+                <option value="Archived">Archived</option>
+                <option value="Retracted">Inactive (legacy)</option>
 
             <?php endif; ?>
 
@@ -371,7 +373,7 @@ $roleLabel = function ($role) {
                 class="ann-btn ann-btn-primary db-primary-action"
                 onclick="document.getElementById('annOpenCreateBtn')?.click()"
             >
-                New Announcement
+                <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> New Announcement
             </button>
 
         <?php endif; ?>
