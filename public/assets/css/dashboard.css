@@ -1236,3 +1236,8 @@ body.dashboard {
   margin-left: auto;
 }
 
+
+/* Shared templates embed a divisional-theme icon (yn_icon plus) inside
+   action buttons alongside each module's own SVG. Hide it everywhere by
+   default; divisional pages re-expose it via their own theme CSS. */
+.divisional-create-icon { display: none; }
