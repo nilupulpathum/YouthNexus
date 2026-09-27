@@ -230,7 +230,7 @@ class AnnouncementModel extends Model
                 content_edited_at = NOW()
             WHERE announcement_id = ?
               AND deleted_at IS NULL
-              AND status IN ('Draft', 'Published')
+              AND status IN ('Draft', 'Published', 'Retracted', 'Archived')
         ";
 
         $stmt = $this->query(
@@ -303,7 +303,6 @@ class AnnouncementModel extends Model
             SET deleted_at = NOW()
             WHERE announcement_id = ?
               AND deleted_at IS NULL
-              AND status = 'Draft'
             ",
             [(int)$id]
         );
@@ -311,19 +310,10 @@ class AnnouncementModel extends Model
         return $stmt->rowCount() > 0;
     }
 
-    public function transitionLifecycle(
-        int $id,
-        string $fromStatus,
-        string $toStatus,
-        int $userId,
-        string $reason
-    ): bool {
-        $allowed = [
-            'Published:Retracted',
-            'Retracted:Archived',
-            'Published:Archived',
-            'Archived:Retracted',
-        ];
+    /** Published items can be archived; archived and older inactive items can be restored. */
+    public function transitionLifecycle(int $id, string $fromStatus, string $toStatus, int $userId, string $reason): bool
+    {
+        $allowed = ['Published:Archived', 'Retracted:Archived', 'Archived:Published', 'Retracted:Published'];
         if (!in_array($fromStatus . ':' . $toStatus, $allowed, true)) {
             throw new InvalidArgumentException('This announcement transition is not permitted.');
         }
@@ -577,8 +567,13 @@ class AnnouncementModel extends Model
 
             case 'NYSC':
 
+                /*
+                 * National oversight: the NYSC administrator sees every
+                 * stored announcement — national (NYSC) plus all zonal,
+                 * divisional and club communications.
+                 */
                 $managerSql = "
-                    a.level = 'NYSC'
+                    1 = 1
                 ";
 
                 break;

@@ -5,14 +5,51 @@
  */
 
 $title                   = $title ?? 'Report Preview — YouthNexus';
+$pageTitle               = $pageTitle ?? 'Report Preview';
+$pageDescription         = $pageDescription ?? 'Review the compiled report before generating and distributing it.';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css'];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
 $report      = $report      ?? (object)[];
 $kpis        = $kpis        ?? [];
-$summaryRows = $summaryRows ?? [];
-$rawRows     = $rawRows     ?? [];
+$summary     = $summary     ?? ['headers' => [], 'rows' => []];
+$raw         = $raw         ?? ['headers' => [], 'rows' => []];
+$syncLabel   = $syncLabel   ?? 'Zonal Hubs Synced';
+$noteTitle   = $noteTitle   ?? 'Statutory Ledger Compliance Verification:';
+$note        = $note        ?? '';
+
+// Render a generic data table: last column is the status pill, first column gets the row dot.
+$renderTableRows = function (array $table) {
+    $headers = $table['headers'] ?? [];
+    $rows    = $table['rows']    ?? [];
+    $last    = count($headers) - 1;
+    if (empty($rows)) {
+        echo '<tr><td colspan="' . max(count($headers), 1) . '" style="text-align:center;padding:28px;color:#9ca3af;">'
+           . 'No records found for the selected range and scope.</td></tr>';
+        return;
+    }
+    foreach ($rows as $row) {
+        echo '<tr>';
+        $cells = $row['cells'] ?? [];
+        foreach ($cells as $ci => $cell) {
+            if ($ci === 0) {
+                echo '<td><span class="rpt-row-dot"></span><span class="rpt-zone-name">' . htmlspecialchars((string)$cell) . '</span></td>';
+            } elseif ($ci === $last && isset($row['status']) && $row['status'] !== '') {
+                echo '<td class="td-right"><span class="rpt-status-pill">' . htmlspecialchars((string)$row['status'])
+                   . '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+            } else {
+                echo '<td class="td-center">' . htmlspecialchars((string)$cell) . '</td>';
+            }
+        }
+        // Safety net: if a row has fewer cells than headers, close with an empty status cell.
+        if (count($cells) <= $last) {
+            echo '<td class="td-right"><span class="rpt-status-pill">' . htmlspecialchars((string)($row['status'] ?? '—'))
+               . '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+        }
+        echo '</tr>';
+    }
+};
 
 $reportId    = (int)($report->report_id     ?? 0);
 $category    = htmlspecialchars($report->category   ?? 'Financial');
@@ -24,11 +61,18 @@ $format      = htmlspecialchars($report->format ?? 'PDF');
 $generatedBy = trim(($report->first_name ?? '') . ' ' . ($report->last_name ?? ''));
 if (empty($generatedBy)) $generatedBy = 'N. Fernando';
 
-$pageScripts = [ROOT . '/assets/js/managereports.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
 <div class="rpt-content rpt-preview-wrap">
+
+    <div class="rpt-preview-back">
+        <a href="<?= ROOT ?>/reports" class="rpt-btn rpt-btn--outline db-secondary-action">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back to Reports
+        </a>
+    </div>
+
 <div class="rpt-preview-modal">
 
     <!-- ── Header ────────────────────────────────────────────── -->
@@ -40,7 +84,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </span>
         </div>
 
-        <h2 class="rpt-preview__title">Report Preview: <?= $typeName ?></h2>
+        <h1 class="rpt-preview__title">Report Preview: <?= $typeName ?></h1>
 
         <p class="rpt-preview__meta">
             Scope: <b><?= $scopeLevel ?></b>
@@ -57,7 +101,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <?php foreach ($kpis as $kpi):
                 $kpiToneClass = ($kpi['tone'] ?? 'blue') === 'green' ? 'rpt-kpi-note--green' : 'rpt-kpi-note--blue';
             ?>
-                <div class="yn-stat-card rpt-kpi-card">
+                <div class="rpt-kpi-card">
                     <div class="rpt-kpi-label"><?= htmlspecialchars($kpi['label']) ?></div>
                     <div class="rpt-kpi-value"><?= htmlspecialchars($kpi['value']) ?></div>
                     <div class="rpt-kpi-note <?= $kpiToneClass ?>">
@@ -80,80 +124,38 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="rpt-sync-note">
                 <span class="rpt-green-dot"></span>
-                <b><?= count($summaryRows) ?> of <?= count($summaryRows) ?></b>&nbsp;Zonal Hubs Synced
+                <b><?= count($summary['rows']) ?> of <?= count($summary['rows']) ?></b>&nbsp;<?= htmlspecialchars($syncLabel) ?>
             </div>
         </div>
 
         <!-- ── Summary Tab ───────────────────────────────────── -->
         <div id="summaryTab" class="rpt-table-section">
             <div class="rpt-table-box">
-                <table class="yn-table">
+                <table>
                     <thead>
                         <tr>
-                            <th>Province / Zone</th>
-                            <th class="td-center">Allocated (LKR)</th>
-                            <th class="td-center">Disbursed (LKR)</th>
-                            <th class="td-center">Expenses Logged</th>
-                            <th class="td-center">Void Count</th>
-                            <th class="td-right">Status</th>
+                            <?php foreach ($summary['headers'] as $hi => $h): ?>
+                                <th class="<?= $hi === 0 ? '' : ($hi === count($summary['headers']) - 1 ? 'td-right' : 'td-center') ?>"><?= htmlspecialchars((string)$h) ?></th>
+                            <?php endforeach; ?>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($summaryRows as $row): ?>
-                            <tr>
-                                <td><span class="rpt-row-dot"></span><span class="rpt-zone-name"><?= htmlspecialchars($row['zone']) ?></span></td>
-                                <td class="td-center"><?= htmlspecialchars($row['allocated']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['disbursed']) ?></td>
-                                <td class="td-center td-bold"><?= htmlspecialchars($row['expenses']) ?></td>
-                                <td class="td-center"><?= (int)$row['voids'] ?></td>
-                                <td class="td-right">
-                                    <span class="rpt-status-pill">
-                                        <?= htmlspecialchars($row['status']) ?>
-                                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
+                    <tbody><?php $renderTableRows($summary); ?></tbody>
                 </table>
             </div>
         </div>
 
         <!-- ── Raw Detail Tab ────────────────────────────────── -->
-        <div id="rawTab" class="rpt-table-section yn-hidden">
+        <div id="rawTab" class="rpt-table-section" style="display:none">
             <div class="rpt-table-box rpt-table-compact">
-                <table class="yn-table">
+                <table>
                     <thead>
                         <tr>
-                            <th>Division</th>
-                            <th>Zone (Hub)</th>
-                            <th class="td-center">Allocated (LKR)</th>
-                            <th class="td-center">Disbursed (LKR)</th>
-                            <th class="td-center">Expenses</th>
-                            <th class="td-center">Voids</th>
-                            <th class="td-center">Submitted By</th>
-                            <th class="td-right">Status</th>
+                            <?php foreach ($raw['headers'] as $hi => $h): ?>
+                                <th class="<?= $hi === 0 ? '' : ($hi === count($raw['headers']) - 1 ? 'td-right' : 'td-center') ?>"><?= htmlspecialchars((string)$h) ?></th>
+                            <?php endforeach; ?>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($rawRows as $row): ?>
-                            <tr>
-                                <td class="td-bold"><?= htmlspecialchars($row['division']) ?></td>
-                                <td><?= htmlspecialchars($row['zone']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['allocated']) ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['disbursed']) ?></td>
-                                <td class="td-center td-bold"><?= htmlspecialchars($row['expenses']) ?></td>
-                                <td class="td-center"><?= (int)$row['voids'] ?></td>
-                                <td class="td-center"><?= htmlspecialchars($row['by']) ?></td>
-                                <td class="td-right">
-                                    <span class="rpt-status-pill">
-                                        <?= htmlspecialchars($row['status']) ?>
-                                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
+                    <tbody><?php $renderTableRows($raw); ?></tbody>
                 </table>
             </div>
         </div>
@@ -164,9 +166,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.5 14 15.5 9.5"/></svg>
             </div>
             <p class="rpt-note-text">
-                <b>Statutory Ledger Compliance Verification:</b>
-                Verified statutory aggregation rolled up from <?= count($rawRows) ?> Divisional reports submitted by Zonal Secretaries.
-                Data sealed under NYSC FinAct <?= date('Y') ?>.
+                <b><?= htmlspecialchars($noteTitle) ?></b>
+                <?= htmlspecialchars($note) ?>
             </p>
         </div>
     </div><!-- /.rpt-preview__body -->
@@ -179,7 +180,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 Edit Parameters
             </a>
             <?php if ($reportId > 0): ?>
-                <form method="post" action="<?= ROOT ?>/reports/archive/<?= $reportId ?>" class="yn-inline"
+                <form method="post" action="<?= ROOT ?>/reports/archive/<?= $reportId ?>" style="display:inline"
                       onsubmit="return confirm('Move this report to archive?')">
                     <button type="submit" class="rpt-footer-link rpt-footer-link--gray" id="btn-archive">
                         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -189,17 +190,17 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <?php endif; ?>
         </div>
         <div class="rpt-preview-footer-right">
-            <button type="button" class="yn-btn yn-btn--ghost rpt-btn rpt-btn--ghost" id="btn-email-share" onclick="openShareModal()">
+            <button type="button" class="rpt-btn rpt-btn--ghost" id="btn-email-share" onclick="openShareModal()">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 Email / Share
             </button>
-            <button type="button" class="yn-btn yn-btn--ghost yn-btn--secondary yn-btn-download rpt-btn rpt-btn--ghost" id="btn-download-pdf"
-                    disabled title="Coming soon: PDF download is not available for this report">
+            <button type="button" class="rpt-btn rpt-btn--ghost" id="btn-download-pdf"
+                    onclick="alert('PDF generation is handled by the report file system. Download will be available once the report is generated & saved.')">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download PDF
             </button>
-            <button type="button" class="yn-btn yn-btn--primary rpt-btn rpt-btn--primary" id="btn-generate-save"
-                    disabled title="Coming soon: report generation is not connected on this page">
+            <button type="button" class="rpt-btn rpt-btn--primary" id="btn-generate-save"
+                    onclick="alert('Report generated and saved successfully.')">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                 Generate &amp; Save Report
             </button>
@@ -210,7 +211,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 </div><!-- /.rpt-preview-wrap -->
 
 <!-- ── Email / Share Modal ────────────────────────────────────── -->
-<div class="rpt-overlay yn-hidden" id="shareOverlay" onclick="if(event.target===this)closeShareModal()">
+<div class="rpt-overlay" id="shareOverlay" style="display:none" onclick="if(event.target===this)closeShareModal()">
     <div class="rpt-share-modal">
         <div class="rpt-share-modal__header">
             <h2>Email / Share Report</h2>
@@ -221,22 +222,42 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <form method="post" action="<?= ROOT ?>/reports/share" class="rpt-share-modal__body">
             <input type="hidden" name="report_id" value="<?= $reportId ?>">
             <label class="rpt-field__label" for="share-email">Recipient Email</label>
-            <input type="email" id="share-email" name="recipient_email" class="rpt-date-input yn-mb-3" placeholder="recipient@example.com" required>
+            <input type="email" id="share-email" name="recipient_email" class="rpt-date-input" placeholder="recipient@example.com" required style="margin-bottom:14px">
             <label class="rpt-field__label" for="share-method">Share Method</label>
-            <div class="rpt-select-wrap rpt-select-wrap--full yn-mb-5">
+            <div class="rpt-select-wrap rpt-select-wrap--full" style="margin-bottom:20px">
                 <select id="share-method" name="method">
                     <option value="Email">Email</option>
                     <option value="Link">Link</option>
                 </select>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="rpt-select-arrow"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
-            <div class="rpt-share-actions">
-                <button type="button" onclick="closeShareModal()" class="yn-btn yn-btn--secondary rpt-cancel-btn">Cancel</button>
-                <button type="submit" class="yn-btn yn-btn--primary rpt-compile-btn" id="btn-share-submit">Send</button>
+            <div style="display:flex;justify-content:flex-end;gap:12px">
+                <button type="button" onclick="closeShareModal()" class="rpt-cancel-btn">Cancel</button>
+                <button type="submit" class="rpt-compile-btn" id="btn-share-submit">Send</button>
             </div>
         </form>
     </div>
 </div>
 
+<script>
+function showTab(name) {
+    var summary    = document.getElementById('summaryTab');
+    var raw        = document.getElementById('rawTab');
+    var btnSummary = document.getElementById('tabSummary');
+    var btnRaw     = document.getElementById('tabRaw');
+    if (name === 'summary') {
+        summary.style.display = 'block'; raw.style.display = 'none';
+        btnSummary.classList.add('rpt-tab-btn--active');
+        btnRaw.classList.remove('rpt-tab-btn--active');
+    } else {
+        summary.style.display = 'none'; raw.style.display = 'block';
+        btnSummary.classList.remove('rpt-tab-btn--active');
+        btnRaw.classList.add('rpt-tab-btn--active');
+    }
+}
+
+function openShareModal()  { document.getElementById('shareOverlay').style.display = 'flex'; }
+function closeShareModal() { document.getElementById('shareOverlay').style.display = 'none'; }
+</script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

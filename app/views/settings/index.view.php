@@ -5,7 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/settings.js'];
 $maskedEmail = $maskedEmail ?? '';
 $csrfToken = $csrf_token ?? '';
@@ -46,8 +46,8 @@ $settingsInitials = strtoupper(
                         <span class="profile-initials" aria-hidden="true"><?= $escape($settingsInitials) ?></span>
                     </div>
                     <div class="avatar-actions">
-                        <button type="button" class="yn-btn yn-btn--primary btn-upload">Upload new picture</button>
-                        <button type="button" class="yn-btn yn-btn--danger btn-delete">Delete</button>
+                        <button type="button" class="btn-upload">Upload new picture</button>
+                        <button type="button" class="btn-delete">Delete</button>
                     </div>
                 </div>
 
@@ -75,8 +75,8 @@ $settingsInitials = strtoupper(
                 </div>
 
                 <div class="form-footer">
-                    <button type="submit" class="yn-btn yn-btn--primary btn-save">Save Changes</button>
-                    <button type="button" class="yn-btn yn-btn--secondary btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                    <button type="button" class="btn-cancel">Cancel</button>
                 </div>
             </form>
         </section>
@@ -103,7 +103,7 @@ $settingsInitials = strtoupper(
                 </div>
                 <p id="pw-form-error" class="dw-field-error" hidden></p>
                 <div class="form-footer">
-                    <button type="submit" class="yn-btn yn-btn--primary btn-save">Update Password</button>
+                    <button type="submit" class="btn-save">Update Password</button>
                 </div>
             </form>
         </section>
@@ -137,7 +137,7 @@ $settingsInitials = strtoupper(
                 </div>
             </div>
             <div class="form-footer">
-                <button type="button" class="yn-btn yn-btn--primary btn-save">Save Preferences</button>
+                <button type="button" class="btn-save">Save Preferences</button>
             </div>
         </section>
     </div>
