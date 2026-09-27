@@ -34,7 +34,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="asset-filters" aria-expanded="false">Filters</button>
     <button class="dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset">Add Asset</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset"><?= yn_icon('plus') ?> Add Asset</button>
   </div>
 
   <section class="dw-filter-panel" id="asset-filters" hidden>
@@ -55,7 +55,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->club_name, $request->item_name, $request->category, $request->reason])); ?>
         <tr data-asset-row data-section="club-request" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="pending" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>">
           <td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td><?= $e($request->club_name) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= (int) $request->available_quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
-          <td><button class="dw-button dw-button--primary" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
+          <td><button class="dw-button dw-button--secondary db-view-button" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
         </tr>
       <?php endforeach; ?>
     </tbody></table></div>

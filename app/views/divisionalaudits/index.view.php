@@ -33,7 +33,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
     </div>
     <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>><?= yn_icon('plus') ?> Start Audit</button>
   </div>
 
   <section class="dw-filter-panel" id="audit-filters" hidden>
@@ -74,7 +74,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php if ($item->audit_id): ?>
             <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
           <?php elseif ((int) $item->has_active_ledger === 1): ?>
-            <button class="dw-button dw-button--primary db-primary-action" type="button" data-start-club="<?= (int) $item->club_id ?>" data-modal-open="start-audit">Start Audit</button>
+            <button class="dw-button dw-button--primary db-primary-action" type="button" data-start-club="<?= (int) $item->club_id ?>" data-modal-open="start-audit"><?= yn_icon('plus') ?> Start Audit</button>
           <?php else: ?>
             <button class="dw-button dw-button--ghost db-secondary-action" type="button" disabled>Ledger Unavailable</button>
           <?php endif; ?>

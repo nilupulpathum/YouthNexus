@@ -403,6 +403,13 @@
   padding: 7px 12px;
 }
 
+/* Give the details action the same readable outline size as other review links. */
+.dr-report-card__actions .dr-report-card__details {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
 .dr-preview {
   max-width: 1120px;
   margin: 0 auto;

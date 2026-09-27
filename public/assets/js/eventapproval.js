@@ -148,9 +148,10 @@
                     </div>
                 `;
 
-                resultSelect.value = 'approve';
+                resultSelect.value = '';
                 remarksField.value = '';
-                updateImpactAlert();
+                impactAlert.hidden = true;
+                confirmBtn.disabled = true;
             })
             .catch(err => {
                 modalBody.innerHTML = '<div style="text-align:center; padding:30px 0; color:#dc2626;"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
@@ -183,7 +184,12 @@
         }
     }
 
-    resultSelect.addEventListener('change', updateImpactAlert);
+    resultSelect.addEventListener('change', () => {
+        const decision = resultSelect.value;
+        confirmBtn.disabled = !decision;
+        impactAlert.hidden = !decision;
+        if (decision) updateImpactAlert();
+    });
 
     function attachReviewButtons() {
         document.querySelectorAll('.ea-btn-review').forEach(btn => {
@@ -336,6 +342,10 @@
         if (!activeEventId) return;
         
         const decision = resultSelect.value; // 'approve' | 'reject'
+        if (decision !== 'approve' && decision !== 'reject') {
+            resultSelect.focus();
+            return;
+        }
         const remarks   = remarksField.value.trim();
 
         if (decision === 'reject' && !remarks) {

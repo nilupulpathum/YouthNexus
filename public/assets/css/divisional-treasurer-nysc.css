@@ -7,6 +7,7 @@
   font-family: var(--yn-font-family);
   color: var(--yn-text-primary);
 }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-ledger-page { width: 100%; max-width: none; }
 .dashboard[data-user-role="DivisionalTreasurer"] .dr-create { width: min(1120px, 100%); }
 
 .dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-actions {

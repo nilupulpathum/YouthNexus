@@ -18,6 +18,26 @@ body.dashboard[data-user-role^="Divisional"] .dw-page-actions {
 
 body.dashboard[data-user-role^="Divisional"] .db-primary-action::before { content: none; }
 
+/* Shared event, attendance, and announcement views serve other roles too. */
+body.dashboard[data-user-role^="Divisional"] .divisional-create-icon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+body.dashboard[data-user-role^="Divisional"] .divisional-create-icon svg,
+body.dashboard[data-user-role^="Divisional"] .db-primary-action > svg,
+body.dashboard[data-user-role^="Divisional"] .dw-audit-decision [data-modal-open="audit-note"] > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.atd-btn.db-primary-action, .me-btn-primary.db-primary-action, .ann-btn-primary.db-primary-action, .publish-open-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--approve { background: var(--yn-success); color: var(--yn-bg-surface); }
 body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--approve:hover { background: var(--yn-success-hover); }
 body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--reject { background: var(--yn-danger); color: var(--yn-bg-surface); }
@@ -495,6 +515,43 @@ body.dashboard[data-user-role^="Divisional"] .atd-table-search-icon { color: var
 }
 
 /* The shared table outline rule must not paint filled decision text blue on blue. */
+/* Review decisions use one deliberate choice and the same field treatment. */
+body.dashboard[data-user-role^="Divisional"] :is(#eaReviewResultSelect, #crReviewResultSelect) {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--yn-border);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-primary);
+  font: 600 13px var(--yn-font-family);
+  cursor: pointer;
+}
+body.dashboard[data-user-role^="Divisional"] :is(#eaReviewResultSelect, #crReviewResultSelect):focus-visible {
+  outline: 3px solid var(--yn-primary-soft);
+  border-color: var(--yn-primary);
+}
+body.dashboard[data-user-role^="Divisional"] :is(#eaImpactAlert, #crDecisionImpactAlert)[hidden] { display: none; }
+
+/* Previous, Next, and page numbers get the same outlined treatment as other actions. */
+body.dashboard[data-user-role^="Divisional"] .yn-pagination__link:not(.yn-pagination__link--active) {
+  border: 1px solid var(--yn-border);
+  border-radius: 9px;
+  color: var(--yn-primary);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+}
+body.dashboard[data-user-role^="Divisional"] .yn-pagination__link:not(.yn-pagination__link--active):hover:not(:disabled) {
+  border-color: var(--yn-primary-border);
+  background: var(--yn-primary-soft);
+}
+body.dashboard[data-user-role^="Divisional"] .yn-pagination__link:disabled { opacity: .5; box-shadow: none; }
+body.dashboard[data-user-role^="Divisional"] .yn-pagination__link--active { border-radius: 9px; }
+body.dashboard[data-user-role^="Divisional"] .dr-report-card__actions .dr-report-card__details {
+  min-height: 40px;
+  padding-inline: 14px;
+  font-size: 14px;
+}
+
 body.dashboard[data-user-role^="Divisional"] table.dw-table .dw-button:is(
   .yn-btn--primary, .dw-button--primary, .yn-btn--approve
 ) {

@@ -47,6 +47,9 @@
 }
 .yn-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
+/* Shared page templates expose this icon only in the divisional theme. */
+.divisional-create-icon { display: none; }
+
 .yn-btn--primary { background: var(--yn-primary); color: var(--yn-bg-surface); }
 .yn-btn--primary:hover:not(:disabled) { background: var(--yn-primary-hover); }
 

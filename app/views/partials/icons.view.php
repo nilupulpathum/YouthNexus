@@ -20,6 +20,7 @@ function yn_icon(string $name): string {
         'info' => '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/>',
         'play' => '<circle cx="12" cy="12" r="8.5"/><path d="m10 8.5 5 3.5-5 3.5v-7Z" stroke-linejoin="round"/>',
         'check' => '<path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/>',
+        'plus' => '<path d="M12 5v14M5 12h14" stroke-linecap="round"/>',
         'users' => '<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.2-5 5.5-5s5 1.8 5.5 5" stroke-linecap="round"/><path d="M16 5.5a3 3 0 0 1 0 5.8M17 14.4c2.1.8 3.2 2.3 3.5 4.6" stroke-linecap="round"/>',
         'clipboard' => '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 10h8M8 14h6" stroke-linecap="round"/>',
         'reports' => '<path d="M5 19V9M12 19V5M19 19v-7M3 19h18" stroke-linecap="round"/>',
