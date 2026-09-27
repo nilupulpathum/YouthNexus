@@ -10,7 +10,6 @@ $can_publish = !empty($can_publish);
 $pageStyles = [ROOT . '/assets/css/announcements.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
-$pageScripts = [ROOT . '/assets/js/announcements.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -77,12 +76,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </label>
         </div>
 
-        <button type="button" class="yn-btn yn-btn--sm yn-btn--ghost clear-filters-btn">
+        <button type="button" class="clear-filters-btn">
             <span class="icon"><?= yn_icon('close') ?></span> Clear all filters
         </button>
 
         <div class="sidebar-bottom-action">
-            <button type="button" class="yn-btn yn-btn--sm yn-btn--secondary mark-all-read-btn">
+            <button type="button" class="mark-all-read-btn">
                 <span class="icon"><?= yn_icon('check') ?></span> Mark all as read
             </button>
         </div>
@@ -101,7 +100,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <option value="oldest">Oldest first</option>
                 </select>
                 <?php if ($can_publish): ?>
-                    <button type="button" class="yn-btn yn-btn--primary publish-open-btn" id="announce-open">Publish Announcement</button>
+                    <button type="button" class="publish-open-btn" id="announce-open">Publish Announcement</button>
                 <?php endif; ?>
             </div>
         </header>
@@ -166,7 +165,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <button type="button" class="btn-download">
                 <span class="icon"><?= yn_icon('download') ?></span> Download Attachment
             </button>
-            <button type="button" class="yn-btn yn-btn--sm yn-btn--ghost btn-mark-read">
+            <button type="button" class="btn-mark-read">
                 <span class="icon"><?= yn_icon('check') ?></span> Mark as Read
             </button>
         </div>
@@ -208,8 +207,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </div>
                 <p id="publish-error" class="publish-error" hidden></p>
                 <div class="publish-footer">
-                    <button type="button" class="yn-btn yn-btn--secondary btn-cancel" data-close>Cancel</button>
-                    <button type="submit" class="yn-btn yn-btn--primary btn-publish">Publish</button>
+                    <button type="button" class="btn-cancel" data-close>Cancel</button>
+                    <button type="submit" class="btn-publish">Publish</button>
                 </div>
             </form>
         </div>
@@ -221,8 +220,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <h2 id="email-title">Send email as well?</h2>
             <p class="popup-text">Urgent announcements email every club member. Send the email together with this post?</p>
             <div class="publish-footer">
-                <button type="button" class="yn-btn yn-btn--secondary btn-cancel" data-close-email>Post without email</button>
-                <button type="button" class="yn-btn yn-btn--primary btn-publish" id="email-confirm">Send email + post</button>
+                <button type="button" class="btn-cancel" data-close-email>Post without email</button>
+                <button type="button" class="btn-publish" id="email-confirm">Send email + post</button>
             </div>
         </div>
     </div>
@@ -467,5 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
+
+<script src="<?= ROOT ?>/assets/js/announcements.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

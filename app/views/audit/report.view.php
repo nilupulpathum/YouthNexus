@@ -10,9 +10,8 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit Report';
 $pageDescription         = $pageDescription ?? 'Math verification, red flags and sign-off for the selected entity & financial year.';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=20260929'];
 
-$pageScripts = [ROOT . '/assets/js/annualaudit.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // ── Formatters ───────────────────────────────────────────────────
@@ -51,21 +50,21 @@ $steps = [
     <?php if (!empty($flashSuccess)): ?>
         <div class="audit-flash-alert audit-flash-success" role="alert">
             <div>&#10003;&nbsp; <?= htmlspecialchars($flashSuccess, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($flashError)): ?>
         <div class="audit-flash-alert audit-flash-error" role="alert">
             <div>&#9888;&nbsp; <?= htmlspecialchars($flashError, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
         </div>
     <?php endif; ?>
 
     <!-- ── Report header bar ─────────────────────────────────────── -->
     <div class="audit-report-top">
         <div class="audit-report-meta">
-            <h1><?= htmlspecialchars($audit->scope_details->title) ?></h1>
+            <h2><?= htmlspecialchars($audit->scope_details->title) ?></h2>
             <p>
                 FY <?= (int)$audit->financial_year ?> &nbsp;&bull;&nbsp;
                 <?= htmlspecialchars($audit->scope_details->subtitle) ?> &nbsp;&bull;&nbsp;
@@ -80,16 +79,16 @@ $steps = [
             <?php endif; ?>
         </div>
         <div class="audit-report-actions">
-            <a href="<?= ROOT ?>/audit" class="audit-btn audit-btn-light">&larr; All Audits</a>
-            <a href="<?= ROOT ?>/audit/export?audit_id=<?= (int)$audit->audit_id ?>" class="audit-btn audit-btn-light">
+            <a href="<?= ROOT ?>/audit" class="audit-btn audit-btn-light db-secondary-action">&larr; All Audits</a>
+            <a href="<?= ROOT ?>/audit/export?audit_id=<?= (int)$audit->audit_id ?>" class="audit-btn audit-btn-light db-secondary-action">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Summary
             </a>
             <?php if (!$locked): ?>
-                <form method="POST" action="<?= ROOT ?>/audit/rerun" class="audit-inline-form">
+                <form method="POST" action="<?= ROOT ?>/audit/rerun" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
                     <input type="hidden" name="audit_id" value="<?= (int)$audit->audit_id ?>">
-                    <button type="submit" class="audit-btn audit-btn-light">
+                    <button type="submit" class="audit-btn audit-btn-light db-secondary-action">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                         Re-run Check
                     </button>
@@ -130,10 +129,10 @@ $steps = [
                 <?php endif; ?>
             </h3>
             <?php if ($locked): ?>
-                <div class="num" class="audit-num-success">Signed Off</div>
+                <div class="num" style="color:#1e9e5a;">Signed Off</div>
                 <div class="sub green">&#10003;&nbsp; Ledger locked for FY <?= (int)$audit->financial_year ?></div>
             <?php elseif ($unresolvedCount > 0): ?>
-                <div class="num" class="audit-num-danger"><?= (int)$unresolvedCount ?></div>
+                <div class="num" style="color:#b91c1c;"><?= (int)$unresolvedCount ?></div>
                 <div class="sub red">&#9679;&nbsp; Unresolved red flag<?= $unresolvedCount !== 1 ? 's' : '' ?></div>
             <?php else: ?>
                 <div class="num">Ready</div>
@@ -196,7 +195,8 @@ $steps = [
                     </button>
                 <?php elseif ($mathPassed): ?>
                     <button type="button" class="audit-btn audit-btn-blue" onclick="openApproveModal()">
-                        &#128274; Approve &amp; Sign-Off Audit
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                        Approve &amp; Sign-Off Audit
                     </button>
                 <?php else: ?>
                     <button type="button" class="audit-btn audit-btn-disabled" disabled
@@ -210,7 +210,7 @@ $steps = [
 
     <?php if (empty($audit->red_flags)): ?>
         <div class="audit-empty-state">
-            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" class="audit-empty-icon"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <h3>No red flags detected</h3>
             <p>The ledger scan found no missing receipts, idle funds, or void-rate anomalies for this scope and year.</p>
         </div>
@@ -249,7 +249,7 @@ $steps = [
                             <?php if (!$locked): ?>
                                 <td>
                                     <?php if ($rf->status !== 'Resolved'): ?>
-                                        <form method="POST" action="<?= ROOT ?>/audit/resolveflag/<?= (int)$rf->red_flag_id ?>" class="audit-inline-form">
+                                        <form method="POST" action="<?= ROOT ?>/audit/resolveflag/<?= (int)$rf->red_flag_id ?>" style="display:inline;">
                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES) ?>">
                                             <button type="submit" class="audit-btn-outline">Resolve / Accept</button>
                                         </form>
@@ -276,7 +276,7 @@ $steps = [
 
         <div class="audit-modal-head">
             <div>
-                <h1>Request Clarification</h1>
+                <h2>Request Clarification</h2>
                 <p>Notify the entity's treasurer &amp; coordinator about the flagged items. The audit stays <b>Pending</b> until resolved.</p>
             </div>
             <button type="button" class="audit-close-x" onclick="closeClarifyModal()" aria-label="Close dialog">&times;</button>
@@ -348,7 +348,7 @@ $steps = [
 
         <div class="audit-modal-head">
             <div>
-                <h1>Approve &amp; Sign-Off Audit</h1>
+                <h2>Approve &amp; Sign-Off Audit</h2>
                 <p>Formal certification and financial-year lock for <?= htmlspecialchars($audit->scope_details->title) ?> — FY <?= (int)$audit->financial_year ?></p>
             </div>
             <button type="button" class="audit-close-x" onclick="closeApproveModal()" aria-label="Close dialog">&times;</button>
@@ -390,7 +390,10 @@ $steps = [
 
             <div class="audit-modal-foot-approve">
                 <button type="button" class="audit-btn-cancel" onclick="closeApproveModal()">Cancel</button>
-                <button type="submit" class="audit-btn-confirm">&#128274; Confirm Sign-Off &amp; Lock FY <?= (int)$audit->financial_year ?></button>
+                <button type="submit" class="audit-btn-confirm">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    Confirm Sign-Off &amp; Lock FY <?= (int)$audit->financial_year ?>
+                </button>
             </div>
         </form>
 
@@ -404,4 +407,6 @@ $steps = [
         csrfToken: <?= json_encode($csrf_token) ?>
     };
 </script>
+<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=20260929" defer></script>
+
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

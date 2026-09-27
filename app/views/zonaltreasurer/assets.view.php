@@ -1,7 +1,7 @@
 <?php
 /**
  * Zonal Assets — zonal-level asset inventory; register + transfer custody modals.
- * Reads and writes the live zonal inventory tables; backend contract unchanged.
+ * Presentation-only: no DB writes; backend contract unchanged.
  * UI follows the divisional standard (dw-* classes + shared partials).
  */
 $e = static function ($value) {
@@ -46,7 +46,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="dw-filter-grid">
             <div class="dw-field">
                 <label for="zonal-asset-search">Search assets</label>
-                <input id="zonal-asset-search" type="search" name="search" value="<?= $e($search) ?>" placeholder="Search asset or SKU">
+                <input id="zonal-asset-search" type="search" name="search" value="<?= $e($search) ?>" placeholder="Search asset, serial or custodian">
             </div>
             <div class="dw-field">
                 <label for="zonal-asset-category">Category</label>
@@ -54,7 +54,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="dw-field">
                 <label for="zonal-asset-status">Status</label>
-                <select id="zonal-asset-status" name="status"><option value="">All statuses</option><option value="available" <?= $status === 'available' ? 'selected' : '' ?>>Available</option></select>
+                <select id="zonal-asset-status" name="status"><option value="">All statuses</option><option value="available" <?= $status === 'available' ? 'selected' : '' ?>>Available</option><option value="inuse" <?= $status === 'inuse' ? 'selected' : '' ?>>In use</option></select>
             </div>
         </div>
         <div class="dw-filter-actions">
@@ -69,10 +69,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <h2 id="zonal-assets-list-heading">Zonal asset inventory</h2>
                 <p>Record ownership and custody of zonal assets. Physical asset verification is not a zonal workflow.</p>
             </div>
+            </div>
             <span class="dw-count"><?= count($assets) ?> <?= count($assets) === 1 ? 'asset' : 'assets' ?></span>
         </header>
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Asset</th>
@@ -166,8 +167,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <select id="asset-custodian" name="custodian"><option>Zone Store</option><?php foreach ($divisions as $divisionName): ?><option><?= $e($divisionName) ?></option><?php endforeach; ?></select>
                 </div>
                 <div class="dw-field">
-                    <label for="asset-transfer-note">Transfer note</label>
-                    <textarea id="asset-transfer-note" name="note" rows="3" maxlength="500" required></textarea>
+                    <label for="asset-note">Transfer note</label>
+                    <textarea id="asset-note" name="note" rows="3" maxlength="500" required></textarea>
                 </div>
             </form>
         </div>

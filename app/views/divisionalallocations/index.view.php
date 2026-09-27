@@ -10,19 +10,16 @@ $currentRoute = 'divisionalallocations';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
-    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-allocations.js',
 ];
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Division Balance', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
     ['value' => (string) $summary['pending'], 'label' => 'Pending Requests', 'note' => 'Awaiting review', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => (string) count(array_filter($history, static fn($allocation): bool => $allocation->status === 'Completed')), 'label' => 'Completed Allocations', 'note' => 'Recorded in allocation history', 'icon' => 'check', 'tone' => 'green'],
-    ['value' => (string) count($clubs), 'label' => 'Eligible Clubs', 'note' => 'Active or flagged in this division', 'icon' => 'users', 'tone' => 'blue'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page dtn-allocations" aria-label="Division fund allocations">
+<section class="dw-page" aria-label="Division fund allocations">
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>
@@ -37,22 +34,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
-  <div class="dw-page-actions" aria-label="Page actions">
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>><span aria-hidden="true">+</span> New Fund Allocation</button>
-  </div>
-
-  <div class="dw-summary-grid" aria-label="Allocation summary">
+  <div class="dw-summary-grid dw-summary-grid--two" aria-label="Allocation summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
     <?php endforeach; ?>
   </div>
 
   <div class="dw-toolbar" aria-label="Allocation tools">
-    <div class="dw-toolbar__search yn-search dw-search">
+    <div class="dw-toolbar__search dw-search dw-search--plain">
       <label class="visually-hidden" for="allocation-search">Search allocations</label>
-      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
+      <input id="allocation-search" type="search" placeholder="Search by club, reference, purpose, or category" data-allocation-search>
     </div>
-    <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="allocation-filters" aria-expanded="false">Filters</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
   </div>
 
   <section class="dw-filter-panel" id="allocation-filters" hidden>
@@ -114,8 +108,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
     </div>
     <div class="dw-filter-actions">
-      <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-allocation-filter-reset>Clear filters</button>
-      <button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-allocation-filter-apply>Apply filters</button>
+      <button class="dw-button dw-button--secondary" type="button" data-allocation-filter-reset>Reset all</button>
+      <button class="dw-button dw-button--primary" type="button" data-allocation-filter-apply>Apply filters</button>
     </div>
   </section>
 
@@ -124,10 +118,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2>Pending Fund Requests</h2><p>Requests submitted by clubs in <?= $e($division->division_name) ?></p></div>
       <span class="dw-count" data-allocation-count="pending"><?= count($pendingRequests) ?> pending</span>
     </header>
-    <div class="yn-table-wrap dw-table-wrap">
-      <table class="yn-table dw-table">
+    <div class="dw-table-wrap">
+      <table class="dw-table">
         <thead><tr><th>Club</th><th>Purpose</th><th>Category</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
-        <tbody id="allocation-pending-rows" data-allocation-rows="pending">
+        <tbody data-allocation-rows="pending">
           <?php foreach ($pendingRequests as $request): ?>
             <?php $searchText = strtolower(implode(' ', [$request->club_name, $request->reference_no, $request->purpose_description, $request->fund_category])); ?>
             <tr data-allocation-row
@@ -145,7 +139,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               <td><?= $e(date('d M Y', strtotime($request->created_at))) ?></td>
               <td>
                 <div class="dw-row-actions">
-                  <button class="yn-btn yn-btn--approve dw-button" type="button"
+                  <button class="dw-button dw-button--primary" type="button"
                           data-review-allocation
                           data-modal-open="review-allocation"
                           data-action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>"
@@ -158,7 +152,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                   <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
                     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
                     <input type="hidden" name="decision" value="reject">
-                    <button class="yn-btn yn-btn--reject dw-button" type="submit">Reject</button>
+                    <button class="dw-button dw-button--danger" type="submit">Reject</button>
                   </form>
                 </div>
               </td>
@@ -167,12 +161,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <nav class="yn-pagination" aria-label="Pending allocation pages" data-yn-pagination data-yn-page-target="allocation-pending-rows" data-yn-page-size="10" hidden></nav>
     <?php
     $emptyTitle = 'No pending requests found';
     $emptyMessage = 'There are no club fund requests matching the current search and filters.';
     $emptyVisible = count($pendingRequests) === 0;
-    require __DIR__ . '/../partials/empty-state.view.php';
+    require __DIR__ . '/../partials/divisional/empty-state.view.php';
     ?>
   </section>
 
@@ -181,10 +174,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <div><h2>Allocation History</h2><p>Reviewed and completed club allocations</p></div>
       <span class="dw-count" data-allocation-count="history"><?= count($history) ?> records</span>
     </header>
-    <div class="yn-table-wrap dw-table-wrap">
-      <table class="yn-table dw-table">
+    <div class="dw-table-wrap">
+      <table class="dw-table">
         <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody id="allocation-history-rows" data-allocation-rows="history">
+        <tbody data-allocation-rows="history">
           <?php foreach ($history as $allocation): ?>
             <?php $searchText = strtolower(implode(' ', [$allocation->club_name, $allocation->reference_no, $allocation->purpose_description, $allocation->fund_category])); ?>
             <tr data-allocation-row
@@ -207,28 +200,26 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </tbody>
       </table>
     </div>
-    <nav class="yn-pagination" aria-label="Allocation history pages" data-yn-pagination data-yn-page-target="allocation-history-rows" data-yn-page-size="10" hidden></nav>
     <?php
     $emptyTitle = 'No allocation history found';
     $emptyMessage = 'Create an allocation or change the current search and filters.';
     $emptyVisible = count($history) === 0;
-    require __DIR__ . '/../partials/empty-state.view.php';
+    require __DIR__ . '/../partials/divisional/empty-state.view.php';
     ?>
   </section>
 </section>
 
 <div class="dw-modal" id="new-allocation" role="dialog" aria-modal="true" aria-labelledby="new-allocation-title" aria-hidden="true" hidden>
   <div class="dw-modal__backdrop" data-modal-close></div>
-  <form class="dw-modal__dialog dtn-allocation-dialog" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
+  <form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
     <header class="dw-modal__header">
-      <span class="dtn-allocation-dialog__mark" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <div class="dtn-allocation-dialog__intro"><h2 id="new-allocation-title">New Fund Allocation</h2><p>Transfer funds from the division ledger to an eligible club.</p></div>
+      <h2 id="new-allocation-title">New Fund Allocation</h2>
       <button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
     </header>
     <div class="dw-modal__body">
       <div class="dw-field dw-field--span-2">
-        <label for="allocation-club">Target Club <span class="yn-required" aria-hidden="true">*</span></label>
+        <label for="allocation-club">Club</label>
         <select id="allocation-club" name="club_id" required>
           <option value="">Select a club</option>
           <?php foreach ($clubs as $club): ?>
@@ -236,20 +227,20 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="dw-detail-box dw-field--span-2 dtn-allocation-dialog__account">
-        <span class="dtn-allocation-dialog__account-icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-        <div><span>Source account</span><strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong></div>
-      </div>
-      <div class="dw-field"><label for="allocation-amount">Disbursement Amount (LKR) <span class="yn-required" aria-hidden="true">*</span></label><input id="allocation-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" placeholder="0.00" required><small>Enter the amount in Sri Lankan rupees.</small></div>
-      <div class="dw-field"><label for="allocation-date">Allocation Date</label><input id="allocation-date" name="transfer_date" type="date" value="<?= date('Y-m-d') ?>" required></div>
+      <div class="dw-field"><label for="allocation-amount">Amount (Rs.)</label><input id="allocation-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
       <div class="dw-field"><label for="allocation-category">Fund Category</label><input id="allocation-category" name="fund_category" type="text" maxlength="100" required></div>
+      <div class="dw-field"><label for="allocation-date">Allocation Date</label><input id="allocation-date" name="transfer_date" type="date" value="<?= date('Y-m-d') ?>" required></div>
       <div class="dw-field">
         <label for="allocation-method">Disbursement Method</label>
         <select id="allocation-method" name="disbursement_method" required><option value="RTGS">Bank Transfer</option><option value="ChequeSLIPS">Cheque / SLIPS</option></select>
       </div>
-      <div class="dw-field dw-field--span-2"><label for="allocation-purpose">Purpose &amp; Description</label><textarea id="allocation-purpose" name="purpose_description" maxlength="2000" placeholder="Describe the club activity and intended use of these funds" required></textarea></div>
+      <div class="dw-field dw-field--span-2"><label for="allocation-purpose">Purpose</label><textarea id="allocation-purpose" name="purpose_description" maxlength="2000" required></textarea></div>
+      <div class="dw-detail-box dw-field--span-2">
+        <span>Source account</span>
+        <strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong>
+      </div>
     </div>
-    <footer class="dw-modal__footer"><span class="dtn-allocation-dialog__note">Transfer from <?= $e($division->division_name) ?> division ledger</span><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
+    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
   </form>
 </div>
 
@@ -276,7 +267,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <span>Approving this request will deduct the amount from the division ledger and credit the club ledger.</span>
       </div>
     </div>
-    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit">Confirm Allocation</button></footer>
+    <footer class="dw-modal__footer"><button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="dw-button dw-button--primary" type="submit">Confirm Allocation</button></footer>
   </form>
 </div>
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
