@@ -6,6 +6,7 @@
  * $title, $pageTitle, $pageDescription, $currentRoute, $userRole,
  * $userName, $userEmail, and $unreadNotificationCount.
  */
+require_once __DIR__ . '/../partials/icons.view.php';
 $title = $title ?? 'Dashboard — YouthNexus';
 $pageTitle = $pageTitle ?? 'Dashboard';
 $pageDescription = $pageDescription ?? '';
