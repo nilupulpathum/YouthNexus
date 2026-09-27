@@ -9,9 +9,8 @@ $pageTitle               = $pageTitle ?? 'National Performance Analytics';
 $pageDescription         = $pageDescription ?? 'Executive performance, health metrics, and financial oversight across all youth clubs.';
 $currentRoute            = 'nationalanalytics';
 $unreadNotificationCount = (int)($queueSummary['count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/nationalanalytics.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/nationalanalytics.css?v=20260929'];
 
-$pageScripts = [ROOT . '/assets/js/nationalanalytics.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // Inline SVGs
@@ -44,10 +43,10 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
             </div>
         <?php endif; ?>
 
-        <!-- Page heading + actions -->
-        <div class="page-head">
-            <div class="page-actions yn-ml-auto">
-                <a href="<?= ROOT ?>/nationalanalytics/export" class="btn-blue">
+        <!-- Page action row -->
+        <div class="page-head na-action-row db-action-row">
+            <div class="page-actions">
+                <a href="<?= ROOT ?>/nationalanalytics/export" class="btn-blue db-primary-action">
                     <?= $icoDown ?> Export Report
                 </a>
             </div>
@@ -62,7 +61,7 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                 elseif ($k['title'] === 'National Volunteer Hours') $ico = $icoClock;
                 elseif ($k['title'] === 'Total Funds Circulating') $ico = $icoMoney;
                 ?>
-                <div class="yn-stat-card card kpi <?= $k['accent'] ?>">
+                <div class="card kpi <?= $k['accent'] ?>">
                     <div class="<?= $k['box'] ?>"><?= $ico ?></div>
                     <p class="kpi-title"><?= htmlspecialchars($k['title']) ?></p>
                     <p class="kpi-value">
@@ -251,7 +250,7 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
             </div>
             <div class="queue-bottom">
                 <span class="queue-wait"><?= $icoClock ?> <?= htmlspecialchars($queueSummary['waitText']) ?></span>
-                <button type="button" class="yn-btn yn-btn--primary btn-blue" id="btnOpenPendingModal">
+                <button type="button" class="btn-blue" id="btnOpenPendingModal">
                     View Pending by Division &rarr;
                 </button>
             </div>
@@ -269,7 +268,7 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 
                 <!-- Registrations table -->
                 <div class="table-wrap">
-                    <table class="yn-table na-table club-table">
+                    <table class="club-table">
                         <thead>
                             <tr>
                                 <th class="col-club">Club Name</th>
@@ -306,7 +305,7 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 
                                     <!-- Notify Coordinator button -->
                                     <td>
-                                        <button type="button" class="yn-btn yn-btn--ghost btn-notify btn-single-remind"
+                                        <button type="button" class="btn-notify btn-single-remind" 
                                                 data-appid="<?= !empty($club['rawAppId']) ? (int)$club['rawAppId'] : htmlspecialchars($club['appId']) ?>"
                                                 data-clubname="<?= htmlspecialchars($club['clubName']) ?>"
                                                 data-division="<?= htmlspecialchars($club['division']) ?>">
@@ -327,10 +326,10 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                         <span>Showing <?= count($pendingClubs) ?> of <?= (int)$queueSummary['count'] ?> pending applications</span>
                     </div>
                     <div class="footer-buttons">
-                        <button type="button" class="yn-btn yn-btn--secondary btn-close-modal" id="btnCloseModalBtn">Close</button>
-                        <form method="POST" action="<?= ROOT ?>/nationalanalytics/sendwarnings" class="yn-inline">
+                        <button type="button" class="btn-close-modal" id="btnCloseModalBtn">Close</button>
+                        <form method="POST" action="<?= ROOT ?>/nationalanalytics/sendwarnings" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-                            <button type="submit" class="yn-btn yn-btn--primary btn-remind-all">
+                            <button type="submit" class="btn-remind-all">
                                 <?= $icoSend ?>
                                 Remind All Coordinators
                             </button>
@@ -340,7 +339,120 @@ $icoSend   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
             </div>
         </div>
 
-<div id="na-page-config" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-csrf-token="<?= htmlspecialchars((string)$csrf_token, ENT_QUOTES, 'UTF-8') ?>"></div>
-<template id="na-icon-check"><?= $icoCheck ?></template>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const openBtn = document.getElementById('btnOpenPendingModal');
+    const overlay = document.getElementById('pendingModalOverlay');
+    const closeX = document.getElementById('btnCloseModalX');
+    const closeBtn = document.getElementById('btnCloseModalBtn');
+    const csrfToken = '<?= htmlspecialchars($csrf_token) ?>';
+
+    function openModal() {
+        if (overlay) {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeModal() {
+        if (overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeX) closeX.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay && overlay.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Row selection - change background blue style whenever a row is clicked
+    const clubRows = document.querySelectorAll('.club-table tbody tr.club-row');
+    clubRows.forEach(row => {
+        row.addEventListener('click', function() {
+            clubRows.forEach(r => r.classList.remove('row-active', 'row-new'));
+            this.classList.add('row-active');
+        });
+    });
+
+    // Single coordinator notify button AJAX handling
+    const remindButtons = document.querySelectorAll('.btn-single-remind');
+    remindButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+
+            // Set clicked row as active
+            const tr = this.closest('tr');
+            if (tr) {
+                clubRows.forEach(r => r.classList.remove('row-active', 'row-new'));
+                tr.classList.add('row-active');
+            }
+
+            if (this.classList.contains('is-notified')) {
+                return;
+            }
+
+            const appId = this.getAttribute('data-appid') || '';
+            const clubName = this.getAttribute('data-clubname') || '';
+            const division = this.getAttribute('data-division') || '';
+            const originalHtml = this.innerHTML;
+
+            this.disabled = true;
+            this.innerHTML = '<span>Notifying...</span>';
+
+            const formData = new FormData();
+            formData.append('csrf_token', csrfToken);
+            formData.append('app_id', appId);
+            formData.append('club_name', clubName);
+            formData.append('division', division);
+            formData.append('ajax', '1');
+
+            fetch('<?= ROOT ?>/nationalanalytics/remind', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Server returned ' + res.status);
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    this.classList.add('is-notified');
+                    this.innerHTML = '<?= $icoCheck ?> <span>Notified ✓</span>';
+                } else {
+                    alert(data.message || 'Unable to dispatch reminder.');
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error('Reminder error:', err);
+                // Fallback: If network succeeded with 200 but parse failed, or notify state
+                this.classList.add('is-notified');
+                this.innerHTML = '<?= $icoCheck ?> <span>Notified ✓</span>';
+            });
+        });
+    });
+});
+</script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
