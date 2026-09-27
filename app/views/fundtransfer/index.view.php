@@ -107,41 +107,70 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <form method="GET" action="<?= ROOT ?>/<?= htmlspecialchars($listRoute) ?>" id="ftFilterForm" class="ft-filter-bar">
-        <div class="ft-search-box-wrap">
-            <input type="text" name="search" class="ft-filter-input" placeholder="Search recipient, reference, or purpose..." value="<?= htmlspecialchars($activeSearch ?? '', ENT_QUOTES, 'UTF-8') ?>">
-            <svg class="ft-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <!-- Search & Filters (attendance-style toolbar) -->
+    <?php
+    $ftActiveFilters = 0;
+    if ($activeZone > 0) $ftActiveFilters++;
+    if (!empty($activeQuarter)) $ftActiveFilters++;
+    if ($activeStatus !== 'All') $ftActiveFilters++;
+    ?>
+    <form method="GET" action="<?= ROOT ?>/<?= htmlspecialchars($listRoute) ?>" id="ftFilterForm">
+        <div class="ft-toolbar">
+            <div class="ft-search-group">
+                <div class="ft-search-input-wrapper">
+                    <input type="text" name="search" id="ftSearchInput" class="ft-search-input" placeholder="Search recipient, reference, or purpose..." aria-label="Search fund transfers" autocomplete="off" value="<?= htmlspecialchars($activeSearch ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+                <span class="ft-search-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+            </div>
+            <button type="button" class="ft-filter-btn" id="ftFilterBtn" aria-expanded="<?= $ftActiveFilters > 0 ? 'true' : 'false' ?>" aria-controls="ftFilterPanel">
+                Filters
+                <span class="ft-filter-count<?= $ftActiveFilters > 0 ? '' : ' hidden' ?>" id="ftFilterCount"><?= $ftActiveFilters ?></span>
+            </button>
         </div>
 
-        <select name="zone_id" class="ft-filter-select" id="ftFilterZone">
-            <option value=""><?= $isZonalDemo ? 'All Divisions' : 'All Zones' ?> (<?= count($zones) ?>)</option>
-            <?php foreach ($zones as $z): ?>
-                <option value="<?= (int)$z->zonal_id ?>" <?= $activeZone === (int)$z->zonal_id ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' — ' . htmlspecialchars($z->province) : '' ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <div class="ft-filter-panel<?= $ftActiveFilters > 0 ? ' open' : '' ?>" id="ftFilterPanel">
+            <div class="ft-filter-grid">
+                <div class="ft-filter-field">
+                    <label for="ftFilterZone"><?= $isZonalDemo ? 'TARGET DIVISION' : 'ZONAL OFFICE' ?></label>
+                    <select name="zone_id" id="ftFilterZone">
+                        <option value=""><?= $isZonalDemo ? 'All Divisions' : 'All Zones' ?> (<?= count($zones) ?>)</option>
+                        <?php foreach ($zones as $z): ?>
+                            <option value="<?= (int)$z->zonal_id ?>" <?= $activeZone === (int)$z->zonal_id ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' — ' . htmlspecialchars($z->province) : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-        <select name="quarter" class="ft-filter-select" id="ftFilterQuarter">
-            <option value="">All Quarters (current: <?= htmlspecialchars($qLabel) ?>)</option>
-            <option value="Q1" <?= $activeQuarter === 'Q1' ? 'selected' : '' ?>>Quarter 1 (Q1 <?= date('Y') ?>)</option>
-            <option value="Q2" <?= $activeQuarter === 'Q2' ? 'selected' : '' ?>>Quarter 2 (Q2 <?= date('Y') ?>)</option>
-            <option value="Q3" <?= $activeQuarter === 'Q3' ? 'selected' : '' ?>>Quarter 3 (Q3 <?= date('Y') ?>)</option>
-            <option value="Q4" <?= $activeQuarter === 'Q4' ? 'selected' : '' ?>>Quarter 4 (Q4 <?= date('Y') ?>)</option>
-        </select>
+                <div class="ft-filter-field">
+                    <label for="ftFilterQuarter">FISCAL QUARTER</label>
+                    <select name="quarter" id="ftFilterQuarter">
+                        <option value="">All Quarters (current: <?= htmlspecialchars($qLabel) ?>)</option>
+                        <option value="Q1" <?= $activeQuarter === 'Q1' ? 'selected' : '' ?>>Quarter 1 (Q1 <?= date('Y') ?>)</option>
+                        <option value="Q2" <?= $activeQuarter === 'Q2' ? 'selected' : '' ?>>Quarter 2 (Q2 <?= date('Y') ?>)</option>
+                        <option value="Q3" <?= $activeQuarter === 'Q3' ? 'selected' : '' ?>>Quarter 3 (Q3 <?= date('Y') ?>)</option>
+                        <option value="Q4" <?= $activeQuarter === 'Q4' ? 'selected' : '' ?>>Quarter 4 (Q4 <?= date('Y') ?>)</option>
+                    </select>
+                </div>
 
-        <select name="status" class="ft-filter-select" id="ftFilterStatus">
-            <option value="All" <?= $activeStatus === 'All' ? 'selected' : '' ?>>All Statuses</option>
-            <option value="Processing" <?= $activeStatus === 'Processing' ? 'selected' : '' ?>>Processing</option>
-            <option value="Completed" <?= $activeStatus === 'Completed' ? 'selected' : '' ?>>Completed</option>
-            <option value="Failed" <?= $activeStatus === 'Failed' ? 'selected' : '' ?>>Failed</option>
-        </select>
+                <div class="ft-filter-field">
+                    <label for="ftFilterStatus">TRANSFER STATUS</label>
+                    <select name="status" id="ftFilterStatus">
+                        <option value="All" <?= $activeStatus === 'All' ? 'selected' : '' ?>>All Statuses</option>
+                        <option value="Processing" <?= $activeStatus === 'Processing' ? 'selected' : '' ?>>Processing</option>
+                        <option value="Completed" <?= $activeStatus === 'Completed' ? 'selected' : '' ?>>Completed</option>
+                        <option value="Failed" <?= $activeStatus === 'Failed' ? 'selected' : '' ?>>Failed</option>
+                    </select>
+                </div>
+            </div>
 
-        <button type="submit" class="ft-btn ft-btn-sm ft-btn-filter">Filter</button>
-        <?php if (!empty($activeSearch) || $activeZone > 0 || $activeStatus !== 'All' || !empty($activeQuarter)): ?>
-            <a href="<?= ROOT ?>/<?= htmlspecialchars($listRoute) ?>" class="ft-btn ft-btn-sm ft-btn-clear">Reset</a>
-        <?php endif; ?>
+            <div class="ft-filter-actions">
+                <button type="submit" class="ft-btn ft-btn-sm ft-btn-filter">Apply Filters</button>
+                <a href="<?= ROOT ?>/<?= htmlspecialchars($listRoute) ?>" class="ft-btn ft-btn-sm ft-btn-clear">Reset</a>
+            </div>
+        </div>
     </form>
 
     <!-- Transfers Table -->
@@ -456,6 +485,18 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         listRoute: <?= json_encode($listRoute) ?>,
         csrfToken: <?= json_encode($csrf_token) ?>,
     };
+
+    // Filter panel toggle (attendance-style)
+    (function () {
+        var filterBtn   = document.getElementById('ftFilterBtn');
+        var filterPanel = document.getElementById('ftFilterPanel');
+        if (filterBtn && filterPanel) {
+            filterBtn.addEventListener('click', function () {
+                var open = filterPanel.classList.toggle('open');
+                filterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+    })();
 </script>
 <script src="<?= ROOT ?>/assets/js/fundtransfer.js" defer></script>
 

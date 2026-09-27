@@ -112,11 +112,11 @@
 }
 .audit-btn-blue {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
 }
 .audit-btn-blue:hover {
     background: #164bd8;
-    color: #fff;
+    color: #fff !important;
 }
 
 /* ---- Stat cards ---- */
@@ -567,7 +567,7 @@
 }
 .audit-btn-confirm {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -700,7 +700,7 @@
 }
 .audit-btn-send {
     background: #1e5eff;
-    color: #fff;
+    color: #fff !important;
     display: flex;
     align-items: center;
     gap: 8px;
