@@ -16,7 +16,7 @@ $summaryCards = [
 ];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Divisional asset management">
+<section class="dw-page dtn-assets" aria-label="Divisional asset management">
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span>
@@ -25,7 +25,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
   <div class="dw-page-actions" aria-label="Page actions">
     <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset">Add Asset</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset"><span aria-hidden="true">+</span> Add Asset</button>
   </div>
 
   <div class="dw-summary-grid" aria-label="Asset summary">
@@ -66,13 +66,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php $emptyTitle = 'No pending club requests'; $emptyMessage = 'New asset requests from clubs appear here.'; $emptyVisible = !$clubRequests; $emptyIcon = 'check'; $emptyAttribute = 'data-club-request-empty'; require __DIR__ . '/../partials/empty-state.view.php'; ?>
   </section>
 
-  <section class="dw-panel" aria-labelledby="division-inventory-title">
-    <header class="dw-panel__header"><div><h2 id="division-inventory-title">Division Inventory</h2><p>Assets currently held by the division store</p></div><span class="dw-count" data-inventory-count><?= count($inventory) ?> items</span></header>
+  <section class="dw-panel dtn-assets__inventory" aria-labelledby="division-inventory-title">
+    <header class="dw-panel__header"><div><h2 id="division-inventory-title">Divisional Asset Catalog &amp; Club Allocation</h2><p>Assets currently held by the division store and available to clubs</p></div><span class="dw-count" data-inventory-count><?= count($inventory) ?> items</span></header>
     <div class="yn-table-wrap dw-table-wrap"><table class="yn-table dw-table"><thead><tr><th>Item</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Custodian</th><th>Updated</th><th>Action</th></tr></thead><tbody id="asset-inventory-rows" data-inventory-body>
       <?php foreach ($inventory as $item): ?>
         <?php $search = strtolower(implode(' ', [$item->item_name, $item->sku, $item->category, $item->specifications])); ?>
         <tr data-asset-row data-section="inventory" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($item->category)) ?>" data-status="" data-quantity="<?= (int) $item->quantity ?>" data-date="<?= $e(substr($item->updated_at, 0, 10)) ?>">
-          <td class="dw-table__description"><?= $e($item->item_name) ?></td><td class="dw-table__reference"><?= $e($item->sku) ?></td><td><?= $e($item->category) ?></td><td><?= (int) $item->quantity ?> <?= $e($item->unit) ?></td><td>Division Store</td><td><?= $e(date('d M Y', strtotime($item->updated_at))) ?></td>
+          <td class="dw-table__description"><strong><?= $e($item->item_name) ?></strong><small><?= $e($item->specifications ?: $item->sku) ?></small></td><td class="dw-table__reference"><?= $e($item->sku) ?></td><td><?= $e($item->category) ?></td><td><?= (int) $item->quantity ?> <?= $e($item->unit) ?></td><td>Division Store</td><td><?= $e(date('d M Y', strtotime($item->updated_at))) ?></td>
           <td><div class="dw-row-actions"><button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button" data-adjust-asset data-modal-open="adjust-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-quantity="<?= (int) $item->quantity ?>">Adjust</button><button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button" data-transfer-asset data-modal-open="transfer-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-available="<?= (int) $item->quantity ?>">Transfer</button><button class="yn-btn yn-btn--ghost dw-button dw-button--ghost" type="button" data-retire-asset data-modal-open="retire-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-available="<?= (int) $item->quantity ?>">Retire</button></div></td>
         </tr>
       <?php endforeach; ?>

@@ -16,11 +16,13 @@ $pageScripts = [
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Division Balance', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
     ['value' => (string) $summary['pending'], 'label' => 'Pending Requests', 'note' => 'Awaiting review', 'icon' => 'clock', 'tone' => 'amber'],
+    ['value' => (string) count(array_filter($history, static fn($allocation): bool => $allocation->status === 'Completed')), 'label' => 'Completed Allocations', 'note' => 'Recorded in allocation history', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) count($clubs), 'label' => 'Eligible Clubs', 'note' => 'Active or flagged in this division', 'icon' => 'users', 'tone' => 'blue'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Division fund allocations">
+<section class="dw-page dtn-allocations" aria-label="Division fund allocations">
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>
@@ -36,10 +38,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php endif; ?>
 
   <div class="dw-page-actions" aria-label="Page actions">
-    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>>New Allocation</button>
+    <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-allocation"<?= $sourceAccount ? '' : ' disabled' ?>><span aria-hidden="true">+</span> New Fund Allocation</button>
   </div>
 
-  <div class="dw-summary-grid dw-summary-grid--two" aria-label="Allocation summary">
+  <div class="dw-summary-grid" aria-label="Allocation summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
     <?php endforeach; ?>
@@ -217,15 +219,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div class="dw-modal" id="new-allocation" role="dialog" aria-modal="true" aria-labelledby="new-allocation-title" aria-hidden="true" hidden>
   <div class="dw-modal__backdrop" data-modal-close></div>
-  <form class="dw-modal__dialog" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
+  <form class="dw-modal__dialog dtn-allocation-dialog" action="<?= ROOT ?>/divisionalallocations/create" method="post" data-allocation-form>
     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
     <header class="dw-modal__header">
-      <h2 id="new-allocation-title">New Fund Allocation</h2>
+      <span class="dtn-allocation-dialog__mark" aria-hidden="true"><?= yn_icon('file') ?></span>
+      <div class="dtn-allocation-dialog__intro"><h2 id="new-allocation-title">New Fund Allocation</h2><p>Transfer funds from the division ledger to an eligible club.</p></div>
       <button class="dw-modal__close" type="button" data-modal-close aria-label="Close"><?= yn_icon('close') ?></button>
     </header>
     <div class="dw-modal__body">
       <div class="dw-field dw-field--span-2">
-        <label for="allocation-club">Club</label>
+        <label for="allocation-club">Target Club <span class="yn-required" aria-hidden="true">*</span></label>
         <select id="allocation-club" name="club_id" required>
           <option value="">Select a club</option>
           <?php foreach ($clubs as $club): ?>
@@ -233,20 +236,20 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="dw-field"><label for="allocation-amount">Amount (Rs.)</label><input id="allocation-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
-      <div class="dw-field"><label for="allocation-category">Fund Category</label><input id="allocation-category" name="fund_category" type="text" maxlength="100" required></div>
+      <div class="dw-detail-box dw-field--span-2 dtn-allocation-dialog__account">
+        <span class="dtn-allocation-dialog__account-icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+        <div><span>Source account</span><strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong></div>
+      </div>
+      <div class="dw-field"><label for="allocation-amount">Disbursement Amount (LKR) <span class="yn-required" aria-hidden="true">*</span></label><input id="allocation-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" placeholder="0.00" required><small>Enter the amount in Sri Lankan rupees.</small></div>
       <div class="dw-field"><label for="allocation-date">Allocation Date</label><input id="allocation-date" name="transfer_date" type="date" value="<?= date('Y-m-d') ?>" required></div>
+      <div class="dw-field"><label for="allocation-category">Fund Category</label><input id="allocation-category" name="fund_category" type="text" maxlength="100" required></div>
       <div class="dw-field">
         <label for="allocation-method">Disbursement Method</label>
         <select id="allocation-method" name="disbursement_method" required><option value="RTGS">Bank Transfer</option><option value="ChequeSLIPS">Cheque / SLIPS</option></select>
       </div>
-      <div class="dw-field dw-field--span-2"><label for="allocation-purpose">Purpose</label><textarea id="allocation-purpose" name="purpose_description" maxlength="2000" required></textarea></div>
-      <div class="dw-detail-box dw-field--span-2">
-        <span>Source account</span>
-        <strong><?= $sourceAccount ? $e($sourceAccount->account_label . ' - ' . $sourceAccount->bank_name) : 'Unavailable' ?></strong>
-      </div>
+      <div class="dw-field dw-field--span-2"><label for="allocation-purpose">Purpose &amp; Description</label><textarea id="allocation-purpose" name="purpose_description" maxlength="2000" placeholder="Describe the club activity and intended use of these funds" required></textarea></div>
     </div>
-    <footer class="dw-modal__footer"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
+    <footer class="dw-modal__footer"><span class="dtn-allocation-dialog__note">Transfer from <?= $e($division->division_name) ?> division ledger</span><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary" type="submit"<?= $sourceAccount ? '' : ' disabled' ?>>Confirm Allocation</button></footer>
   </form>
 </div>
 
