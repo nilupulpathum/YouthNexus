@@ -1,0 +1,184 @@
+<?php
+/**
+ * Club Registration Approval — Divisional Coordinator dashboard
+ *
+ * Uses the shared dashboard layout shell (dashboard-start / dashboard-end).
+ * Only page-specific content lives here.
+ */
+$title           = $title ?? 'Approve Club Registration — YouthNexus';
+$pageTitle       = 'Approve Club Registration';
+$pageDescription = 'Review and approve new club applications';
+$currentRoute    = 'clubregistrationapproval';
+
+$unreadNotificationCount = (int)($counts['Pending'] ?? 0);
+$pageStyles              = [
+    ROOT . '/assets/css/clubregistrationapproval.css',
+    ROOT . '/assets/css/divisional-summary-standard.css',
+];
+$pageScripts             = [ROOT . '/assets/js/clubregistrationapproval.js'];
+
+require_once __DIR__ . '/../partials/icons.view.php';
+require __DIR__ . '/../layouts/dashboard-start.view.php';
+?>
+
+    <!-- ============ Stat cards ============ -->
+    <div class="cr-stats">
+        <button type="button" class="yn-stat-card cr-stat-card" data-filter="Pending" id="statPending">
+            <div class="cr-stat-icon pending">
+                <?= yn_icon('clock') ?>
+            </div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Pending'] ?></span><span class="cr-stat-label">Pending Applications</span></span>
+        </button>
+        <button type="button" class="yn-stat-card cr-stat-card is-active" data-filter="Approved" id="statApproved">
+            <div class="cr-stat-icon approved">
+                <?= yn_icon('check') ?>
+            </div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Approved'] ?></span><span class="cr-stat-label">Approved Applications</span></span>
+        </button>
+        <button type="button" class="yn-stat-card cr-stat-card" data-filter="Rejected" id="statRejected">
+            <div class="cr-stat-icon rejected">
+                <?= yn_icon('close') ?>
+            </div>
+            <span class="cr-stat-content"><span class="cr-stat-value"><?= (int)$counts['Rejected'] ?></span><span class="cr-stat-label">Rejected Applications</span></span>
+        </button>
+    </div>
+
+    <!-- ============ Search + filter bar ============ -->
+    <div class="cr-toolbar">
+        <div class="cr-search-group">
+            <div class="cr-search-input-wrapper">
+                <input type="text" id="crSearchInput" placeholder="Search applications...">
+                <span class="cr-search-icon">
+                    <?= yn_icon('search') ?>
+                </span>
+            </div>
+        </div>
+        <button type="button" class="cr-filter-btn yn-filter-toggle" id="crFilterBtn" aria-expanded="false">
+            <?= yn_icon('filter') ?> Filters
+        </button>
+    </div>
+
+    <!-- Filter panel: hidden until "Filters" is clicked -->
+    <div class="cr-filter-panel" id="crFilterPanel">
+        <h2 class="yn-filter-heading">Advanced Filters for Club Registration Applications</h2>
+        <div class="cr-filter-field">
+            <label for="crFilterStatus">Status</label>
+            <select id="crFilterStatus">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="cr-filter-field">
+            <label for="crFilterDocs">Document Completeness</label>
+            <select id="crFilterDocs">
+                <option value="">All</option>
+                <option value="complete">Complete</option>
+                <option value="incomplete">Incomplete</option>
+            </select>
+        </div>
+        <div class="cr-filter-field">
+            <label for="crFilterSubmittedFrom">Submitted from</label>
+            <input type="date" id="crFilterSubmittedFrom">
+        </div>
+        <div class="cr-filter-actions">
+            <button type="button" class="cr-btn yn-filter-clear" id="crClearFilterBtn">Clear filters</button>
+            <button type="button" class="cr-btn cr-btn-primary yn-filter-apply" id="crAddFilterBtn">Apply filters</button>
+        </div>
+    </div>
+
+    <div class="cr-section-header-row" id="crSectionHeaderRow">
+        <h3 class="cr-section-heading">Applications</h3>
+        <button type="button" class="cr-sort-toggle-btn" id="crSortToggleBtn" data-sort="asc">Sort: Oldest First</button>
+    </div>
+
+    <!-- ============ Application cards grid ============ -->
+    <div class="cr-grid" id="crGrid">
+        <?php if (empty($applications)): ?>
+            <div class="cr-empty cr-empty--full-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                <p>No pending applications right now.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($applications as $app):
+                $submittedDaysAgo = (int)((time() - strtotime($app->submitted_at)) / 86400);
+                $isWaitingLong = $submittedDaysAgo > 7;
+            ?>
+            <div class="cr-card"
+                 data-name="<?= htmlspecialchars(strtolower($app->club_name)) ?>"
+                 data-proposer="<?= htmlspecialchars(strtolower($app->proposer_name)) ?>"
+                 data-submitted="<?= strtotime($app->submitted_at) ?>"
+                 data-submitted-date="<?= htmlspecialchars(substr($app->submitted_at, 0, 10), ENT_QUOTES, 'UTF-8') ?>"
+                 data-status="Pending"
+                 data-docstatus="<?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
+                <div class="cr-card-top">
+                    <?php if ($app->documents_complete): ?>
+                        <div class="cr-card-icon complete" title="Documents Complete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="16 13 12 17 9 14"/></svg>
+                        </div>
+                    <?php else: ?>
+                        <div class="cr-card-icon incomplete" title="Documents Incomplete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                        </div>
+                    <?php endif; ?>
+                    <span class="cr-badge pending">Pending</span>
+                </div>
+
+                <div class="cr-card-date<?= $isWaitingLong ? ' cr-waiting-long' : '' ?>">
+                    SUBMITTED <?= strtoupper(date('M j, Y', strtotime($app->submitted_at))) ?><?= $isWaitingLong ? ' · ' . $submittedDaysAgo . ' DAYS AGO' : '' ?>
+                </div>
+
+                <div class="cr-card-name"><?= htmlspecialchars($app->club_name) ?></div>
+
+                <div class="cr-card-proposer">
+                    Proposer: <?= htmlspecialchars($app->proposer_name) ?><?= (!empty($app->proposer_nic) && !empty($app->proposer_eligible)) ? ' — NIC Verified' : '' ?>
+                </div>
+
+                <div class="cr-card-docs <?= $app->documents_complete ? 'complete' : 'incomplete' ?>">
+                    Documents: <?= $app->documents_complete ? 'Complete' : htmlspecialchars($app->missing_summary) ?>
+                </div>
+
+                <div class="cr-card-footer">
+                    <button type="button" class="cr-btn cr-review-btn db-view-button" data-id="<?= (int)$app->application_id ?>">View Details</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+<!-- ============ Review Modal (populated via JS) ============ -->
+<div class="cr-modal-backdrop" id="crModalBackdrop">
+    <div class="cr-modal" id="crModalContent">
+        <!-- filled dynamically by clubregistrationapproval.js -->
+    </div>
+</div>
+
+<!-- ============ Dual-Sided NIC Verification Modal ============ -->
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crNicModalBackdrop">
+    <div class="cr-modal cr-nic-modal" id="crNicModalContent">
+        <!-- filled dynamically -->
+    </div>
+</div>
+
+<!-- ============ Media Gallery / Lightbox Modal ============ -->
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crGalleryModalBackdrop">
+    <div class="cr-modal cr-gallery-modal" id="crGalleryModalContent">
+        <!-- filled dynamically -->
+    </div>
+</div>
+
+<div class="cr-modal-backdrop cr-submodal-backdrop" id="crArchiveModalBackdrop">
+    <form class="cr-modal" id="crArchiveForm" role="dialog" aria-modal="true" aria-labelledby="crArchiveTitle">
+        <div class="cr-modal-header"><h2 id="crArchiveTitle">Archive Rejected Application</h2><button type="button" class="cr-modal-close" data-archive-close aria-label="Close">Close</button></div>
+        <div class="cr-decision-panel"><div class="cr-decision-remarks-section"><label for="crArchiveReason">Archive reason</label><textarea id="crArchiveReason" name="reason" minlength="5" maxlength="1000" required></textarea></div></div>
+        <div class="cr-decision-actions"><button type="button" class="cr-btn" data-archive-close>Cancel</button><button type="submit" class="cr-btn cr-btn-primary">Archive Application</button></div>
+    </form>
+</div>
+
+<div class="cr-toast" id="crToast"></div>
+
+<input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
+<div id="crPageConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-coordinator-name="<?= htmlspecialchars((string) ($_SESSION['user_name'] ?? 'Divisional Coordinator'), ENT_QUOTES, 'UTF-8') ?>"></div>
+
+<?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
