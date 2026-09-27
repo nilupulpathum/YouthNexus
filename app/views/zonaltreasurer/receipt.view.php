@@ -3,7 +3,7 @@
  * Official Fund Transfer Receipt View
  * Styled for printing and PDF generation.
  */
-$hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_name ? ' - ' . $transfer->target_hub_name : ''));
+$hubDetail = trim(($transfer->target_province ?? '') . (!empty($transfer->target_hub_name) ? ' - ' . $transfer->target_hub_name : ''));
 ?>
 <!DOCTYPE html>
 <html lang="en">
