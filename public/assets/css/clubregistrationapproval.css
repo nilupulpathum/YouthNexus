@@ -94,14 +94,17 @@
 
 .cr-stat-icon.pending {
     background: var(--yn-warning-border);
+    color: #8a5b06;
 }
 
 .cr-stat-icon.approved {
     background: #d1fae5;
+    color: #157a45;
 }
 
 .cr-stat-icon.rejected {
     background: var(--yn-danger-soft-strong);
+    color: #b91c1c;
 }
 
 .cr-stat-value {

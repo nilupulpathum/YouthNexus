@@ -67,14 +67,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="atd-stats">
         <div class="yn-stat-card atd-stat-card">
             <div class="atd-stat-icon present">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <?= yn_icon('check') ?>
             </div>
             <div class="atd-stat-value" id="amPresentCount"><?= $present ?></div>
             <div class="atd-stat-label">Present</div>
         </div>
         <div class="yn-stat-card atd-stat-card">
             <div class="atd-stat-icon absent">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </div>
             <div class="atd-stat-value" id="amAbsentCount"><?= $absent ?></div>
             <div class="atd-stat-label">Absent</div>
@@ -94,9 +94,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="yn-table-wrap atd-table-wrapper">
         <div class="atd-table-toolbar">
             <div class="atd-table-search">
-                <span class="atd-table-search-icon">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                </span>
+                <span class="atd-table-search-icon"><?= yn_icon('search') ?></span>
                 <input type="text" id="amTableSearch" placeholder="Search members by name, email or club…" autocomplete="off">
             </div>
             <select class="atd-table-status-filter" id="amTableStatusFilter">
@@ -197,7 +195,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <div class="atd-modal-header">
             <h3>Update Member Attendance</h3>
             <button type="button" class="atd-modal-close" id="amQuickClose" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </button>
         </div>
         <div class="atd-modal-body">
