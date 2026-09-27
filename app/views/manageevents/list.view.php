@@ -13,10 +13,10 @@ $pageDescription         = $isNyscAdmin
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
 $pageStyles              = [
-    ROOT . '/assets/css/manageevents.css?v=20260929',
-    ROOT . '/assets/css/divisional-summary-standard.css?v=20260929',
+    ROOT . '/assets/css/manageevents.css?v=20261001',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20261001',
 ];
-$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20260929'];
+$pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20261001'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

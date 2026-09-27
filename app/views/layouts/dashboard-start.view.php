@@ -6,6 +6,11 @@
  * $title, $pageTitle, $pageDescription, $currentRoute, $userRole,
  * $userName, $userEmail, and $unreadNotificationCount.
  */
+
+// yn_icon() must exist for every dashboard page — views (e.g. manageevents)
+// call it in their bodies but some forget their own require. The helper
+// guards itself with function_exists, so this is safe to run always.
+require_once __DIR__ . '/../partials/icons.view.php';
 $title = $title ?? 'Dashboard — YouthNexus';
 $pageTitle = $pageTitle ?? 'Dashboard';
 $pageDescription = $pageDescription ?? '';
