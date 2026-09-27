@@ -37,6 +37,10 @@ $summaryCards = [
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 <section class="dw-page dtd-page" aria-label="Divisional Treasurer dashboard" data-finance-refresh-on-change>
+  <div class="dtd-quick-actions" aria-label="Finance quick actions">
+    <a class="dtd-quick-action" href="<?= ROOT ?>/divisionalallocations"><strong>Allocate Funds</strong><span>Review club requests and move approved funds</span></a>
+    <a class="dtd-quick-action" href="<?= ROOT ?>/divisionalaudits"><strong>Review Club Audits</strong><span>Check ledgers, receipts, and outstanding findings</span></a>
+  </div>
   <div class="dw-summary-grid" aria-label="Division finance summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
   </div>

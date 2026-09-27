@@ -1,0 +1,216 @@
+/* Divisional Treasurer presentation aligned with the NYSC finance screens.
+   Only dashboard content for this role is affected; routes and form hooks stay put. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-page {
+  width: min(1300px, 100%);
+  margin-inline: auto;
+  gap: 18px;
+  font-family: var(--yn-font-family);
+  color: var(--yn-text-primary);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dr-create { width: min(1120px, 100%); }
+
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-action {
+  display: grid;
+  gap: 5px;
+  min-height: 88px;
+  align-content: center;
+  padding: 20px;
+  border-radius: var(--yn-radius-lg);
+  background: var(--yn-sidebar-bg);
+  color: var(--yn-bg-surface);
+  text-decoration: none;
+  transition: background .2s ease;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-action:hover { background: var(--yn-primary-hover); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-action:focus-visible,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-button:focus-visible {
+  outline: 3px solid var(--yn-primary);
+  outline-offset: 2px;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-action strong { font-size: 14px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-action span { font-size: 12px; color: rgba(255,255,255,.78); }
+
+/* Keep the original icon-and-copy grouping for treasurer summary cards. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-summary-grid { gap: 16px; }
+
+/* National transfer, warehouse, and audit views use simple white panels and
+   distinct actions above them. Reuse that hierarchy for the divisional forms. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-panel,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-audit-card,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-record-card,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-filter-panel {
+  border-radius: var(--yn-radius-lg);
+  box-shadow: none;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-panel__header { align-items: center; padding: 20px 20px 16px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-panel__header h2,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-panel__header h3,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-section-header h2 { font-size: 15px; font-weight: 700; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-panel__header p,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-section-header p { font-size: 12px; line-height: 1.5; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-section-header { align-items: center; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-count { padding: 6px 10px; font-size: 11px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-button { min-height: 40px; border-radius: 8px; font-size: 12px; font-weight: 650; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-button--ghost { min-height: 34px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-search input { height: 44px; font-size: 13px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-filter-panel { padding: 20px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-filter-panel__heading { font-size: 13px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-field label,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-field__label { font-size: 11px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-field small { font-size: 11px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-filter-actions { justify-content: flex-end; }
+
+/* National finance tables remain legible in their horizontal scroll area. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-table { font-size: 12px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-table th { padding: 12px 11px; font-size: 10px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-table td { padding: 13px 11px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-record-card__title,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-audit-card__header h3 { font-size: 14px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-record-card__meta,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-audit-card__cycle { font-size: 10px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-record-card__details,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-audit-card__details { font-size: 12px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-status { font-size: 10px; }
+
+/* Treasurer dashboard activity panels match the NYSC two-column panels. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-grid { gap: 16px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-list,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-health-list,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-reminders { padding: 0 20px 18px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-list__item strong,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-reminder strong,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-health__body strong { font-size: 12px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-list__item span:not(.dw-status),
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-reminder span:not(.dw-status):not(.dtd-reminder__icon),
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-health__body > div:first-child span,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtd-muted { font-size: 11px; }
+
+/* Match the NYSC fund transfer overview: action, four summary metrics,
+   filters, then the pending and completed allocation registers. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocations .dw-page-actions { margin-bottom: 4px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocations .dw-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocations .dw-panel__header { border-bottom: 1px solid var(--yn-border); }
+
+/* The NYSC transfer dialog provides the hierarchy; the division keeps its
+   existing club fields, account source, form action, and primary colour. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog { width: min(760px, 100%); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-modal__header {
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 22px 24px;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-modal__close { margin-left: auto; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  border-radius: 10px;
+  background: var(--yn-sidebar-bg);
+  color: var(--yn-bg-surface);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__intro p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: var(--yn-text-muted);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-modal__body { gap: 16px 18px; padding: 24px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid var(--yn-primary-border);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__account-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 8px;
+  background: var(--yn-primary-soft);
+  color: var(--yn-primary);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__account strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-field input,
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-field select { height: 46px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-field textarea { min-height: 90px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog .dw-modal__footer { justify-content: flex-end; flex-wrap: wrap; padding: 16px 24px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__note { margin-right: auto; color: var(--yn-text-muted); font-size: 11px; }
+
+/* National catalog styling applied to the divisional inventory and its
+   existing request/transfer actions. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-assets .dw-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-assets .dw-panel__header { border-bottom: 1px solid var(--yn-border); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-assets__inventory .dw-table th { background: var(--yn-bg-surface-alt); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-assets__inventory .dw-table__description small {
+  display: block;
+  max-width: 300px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--yn-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* NYSC audit presentation: a clear initiation panel above a tabular register.
+   Existing audit modal, form fields, data attributes and endpoints are reused. */
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-start {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 22px 24px;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-start h2 {
+  margin: 0;
+  color: var(--yn-text-primary);
+  font-size: 17px;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-start p {
+  margin: 7px 0 0;
+  color: var(--yn-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-register .dw-panel__header { border-bottom: 1px solid var(--yn-border); }
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-register .dw-table th {
+  background: var(--yn-bg-surface-alt);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-register .dtn-audit-row--flagged td:first-child {
+  box-shadow: inset 3px 0 0 var(--yn-danger);
+}
+.dashboard[data-user-role="DivisionalTreasurer"] .dtn-audit-register .dw-table td:last-child {
+  white-space: nowrap;
+}
+
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-modal__dialog { border: 1px solid var(--yn-border); border-radius: 12px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-modal__header,
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-modal__footer { padding: 18px 20px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-modal__header h2 { font-size: 16px; }
+.dashboard[data-user-role="DivisionalTreasurer"] .dw-modal__body { padding: 20px; }
+
+@media (max-width: 900px) {
+  .dashboard[data-user-role="DivisionalTreasurer"] .dw-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocations .dw-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .dashboard[data-user-role="DivisionalTreasurer"] .dtd-quick-actions,
+  .dashboard[data-user-role="DivisionalTreasurer"] .dw-summary-grid { grid-template-columns: 1fr; }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dw-panel__header { align-items: flex-start; flex-wrap: wrap; }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dw-filter-actions { flex-wrap: wrap; }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocations .dw-summary-grid { grid-template-columns: 1fr; }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dtn-assets .dw-summary-grid { grid-template-columns: 1fr; }
+  .dashboard[data-user-role="DivisionalTreasurer"] .dtn-allocation-dialog__note { width: 100%; }
+}

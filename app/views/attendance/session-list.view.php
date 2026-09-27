@@ -90,9 +90,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     value="<?= htmlspecialchars($filters['search'] ?? '') ?>"
                 >
             </div>
-            <span class="am-search-icon" aria-hidden="true">
-                <?= yn_icon('search') ?>
-            </span>
         </div>
         <button
             type="button"

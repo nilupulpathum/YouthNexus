@@ -48,6 +48,13 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
   <?php if (in_array($userRole, ['DivisionalCoordinator', 'DivisionalSecretary', 'DivisionalTreasurer'], true)): ?>
     <link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-consistency.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
   <?php endif; ?>
+  <?php if ($userRole === 'DivisionalTreasurer' && in_array($currentRoute, [
+    'divisionaltreasurer', 'divisionalallocations', 'divisionalassets', 'divisionalaudits',
+    'divisionalledger', 'divisionaltransactions', 'divisionalvoidrequest',
+    'divisionalvoidapproval', 'divisionalreports'
+  ], true)): ?>
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/divisional-treasurer-nysc.css?v=<?= rawurlencode(ASSET_VERSION) ?>">
+  <?php endif; ?>
 </head>
 <body class="dashboard dashboard-page" data-user-role="<?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?>">
   <a class="dashboard-skip-link" href="#main-content">Skip to main content</a>
