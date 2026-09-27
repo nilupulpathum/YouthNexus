@@ -88,6 +88,7 @@ class ManageEvents extends Controller {
             'user_name'     => $_SESSION['user_name'] ?? ($isNyscAdmin ? 'N. Fernando' : 'Divisional Secretary'),
             'user_role'     => $userRole,
             'user_initials' => $_SESSION['user_initials'] ?? 'NF',
+            'flash'         => $this->pullEventFlash(),
         ]);
     }
 
@@ -225,6 +226,7 @@ class ManageEvents extends Controller {
         }
 
         // 4. Persistence
+        $saveAsDraft = !$isNyscAdmin && ($_POST['submission_mode'] ?? '') === 'draft';
         $eventData = [
             'title'                 => $title,
             'description'           => $description ?: null,
@@ -237,7 +239,7 @@ class ManageEvents extends Controller {
             'organizer_club_id'     => null,
             'organizer_zonal_id'    => null,
             'target_scope'          => $targetScope,
-            'status'                => $isNyscAdmin ? 'Approved' : 'PendingApproval',
+            'status'                => $isNyscAdmin ? 'Approved' : ($saveAsDraft ? 'Draft' : 'PendingApproval'),
             'created_by'            => $userId,
         ];
 
@@ -333,7 +335,7 @@ class ManageEvents extends Controller {
         // Check if editable
         $canEdit = $isNyscAdmin
             ? ((int)$event->created_by === $userId)
-            : ($event->status === 'PendingApproval' && (int)$event->created_by === $userId);
+            : (in_array($event->status, ['Draft', 'PendingApproval'], true) && (int)$event->created_by === $userId);
 
         $this->view('manageevents/status', [
             'title'         => htmlspecialchars($event->title) . ' — Event Status — YouthNexus',
@@ -342,11 +344,19 @@ class ManageEvents extends Controller {
             'targets'       => $targets,
             'target_map'    => $targetMap,
             'can_edit'      => $canEdit,
+            'can_delete_draft' => !$isNyscAdmin && $event->status === 'Draft' && (int)$event->created_by === $userId,
+            'can_submit_draft' => !$isNyscAdmin && $event->status === 'Draft' && (int)$event->created_by === $userId,
+            'can_withdraw' => !$isNyscAdmin && $event->status === 'PendingApproval' && (int)$event->created_by === $userId,
+            'can_request_cancellation' => !$isNyscAdmin
+                && $userRole === 'DivisionalSecretary'
+                && $event->status === 'Approved'
+                && (int) $event->organizer_division_id === $divisionId,
             'is_nysc_admin' => $isNyscAdmin,
             'csrf_token'    => $_SESSION['csrf_token'],
             'user_name'     => $_SESSION['user_name'] ?? ($isNyscAdmin ? 'N. Fernando' : 'Divisional Secretary'),
             'user_role'     => $userRole,
             'user_initials' => $_SESSION['user_initials'] ?? 'NF',
+            'flash'         => $this->pullEventFlash(),
         ]);
     }
 
@@ -375,7 +385,7 @@ class ManageEvents extends Controller {
         if ($event && (int)$event->created_by === $userId) {
             if ($isNyscAdmin) {
                 $canEdit = true;
-            } elseif ((int)$event->organizer_division_id === $divisionId && $event->status === 'PendingApproval') {
+            } elseif ((int)$event->organizer_division_id === $divisionId && in_array($event->status, ['Draft', 'PendingApproval'], true)) {
                 $canEdit = true;
             }
         }
@@ -538,5 +548,110 @@ class ManageEvents extends Controller {
 
         $this->redirect('manageevents/status/' . $eventId);
     }
-}
 
+    public function submitDraft($id = null) {
+        $this->transitionOwnedDivisionalEvent((int) $id, 'Draft', 'PendingApproval', false, 'The draft was submitted for approval.');
+    }
+
+    public function withdraw($id = null) {
+        $this->transitionOwnedDivisionalEvent((int) $id, 'PendingApproval', 'Withdrawn', true, 'The event submission was withdrawn.');
+    }
+
+    public function requestCancellation($id = null) {
+        $this->transitionOwnedDivisionalEvent(
+            (int) $id,
+            'Approved',
+            'CancellationPending',
+            true,
+            'The cancellation request was sent for approval.',
+            false
+        );
+    }
+
+    public function deleteDraft($id = null) {
+        $this->requireAuth();
+        $eventId = (int) $id;
+        if (($_SESSION['user_role'] ?? '') !== 'DivisionalSecretary'
+            || $_SERVER['REQUEST_METHOD'] !== 'POST'
+            || !$this->validCsrf()
+            || $eventId < 1) {
+            $this->redirect('manageevents');
+        }
+        $deleted = $this->model('EventModel')->deleteDivisionalDraft(
+            $eventId,
+            (int) $_SESSION['division_id'],
+            (int) $_SESSION['user_id']
+        );
+        if ($deleted) {
+            $this->model('AuditLogModel')->log(
+                (int) $_SESSION['user_id'], 'DELETE_EVENT_DRAFT', 'Event', $eventId,
+                'Deleted an unpublished divisional event draft.'
+            );
+        }
+        $_SESSION['event_flash'] = [
+            'type' => $deleted ? 'success' : 'error',
+            'message' => $deleted ? 'The event draft was deleted.' : 'The event draft could not be deleted.',
+        ];
+        $this->redirect('manageevents');
+    }
+
+    private function transitionOwnedDivisionalEvent(
+        int $eventId,
+        string $fromStatus,
+        string $toStatus,
+        bool $reasonRequired,
+        string $successMessage,
+        bool $requireOwnership = true
+    ): void {
+        $this->requireAuth();
+        if (($_SESSION['user_role'] ?? '') !== 'DivisionalSecretary'
+            || $_SERVER['REQUEST_METHOD'] !== 'POST'
+            || !$this->validCsrf()
+            || $eventId < 1) {
+            $this->redirect('manageevents');
+        }
+        $reason = trim((string) ($_POST['reason'] ?? ''));
+        if ($reasonRequired && (strlen($reason) < 5 || strlen($reason) > 1000)) {
+            $_SESSION['event_flash'] = ['type' => 'error', 'message' => 'Provide a reason between 5 and 1000 characters.'];
+            $this->redirect('manageevents/status/' . $eventId);
+        }
+        try {
+            $changed = $this->model('EventModel')->transitionDivisionalEvent(
+                $eventId,
+                (int) $_SESSION['division_id'],
+                (int) $_SESSION['user_id'],
+                $fromStatus,
+                $toStatus,
+                $reason,
+                $requireOwnership
+            );
+            if ($changed) {
+                $this->model('AuditLogModel')->log(
+                    (int) $_SESSION['user_id'],
+                    'EVENT_' . strtoupper($toStatus),
+                    'Event',
+                    $eventId,
+                    $reason !== '' ? $reason : $successMessage
+                );
+            }
+            $_SESSION['event_flash'] = [
+                'type' => $changed ? 'success' : 'error',
+                'message' => $changed ? $successMessage : 'The event status changed before this action was saved.',
+            ];
+        } catch (Throwable $exception) {
+            $_SESSION['event_flash'] = ['type' => 'error', 'message' => $exception->getMessage()];
+        }
+        $this->redirect('manageevents/status/' . $eventId);
+    }
+
+    private function validCsrf(): bool {
+        $token = (string) ($_POST['csrf_token'] ?? '');
+        return $token !== '' && hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token);
+    }
+
+    private function pullEventFlash(): ?array {
+        $flash = $_SESSION['event_flash'] ?? null;
+        unset($_SESSION['event_flash']);
+        return is_array($flash) ? $flash : null;
+    }
+}

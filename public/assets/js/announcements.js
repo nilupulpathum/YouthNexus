@@ -2337,6 +2337,70 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
+  const changeAnnouncementLifecycle =
+    (id, action) => {
+      if (busy) return;
+      const labels = {
+        retract: 'Withdraw from Publication',
+        archive: 'Archive Announcement',
+        restore: 'Restore Announcement'
+      };
+      if (!labels[action]) return;
+      const lifecycleModal = document.getElementById('annLifecycleModal');
+      const lifecycleForm = document.getElementById('annLifecycleForm');
+      const lifecycleTitle = document.getElementById('annLifecycleTitle');
+      const lifecycleSubmit = document.getElementById('annLifecycleSubmit');
+      const lifecycleReason = document.getElementById('annLifecycleReason');
+      if (!lifecycleModal || !lifecycleForm) return;
+      lifecycleForm.dataset.id = id;
+      lifecycleForm.dataset.action = action;
+      lifecycleTitle.textContent = labels[action];
+      lifecycleSubmit.textContent = labels[action];
+      lifecycleReason.value = '';
+      lifecycleModal.classList.add('open');
+      lifecycleModal.setAttribute('aria-hidden', 'false');
+      lifecycleReason.focus();
+    };
+
+  document.querySelectorAll('[data-ann-lifecycle-action]').forEach(button => {
+    button.addEventListener('click', () => {
+      changeAnnouncementLifecycle(
+        button.dataset.announcementId,
+        button.dataset.annLifecycleAction
+      );
+    });
+  });
+
+  const lifecycleForm = document.getElementById('annLifecycleForm');
+  const lifecycleModal = document.getElementById('annLifecycleModal');
+  document.querySelectorAll('[data-ann-lifecycle-close]').forEach(button => {
+    button.addEventListener('click', () => {
+      lifecycleModal?.classList.remove('open');
+      lifecycleModal?.setAttribute('aria-hidden', 'true');
+    });
+  });
+  lifecycleForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (busy) return;
+    const reason = document.getElementById('annLifecycleReason')?.value.trim() || '';
+    if (reason.length < 5) {
+      showToast('Provide a reason of at least 5 characters.');
+      return;
+    }
+    busy = true;
+    try {
+      await request(
+        `${lifecycleForm.dataset.action}/${encodeURIComponent(lifecycleForm.dataset.id)}`,
+        { method: 'POST', body: new URLSearchParams({ csrf_token: csrf, reason: reason }) }
+      );
+      window.location.reload();
+    } catch (error) {
+      busy = false;
+      showToast(error.message);
+    }
+  });
+
+
   // ============================================================
   // Mark as read
   // ============================================================
@@ -2454,6 +2518,18 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
+  let appliedStatus = status?.value || '';
+  let appliedRole = roleFilter?.value || '';
+  let appliedPriority = priority?.value || '';
+
+  function commitPanelFilters() {
+    appliedStatus = status?.value || '';
+    appliedRole = roleFilter?.value || '';
+    appliedPriority = priority?.value || '';
+    if (tab) tab.value = appliedStatus === 'Draft' ? 'Drafts' : (appliedStatus || 'All Announcements');
+    applyFilters();
+  }
+
   function applyFilters() {
 
     /*
@@ -2473,7 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const active =
           card.dataset.annStatus
-          === status.value;
+          === appliedStatus;
 
 
         card.classList.toggle(
@@ -2544,25 +2620,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
           const matchesStatus =
-            !status.value
+            !appliedStatus
             ||
             card.dataset.status
-            === status.value;
+            === appliedStatus;
 
 
           const matchesRole =
-            !roleFilter?.value
+            !appliedRole
             ||
             targetRoles.includes(
-              roleFilter.value
+              appliedRole
             );
 
 
           const matchesPriority =
-            !priority?.value
+            !appliedPriority
             ||
             card.dataset.priority
-            === priority.value;
+            === appliedPriority;
 
 
           const matches =
@@ -2605,16 +2681,7 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 
 
-  roleFilter?.addEventListener(
-    'change',
-    applyFilters
-  );
 
-
-  priority?.addEventListener(
-    'change',
-    applyFilters
-  );
 
 
   function selectStatus(
@@ -2628,6 +2695,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     status.value =
       value;
+    appliedStatus = value;
 
 
     if (tab) {
@@ -2646,15 +2714,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  status?.addEventListener(
-    'change',
-    () => {
 
-      selectStatus(
-        status.value
-      );
-    }
-  );
 
 
   tab?.addEventListener(
@@ -2719,6 +2779,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
 
+          appliedRole = '';
+          appliedPriority = '';
           selectStatus(
             card.dataset.annStatus
             || ''
@@ -2765,6 +2827,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document
     .getElementById(
+      'annApplyFilterBtn'
+    )
+    ?.addEventListener(
+      'click',
+      commitPanelFilters
+    );
+
+  document
+    .getElementById(
       'annClearFilterBtn'
     )
     ?.addEventListener(
@@ -2789,6 +2860,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+        appliedRole = '';
+        appliedPriority = '';
         selectStatus(
           ''
         );

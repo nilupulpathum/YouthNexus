@@ -196,12 +196,16 @@ class Divisionalreports extends Controller {
             $this->setFlash('error', 'The archive request could not be verified.');
             $this->redirect('divisionalreports');
         }
-        $changed = $this->model('DivisionalReportModel')->archiveReport(
-            (int) $_SESSION['division_id'],
-            (int) $reportId,
-            (int) $_SESSION['user_id'],
-            (string) $_SESSION['user_role']
-        );
+        try {
+            $changed = $this->model('DivisionalReportModel')->archiveReport(
+                (int) $_SESSION['division_id'], (int) $reportId, (int) $_SESSION['user_id'],
+                (string) $_SESSION['user_role'], trim((string) ($_POST['reason'] ?? ''))
+            );
+            if ($changed) $this->model('AuditLogModel')->log((int) $_SESSION['user_id'], 'ARCHIVE_DIVISIONAL_REPORT', 'Report', (int) $reportId, trim((string) $_POST['reason']));
+        } catch (Throwable $exception) {
+            $this->setFlash('error', $exception->getMessage());
+            $this->redirect('divisionalreports');
+        }
         $this->setFlash($changed ? 'success' : 'error', $changed ? 'The report was archived.' : 'The report could not be archived.');
         $this->redirect('divisionalreports');
     }
@@ -213,8 +217,9 @@ class Divisionalreports extends Controller {
             $this->redirect('divisionalreports');
         }
         $changed = $this->model('DivisionalReportModel')->restoreReport(
-            (int) $_SESSION['division_id'], (int) $reportId, (string) $_SESSION['user_role']
+            (int) $_SESSION['division_id'], (int) $reportId, (int) $_SESSION['user_id'], (string) $_SESSION['user_role']
         );
+        if ($changed) $this->model('AuditLogModel')->log((int) $_SESSION['user_id'], 'RESTORE_DIVISIONAL_REPORT', 'Report', (int) $reportId, 'Restored archived report.');
         $this->setFlash($changed ? 'success' : 'error', $changed ? 'The report was restored.' : 'The report could not be restored.');
         $this->redirect('divisionalreports');
     }
