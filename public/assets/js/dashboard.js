@@ -20,11 +20,14 @@
     } catch (error) { /* Storage is optional. */ }
   }
 
-  // The next page keeps the cover until its styles and assets have loaded.
-  if (document.readyState === 'complete') {
+  // Lift the cover as soon as the page shell is parsed — do NOT wait for
+  // the full `load` event, which is delayed by every image, iframe, and
+  // external stylesheet (the Google Fonts @import can hang for ages on a
+  // slow connection and left the cover stuck over a ready page).
+  if (document.readyState !== 'loading') {
     finishNavigation();
   } else {
-    window.addEventListener('load', finishNavigation, { once: true });
+    document.addEventListener('DOMContentLoaded', finishNavigation, { once: true });
   }
   window.addEventListener('pageshow', function (event) {
     if (event.persisted) finishNavigation();
