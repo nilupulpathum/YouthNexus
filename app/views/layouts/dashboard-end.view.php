@@ -6,7 +6,7 @@
     </div>
   </div>
 
-  <script src="<?= ROOT ?>/assets/js/dashboard.js" defer></script>
+  <script src="<?= ROOT ?>/assets/js/dashboard.js?v=20260927-loading" defer></script>
   <?php foreach ($pageScripts as $pageScript): ?>
     <script src="<?= htmlspecialchars((string) $pageScript, ENT_QUOTES, 'UTF-8') ?>" defer></script>
   <?php endforeach; ?>

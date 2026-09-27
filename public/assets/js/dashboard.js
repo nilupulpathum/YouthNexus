@@ -13,6 +13,44 @@
   var sidebarClose = document.querySelector('[data-sidebar-close]');
   var sidebarScrim = document.querySelector('[data-sidebar-scrim]');
 
+  function finishNavigation() {
+    document.documentElement.classList.remove('yn-nav-loading');
+    try {
+      sessionStorage.removeItem('yn-sidebar-navigation');
+    } catch (error) { /* Storage is optional. */ }
+  }
+
+  // The next page keeps the cover until its styles and assets have loaded.
+  if (document.readyState === 'complete') {
+    finishNavigation();
+  } else {
+    window.addEventListener('load', finishNavigation, { once: true });
+  }
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) finishNavigation();
+  });
+
+  if (sidebar) {
+    sidebar.addEventListener('click', function (event) {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      var link = event.target.closest('.dashboard-nav a[href]');
+      if (!link || link.target || link.hasAttribute('download')) return;
+
+      var destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin || !/^https?:$/.test(destination.protocol)) return;
+      // An in-page anchor or current route needs no full-page loading state.
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+
+      document.documentElement.classList.add('yn-nav-loading');
+      try {
+        sessionStorage.setItem('yn-sidebar-navigation', String(Date.now()));
+      } catch (error) { /* The outgoing-page cover still works. */ }
+
+      // If navigation was canceled or failed, return control to the user.
+      window.setTimeout(finishNavigation, 30000);
+    });
+  }
+
   function setProfileOpen(isOpen) {
     if (!profileToggle || !profileDropdown) {
       return;
