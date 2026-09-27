@@ -1,45 +1,46 @@
 <?php
 require_once __DIR__ . '/../partials/icons.view.php';
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$title = 'Generate Report - YouthNexus';
-$pageTitle = 'Generate Report';
-$pageDescription = 'Choose a report, reporting period, and output for your division';
+$title = 'Aggregate Reports - YouthNexus';
+$pageTitle = 'Aggregate Reports';
+$pageDescription = 'Bring together club activity across your division';
 $currentRoute = 'divisionalreports';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-reports.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-report-create.js'];
 
-$catalog = array_filter(array_map(
-    static fn(array $types): array => array_values(array_filter(
-        $types,
-        static fn($type): bool => $type->type_name !== 'Club Activity Aggregate'
-    )),
-    $catalog
-));
-$selectedType = null;
 $selectedCategory = '';
+$selectedType = null;
 foreach ($catalog as $category => $types) {
-    $selectedType = $types[0];
-    $selectedCategory = $category;
-    break;
+    foreach ($types as $type) {
+        if ($selectedType === null) {
+            $selectedType = $type;
+            $selectedCategory = $category;
+        }
+        if ($type->type_name === 'Club Activity Aggregate') {
+            $selectedType = $type;
+            $selectedCategory = $category;
+            break 2;
+        }
+    }
 }
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page dr-create dr-create--standard" aria-label="Generate divisional report">
+<section class="dw-page dr-create dr-create--aggregate" aria-label="Aggregate club reports">
   <?php if ($flash): ?><div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div><?php endif; ?>
+  <?php if (!$selectedType): ?><div class="dw-alert dw-alert--warning" role="status"><?= yn_icon('info') ?><span>No report types are available. Check the divisional report catalog.</span></div><?php endif; ?>
 
   <form class="dw-panel dr-create-card" action="<?= ROOT ?>/divisionalreports/generate" method="post" data-report-create-form>
     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
 
     <header class="dr-create-card__header">
       <div>
-        <h2>Generate a divisional report</h2>
-        <p>Choose the information to review, then set the dates and output format.</p>
+        <h2>Aggregate club reports</h2>
+        <p>Select the reporting period and output format for the division-wide club activity summary.</p>
       </div>
       <a class="dr-create-card__close" href="<?= ROOT ?>/divisionalreports" aria-label="Close report configuration"><?= yn_icon('close') ?></a>
     </header>
 
     <div class="dr-create-card__body">
-      <div class="dr-create-step"><span>01</span><div><h3>Report details</h3><p>Available report types reflect your divisional role.</p></div></div>
       <div class="dr-create-grid">
         <div class="dw-field">
           <label for="report-category">Report category</label>
@@ -61,9 +62,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           </select>
         </div>
 
-        <div class="dr-scope-note dr-create-grid__full"><?= yn_icon('info') ?><span>Division: <strong><?= $e($division->division_name) ?></strong>. Only records from this division are included.</span></div>
+        <div class="dw-field dr-create-grid__full">
+          <label for="report-scope">Aggregation scope</label>
+          <input id="report-scope" type="text" value="Divisional summary (clubs in <?= $e($division->division_name) ?>)" readonly>
+          <small class="dr-field-note"><?= yn_icon('info') ?><span>The report is restricted to records belonging to <?= $e($division->division_name) ?>.</span></small>
+        </div>
 
-        <div class="dr-create-step dr-create-grid__full"><span>02</span><div><h3>Reporting period</h3><p>Choose the dates to include in this report.</p></div></div>
         <div class="dw-field">
           <label for="report-start">From date</label>
           <input id="report-start" name="date_start" type="date" value="<?= date('Y-01-01') ?>" max="<?= date('Y-m-d') ?>" required>
@@ -79,7 +83,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
       </div>
 
-      <div class="dr-create-step"><span>03</span><div><h3>Output format</h3><p>Preview on screen or download a file.</p></div></div>
       <fieldset class="dr-format-fieldset">
         <legend>Select output format</legend>
         <div class="dr-format-grid">
@@ -117,7 +120,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <footer class="dr-create-card__footer">
       <a class="yn-btn yn-btn--secondary yn-btn-back dw-button dw-button--secondary db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
-      <button class="dw-button dw-button--primary db-confirm-action" type="submit" data-create-submit>Generate Report</button>
+      <button class="dw-button dw-button--primary db-confirm-action" type="submit" data-create-submit<?= $selectedType ? '' : ' disabled' ?>>Generate Selected Report</button>
     </footer>
   </form>
 </section>

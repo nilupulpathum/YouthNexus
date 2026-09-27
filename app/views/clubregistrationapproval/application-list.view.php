@@ -47,10 +47,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="cr-toolbar">
         <div class="cr-search-group">
             <div class="cr-search-input-wrapper">
-                <input type="text" id="crSearchInput" placeholder="Search applications...">
-                <span class="cr-search-icon">
+                <span class="cr-search-icon" aria-hidden="true">
                     <?= yn_icon('search') ?>
                 </span>
+                <input type="text" id="crSearchInput" placeholder="Search applications by club or applicant...">
             </div>
         </div>
         <button type="button" class="cr-filter-btn yn-filter-toggle" id="crFilterBtn" aria-expanded="false">

@@ -72,7 +72,7 @@ class Divisionalreports extends Controller {
         }
         $aggregateMode = $role === 'DivisionalSecretary'
             && (string) ($_GET['mode'] ?? '') === 'aggregate';
-        $this->view('divisionalreports/create', [
+        $this->view($aggregateMode ? 'divisionalreports/aggregate' : 'divisionalreports/create', [
             'division' => $division,
             'catalog' => $catalog,
             'aggregateMode' => $aggregateMode,
