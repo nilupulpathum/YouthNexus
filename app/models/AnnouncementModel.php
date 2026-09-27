@@ -567,8 +567,13 @@ class AnnouncementModel extends Model
 
             case 'NYSC':
 
+                /*
+                 * National oversight: the NYSC administrator sees every
+                 * stored announcement — national (NYSC) plus all zonal,
+                 * divisional and club communications.
+                 */
                 $managerSql = "
-                    a.level = 'NYSC'
+                    1 = 1
                 ";
 
                 break;
