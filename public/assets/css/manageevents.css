@@ -17,6 +17,10 @@
     justify-content: flex-end;
 }
 
+/* The shared template embeds a divisional-theme icon inside the create
+   button; this module shows its own SVG plus, so keep the extra one off. */
+.divisional-create-icon { display: none; }
+
 .me-header-title h2 {
     margin: 0;
     font-size: 22px;
