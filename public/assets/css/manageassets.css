@@ -90,7 +90,7 @@
 
 .am-btn-primary {
     background: #1e5eff;
-    color: #ffffff;
+    color: #ffffff !important;
     box-shadow: 0 2px 6px rgba(30, 94, 255, 0.25);
 }
 .am-btn-primary:hover {
@@ -132,7 +132,7 @@
 
 .am-btn-distribute {
     background: #1e5eff;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 .am-btn-distribute:hover:not(.disabled) {
     background: #164bd8;
