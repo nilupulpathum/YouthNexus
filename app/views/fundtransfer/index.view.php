@@ -11,7 +11,7 @@ $listRoute = $listRoute ?? $transferRoute;
 $isZonalDemo = $isZonalDemo ?? false;
 $currentRoute = $listRoute;
 $unreadNotificationCount = $isZonalDemo ? 2 : 0;
-$pageStyles = [ROOT . '/assets/css/fundtransfer.css'];
+$pageStyles = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
