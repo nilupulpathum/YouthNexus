@@ -21,7 +21,8 @@ $links = [
     ['title' => 'Allocate Funds', 'desc' => 'Distribute NYSC funds to divisions under this zone', 'href' => 'zonaltreasurer/allocate', 'icon' => 'file'],
     ['title' => 'Audit Finance', 'desc' => 'Income and expense breakdown with audit note', 'href' => 'zonaltreasurer/audit', 'icon' => 'eye'],
     ['title' => 'Zonal Assets', 'desc' => 'Zonal-level asset inventory', 'href' => 'zonaltreasurer/assets', 'icon' => 'calendar'],
-    ['title' => 'Void Requests', 'desc' => 'Pending void requests from clubs', 'href' => 'zonaltreasurer/voids', 'icon' => 'clock'],
+    ['title' => 'Zonal Ledger', 'desc' => 'Zone income and expenses with running balance', 'href' => 'zonaltreasurer/ledger', 'icon' => 'clipboard'],
+    ['title' => 'Void Requests', 'desc' => 'Pending void requests from divisions', 'href' => 'zonaltreasurer/voids', 'icon' => 'clock'],
 ];
 
 $summaryCards = [
