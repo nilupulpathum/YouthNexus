@@ -427,16 +427,36 @@ document.addEventListener('DOMContentLoaded', () => {
         '[data-recipient-list]'
       );
 
+    /*
+     * National managers may narrow the broadcast to one zone; the
+     * recipient endpoint honours the same filter server-side.
+     */
+    const zoneSelect =
+      document.getElementById(
+        'annBroadcastZone'
+      );
+
+    const zoneId =
+      zoneSelect?.value
+      || '';
+
+    const cacheKey =
+      `${role}::${zoneId}`;
+
+    const zoneQuery =
+      zoneId
+        ? `?zone_id=${encodeURIComponent(zoneId)}`
+        : '';
 
     /*
      * We may have fetched this role earlier.
      */
     if (
-      recipientCache.has(role)
+      recipientCache.has(cacheKey)
     ) {
       renderRecipientList(
         card,
-        recipientCache.get(role)
+        recipientCache.get(cacheKey)
       );
 
       return;
@@ -453,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data =
         await request(
-          `recipients/${encodeURIComponent(role)}`
+          `recipients/${encodeURIComponent(role)}${zoneQuery}`
         );
 
 
@@ -466,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
       recipientCache.set(
-        role,
+        cacheKey,
         recipients
       );
 
@@ -1205,6 +1225,22 @@ document.addEventListener('DOMContentLoaded', () => {
         category.value =
           announcement.category
           || '';
+      }
+
+
+      const broadcastZone =
+        document.getElementById(
+          'annBroadcastZone'
+        );
+
+
+      if (broadcastZone) {
+        broadcastZone.value =
+          announcement.organizer_zonal_id
+            ? String(
+                announcement.organizer_zonal_id
+              )
+            : '';
       }
 
 
@@ -2337,70 +2373,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
-  const changeAnnouncementLifecycle =
-    (id, action) => {
-      if (busy) return;
-      const labels = {
-        retract: 'Withdraw from Publication',
-        archive: 'Archive Announcement',
-        restore: 'Restore Announcement'
-      };
-      if (!labels[action]) return;
-      const lifecycleModal = document.getElementById('annLifecycleModal');
-      const lifecycleForm = document.getElementById('annLifecycleForm');
-      const lifecycleTitle = document.getElementById('annLifecycleTitle');
-      const lifecycleSubmit = document.getElementById('annLifecycleSubmit');
-      const lifecycleReason = document.getElementById('annLifecycleReason');
-      if (!lifecycleModal || !lifecycleForm) return;
-      lifecycleForm.dataset.id = id;
-      lifecycleForm.dataset.action = action;
-      lifecycleTitle.textContent = labels[action];
-      lifecycleSubmit.textContent = labels[action];
-      lifecycleReason.value = '';
-      lifecycleModal.classList.add('open');
-      lifecycleModal.setAttribute('aria-hidden', 'false');
-      lifecycleReason.focus();
-    };
-
-  document.querySelectorAll('[data-ann-lifecycle-action]').forEach(button => {
-    button.addEventListener('click', () => {
-      changeAnnouncementLifecycle(
-        button.dataset.announcementId,
-        button.dataset.annLifecycleAction
-      );
-    });
-  });
-
-  const lifecycleForm = document.getElementById('annLifecycleForm');
-  const lifecycleModal = document.getElementById('annLifecycleModal');
-  document.querySelectorAll('[data-ann-lifecycle-close]').forEach(button => {
-    button.addEventListener('click', () => {
-      lifecycleModal?.classList.remove('open');
-      lifecycleModal?.setAttribute('aria-hidden', 'true');
-    });
-  });
-  lifecycleForm?.addEventListener('submit', async event => {
-    event.preventDefault();
-    if (busy) return;
-    const reason = document.getElementById('annLifecycleReason')?.value.trim() || '';
-    if (reason.length < 5) {
-      showToast('Provide a reason of at least 5 characters.');
-      return;
-    }
-    busy = true;
-    try {
-      await request(
-        `${lifecycleForm.dataset.action}/${encodeURIComponent(lifecycleForm.dataset.id)}`,
-        { method: 'POST', body: new URLSearchParams({ csrf_token: csrf, reason: reason }) }
-      );
-      window.location.reload();
-    } catch (error) {
-      busy = false;
-      showToast(error.message);
-    }
-  });
-
-
   // ============================================================
   // Mark as read
   // ============================================================
@@ -2506,6 +2478,12 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
+  const zoneFilter =
+    document.getElementById(
+      'annFilterZone'
+    );
+
+
   const tab =
     document.getElementById(
       'annTabSelect'
@@ -2517,18 +2495,6 @@ document.addEventListener('DOMContentLoaded', () => {
       '[data-ann-status]'
     );
 
-
-  let appliedStatus = status?.value || '';
-  let appliedRole = roleFilter?.value || '';
-  let appliedPriority = priority?.value || '';
-
-  function commitPanelFilters() {
-    appliedStatus = status?.value || '';
-    appliedRole = roleFilter?.value || '';
-    appliedPriority = priority?.value || '';
-    if (tab) tab.value = appliedStatus === 'Draft' ? 'Drafts' : (appliedStatus || 'All Announcements');
-    applyFilters();
-  }
 
   function applyFilters() {
 
@@ -2549,7 +2515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const active =
           card.dataset.annStatus
-          === appliedStatus;
+          === status.value;
 
 
         card.classList.toggle(
@@ -2620,25 +2586,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
           const matchesStatus =
-            !appliedStatus
+            !status.value
             ||
             card.dataset.status
-            === appliedStatus;
+            === status.value;
 
 
           const matchesRole =
-            !appliedRole
+            !roleFilter?.value
             ||
             targetRoles.includes(
-              appliedRole
+              roleFilter.value
             );
 
 
           const matchesPriority =
-            !appliedPriority
+            !priority?.value
             ||
             card.dataset.priority
-            === appliedPriority;
+            === priority.value;
+
+
+          const matchesZone =
+            !zoneFilter?.value
+            ||
+            (card.dataset.zone
+              || '0'
+            ) === zoneFilter.value;
 
 
           const matches =
@@ -2648,7 +2622,9 @@ document.addEventListener('DOMContentLoaded', () => {
             &&
             matchesRole
             &&
-            matchesPriority;
+            matchesPriority
+            &&
+            matchesZone;
 
 
           card.hidden =
@@ -2681,7 +2657,16 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 
 
+  roleFilter?.addEventListener(
+    'change',
+    applyFilters
+  );
 
+
+  priority?.addEventListener(
+    'change',
+    applyFilters
+  );
 
 
   function selectStatus(
@@ -2695,7 +2680,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     status.value =
       value;
-    appliedStatus = value;
 
 
     if (tab) {
@@ -2714,7 +2698,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  status?.addEventListener(
+    'change',
+    () => {
 
+      selectStatus(
+        status.value
+      );
+    }
+  );
 
 
   tab?.addEventListener(
@@ -2779,8 +2771,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
 
-          appliedRole = '';
-          appliedPriority = '';
           selectStatus(
             card.dataset.annStatus
             || ''
@@ -2825,14 +2815,54 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
-  document
-    .getElementById(
-      'annApplyFilterBtn'
-    )
-    ?.addEventListener(
-      'click',
-      commitPanelFilters
+  zoneFilter?.addEventListener(
+    'change',
+    () => {
+
+      applyFilters();
+    }
+  );
+
+
+  /*
+   * Changing the broadcast scope invalidates cached
+   * recipient lists (they are zone-scoped) and any
+   * already-rendered recipient pickers.
+   */
+  const broadcastZoneSelect =
+    document.getElementById(
+      'annBroadcastZone'
     );
+
+  broadcastZoneSelect?.addEventListener(
+    'change',
+    () => {
+
+      recipientCache.clear();
+
+      document
+        .querySelectorAll(
+          '[data-target-role-card]'
+        )
+        .forEach(
+          card => {
+
+            delete card.dataset
+              .recipientsLoaded;
+
+            const list =
+              card.querySelector(
+                '[data-recipient-list]'
+              );
+
+            if (list) {
+              list.textContent =
+                'Select "specific users" to load eligible recipients.';
+            }
+          }
+        );
+    }
+  );
 
   document
     .getElementById(
@@ -2847,21 +2877,21 @@ document.addEventListener('DOMContentLoaded', () => {
             '';
         }
 
+        if (zoneFilter) {
+          zoneFilter.value =
+            '';
+        }
 
         if (priority) {
           priority.value =
             '';
         }
 
-
         if (search) {
           search.value =
             '';
         }
 
-
-        appliedRole = '';
-        appliedPriority = '';
         selectStatus(
           ''
         );

@@ -18,7 +18,7 @@ $currentRoute    = 'clubhealth';
 $pageStyles = [
     ROOT . '/assets/css/divisional-workflows.css',
     ROOT . '/assets/css/divisional-club-health.css',
-    ROOT . '/assets/css/nysc-club-health.css'
+    ROOT . '/assets/css/nysc-club-health.css?v=20260930'
 ];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
@@ -425,22 +425,22 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           </div>
           <div class="nysc-disband-actions__buttons">
             <!-- Issue Disband Warning Button -->
-            <button class="dw-button nysc-btn-warning" type="button" data-open-disband-warning>
+            <button class="dw-button db-primary-action nysc-btn-warning" type="button" data-open-disband-warning>
               Issue Disband Warning
             </button>
 
             <!-- Retrieve Remaining Funds Button (if Balance > 0) -->
-            <button class="dw-button nysc-btn-funds" type="button" data-btn-retrieve-funds hidden>
+            <button class="dw-button db-primary-action nysc-btn-funds" type="button" data-btn-retrieve-funds hidden>
               Retrieve Remaining Funds
             </button>
 
             <!-- Execute Disband Button -->
-            <button class="dw-button nysc-btn-disband" type="button" data-btn-execute-disband>
+            <button class="dw-button db-primary-action nysc-btn-disband" type="button" data-btn-execute-disband>
               Execute Disband
             </button>
           </div>
         </div>
-        <p class="dw-alert dw-alert--warning nch-lock-note" data-disband-lock-msg hidden></p>
+        <p class="dw-alert dw-alert--warning" data-disband-lock-msg hidden style="margin: 0; font-size: 12px;"></p>
       </section>
 
       <!-- Profile & Performance Columns -->
@@ -470,7 +470,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               </div>
             </div>
             <div class="dw-table-wrap">
-              <table class="yn-table dw-table">
+              <table class="dw-table">
                 <thead>
                   <tr>
                     <th>Event</th>
@@ -509,7 +509,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <div class="dw-impact-grid" data-detail-finance-summary></div>
         <div class="dw-table-wrap">
-          <table class="yn-table dw-table">
+          <table class="dw-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -541,7 +541,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
           </div>
           <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
               <thead>
                 <tr>
                   <th>Month</th>
@@ -591,7 +591,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <div class="dw-detail-box dw-field--span-2">
         <span>Recipients (President &amp; Secretary)</span>
-        <span data-warning-recipients class="nch-recipient-label"></span>
+        <span data-warning-recipients style="font-size: 13px; font-weight: 600; color: #334155;"></span>
       </div>
       <div class="dw-field dw-field--span-2">
         <label for="warning-subject">Warning Notice Subject</label>
@@ -613,7 +613,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button nysc-btn-warning" type="submit">Send Warning Notification</button>
+      <button class="dw-button db-primary-action nysc-btn-warning" type="submit">Send Warning Notification</button>
     </footer>
   </form>
 </div>
@@ -634,9 +634,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <div class="dw-detail-box dw-field--span-2">
         <span>Remaining Ledger Balance to Sweep</span>
-        <strong data-retrieve-amount class="nch-retrieve-amount"></strong>
+        <strong data-retrieve-amount style="color: #047857; font-size: 18px;"></strong>
       </div>
-      <div class="nysc-confirm-box dw-field--span-2 nch-confirm-success">
+      <div class="nysc-confirm-box dw-field--span-2" style="background: #f0fdf4; border-color: #22c55e; color: #15803d;">
         <strong>Treasury Fund Sweep Operation</strong>
         <ul>
           <li>A <strong>Fund Transfer Out</strong> expense entry is posted in the Club Ledger (Balance becomes 0.00).</li>
@@ -647,7 +647,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="dw-button nysc-btn-funds" type="submit">Confirm &amp; Retrieve Funds</button>
+      <button class="dw-button db-primary-action nysc-btn-funds" type="submit">Confirm &amp; Retrieve Funds</button>
     </footer>
   </form>
 </div>
@@ -683,7 +683,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
     <footer class="dw-modal__footer">
       <button class="dw-button dw-button--secondary" type="button" data-modal-close>No, Return to Dashboard</button>
-      <button class="dw-button nysc-btn-disband" type="submit">Yes, Execute Disband</button>
+      <button class="dw-button db-primary-action nysc-btn-disband" type="submit">Yes, Execute Disband</button>
     </footer>
   </form>
 </div>

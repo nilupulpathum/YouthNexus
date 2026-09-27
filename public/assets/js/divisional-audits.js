@@ -12,32 +12,20 @@
     return element ? element.value.trim().toLowerCase() : '';
   }
 
-  var panelControls = [typeFilter, statusFilter, flagFilter, sortFilter];
-  var appliedValues = new Map();
-  function captureFilters() {
-    panelControls.forEach(function (control) {
-      if (control) appliedValues.set(control, control.value);
-    });
-  }
-  function selected(control) {
-    return control ? String(appliedValues.get(control) || '') : '';
-  }
-  captureFilters();
-
   function applyQueueFilters() {
     var term = value(search);
     cards.forEach(function (card) {
       card.hidden = !((!term || card.dataset.search.indexOf(term) !== -1)
-        && (!selected(typeFilter) || card.dataset.type === selected(typeFilter).trim().toLowerCase())
-        && (!selected(statusFilter) || card.dataset.status === selected(statusFilter).trim().toLowerCase())
-        && (!selected(flagFilter) || card.dataset.flags === selected(flagFilter).trim().toLowerCase()));
+        && (!value(typeFilter) || card.dataset.type === value(typeFilter))
+        && (!value(statusFilter) || card.dataset.status === value(statusFilter))
+        && (!value(flagFilter) || card.dataset.flags === value(flagFilter)));
     });
 
     var grid = document.querySelector('[data-audit-grid]');
     if (grid) {
       cards.sort(function (a, b) {
-        if (selected(sortFilter) === 'recent') return (b.dataset.date || '').localeCompare(a.dataset.date || '');
-        if (selected(sortFilter) === 'oldest') return (a.dataset.date || '').localeCompare(b.dataset.date || '');
+        if (value(sortFilter) === 'recent') return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+        if (value(sortFilter) === 'oldest') return (a.dataset.date || '').localeCompare(b.dataset.date || '');
         return a.dataset.search.localeCompare(b.dataset.search);
       });
       cards.forEach(function (card) { grid.appendChild(card); });
@@ -52,13 +40,12 @@
 
   if (search) search.addEventListener('input', applyQueueFilters);
   var applyButton = document.querySelector('[data-audit-filter-apply]');
-  if (applyButton) applyButton.addEventListener('click', function () { captureFilters(); applyQueueFilters(); });
+  if (applyButton) applyButton.addEventListener('click', applyQueueFilters);
   var resetButton = document.querySelector('[data-audit-filter-reset]');
   if (resetButton) {
     resetButton.addEventListener('click', function () {
       [search, typeFilter, statusFilter, flagFilter].forEach(function (field) { if (field) field.value = ''; });
       if (sortFilter) sortFilter.value = 'club';
-      captureFilters();
       applyQueueFilters();
     });
   }
