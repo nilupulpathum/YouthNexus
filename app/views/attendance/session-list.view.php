@@ -14,17 +14,17 @@ $pageStyles              = [
     ROOT . '/assets/css/attendance.css?v=20260929',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+$pageScripts             = [ROOT . '/assets/js/attendance.js'];
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
-<div class="am-page-container">
+<div class="atd-page-container">
 
     <!-- Action Row -->
-    <div class="am-action-row db-action-row">
-        <button type="button" class="am-btn am-btn-primary db-primary-action" id="amAddBtn">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div class="atd-action-row">
+        <button type="button" class="atd-btn atd-btn-primary db-primary-action" id="amAddBtn">
             Log Attendance
         </button>
     </div>
@@ -32,30 +32,30 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- ============================================================
          Stat Cards
          ============================================================ -->
-    <div class="am-stats <?= $isNYSCAdmin ? 'am-stats-3' : '' ?>">
-        <div class="am-stat-card">
-            <div class="am-stat-icon events">
+    <div class="atd-stats <?= $isNYSCAdmin ? 'atd-stats-3' : '' ?>">
+        <div class="yn-stat-card atd-stat-card">
+            <div class="atd-stat-icon events">
                 <?= yn_icon('calendar') ?>
             </div>
-            <div class="am-stat-value"><?= (int)($stats->events_this_year ?? 0) ?></div>
-            <div class="am-stat-label"><?= $isNYSCAdmin ? 'National Approved Events' : 'Approved Events This Year' ?></div>
+            <div class="atd-stat-value"><?= (int)($stats->events_this_year ?? 0) ?></div>
+            <div class="atd-stat-label"><?= $isNYSCAdmin ? 'National Approved Events' : 'Approved Events This Year' ?></div>
         </div>
 
-        <div class="am-stat-card">
-            <div class="am-stat-icon recorded">
+        <div class="yn-stat-card atd-stat-card">
+            <div class="atd-stat-icon recorded">
                 <?= yn_icon('check') ?>
             </div>
-            <div class="am-stat-value"><?= (int)($stats->attendance_this_year ?? 0) ?></div>
-            <div class="am-stat-label"><?= $isNYSCAdmin ? 'Total Attendances Recorded' : 'Attendance Records This Year' ?></div>
+            <div class="atd-stat-value"><?= (int)($stats->attendance_this_year ?? 0) ?></div>
+            <div class="atd-stat-label"><?= $isNYSCAdmin ? 'Total Attendances Recorded' : 'Attendance Records This Year' ?></div>
         </div>
 
         <?php if ($isNYSCAdmin): ?>
-        <div class="am-stat-card">
-            <div class="am-stat-icon rate">
+        <div class="yn-stat-card atd-stat-card">
+            <div class="atd-stat-icon rate">
                 <?= yn_icon('award') ?>
             </div>
-            <div class="am-stat-value"><?= (int)($stats->national_rate ?? 0) ?>%</div>
-            <div class="am-stat-label">National Presence Rate</div>
+            <div class="atd-stat-value"><?= (int)($stats->national_rate ?? 0) ?>%</div>
+            <div class="atd-stat-label">National Presence Rate</div>
         </div>
         <?php endif; ?>
     </div>
@@ -74,13 +74,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         $activeFilters++;
     }
     ?>
-    <div class="am-toolbar">
-        <div class="am-search-group">
-            <div class="am-search-input-wrapper">
+    <div class="atd-toolbar">
+        <div class="atd-search-group">
+            <span class="atd-search-icon" aria-hidden="true">
+                <?= yn_icon('search') ?>
+            </span>
+            <div class="atd-search-input-wrapper">
                 <input
                     type="text"
                     id="amSearchInput"
-                    class="am-search-input"
+                    class="atd-search-input"
                     placeholder="Search events by title, location, club or organizer..."
                     aria-label="Search events"
                     autocomplete="off"
@@ -93,14 +96,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <button
             type="button"
-            class="am-filter-btn"
+            class="atd-filter-btn yn-filter-toggle"
             id="amFilterBtn"
             aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>"
             aria-controls="amFilterPanel"
         >
-            Filters
+            <?= yn_icon('filter') ?> Filters
             <span
-                class="am-filter-count<?= $activeFilters > 0 ? '' : ' hidden' ?>"
+                class="atd-filter-count<?= $activeFilters > 0 ? '' : ' hidden' ?>"
                 id="amFilterCount"
             ><?= $activeFilters ?></span>
         </button>
@@ -109,10 +112,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- Filter Panel -->
     <?php if ($isNYSCAdmin): ?>
     <!-- NYSC Administrator Cascading Filter Panel (Server & Client supported) -->
-    <form method="GET" action="<?= ROOT ?>/attendance" class="am-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
-        <div class="am-filter-grid">
+    <form method="GET" action="<?= ROOT ?>/attendance" class="atd-filter-panel<?= $activeFilters > 0 ? ' open' : '' ?>" id="amFilterPanel">
+        <h2 class="yn-filter-heading">Advanced Filters for Attendance Events</h2>
+        <div class="atd-filter-grid">
             <!-- 1. Zone Filter -->
-            <div class="am-filter-field">
+            <div class="atd-filter-field">
                 <label for="filterZone">ZONAL OFFICE</label>
                 <select name="zone_id" id="filterZone">
                     <option value="">All Zones (<?= count($zones ?? []) ?>)</option>
@@ -125,7 +129,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <!-- 2. Division Filter (Cascaded) -->
-            <div class="am-filter-field">
+            <div class="atd-filter-field">
                 <label for="filterDivision">DIVISIONAL SECRETARIAT</label>
                 <select name="division_id" id="filterDivision">
                     <option value="">All Divisions</option>
@@ -138,7 +142,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <!-- 3. Club Filter (Cascaded) -->
-            <div class="am-filter-field">
+            <div class="atd-filter-field">
                 <label for="filterClub">YOUTH CLUB</label>
                 <select name="club_id" id="filterClub">
                     <option value="">All Clubs</option>
@@ -151,7 +155,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <!-- 4. Organizer Level Filter -->
-            <div class="am-filter-field">
+            <div class="atd-filter-field">
                 <label for="filterLevel">ORGANIZER LEVEL</label>
                 <select name="level" id="filterLevel">
                     <option value="all" <?= (($filters['level'] ?? '') === 'all') ? 'selected' : '' ?>>All Levels</option>
@@ -163,7 +167,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <!-- 5. Event Type Filter -->
-            <div class="am-filter-field">
+            <div class="atd-filter-field">
                 <label for="amFilterType">EVENT TYPE</label>
                 <select name="event_type" id="amFilterType">
                     <option value="">All Types</option>
@@ -177,38 +181,45 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
         </div>
 
-        <div class="am-filter-actions">
-            <button type="submit" class="am-btn am-btn-primary" id="amApplyFilterBtn">Apply Filters</button>
-            <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-cancel" id="amClearFilterBtn">Reset</a>
+        <div class="atd-filter-actions">
+            <a href="<?= ROOT ?>/attendance" class="atd-btn atd-btn-cancel yn-filter-clear" id="amClearFilterBtn">Clear filters</a>
+            <button type="submit" class="atd-btn atd-btn-primary yn-filter-apply" id="amApplyFilterBtn">Apply filters</button>
         </div>
     </form>
 
     <?php else: ?>
     <!-- Divisional Secretary Client-Side Filter Panel -->
-    <div class="am-filter-panel" id="amFilterPanel">
-        <div class="am-filter-field">
-            <label for="amFilterType">Event Type</label>
-            <select id="amFilterType">
-                <option value="">All Types</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Community Service">Community Service</option>
-                <option value="Training">Training</option>
-                <option value="Sports">Sports</option>
-                <option value="Cultural">Cultural</option>
-                <option value="Other">Other</option>
-            </select>
+    <div class="atd-filter-panel" id="amFilterPanel">
+        <h2 class="yn-filter-heading">Advanced Filters for Attendance Events</h2>
+        <div class="atd-filter-grid">
+            <div class="atd-filter-field">
+                <label for="amFilterType">Event Type</label>
+                <select id="amFilterType">
+                    <option value="">All Types</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Community Service">Community Service</option>
+                    <option value="Training">Training</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="atd-filter-field">
+                <label for="amFilterScope">Organiser</label>
+                <select id="amFilterScope">
+                    <option value="">All</option>
+                    <option value="division">Division Events</option>
+                    <option value="club">Club Events</option>
+                </select>
+            </div>
+            <div class="atd-filter-field">
+                <label for="amFilterDateFrom">Event date from</label>
+                <input type="date" id="amFilterDateFrom">
+            </div>
         </div>
-        <div class="am-filter-field">
-            <label for="amFilterScope">Organiser</label>
-            <select id="amFilterScope">
-                <option value="">All</option>
-                <option value="division">Division Events</option>
-                <option value="club">Club Events</option>
-            </select>
-        </div>
-        <div class="am-filter-actions">
-            <button type="button" class="am-btn am-btn-primary" id="amApplyFilterBtn">Apply</button>
-            <button type="button" class="am-btn" id="amClearFilterBtn">Clear</button>
+        <div class="atd-filter-actions">
+            <button type="button" class="atd-btn yn-filter-clear" id="amClearFilterBtn">Clear filters</button>
+            <button type="button" class="atd-btn atd-btn-primary yn-filter-apply" id="amApplyFilterBtn">Apply filters</button>
         </div>
     </div>
     <?php endif; ?>
@@ -216,13 +227,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- ============================================================
          Event Cards Grid
          ============================================================ -->
-    <div class="am-list" id="amCardGrid">
+    <div class="atd-list" id="amCardGrid">
         <?php if (empty($events)): ?>
-            <div class="am-empty-state">
-                <span class="am-empty-state-icon"><?= yn_icon('info') ?></span>
+            <div class="atd-empty-state">
+                <span class="atd-empty-state-icon"><?= yn_icon('info') ?></span>
                 <p>No approved events match the selected criteria.</p>
                 <?php if (!empty($filters['zone_id']) || !empty($filters['division_id']) || !empty($filters['club_id'])): ?>
-                    <a href="<?= ROOT ?>/attendance" class="am-btn am-btn-sm" style="margin-top:10px;">Clear All Filters</a>
+                    <a href="<?= ROOT ?>/attendance" class="atd-btn atd-btn-sm yn-mt-2">Clear all filters</a>
                 <?php endif; ?>
             </div>
         <?php else: foreach ($events as $evt): ?>
@@ -253,42 +264,43 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     $evt->organizer_club_code ?? '',
                 ])));
             ?>
-            <div class="am-card"
+            <div class="atd-card"
                  data-search="<?= htmlspecialchars($searchText) ?>"
                  data-title="<?= htmlspecialchars(strtolower($evt->title)) ?>"
                  data-type="<?= htmlspecialchars(strtolower($evt->event_type ?? '')) ?>"
+                 data-event-date="<?= htmlspecialchars(substr($evt->start_datetime ?? '', 0, 10), ENT_QUOTES, 'UTF-8') ?>"
                  data-scope="<?= $lvl ?>"
                  data-zone="<?= (int)($evt->event_zonal_id ?? 0) ?>"
                  data-division="<?= (int)($evt->event_division_id ?? 0) ?>"
                  data-club="<?= (int)($evt->organizer_club_id ?? 0) ?>">
-                <div class="am-card-top">
-                    <span class="am-badge <?= $lvl ?>"><?= htmlspecialchars($lvlBadge) ?></span>
+                <div class="atd-card-top">
+                    <span class="atd-badge <?= $lvl ?>"><?= htmlspecialchars($lvlBadge) ?></span>
                     <?php if (!empty($evt->event_type)): ?>
-                        <span class="am-badge type"><?= htmlspecialchars($evt->event_type) ?></span>
+                        <span class="atd-badge type"><?= htmlspecialchars($evt->event_type) ?></span>
                     <?php endif; ?>
                 </div>
-                <h3 class="am-card-title"><?= htmlspecialchars($evt->title) ?></h3>
-                <p class="am-card-organiser">
+                <h3 class="atd-card-title"><?= htmlspecialchars($evt->title) ?></h3>
+                <p class="atd-card-organiser">
                     <?= $hierarchyText ?>
                     <?php if (!empty($evt->organizer_club_code)): ?>
                         <small class="ea-club-code"><?= htmlspecialchars($evt->organizer_club_code) ?></small>
                     <?php endif; ?>
                 </p>
-                <div class="am-card-meta">
-                    <span class="am-card-meta-item">
-                        <span class="am-card-meta-icon"><?= yn_icon('calendar') ?></span>
+                <div class="atd-card-meta">
+                    <span class="atd-card-meta-item">
+                        <span class="atd-card-meta-icon"><?= yn_icon('calendar') ?></span>
                         <?= date('M j, Y', strtotime($evt->start_datetime)) ?>
                     </span>
                     <?php if (!empty($evt->location)): ?>
-                        <span class="am-card-meta-item">
-                            <span class="am-card-meta-icon"><?= yn_icon('pin') ?></span>
+                        <span class="atd-card-meta-item">
+                            <span class="atd-card-meta-icon"><?= yn_icon('pin') ?></span>
                             <?= htmlspecialchars($evt->location) ?>
                         </span>
                     <?php endif; ?>
                 </div>
-                <span class="am-card-attendance-chip<?= $chipClass ?>"><?= $chipLabel ?></span>
-                <div class="am-card-footer">
-                    <a href="<?= ROOT ?>/attendance/detail/<?= (int)$evt->event_id ?>" class="am-btn-view db-view-button">
+                <span class="atd-card-attendance-chip<?= $chipClass ?>"><?= $chipLabel ?></span>
+                <div class="atd-card-footer">
+                    <a href="<?= ROOT ?>/attendance/detail/<?= (int)$evt->event_id ?>" class="atd-btn-view db-view-button">
                         View Attendance
                     </a>
                 </div>
@@ -301,24 +313,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <!-- ============================================================
      Add Attendance Modal (from manage attendance)
      ============================================================ -->
-<div class="am-modal-backdrop" id="amModal">
-    <div class="am-modal">
-        <div class="am-modal-header">
+<div class="atd-modal-backdrop" id="amModal">
+    <div class="atd-modal">
+        <div class="atd-modal-header">
             <h3>Log Attendance</h3>
-            <button type="button" class="am-modal-close" id="amModalClose" aria-label="Close">
+            <button type="button" class="atd-modal-close" id="amModalClose" aria-label="Close">
                 <?= yn_icon('close') ?>
             </button>
         </div>
-        <div class="am-modal-tabs">
-            <button class="am-modal-tab active" data-tab="single" id="tabSingle">Single Entry</button>
-            <button class="am-modal-tab"         data-tab="bulk"   id="tabBulk">Bulk CSV Upload</button>
+        <div class="atd-modal-tabs">
+            <button class="atd-modal-tab active" data-tab="single" id="tabSingle">Single Entry</button>
+            <button class="atd-modal-tab"         data-tab="bulk"   id="tabBulk">Bulk CSV Upload</button>
         </div>
-        <div class="am-modal-body">
+        <div class="atd-modal-body">
 
             <!-- Single Entry -->
-            <div class="am-tab-pane active" id="paneSingle">
-                <div class="am-field">
-                    <label for="sEventSelect">EVENT <span style="color:#ef4444;">*</span></label>
+            <div class="atd-tab-pane active" id="paneSingle">
+                <div class="atd-field">
+                    <label for="sEventSelect">EVENT <span class="yn-required">*</span></label>
                     <select id="sEventSelect">
                         <option value="">— Select Event —</option>
                         <?php foreach ($events as $evt): ?>
@@ -326,35 +338,35 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="am-field">
-                    <label for="sMemberSelect">MEMBER <span style="color:#ef4444;">*</span></label>
+                <div class="atd-field">
+                    <label for="sMemberSelect">MEMBER <span class="yn-required">*</span></label>
                     <select id="sMemberSelect" disabled>
                         <option value="">— Select Event first —</option>
                     </select>
                 </div>
-                <div class="am-fields-row">
-                    <div class="am-field">
-                        <label for="sStatus">STATUS <span style="color:#ef4444;">*</span></label>
+                <div class="atd-fields-row">
+                    <div class="atd-field">
+                        <label for="sStatus">STATUS <span class="yn-required">*</span></label>
                         <select id="sStatus">
                             <option value="Present">Present</option>
                             <option value="Absent">Absent</option>
                         </select>
                     </div>
-                    <div class="am-field">
+                    <div class="atd-field">
                         <label for="sCheckIn">CHECK-IN TIME (optional)</label>
                         <input type="datetime-local" id="sCheckIn">
                     </div>
                 </div>
-                <div class="am-field">
+                <div class="atd-field">
                     <label for="sRemark">REMARK (optional)</label>
                     <input type="text" id="sRemark" placeholder="e.g. On-time / Excused absence">
                 </div>
             </div>
 
             <!-- Bulk CSV -->
-            <div class="am-tab-pane" id="paneBulk">
-                <div class="am-field">
-                    <label for="bEventSelect">EVENT <span style="color:#ef4444;">*</span></label>
+            <div class="atd-tab-pane" id="paneBulk">
+                <div class="atd-field">
+                    <label for="bEventSelect">EVENT <span class="yn-required">*</span></label>
                     <select id="bEventSelect">
                         <option value="">— Select Event —</option>
                         <?php foreach ($events as $evt): ?>
@@ -362,31 +374,27 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="am-field">
-                    <label for="bCsvFile">CSV FILE <span style="color:#ef4444;">*</span></label>
+                <div class="atd-field">
+                    <label for="bCsvFile">CSV FILE <span class="yn-required">*</span></label>
                     <input type="file" id="bCsvFile" accept=".csv">
                 </div>
-                <div class="am-csv-note">
+                <div class="atd-csv-note">
                     <strong>Expected CSV columns:</strong> <code>member_id, status, check_in_time, remark</code><br>
                     Rows with an invalid member ID will be skipped and reported back.
                 </div>
             </div>
 
         </div>
-        <div class="am-modal-footer">
-            <button type="button" class="am-btn-cancel" id="amModalCancelBtn">Cancel</button>
-            <button type="button" class="am-btn am-btn-primary" id="amSaveBtn">Save Attendance</button>
+        <div class="atd-modal-footer">
+            <button type="button" class="atd-btn-cancel" id="amModalCancelBtn">Cancel</button>
+            <button type="button" class="atd-btn atd-btn-primary" id="amSaveBtn">Save Attendance</button>
         </div>
     </div>
 </div>
 
-<div class="am-toast" id="amToast"></div>
+<div class="atd-toast" id="amToast"></div>
 
 <input type="hidden" id="csrfToken" value="<?= htmlspecialchars($csrf_token ?? '') ?>">
-<script>
-    window.ROOT = "<?= ROOT ?>";
-    window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
-</script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=20260929"></script>
+<div id="attendanceConfig" hidden data-root="<?= htmlspecialchars(ROOT, ENT_QUOTES, 'UTF-8') ?>" data-nysc-admin="<?= $isNYSCAdmin ? 'true' : 'false' ?>"></div>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

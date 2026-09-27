@@ -13,6 +13,7 @@ $currentRoute = $listRoute;
 $unreadNotificationCount = $isZonalDemo ? 2 : 0;
 $pageStyles = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
 
+$pageScripts = [ROOT . '/assets/js/fundtransfer.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // Formatters
@@ -49,9 +50,8 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Ledger
             </a>
-            <button type="button" class="ft-btn ft-btn-primary db-primary-action" id="btnOpenCreateModal" aria-haspopup="dialog">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Fund Allocation
+            <button type="button" class="yn-btn yn-btn--primary ft-btn ft-btn-primary db-primary-action" id="btnOpenCreateModal" aria-haspopup="dialog">
+                <span class="ft-btn-icon">+</span> New Fund Allocation
             </button>
         </div>
     </div>
@@ -59,7 +59,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
     <!-- Stat Cards (4 Cards from fundTransfer.php) -->
     <div class="ft-cards-row">
         <!-- 1. Fiscal Window -->
-        <div class="ft-stat-card">
+        <div class="yn-stat-card ft-stat-card">
             <div class="ft-stat-head">
                 <span class="ft-stat-title"><?= htmlspecialchars(strtoupper($qLabel)) ?> FISCAL WINDOW</span>
             </div>
@@ -68,7 +68,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
 
         <!-- 2. In-flight Transfers -->
-        <div class="ft-stat-card">
+        <div class="yn-stat-card ft-stat-card">
             <div class="ft-stat-head">
                 <span class="ft-stat-title">IN-FLIGHT CLEARANCE</span>
                 <?php if (($stats['in_flight_count'] ?? 0) > 0): ?>
@@ -83,7 +83,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
 
         <!-- 3. Budget Cap & Utilization -->
-        <div class="ft-stat-card ft-stat-card-budget">
+        <div class="yn-stat-card ft-stat-card ft-stat-card-budget">
             <div class="ft-stat-head">
                 <span class="ft-stat-title"><?= $isZonalDemo ? 'NYSC FUNDS RECEIVED' : 'ANNUAL BUDGET' ?> <?= date('Y') ?></span>
                 <span class="ft-badge ft-badge-blue"><?= $utilizedPct ?>% Utilized</span>
@@ -96,7 +96,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
 
         <!-- 4. Core Bank Account Gateway -->
-        <div class="ft-stat-card ft-stat-card-bank">
+        <div class="yn-stat-card ft-stat-card ft-stat-card-bank">
             <div class="ft-stat-head">
                 <span class="ft-stat-title">CORE SETTLEMENT ACCOUNT</span>
                 <span class="ft-badge ft-badge-green">Active</span>
@@ -175,7 +175,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
     <!-- Transfers Table -->
     <div class="ft-table-card">
-        <table class="ft-table" id="transfersTable">
+        <table class="yn-table ft-table" id="transfersTable">
             <thead>
                 <tr>
                     <th>DATE &amp; REF</th>
@@ -235,7 +235,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                             <?php endif; ?>
                         </td>
                         <td class="ft-td-actions">
-                            <button type="button" class="ft-link-btn ft-btn-view-details"
+                            <button type="button" class="yn-btn yn-btn--sm yn-btn--ghost ft-link-btn ft-btn-view-details"
                                 data-id="<?= (int)$t->allocation_id ?>"
                                 data-ref="<?= htmlspecialchars($t->reference_no, ENT_QUOTES) ?>"
                                 data-status="<?= htmlspecialchars($t->status, ENT_QUOTES) ?>"
@@ -374,8 +374,8 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 Authorizing as: <strong><?= htmlspecialchars($userName ?? 'N. Fernando') ?></strong> (<?= htmlspecialchars($userDesignation ?? 'Div. Secretary') ?>)
             </div>
             <div class="ft-footer-buttons">
-                <button type="button" class="ft-btn ft-btn-cancel" id="btnCancelAllocModal">Cancel</button>
-                <button type="submit" form="fundAllocationForm" class="ft-btn ft-btn-authorize" id="btnSubmitAlloc">
+                <button type="button" class="yn-btn yn-btn--secondary ft-btn ft-btn-cancel" id="btnCancelAllocModal">Cancel</button>
+                <button type="submit" form="fundAllocationForm" class="yn-btn yn-btn--primary ft-btn ft-btn-authorize" id="btnSubmitAlloc">
                     Authorize Transfer
                 </button>
             </div>
@@ -469,7 +469,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
         <!-- Details Footer -->
         <div class="ft-popup-footer ft-details-footer">
-            <button type="button" class="ft-btn ft-btn-close" id="btnCloseDetailsModal2">Close</button>
+            <button type="button" class="yn-btn yn-btn--secondary ft-btn ft-btn-close" id="btnCloseDetailsModal2">Close</button>
             <a href="#" class="ft-btn ft-btn-download" id="btnReceiptDownload" target="_blank">
                 Print Receipt / Save PDF
             </a>
@@ -498,6 +498,5 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         }
     })();
 </script>
-<script src="<?= ROOT ?>/assets/js/fundtransfer.js" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

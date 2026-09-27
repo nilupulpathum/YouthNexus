@@ -44,6 +44,10 @@ $roleLabel = function ($role) {
     );
 };
 
+$statusLabel = static function ($status) {
+    return $status === 'Retracted' ? 'Withdrawn from Publication' : (string) $status;
+};
+
 
 /**
  * New detailed audience structure supplied by controller:
@@ -156,18 +160,22 @@ switch ($announcement->level ?? '') {
             <?php endif; ?>
 
 
-            <?php if (
-                $announcement->status === 'Draft'
-            ): ?>
+            <?php if ($announcement->status === 'Draft'): ?>
 
                 <span class="ann-badge ann-badge-draft">
                     DRAFT
                 </span>
 
-            <?php else: ?>
+            <?php elseif ($announcement->status === 'Published'): ?>
 
                 <span class="ann-badge ann-badge-published">
                     PUBLISHED
+                </span>
+
+            <?php else: ?>
+
+                <span class="ann-badge ann-badge-draft">
+                    <?= htmlspecialchars(strtoupper($statusLabel($announcement->status)), ENT_QUOTES, 'UTF-8') ?>
                 </span>
 
             <?php endif; ?>
@@ -390,6 +398,7 @@ switch ($announcement->level ?? '') {
 
             <?php if (!empty($canManage)): ?>
 
+                <?php if (in_array($announcement->status, ['Draft', 'Published'], true)): ?>
                 <a
                     class="ann-btn ann-btn-secondary db-secondary-action"
                     href="<?= ROOT ?>/announcements?edit=<?= (int)$announcement->announcement_id ?>"
@@ -402,15 +411,24 @@ switch ($announcement->level ?? '') {
                         : 'Edit Announcement' ?>
 
                 </a>
+                <?php endif; ?>
 
-
+                <?php if ($announcement->status === 'Draft'): ?>
                 <button
                     type="button"
                     class="ann-btn ann-btn-danger"
                     onclick="deleteAnnouncement(<?= (int)$announcement->announcement_id ?>)"
                 >
-                    Delete Announcement
+                    Delete Draft
                 </button>
+                <?php elseif ($announcement->status === 'Published'): ?>
+                    <button type="button" class="ann-btn ann-btn-danger" data-ann-lifecycle-action="retract" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Withdraw from Publication</button>
+                    <button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-action="archive" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Archive Announcement</button>
+                <?php elseif ($announcement->status === 'Retracted'): ?>
+                    <button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-action="archive" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Archive Announcement</button>
+                <?php elseif ($announcement->status === 'Archived'): ?>
+                    <button type="button" class="ann-btn ann-btn-primary" data-ann-lifecycle-action="restore" data-announcement-id="<?= (int)$announcement->announcement_id ?>">Restore Announcement</button>
+                <?php endif; ?>
 
             <?php endif; ?>
 
@@ -852,6 +870,19 @@ switch ($announcement->level ?? '') {
     </div>
 
 </div>
+
+
+<?php if (!empty($canManage) && in_array($announcement->status, ['Published', 'Retracted', 'Archived'], true)): ?>
+<div class="ann-modal-backdrop" id="annLifecycleModal" aria-hidden="true">
+    <div class="ann-modal-card" role="dialog" aria-modal="true" aria-labelledby="annLifecycleTitle">
+        <div class="ann-modal-header"><h2 id="annLifecycleTitle">Update Announcement Lifecycle</h2><button type="button" class="ann-modal-close" data-ann-lifecycle-close aria-label="Close"><?= $annIcon('close') ?></button></div>
+        <form id="annLifecycleForm">
+            <div class="ann-modal-body"><div class="ann-field"><label for="annLifecycleReason">Reason</label><textarea id="annLifecycleReason" name="reason" minlength="5" maxlength="1000" required></textarea></div></div>
+            <div class="ann-modal-footer"><button type="button" class="ann-btn ann-btn-secondary" data-ann-lifecycle-close>Cancel</button><button type="submit" class="ann-btn ann-btn-primary" id="annLifecycleSubmit">Save Change</button></div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
 
 
 <!-- ========================================================= -->

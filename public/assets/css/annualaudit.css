@@ -994,3 +994,10 @@
     background-image: none;
     padding-right: 14px;
 }
+
+/* Shared audit presentation for both the audit register and report. */
+.audit-flash-close { background: none; border: 0; cursor: pointer; font-size: 16px; color: inherit; }
+.audit-empty-icon { color: #d1d5db; margin-bottom: 12px; }
+.audit-inline-form { display: inline; }
+.audit-num-success { color: #1e9e5a; }
+.audit-num-danger { color: #b91c1c; }
