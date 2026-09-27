@@ -11,8 +11,8 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css',
-    ROOT . '/assets/css/divisional-summary-standard.css',
+    ROOT . '/assets/css/attendance.css?v=20260929',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 $pageScripts             = [ROOT . '/assets/js/attendance.js'];
 

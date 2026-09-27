@@ -427,16 +427,36 @@ document.addEventListener('DOMContentLoaded', () => {
         '[data-recipient-list]'
       );
 
+    /*
+     * National managers may narrow the broadcast to one zone; the
+     * recipient endpoint honours the same filter server-side.
+     */
+    const zoneSelect =
+      document.getElementById(
+        'annBroadcastZone'
+      );
+
+    const zoneId =
+      zoneSelect?.value
+      || '';
+
+    const cacheKey =
+      `${role}::${zoneId}`;
+
+    const zoneQuery =
+      zoneId
+        ? `?zone_id=${encodeURIComponent(zoneId)}`
+        : '';
 
     /*
      * We may have fetched this role earlier.
      */
     if (
-      recipientCache.has(role)
+      recipientCache.has(cacheKey)
     ) {
       renderRecipientList(
         card,
-        recipientCache.get(role)
+        recipientCache.get(cacheKey)
       );
 
       return;
@@ -453,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data =
         await request(
-          `recipients/${encodeURIComponent(role)}`
+          `recipients/${encodeURIComponent(role)}${zoneQuery}`
         );
 
 
@@ -466,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
       recipientCache.set(
-        role,
+        cacheKey,
         recipients
       );
 
@@ -1205,6 +1225,22 @@ document.addEventListener('DOMContentLoaded', () => {
         category.value =
           announcement.category
           || '';
+      }
+
+
+      const broadcastZone =
+        document.getElementById(
+          'annBroadcastZone'
+        );
+
+
+      if (broadcastZone) {
+        broadcastZone.value =
+          announcement.organizer_zonal_id
+            ? String(
+                announcement.organizer_zonal_id
+              )
+            : '';
       }
 
 
@@ -2506,6 +2542,12 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
+  const zoneFilter =
+    document.getElementById(
+      'annFilterZone'
+    );
+
+
   const tab =
     document.getElementById(
       'annTabSelect'
@@ -2641,6 +2683,14 @@ document.addEventListener('DOMContentLoaded', () => {
             === appliedPriority;
 
 
+          const matchesZone =
+            !zoneFilter?.value
+            ||
+            (card.dataset.zone
+              || '0'
+            ) === zoneFilter.value;
+
+
           const matches =
             matchesSearch
             &&
@@ -2648,7 +2698,9 @@ document.addEventListener('DOMContentLoaded', () => {
             &&
             matchesRole
             &&
-            matchesPriority;
+            matchesPriority
+            &&
+            matchesZone;
 
 
           card.hidden =
@@ -2825,6 +2877,55 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
 
+  zoneFilter?.addEventListener(
+    'change',
+    () => {
+
+      applyFilters();
+    }
+  );
+
+
+  /*
+   * Changing the broadcast scope invalidates cached
+   * recipient lists (they are zone-scoped) and any
+   * already-rendered recipient pickers.
+   */
+  const broadcastZoneSelect =
+    document.getElementById(
+      'annBroadcastZone'
+    );
+
+  broadcastZoneSelect?.addEventListener(
+    'change',
+    () => {
+
+      recipientCache.clear();
+
+      document
+        .querySelectorAll(
+          '[data-target-role-card]'
+        )
+        .forEach(
+          card => {
+
+            delete card.dataset
+              .recipientsLoaded;
+
+            const list =
+              card.querySelector(
+                '[data-recipient-list]'
+              );
+
+            if (list) {
+              list.textContent =
+                'Select "specific users" to load eligible recipients.';
+            }
+          }
+        );
+    }
+  );
+
   document
     .getElementById(
       'annApplyFilterBtn'
@@ -2847,12 +2948,15 @@ document.addEventListener('DOMContentLoaded', () => {
             '';
         }
 
+        if (zoneFilter) {
+          zoneFilter.value =
+            '';
+        }
 
         if (priority) {
           priority.value =
             '';
         }
-
 
         if (search) {
           search.value =

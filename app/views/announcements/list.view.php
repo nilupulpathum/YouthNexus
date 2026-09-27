@@ -18,10 +18,10 @@ $pageTitle       = 'Announcements';
 $pageDescription = 'View communications relevant to your role and organisational scope';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css',
-    ROOT . '/assets/css/divisional-summary-standard.css',
+    ROOT . '/assets/css/announcements.css?v=20260929',
+    ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
-$pageScripts     = [ROOT . '/assets/js/announcements.js'];
+$pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
 require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -241,6 +241,41 @@ $statusLabel = static function ($status) {
     </div>
 
 
+    <?php if ($managerLevel === 'NYSC'): ?>
+
+        <div class="ann-filter-field">
+
+            <label for="annFilterZone">
+                Zone
+            </label>
+
+            <select id="annFilterZone">
+
+                <option value="">
+                    All Zones
+                </option>
+
+                <?php foreach (($zones ?? []) as $z): ?>
+
+                    <option
+                        value="<?= (int)$z->zonal_id ?>"
+                    >
+                        <?= htmlspecialchars(
+                            $z->zonal_name,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </option>
+
+                <?php endforeach; ?>
+
+            </select>
+
+        </div>
+
+    <?php endif; ?>
+
+
     <?php if (
         $canManageAnnouncements
         && !empty($availableTargetRoles)
@@ -453,6 +488,7 @@ $statusLabel = static function ($status) {
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>"
+                data-zone="<?= (int)($a->organizer_zonal_id ?? 0) ?>"
             >
 
                 <div class="ann-card-top">
@@ -773,6 +809,50 @@ $statusLabel = static function ($status) {
                     ></textarea>
 
                 </div>
+
+
+                <!-- ================================================= -->
+                <!-- Broadcast scope (NYSC only)                       -->
+                <!-- ================================================= -->
+
+                <?php if ($managerLevel === 'NYSC'): ?>
+
+                    <div class="ann-field">
+
+                        <label for="annBroadcastZone">
+                            Broadcast Scope
+                        </label>
+
+                        <p class="ann-field-help">
+                            National broadcasts reach every zone.
+                            Choose a zone to target only that zone's users.
+                        </p>
+
+                        <select id="annBroadcastZone" name="broadcast_zone_id">
+
+                            <option value="">
+                                National — all zones
+                            </option>
+
+                            <?php foreach (($zones ?? []) as $z): ?>
+
+                                <option
+                                    value="<?= (int)$z->zonal_id ?>"
+                                >
+                                    <?= htmlspecialchars(
+                                        $z->zonal_name,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </option>
+
+                            <?php endforeach; ?>
+
+                        </select>
+
+                    </div>
+
+                <?php endif; ?>
 
 
                 <!-- ================================================= -->
