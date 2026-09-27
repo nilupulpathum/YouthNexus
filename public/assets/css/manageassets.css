@@ -254,57 +254,243 @@
 .am-badge-purple { background: #f3e8ff; color: #6b21a8; }
 .am-badge-gray   { background: #f1f5f9; color: #475569; }
 
-/* ── Filter Bar ─────────────────────────────────────────────── */
+/* ── Filter Bar (Manage User parity: toolbar + collapsible panel) ── */
 .am-filter-bar {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    background: #ffffff;
-    padding: 14px 18px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .am-search-wrap {
-    flex: 1;
-    min-width: 280px;
-    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.am-search-wrap:hover { border-color: #cbd5e1; }
+
+.am-search-wrap:focus-within {
+    border-color: #5b82df;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.10);
 }
 
 .am-search-input {
+    flex: 1 1 auto;
     width: 100%;
-    padding: 10px 38px 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #0f172a;
-    font-size: 13.5px;
+    min-width: 0;
+    height: 100%;
     box-sizing: border-box;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    margin: 0;
+    padding: 0 0 0 14px;
+    background: transparent;
+    color: #0f172a;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    font-size: 14px;
 }
 
-.am-search-input:focus {
-    outline: none;
-    border-color: #1e5eff;
-    background: #ffffff;
+/* Neutralizer: dashboard.css/common.css style bare inputs globally. */
+.dashboard .am-search-input,
+.dashboard .am-search-input:hover,
+.dashboard .am-search-input:focus,
+.dashboard .am-search-input:focus-visible,
+.dashboard .am-search-input:active {
+    margin: 0 !important;
+    padding: 0 0 0 14px !important;
+    background: transparent !important;
+    color: #111827;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
 }
+
+.dashboard .am-search-input::placeholder { color: #94a3b8; opacity: 1; }
 
 .am-search-icon {
-    position: absolute;
-    right: 14px;
-    left: auto;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 14px;
+    flex: 0 0 15px;
+    width: 15px;
+    height: 15px;
+    margin: 0 14px 0 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    color: #94a3b8;
     pointer-events: none;
 }
+
+.am-filter-btn {
+    flex: 0 0 auto;
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0 16px;
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.am-filter-btn:hover,
+.am-filter-btn[aria-expanded="true"] {
+    color: #1e40af;
+    background: #f8fafc;
+    border-color: #b9c8ee;
+}
+
+.am-filter-count {
+    min-width: 19px;
+    height: 19px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    background: #1e40af;
+    color: #ffffff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.am-filter-count.hidden { display: none; }
+
+.am-filter-panel {
+    display: none;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 0 0 16px;
+}
+
+.am-filter-panel.open { display: flex; }
+
+.am-filter-grid {
+    flex: 1 1 560px;
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.am-filter-field {
+    flex: 1 1 180px;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.am-filter-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.am-filter-field select {
+    height: 38px;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #111827;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.am-filter-field select:focus {
+    border-color: #5b82df;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.10);
+}
+
+.am-filter-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.am-filter-actions .am-filter-apply {
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    background: #1e40af;
+    color: #ffffff !important;
+    border: 1px solid #1e40af;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+}
+
+.am-filter-actions .am-filter-apply:hover {
+    background: #1d3c9f;
+    border-color: #1d3c9f;
+}
+
+.am-filter-reset {
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 7px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.am-filter-reset:hover { background: #f8fafc; border-color: #cbd5e1; }
 
 .am-select {
     padding: 10px 36px 10px 14px;
@@ -904,7 +1090,7 @@
         flex-direction: column;
         align-items: stretch;
     }
-    .am-select {
+    .am-filter-field select {
         width: 100%;
     }
     .am-field-row {

@@ -317,6 +317,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── FILTER PANEL TOGGLE / RESET (Manage User parity) ──────
+    const filterBtn = document.getElementById('amFilterBtn');
+    const filterPanel = document.getElementById('amFilterPanel');
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', function () {
+            const open = filterPanel.classList.toggle('open');
+            filterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    }
+    const filterResetBtn = document.getElementById('am-reset-btn');
+    if (filterResetBtn) {
+        filterResetBtn.addEventListener('click', function () {
+            window.location.href = window.YouthNexusAssets.rootUrl + '/manageassets';
+        });
+    }
+
     // ── FORM SUBMISSIONS VIA AJAX ─────────────────────────────
     const addStockForm = document.getElementById('addStockForm');
     const distributeForm = document.getElementById('distributeForm');
