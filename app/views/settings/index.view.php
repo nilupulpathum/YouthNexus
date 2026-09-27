@@ -5,7 +5,7 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/settings.js'];
 $maskedEmail = $maskedEmail ?? '';
 $csrfToken = $csrf_token ?? '';

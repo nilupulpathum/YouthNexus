@@ -21,34 +21,34 @@
     align-items: center;
     gap: 12px;
     padding: 14px 20px;
-    background: var(--yn-bg-surface);
-    border: 1px solid var(--yn-border);
+    background: #fff;
+    border: 1px solid var(--db-border);
     border-radius: 12px;
     font-size: 14px;
     font-weight: 700;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
     cursor: pointer;
     text-align: left;
     transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-    background: var(--yn-bg-page);
+    background: #f8fafc;
 }
 
 .tab-btn.is-active {
-    background: var(--yn-sidebar-bg);
-    color: var(--yn-bg-surface);
-    border-color: var(--yn-sidebar-bg);
+    background: var(--db-sidebar-bg);
+    color: #fff;
+    border-color: var(--db-sidebar-bg);
 }
 
 /* Content Area */
 .settings-content {
     flex-grow: 1;
-    background: var(--yn-bg-surface);
+    background: #fff;
     border-radius: 16px;
     padding: 32px;
-    border: 1px solid var(--yn-border);
+    border: 1px solid var(--db-border);
 }
 
 .settings-pane {
@@ -62,7 +62,7 @@
 .pane-header {
     margin-bottom: 32px;
     padding-bottom: 20px;
-    border-bottom: 1px solid var(--yn-border);
+    border-bottom: 1px solid var(--db-border);
 }
 
 .pane-header h2 {
@@ -73,7 +73,7 @@
 
 .pane-header p {
     font-size: 14px;
-    color: var(--yn-text-muted);
+    color: var(--db-text-grey);
 }
 
 /* Forms */
@@ -89,7 +89,7 @@
     height: 80px;
     border-radius: 16px;
     overflow: hidden;
-    background: var(--yn-bg-surface-alt);
+    background: #f1f5f9;
 }
 
 .profile-avatar-preview img {
@@ -105,8 +105,8 @@
 
 .btn-upload {
     padding: 8px 16px;
-    background: var(--yn-sidebar-bg);
-    color: var(--yn-bg-surface);
+    background: var(--db-sidebar-bg);
+    color: #fff;
     border: none;
     border-radius: 8px;
     font-size: 13px;
@@ -116,9 +116,9 @@
 
 .btn-delete {
     padding: 8px 16px;
-    background: var(--yn-bg-surface);
+    background: #fff;
     color: #ef4444;
-    border: 1px solid var(--yn-danger-soft-strong);
+    border: 1px solid #fee2e2;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 700;
@@ -144,12 +144,12 @@
 .form-group label {
     font-size: 13px;
     font-weight: 700;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
 }
 
 .form-group input {
     padding: 12px;
-    border: 1.5px solid var(--yn-border);
+    border: 1.5px solid var(--db-border);
     border-radius: 10px;
     font-size: 14px;
 }
@@ -157,15 +157,15 @@
 .form-footer {
     margin-top: 32px;
     padding-top: 24px;
-    border-top: 1px solid var(--yn-border);
+    border-top: 1px solid var(--db-border);
     display: flex;
     gap: 16px;
 }
 
 .btn-save {
     padding: 12px 24px;
-    background: var(--yn-sidebar-bg);
-    color: var(--yn-bg-surface);
+    background: var(--db-sidebar-bg);
+    color: #fff;
     border: none;
     border-radius: 10px;
     font-weight: 700;
@@ -174,9 +174,9 @@
 
 .btn-cancel, .btn-verify-code {
     padding: 12px 24px;
-    background: var(--yn-bg-surface);
-    border: 1px solid var(--yn-border);
-    color: var(--yn-text-primary);
+    background: #fff;
+    border: 1px solid var(--db-border);
+    color: var(--db-text-dark);
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
@@ -203,7 +203,7 @@
 
 .item-info p {
     font-size: 13px;
-    color: var(--yn-text-muted);
+    color: var(--db-text-grey);
 }
 
 .switch {
@@ -226,7 +226,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--yn-border-slate);
+    background-color: #e2e8f0;
     transition: .4s;
 }
 
@@ -242,7 +242,7 @@
 }
 
 input:checked + .slider {
-    background-color: var(--yn-sidebar-bg);
+    background-color: var(--db-sidebar-bg);
 }
 
 input:checked + .slider:before {
@@ -298,16 +298,16 @@ input:checked + .slider:before {
     justify-content: center;
     width: 100%;
     height: 100%;
-    color: var(--yn-sidebar-bg);
+    color: var(--db-sidebar-bg);
     background: #e8eefb;
     font-size: 28px;
     font-weight: 800;
 }
 
 /* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
-.dashboard .tab-btn { color: var(--yn-text-primary); }
-.dashboard .tab-btn.is-active { color: var(--yn-bg-surface); }
-.dashboard .btn-save { color: var(--yn-bg-surface); }
-.dashboard .btn-cancel, .dashboard .btn-verify-code { color: var(--yn-text-primary); }
-.dashboard .btn-upload { color: var(--yn-bg-surface); }
+.dashboard .tab-btn { color: var(--db-text-dark); }
+.dashboard .tab-btn.is-active { color: #fff; }
+.dashboard .btn-save { color: #fff; }
+.dashboard .btn-cancel, .dashboard .btn-verify-code { color: var(--db-text-dark); }
+.dashboard .btn-upload { color: #fff; }
 .dashboard .btn-delete { color: #ef4444; }
