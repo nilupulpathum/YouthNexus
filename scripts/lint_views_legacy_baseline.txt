@@ -1,0 +1,177 @@
+app/views/divisionalallocations/index.view.php: table missing yn-table
+app/views/divisionalallocations/index.view.php: table missing yn-table
+app/views/divisionalassets/index.view.php: table missing yn-table
+app/views/divisionalassets/index.view.php: table missing yn-table
+app/views/divisionalassets/index.view.php: table missing yn-table
+app/views/divisionalassets/index.view.php: table missing yn-table
+app/views/divisionalaudits/review.view.php: table missing yn-table
+app/views/divisionalclubhealth/index.view.php: table missing yn-table
+app/views/divisionalclubhealth/index.view.php: table missing yn-table
+app/views/divisionalclubhealth/index.view.php: table missing yn-table
+app/views/divisionalcoordinator/index.view.php: table missing yn-table
+app/views/divisionalledger/index.view.php: table missing yn-table
+app/views/divisionalreports/preview.view.php: table missing yn-table
+app/views/divisionaltreasurer/index.view.php: table missing yn-table
+app/views/divisionalvoidapproval/index.view.php: table missing yn-table
+app/views/divisionalvoidapproval/index.view.php: table missing yn-table
+app/views/divisionalvoidapproval/index.view.php: table missing yn-table
+app/views/divisionalvoidrequest/index.view.php: table missing yn-table
+app/views/divisionalvoidrequest/index.view.php: table missing yn-table
+app/views/attendance/session-list.view.php: missing $pageScripts array before dashboard layout
+app/views/attendance/session-list.view.php: load assets through the dashboard layout
+app/views/attendance/session-list.view.php: non-data-driven inline style: margin-top:10px;
+app/views/attendance/session-list.view.php: non-data-driven inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: non-data-driven inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: non-data-driven inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: non-data-driven inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: non-data-driven inline style: color:#ef4444;
+app/views/attendance/session-detail.view.php: missing $pageScripts array before dashboard layout
+app/views/attendance/session-detail.view.php: load assets through the dashboard layout
+app/views/attendance/session-detail.view.php: non-data-driven inline style: margin-right:5px
+app/views/attendance/session-detail.view.php: non-data-driven inline style: margin-right:5px
+app/views/attendance/session-detail.view.php: non-data-driven inline style: font-size:13px;color:#6b7280;margin-left:auto;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: padding:40px 0;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: text-align:right;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: color:#64748b;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: font-size:11px;color:#94a3b8;margin-top:2px;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: text-align:right;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: max-width:440px;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: font-weight:700;font-size:14px;color:#0f172a;padding:8px 0;
+app/views/attendance/session-detail.view.php: non-data-driven inline style: color:#ef4444;
+app/views/clubregistrationapproval/application-list.view.php: missing $pageScripts array before dashboard layout
+app/views/clubregistrationapproval/application-list.view.php: load assets through the dashboard layout
+app/views/clubregistrationapproval/application-list.view.php: non-data-driven inline style: grid-column: 1 / -1;
+app/views/eventapproval/event-list.view.php: missing $pageScripts array before dashboard layout
+app/views/eventapproval/event-list.view.php: load assets through the dashboard layout
+app/views/manageevents/list.view.php: non-data-driven inline style: margin-right:3px;vertical-align:-1px;
+app/views/manageevents/list.view.php: non-data-driven inline style: color:var(--db-text-grey);font-size:11px;
+app/views/manageevents/list.view.php: non-data-driven inline style: font-weight:400;color:var(--db-text-grey)
+app/views/manageevents/status.view.php: non-data-driven inline style: margin-right:3px;vertical-align:-1px;
+app/views/manageevents/status.view.php: non-data-driven inline style: color: var(--db-text-grey);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey)
+app/views/manageevents/status.view.php: non-data-driven inline style: color: #b91c1c;
+app/views/manageevents/status.view.php: non-data-driven inline style: color: #991b1b;
+app/views/manageevents/status.view.php: non-data-driven inline style: display: block; margin-bottom: 4px; color: var(--db-text-dark);
+app/views/manageevents/status.view.php: non-data-driven inline style: color:var(--db-text-grey);font-size:11px;
+app/views/manageevents/status.view.php: non-data-driven inline style: font-weight:400;color:var(--db-text-grey)
+app/views/announcements/index.view.php: missing $pageScripts array before dashboard layout
+app/views/announcements/index.view.php: load assets through the dashboard layout
+app/views/attendance/session-detail.view.php: missing $pageScripts array before dashboard layout
+app/views/attendance/session-detail.view.php: load assets through the dashboard layout
+app/views/attendance/session-detail.view.php: static inline style: margin-right:5px
+app/views/attendance/session-detail.view.php: static inline style: margin-right:5px
+app/views/attendance/session-detail.view.php: static inline style: font-size:13px;color:#6b7280;margin-left:auto;
+app/views/attendance/session-detail.view.php: static inline style: padding:40px 0;
+app/views/attendance/session-detail.view.php: static inline style: text-align:right;
+app/views/attendance/session-detail.view.php: static inline style: color:#64748b;
+app/views/attendance/session-detail.view.php: static inline style: font-size:11px;color:#94a3b8;margin-top:2px;
+app/views/attendance/session-detail.view.php: static inline style: text-align:right;
+app/views/attendance/session-detail.view.php: static inline style: max-width:440px;
+app/views/attendance/session-detail.view.php: static inline style: font-weight:700;font-size:14px;color:#0f172a;padding:8px 0;
+app/views/attendance/session-detail.view.php: static inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: missing $pageScripts array before dashboard layout
+app/views/attendance/session-list.view.php: load assets through the dashboard layout
+app/views/attendance/session-list.view.php: static inline style: margin-top:10px;
+app/views/attendance/session-list.view.php: static inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: static inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: static inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: static inline style: color:#ef4444;
+app/views/attendance/session-list.view.php: static inline style: color:#ef4444;
+app/views/audit/index.view.php: missing $pageScripts array before dashboard layout
+app/views/audit/index.view.php: static inline style: background:none;border:none;cursor:pointer;font-size:16px;color:inherit;
+app/views/audit/index.view.php: static inline style: background:none;border:none;cursor:pointer;font-size:16px;color:inherit;
+app/views/audit/index.view.php: static inline style: color:#d1d5db;margin-bottom:12px
+app/views/audit/report.view.php: missing $pageScripts array before dashboard layout
+app/views/audit/report.view.php: load assets through the dashboard layout
+app/views/audit/report.view.php: static inline style: background:none;border:none;cursor:pointer;font-size:16px;color:inherit;
+app/views/audit/report.view.php: static inline style: background:none;border:none;cursor:pointer;font-size:16px;color:inherit;
+app/views/audit/report.view.php: static inline style: display:inline;
+app/views/audit/report.view.php: static inline style: color:#1e9e5a;
+app/views/audit/report.view.php: static inline style: color:#b91c1c;
+app/views/audit/report.view.php: static inline style: color:#d1d5db;margin-bottom:12px
+app/views/audit/report.view.php: static inline style: display:inline;
+app/views/clubhealth/index.view.php: static inline style: margin: 0; font-size: 12px;
+app/views/clubhealth/index.view.php: static inline style: font-size: 13px; font-weight: 600; color: #334155;
+app/views/clubhealth/index.view.php: static inline style: color: #047857; font-size: 18px;
+app/views/clubhealth/index.view.php: static inline style: background: #f0fdf4; border-color: #22c55e; color: #15803d;
+app/views/clubregistrationapproval/application-list.view.php: missing $pageScripts array before dashboard layout
+app/views/clubregistrationapproval/application-list.view.php: load assets through the dashboard layout
+app/views/clubregistrationapproval/application-list.view.php: static inline style: grid-column: 1 / -1;
+app/views/eventapproval/event-list.view.php: missing $pageScripts array before dashboard layout
+app/views/eventapproval/event-list.view.php: load assets through the dashboard layout
+app/views/events/index.view.php: missing $pageScripts array before dashboard layout
+app/views/events/index.view.php: load assets through the dashboard layout
+app/views/fundtransfer/details.view.php: missing $pageScripts array before dashboard layout
+app/views/fundtransfer/details.view.php: static inline style: margin-bottom: 20px;
+app/views/fundtransfer/details.view.php: static inline style: margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;
+app/views/fundtransfer/index.view.php: missing $pageScripts array before dashboard layout
+app/views/fundtransfer/index.view.php: load assets through the dashboard layout
+app/views/help/index.view.php: missing $pageScripts array before dashboard layout
+app/views/help/index.view.php: load assets through the dashboard layout
+app/views/manageassets/index.view.php: missing $pageScripts array before dashboard layout
+app/views/manageassets/index.view.php: load assets through the dashboard layout
+app/views/manageassets/index.view.php: static inline style: margin: 0;
+app/views/manageassets/index.view.php: static inline style: vertical-align:middle;margin-right:4px;
+app/views/manageassets/index.view.php: static inline style: width: 32px;
+app/views/manageassets/index.view.php: static inline style: text-align: right;
+app/views/manageassets/index.view.php: static inline style: text-align: center; padding: 36px; color: #9ca3af;
+app/views/manageassets/index.view.php: static inline style: text-align: right;
+app/views/manageassets/index.view.php: static inline style: justify-content: flex-end;
+app/views/manageassets/index.view.php: static inline style: text-align: right;
+app/views/manageassets/index.view.php: static inline style: text-align: center; padding: 36px; color: #9ca3af;
+app/views/manageassets/index.view.php: static inline style: text-align: right;
+app/views/manageevents/list.view.php: static inline style: margin-right:3px;vertical-align:-1px;
+app/views/manageevents/list.view.php: static inline style: color:var(--db-text-grey);font-size:11px;
+app/views/manageevents/list.view.php: static inline style: font-weight:400;color:var(--db-text-grey)
+app/views/manageevents/status.view.php: static inline style: margin-right:3px;vertical-align:-1px;
+app/views/manageevents/status.view.php: static inline style: color: var(--db-text-grey);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey)
+app/views/manageevents/status.view.php: static inline style: color: #b91c1c;
+app/views/manageevents/status.view.php: static inline style: color: #991b1b;
+app/views/manageevents/status.view.php: static inline style: display: block; margin-bottom: 4px; color: var(--db-text-dark);
+app/views/manageevents/status.view.php: static inline style: color:var(--db-text-grey);font-size:11px;
+app/views/manageevents/status.view.php: static inline style: font-weight:400;color:var(--db-text-grey)
+app/views/manageuser/list.view.php: missing $pageStyles array before dashboard layout
+app/views/manageuser/list.view.php: missing $pageScripts array before dashboard layout
+app/views/manageuser/list.view.php: static inline style: color:var(--mu-blue-lt);font-size:12.5px;
+app/views/manageuser/list.view.php: static inline style: vertical-align:-2px;opacity:.6
+app/views/manageuser/list.view.php: static inline style: font-size:13px;color:#065f46;margin-bottom:8px;
+app/views/manageuser/list.view.php: static inline style: font-size:12px;color:#6b7280;margin-top:10px;
+app/views/manageuser/list.view.php: static inline style: margin-top:24px;
+app/views/manageuser/list.view.php: static inline style: margin-top:24px;
+app/views/nationalanalytics/index.view.php: missing $pageScripts array before dashboard layout
+app/views/nationalanalytics/index.view.php: static inline style: display:inline;
+app/views/nationaldashboard/index.view.php: missing $pageScripts array before dashboard layout
+app/views/reports/create.view.php: missing $pageScripts array before dashboard layout
+app/views/reports/create.view.php: static inline style: display:none
+app/views/reports/index.view.php: missing $pageScripts array before dashboard layout
+app/views/reports/index.view.php: static inline style: color:#d1d5db;margin-bottom:12px
+app/views/reports/index.view.php: static inline style: font-size:13px;color:#9ca3af
+app/views/reports/preview.view.php: missing $pageScripts array before dashboard layout
+app/views/reports/preview.view.php: static inline style: text-align:center;padding:28px;color:#9ca3af;
+app/views/reports/preview.view.php: static inline style: display:none
+app/views/reports/preview.view.php: static inline style: display:inline
+app/views/reports/preview.view.php: static inline style: display:none
+app/views/reports/preview.view.php: static inline style: margin-bottom:14px
+app/views/reports/preview.view.php: static inline style: margin-bottom:20px
+app/views/reports/preview.view.php: static inline style: display:flex;justify-content:flex-end;gap:12px
+app/views/zonaltreasurer/allocate.view.php: missing $pageScripts array before dashboard layout
+app/views/zonaltreasurer/allocate.view.php: load assets through the dashboard layout
+public/assets/css/divisional-club-health.css: legacy token, literal color, or important override
+public/assets/css/divisional-consistency.css: legacy token, literal color, or important override
+public/assets/css/divisional-dashboard.css: legacy token, literal color, or important override
+public/assets/css/divisional-reports.css: legacy token, literal color, or important override
+public/assets/css/divisional-summary-standard.css: legacy token, literal color, or important override
+public/assets/css/divisional-workflows.css: legacy token, literal color, or important override
+divisionalledger: missing list pagination
+divisionalallocations: missing list pagination
+divisionalvoidapproval: missing list pagination
+divisionalassets: missing list pagination
