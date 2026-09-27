@@ -70,7 +70,7 @@ $pageStyles = isset($pageStyles) && is_array($pageStyles) ? $pageStyles : [];
     }, 3000);
   </script>
   <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/dashboard.css?v=20261001">
   <?php foreach ($pageStyles as $pageStyle): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars((string) $pageStyle, ENT_QUOTES, 'UTF-8') ?>">
   <?php endforeach; ?>
