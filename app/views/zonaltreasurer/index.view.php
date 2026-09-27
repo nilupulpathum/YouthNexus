@@ -14,7 +14,7 @@ $title = 'Zonal Treasurer Overview - YouthNexus';
 $pageTitle = 'Zonal Treasurer';
 $pageDescription = 'Funds received by ' . ($zoneName ?? 'Zone') . '.';
 $currentRoute = 'zonaltreasurer/index';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 
 $links = [
@@ -46,34 +46,34 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <section class="dw-panel" aria-labelledby="zonaltreasurer-links-heading">
         <header class="dw-panel__header">
             <div>
+                <p><?= $e($zoneName ?? 'Zone') ?></p>
                 <h2 id="zonaltreasurer-links-heading">Treasurer workspace</h2>
-                <p><?= $e($zoneName ?? 'Zone') ?> — distribute funds to divisions and manage the zone's finance records.</p>
             </div>
-            <span class="dw-count"><?= count($links) ?> workspaces</span>
+            <span class="dw-count"><?= count($links) ?> shortcuts</span>
         </header>
-        <div class="dw-table-wrap">
-            <table class="dw-table">
-                <thead>
-                    <tr>
-                        <th>Workspace</th>
-                        <th>Description</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($links as $s): ?>
-                        <tr>
-                            <td><strong><?= $e($s['title']) ?></strong></td>
-                            <td><?= $e($s['desc']) ?></td>
-                            <td>
-                                <div class="dw-row-actions">
-                                    <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/<?= $e($s['href']) ?>">Open</a>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <div class="dw-panel__body">
+            <div class="dw-record-grid">
+                <?php foreach ($links as $s): ?>
+                    <article class="dw-record-card">
+                        <div class="dw-record-card__header">
+                            <div class="dw-record-card__identity">
+                                <span class="dw-record-card__icon" aria-hidden="true"><?= yn_icon($s['icon']) ?></span>
+                                <div class="dw-record-card__meta"><span>Treasurer action</span></div>
+                            </div>
+                        </div>
+                        <h3 class="dw-record-card__title"><?= $e($s['title']) ?></h3>
+                        <div class="dw-record-card__details">
+                            <span><?= $e($s['desc']) ?></span>
+                        </div>
+                        <div class="dw-record-card__footer">
+                            <span class="dw-record-card__reference">Shortcut</span>
+                            <div class="dw-record-card__actions">
+                                <a class="dw-button dw-button--ghost" href="<?= ROOT ?>/<?= $e($s['href']) ?>">Open</a>
+                            </div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         </div>
     </section>
 </section>
