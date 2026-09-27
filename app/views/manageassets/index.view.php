@@ -8,7 +8,7 @@ $pageTitle               = $pageTitle ?? 'National Asset Management & Logistics'
 $pageDescription         = $pageDescription ?? 'Central logistics, zonal stock allocation, and inventory deficit surveillance.';
 $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
-$pageStyles              = [ROOT . '/assets/css/manageassets.css'];
+$pageStyles              = [ROOT . '/assets/css/manageassets.css?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

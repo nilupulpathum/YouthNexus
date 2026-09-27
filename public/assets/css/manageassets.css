@@ -840,7 +840,7 @@
     padding: 10px 22px;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: #ffffff !important;
     background: #1e5eff;
     border: none;
     border-radius: 8px;
