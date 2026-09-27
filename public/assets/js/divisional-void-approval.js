@@ -21,19 +21,34 @@
   var pendingEmpty = document.querySelector('[data-pending-empty]');
   var decidedEmpty = document.querySelector('[data-decided-empty]');
 
+  var panelControls = [club, status, type, reason, minimum, maximum, dateFrom, dateTo, sort];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function value(control) {
     return control ? String(control.value || '').trim().toLowerCase() : '';
   }
 
   function numberValue(control) {
-    if (!control || control.value === '') return null;
-    var parsed = Number(control.value);
+    var current = selected(control);
+    if (current === '') return null;
+    var parsed = Number(current);
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  function selectedValue(control) { return selected(control).trim().toLowerCase(); }
+
   function sortRows(sectionRows, body) {
     if (!body) return;
-    var selected = value(sort) || 'newest';
+    var selected = selectedValue(sort) || 'newest';
     sectionRows.sort(function (left, right) {
       if (selected === 'oldest') return left.dataset.date.localeCompare(right.dataset.date);
       if (selected === 'amount-high') return Number(right.dataset.amount) - Number(left.dataset.amount);
@@ -45,14 +60,14 @@
 
   function applyFilters() {
     var query = value(search);
-    var selectedClub = value(club);
-    var selectedStatus = value(status);
-    var selectedType = value(type);
-    var reasonText = value(reason);
+    var selectedClub = selectedValue(club);
+    var selectedStatus = selectedValue(status);
+    var selectedType = selectedValue(type);
+    var reasonText = selectedValue(reason);
     var min = numberValue(minimum);
     var max = numberValue(maximum);
-    var from = dateFrom ? dateFrom.value : '';
-    var to = dateTo ? dateTo.value : '';
+    var from = selected(dateFrom);
+    var to = selected(dateTo);
     var pendingVisible = 0;
     var decidedVisible = 0;
 
@@ -68,6 +83,7 @@
         && (!from || row.dataset.date >= from)
         && (!to || row.dataset.date <= to);
       row.hidden = !matches;
+      row.dataset.filterMatch = matches ? 'true' : 'false';
       if (matches && row.dataset.section === 'pending') pendingVisible += 1;
       if (matches && row.dataset.section === 'decided') decidedVisible += 1;
     });
@@ -78,15 +94,17 @@
     if (decidedCount) decidedCount.textContent = decidedVisible + (decidedVisible === 1 ? ' request' : ' requests');
     if (pendingEmpty) pendingEmpty.classList.toggle('is-visible', pendingVisible === 0);
     if (decidedEmpty) decidedEmpty.classList.toggle('is-visible', decidedVisible === 0);
+    if (window.ynPager) window.ynPager.update();
   }
 
   search.addEventListener('input', applyFilters);
-  document.querySelector('[data-approval-filter-apply]')?.addEventListener('click', applyFilters);
+  document.querySelector('[data-approval-filter-apply]')?.addEventListener('click', function () { captureFilters(); applyFilters(); });
   document.querySelector('[data-approval-filter-reset]')?.addEventListener('click', function () {
     [search, club, status, type, reason, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
       if (control) control.value = '';
     });
     if (sort) sort.value = 'newest';
+    captureFilters();
     applyFilters();
   });
 
@@ -96,9 +114,10 @@
   }
 
   var decisionForm = document.querySelector('[data-decision-form]');
-  var decisionSelect = document.querySelector('[data-decision-select]');
+  var decisionButtons = decisionForm ? decisionForm.querySelectorAll('[data-submit-decision]') : [];
   var remarks = document.querySelector('[data-decision-remarks]');
   var remarksRequired = document.querySelector('[data-remarks-required]');
+  var activeDecision = 'approve';
   var evidence = {};
   var evidenceSource = document.getElementById('void-review-evidence');
   if (evidenceSource) {
@@ -184,7 +203,7 @@
   }
 
   function updateDecisionRequirements() {
-    var remarksNeeded = decisionSelect && decisionSelect.value === 'reject';
+    var remarksNeeded = activeDecision === 'reject';
     if (remarks) {
       remarks.required = remarksNeeded;
       remarks.minLength = remarksNeeded ? 5 : 0;
@@ -192,7 +211,12 @@
     if (remarksRequired) remarksRequired.hidden = !remarksNeeded;
   }
 
-  if (decisionSelect) decisionSelect.addEventListener('change', updateDecisionRequirements);
+  decisionButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      activeDecision = button.value;
+      updateDecisionRequirements();
+    });
+  });
 
   document.querySelectorAll('[data-review-request]').forEach(function (button) {
     button.addEventListener('click', function () {
@@ -207,7 +231,7 @@
       setText('[data-review-requester]', button.dataset.requester);
       setText('[data-review-date]', button.dataset.requestedAt);
       renderEvidence(button.dataset.requestId);
-      if (decisionSelect) decisionSelect.value = 'approve';
+      activeDecision = 'approve';
       if (remarks) remarks.value = '';
       updateDecisionRequirements();
     });
@@ -215,6 +239,7 @@
 
   if (decisionForm) {
     decisionForm.addEventListener('submit', function (event) {
+      activeDecision = event.submitter ? event.submitter.value : activeDecision;
       updateDecisionRequirements();
       if (!decisionForm.checkValidity()) {
         event.preventDefault();
@@ -222,7 +247,7 @@
         return;
       }
       var message = 'Approve this void request and update the club ledger balance?';
-      if (decisionSelect && decisionSelect.value === 'reject') {
+      if (activeDecision === 'reject') {
         message = 'Reject this void request?';
       }
       if (!window.confirm(message)) event.preventDefault();
