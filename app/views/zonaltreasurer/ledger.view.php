@@ -46,7 +46,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <header class="dw-panel__header">
             <div>
                 <h2 id="zonal-ledger-list-heading">Transaction ledger</h2>
-                <p>Session-only records with running balances. Division allocations are recorded through the allocation workflow.</p>
+                <p>Live zone records with running balances. Division allocations are recorded through the allocation workflow.</p>
             </div>
             <span class="dw-count"><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
         </header>
