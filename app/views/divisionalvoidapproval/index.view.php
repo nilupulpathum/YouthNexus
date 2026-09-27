@@ -276,13 +276,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
       </section>
       <div class="dw-field dw-field--span-2">
-        <label for="void-decision">Decision</label>
-        <select id="void-decision" name="decision" required data-decision-select>
-          <option value="approve">Approve Void</option>
-          <option value="reject">Reject Request</option>
-        </select>
-      </div>
-      <div class="dw-field dw-field--span-2">
         <label for="void-decision-remarks">Remarks <span data-remarks-required hidden>(required when rejecting)</span></label>
         <textarea id="void-decision-remarks" name="remarks" maxlength="1000" placeholder="Add a note for the Club Treasurer" data-decision-remarks></textarea>
       </div>
@@ -291,9 +284,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <span>Approving marks the entry as voided, updates the club ledger balance, and notifies the Club Treasurer.</span>
       </div>
     </div>
-    <footer class="dw-modal__footer">
+    <footer class="dw-modal__footer dw-modal__footer--decisions">
       <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary" type="button" data-modal-close>Cancel</button>
-      <button class="yn-btn yn-btn--approve dw-button" type="submit" data-submit-decision>Approve Request</button>
+      <button class="yn-btn yn-btn--reject dw-button" type="submit" name="decision" value="reject" data-submit-decision>Reject Request</button>
+      <button class="yn-btn yn-btn--approve dw-button" type="submit" name="decision" value="approve" data-submit-decision>Approve Void</button>
     </footer>
   </form>
 </div>

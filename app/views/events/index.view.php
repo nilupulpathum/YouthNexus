@@ -8,6 +8,7 @@ $escape = static function ($value) {
 $pageStyles = [ROOT . '/assets/css/events.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
+$pageScripts = [ROOT . '/assets/js/events.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -102,7 +103,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </label>
         </div>
 
-        <button type="button" class="clear-filters-btn">
+        <button type="button" class="yn-btn yn-btn--sm yn-btn--ghost clear-filters-btn">
             <span class="icon"><?= yn_icon('close') ?></span> Clear all filters
         </button>
     </aside>
@@ -159,17 +160,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <p id="popup-description"></p>
         </div>
         <div class="popup-footer">
-            <button type="button" class="btn-participate">
+            <button type="button" class="yn-btn yn-btn--sm yn-btn--approve btn-participate">
                 <span class="icon"><?= yn_icon('check') ?></span> Participate
             </button>
-            <button type="button" class="btn-not-participate">
+            <button type="button" class="yn-btn yn-btn--sm yn-btn--reject btn-not-participate">
                 <span class="icon"><?= yn_icon('close') ?></span> Not participate
             </button>
         </div>
     </div>
 </div>
-
-
-<script src="<?= ROOT ?>/assets/js/events.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

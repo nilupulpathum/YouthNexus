@@ -220,6 +220,10 @@
 .dw-modal__close { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--yn-border); border-radius: 7px; background: var(--yn-bg-surface); color: var(--yn-text-muted); cursor: pointer; }
 .dw-modal__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; }
 .dw-modal__footer { justify-content: flex-end; border-top: 1px solid var(--yn-border); }
+.dw-modal__footer--decisions { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .dw-modal__footer--decisions > .yn-btn { flex: 1 1 100%; }
+}
 .dw-modal-open { overflow: hidden; }
 
 .dw-evidence-section { display: grid; gap: 11px; padding: 13px; border: 1px solid var(--yn-border); border-radius: var(--yn-radius); background: var(--yn-bg-surface); }

@@ -47,7 +47,7 @@
 }
 .yn-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-.yn-btn--primary { background: var(--yn-primary); color: #fff; }
+.yn-btn--primary { background: var(--yn-primary); color: var(--yn-bg-surface); }
 .yn-btn--primary:hover:not(:disabled) { background: var(--yn-primary-hover); }
 
 .yn-btn--secondary {
@@ -67,15 +67,15 @@
 }
 .yn-btn--ghost:hover:not(:disabled) { background: var(--yn-bg-surface-alt); }
 
-.yn-btn--danger { background: var(--yn-danger); color: #fff; }
+.yn-btn--danger { background: var(--yn-danger); color: var(--yn-bg-surface); }
 .yn-btn--danger:hover:not(:disabled) { background: var(--yn-danger-hover); }
 
 .yn-btn--sm { min-height: 32px; padding: 0 10px; font-size: var(--yn-font-sm); }
 .yn-btn--lg { min-height: 48px; padding: 0 20px; font-size: var(--yn-font-lg); }
 
-.yn-btn--approve { background: var(--yn-success); color: #fff; }
+.yn-btn--approve { background: var(--yn-success); color: var(--yn-bg-surface); }
 .yn-btn--approve:hover:not(:disabled) { background: var(--yn-success-hover); }
-.yn-btn--reject { background: var(--yn-danger); color: #fff; }
+.yn-btn--reject { background: var(--yn-danger); color: var(--yn-bg-surface); }
 .yn-btn--reject:hover:not(:disabled) { background: var(--yn-danger-hover); }
 
 .yn-btn-download.yn-btn--secondary { gap: 8px; }
@@ -255,7 +255,7 @@
 }
 .yn-stat-card__icon svg { width: 18px; height: 18px; }
 
-.yn-stat-card--blue   .yn-stat-card__icon { background: #eff6ff; color: #2563eb; }
+.yn-stat-card--blue   .yn-stat-card__icon { background: var(--yn-primary-bg); color: var(--yn-info); }
 .yn-stat-card--green  .yn-stat-card__icon { background: var(--yn-success-soft); color: var(--yn-success); }
 .yn-stat-card--amber  .yn-stat-card__icon { background: var(--yn-warning-soft); color: var(--yn-warning); }
 .yn-stat-card--red    .yn-stat-card__icon { background: var(--yn-danger-soft); color: var(--yn-danger); }
@@ -358,7 +358,7 @@
   cursor: pointer;
 }
 .yn-pagination__link:hover:not(:disabled) { background: var(--yn-bg-surface-alt); }
-.yn-pagination__link--active { background: var(--yn-primary); color: #fff; }
+.yn-pagination__link--active { background: var(--yn-primary); color: var(--yn-bg-surface); }
 .yn-pagination__link--active:hover:not(:disabled) { background: var(--yn-primary-hover); }
 .yn-pagination__link:disabled { color: var(--yn-text-disabled); cursor: not-allowed; }
 .yn-pagination__link:focus-visible { outline: 2px solid var(--yn-primary); outline-offset: 2px; }
@@ -404,3 +404,5 @@
    The topbar in dashboard-header.view.php already renders:
      <h1>$pageTitle</h1><p>$pageDescription</p>
    See PR #3 §5.4 for the cleanup of duplicate in-body headings. */
+
+.yn-table__col-check { width: 32px; }

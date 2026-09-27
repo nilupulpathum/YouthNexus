@@ -8,6 +8,7 @@ $escape = static function ($value) {
 $pageStyles = [ROOT . '/assets/css/profile.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 

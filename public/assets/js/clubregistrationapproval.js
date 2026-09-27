@@ -1042,10 +1042,7 @@
                         '<div class="cr-decision-fields-row">' +
                             '<div class="cr-field">' +
                                 '<label>REVIEW RESULT</label>' +
-                                '<select id="crReviewResultSelect">' +
-                                    '<option value="approve">Approve Registration</option>' +
-                                    '<option value="reject">Reject Registration</option>' +
-                                '</select>' +
+                                '<p class="cr-decision-guidance">Choose an action below after reviewing the application.</p>' +
                             '</div>' +
                             '<div class="cr-field">' +
                                 '<label>REVIEWED BY</label>' +
@@ -1068,7 +1065,8 @@
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
                                 '<button type="button" class="cr-btn-cancel-link db-close-action" id="crCancelReviewBtn">Cancel Review</button>' +
-                                '<button type="button" class="cr-btn cr-btn-submit-decision db-confirm-action" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
+                                '<button type="button" class="yn-btn yn-btn--reject" data-cr-submit-decision="reject">Reject Registration</button>' +
+                                '<button type="button" class="yn-btn yn-btn--approve" data-cr-submit-decision="approve">Approve Registration</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1128,12 +1126,12 @@
         }
 
         if (app.status === 'Pending') {
-            var selectEl = document.getElementById('crReviewResultSelect');
+            var decisionButtons = modalContent.querySelectorAll('[data-cr-submit-decision]');
             var alertEl = document.getElementById('crDecisionImpactAlert');
 
-            if (selectEl && alertEl) {
-                selectEl.addEventListener('change', function () {
-                    if (selectEl.value === 'approve') {
+            function showDecisionImpact(action) {
+                    if (!alertEl) return;
+                    if (action === 'approve') {
                         alertEl.className = 'cr-decision-impact-alert approve';
                         alertEl.innerHTML = 
                             '<div class="cr-impact-icon-circle approve">' +
@@ -1154,18 +1152,19 @@
                                 '<p>Rejecting this application will notify the proposer and nominees with the provided remarks. They will need to correct and resubmit the application.</p>' +
                             '</div>';
                     }
-                });
             }
 
             var cancelBtn = document.getElementById('crCancelReviewBtn');
             if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-            var confirmBtn = document.getElementById('crConfirmSubmitBtn');
-            if (confirmBtn && selectEl) {
-                confirmBtn.addEventListener('click', function () {
-                    submitDecision(app.application_id, selectEl.value, app.club_name);
+            decisionButtons.forEach(function (button) {
+                button.addEventListener('mouseenter', function () { showDecisionImpact(button.dataset.crSubmitDecision); });
+                button.addEventListener('focus', function () { showDecisionImpact(button.dataset.crSubmitDecision); });
+                button.addEventListener('click', function () {
+                    showDecisionImpact(button.dataset.crSubmitDecision);
+                    submitDecision(app.application_id, button.dataset.crSubmitDecision, app.club_name);
                 });
-            }
+            });
         } else {
             var closeReadonlyBtn = document.getElementById('crCloseReadonlyBtn');
             if (closeReadonlyBtn) closeReadonlyBtn.addEventListener('click', closeModal);
@@ -1282,8 +1281,8 @@
             return;
         }
 
-        var submitBtn = document.getElementById('crConfirmSubmitBtn');
-        if (submitBtn) submitBtn.disabled = true;
+        var submitButtons = modalContent.querySelectorAll('[data-cr-submit-decision]');
+        submitButtons.forEach(function (button) { button.disabled = true; });
 
         var body = new URLSearchParams();
         body.set('csrf_token', csrfToken);
@@ -1299,7 +1298,7 @@
             .then(function (data) {
                 if (data.error) {
                     showToast(data.error, true);
-                    if (submitBtn) submitBtn.disabled = false;
+                    submitButtons.forEach(function (button) { button.disabled = false; });
                     return;
                 }
                 if (action === 'approve') {
@@ -1329,7 +1328,7 @@
             })
             .catch(function () {
                 showToast('Something went wrong. Please try again.', true);
-                if (submitBtn) submitBtn.disabled = false;
+                submitButtons.forEach(function (button) { button.disabled = false; });
             });
     }
 

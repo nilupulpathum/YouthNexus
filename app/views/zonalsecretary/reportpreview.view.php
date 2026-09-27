@@ -6,6 +6,7 @@ $snapshot = is_array($snapshot ?? null) ? $snapshot : [];
 $zoneName = $zoneName ?? 'Zone';
 $pageStyles = [ROOT . '/assets/css/managereports.css'];
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 

@@ -5,6 +5,7 @@ $escape = static function ($value) {
 
 require __DIR__ . '/../partials/icons.view.php';
 $pageStyles = [ROOT . '/assets/css/managereports.css'];
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 

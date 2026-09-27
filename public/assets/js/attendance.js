@@ -19,7 +19,7 @@
         const t = document.getElementById('amToast');
         if (!t) return;
         t.textContent = message;
-        t.className   = 'am-toast ' + type;
+        t.className   = 'atd-toast ' + type;
         void t.offsetWidth;
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3500);
@@ -127,7 +127,7 @@
 
         emptyMessage = document.createElement('div');
         emptyMessage.id = 'amFilterEmpty';
-        emptyMessage.className = 'am-empty-state';
+        emptyMessage.className = 'atd-empty-state';
 
         const message = document.createElement('p');
         message.textContent = 'No events match the current search and filters.';
@@ -145,7 +145,7 @@
         const selectedScope = isNYSCAdmin
             ? ''
             : appliedScope.toLowerCase();
-        const cards = document.querySelectorAll('#amCardGrid .am-card');
+        const cards = document.querySelectorAll('#amCardGrid .atd-card');
         let visible = 0;
 
         cards.forEach(card => {
@@ -223,10 +223,10 @@
     }
 
     // Modal Tab Switching
-    document.querySelectorAll('.am-modal-tab').forEach(tab => {
+    document.querySelectorAll('.atd-modal-tab').forEach(tab => {
         tab.addEventListener('click', function () {
-            document.querySelectorAll('.am-modal-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.am-tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.atd-modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.atd-tab-pane').forEach(p => p.classList.remove('active'));
             this.classList.add('active');
             const targetPane = document.getElementById(this.dataset.tab === 'bulk' ? 'paneBulk' : 'paneSingle');
             if (targetPane) targetPane.classList.add('active');
@@ -346,7 +346,7 @@
     function filterRosterRows() {
         const query  = (tableSearch?.value || '').toLowerCase().trim();
         const status = statusFilter?.value || '';
-        const rows   = document.querySelectorAll('.am-roster-row');
+        const rows   = document.querySelectorAll('.atd-roster-row');
 
         rows.forEach(row => {
             const name   = row.dataset.name  || '';
@@ -379,7 +379,7 @@
     if (quickClose)  quickClose.addEventListener('click', closeQuickModal);
     if (quickCancel) quickCancel.addEventListener('click', closeQuickModal);
 
-    document.querySelectorAll('.am-btn-quick-update').forEach(btn => {
+    document.querySelectorAll('.atd-btn-quick-update').forEach(btn => {
         btn.addEventListener('click', function () {
             if (!quickModal) return;
             const mId    = this.dataset.memberId;
@@ -404,7 +404,7 @@
     });
 
     function updateDetailSummary() {
-        const rows = Array.from(document.querySelectorAll('.am-roster-row'));
+        const rows = Array.from(document.querySelectorAll('.atd-roster-row'));
         if (!rows.length) return;
 
         const present = rows.filter(row => (row.dataset.status || '').toLowerCase() === 'present').length;
@@ -427,7 +427,7 @@
     }
 
     function updateRosterRow(memberId, status, checkIn, remark) {
-        const row = Array.from(document.querySelectorAll('.am-roster-row'))
+        const row = Array.from(document.querySelectorAll('.atd-roster-row'))
             .find(candidate => candidate.dataset.memberId === String(memberId));
         if (!row) return;
 
@@ -438,7 +438,7 @@
             const badge = document.createElement('span');
             const normalizedStatus = status.toLowerCase();
 
-            badge.className = `am-status-badge ${normalizedStatus}`;
+            badge.className = `atd-status-badge ${normalizedStatus}`;
             badge.textContent = normalizedStatus === 'present' ? 'Present' : 'Absent';
             statusCell.replaceChildren(badge);
         }
@@ -462,18 +462,18 @@
 
             if (user.role) {
                 const role = document.createElement('small');
-                role.className = 'am-recorder-role';
+                role.className = 'atd-recorder-role';
                 role.textContent = ` (${user.role})`;
                 recordedByCell.appendChild(role);
             }
 
             const timestamp = document.createElement('div');
-            timestamp.className = 'am-recorded-at';
+            timestamp.className = 'atd-recorded-at';
             timestamp.textContent = 'Updated just now';
             recordedByCell.appendChild(timestamp);
         }
 
-        const updateButton = row.querySelector('.am-btn-quick-update');
+        const updateButton = row.querySelector('.atd-btn-quick-update');
         if (updateButton) {
             updateButton.dataset.currentStatus = status;
             updateButton.dataset.currentCheckin = status === 'Present' ? checkIn : '';

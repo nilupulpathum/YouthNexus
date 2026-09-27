@@ -95,7 +95,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </header>
 
         <div class="dw-table-wrap">
-            <table class="dw-table">
+            <table class="yn-table dw-table">
                 <thead>
                     <tr>
                         <th><span class="visually-hidden">Verified</span></th>

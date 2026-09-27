@@ -123,9 +123,23 @@
   });
 
   var reviewForm = document.querySelector('[data-review-form]');
+  var remarks = document.querySelector('[data-remarks]');
+  var required = document.querySelector('[data-remarks-required]');
+  var activeDecision = 'approve';
+  function updateDecision() {
+    var rejecting = activeDecision === 'reject';
+    if (remarks) {
+      remarks.required = rejecting;
+      remarks.minLength = rejecting ? 5 : 0;
+    }
+    if (required) required.hidden = !rejecting;
+  }
   document.querySelectorAll('[data-review-request]').forEach(function (button) {
     button.addEventListener('click', function () {
       reviewForm.action = reviewForm.dataset.decisionBase + button.dataset.requestId;
+      activeDecision = 'approve';
+      if (remarks) remarks.value = '';
+      updateDecision();
       document.querySelector('[data-review-ref]').textContent = button.dataset.requestRef;
       document.querySelector('[data-review-club]').textContent = button.dataset.club;
       document.querySelector('[data-review-item]').textContent = button.dataset.item;
@@ -137,20 +151,24 @@
     });
   });
 
-  var decision = document.querySelector('[data-decision]');
-  var remarks = document.querySelector('[data-remarks]');
-  var required = document.querySelector('[data-remarks-required]');
-  function updateDecision() {
-    var rejecting = decision && decision.value === 'reject';
-    if (remarks) remarks.required = rejecting;
-    if (required) required.hidden = !rejecting;
-    var submit = document.querySelector('[data-asset-submit-decision]');
-    if (submit) {
-      submit.classList.toggle('yn-btn--approve', !rejecting);
-      submit.classList.toggle('yn-btn--reject', !!rejecting);
-      submit.textContent = rejecting ? 'Reject Request' : 'Approve Request';
+  document.querySelectorAll('[data-asset-submit-decision]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      activeDecision = button.value;
+      updateDecision();
+    });
+  });
+  if (reviewForm) reviewForm.addEventListener('submit', function (event) {
+    activeDecision = event.submitter ? event.submitter.value : activeDecision;
+    updateDecision();
+    if (!reviewForm.checkValidity()) {
+      event.preventDefault();
+      reviewForm.reportValidity();
+      return;
     }
-  }
-  if (decision) decision.addEventListener('change', updateDecision);
+    var message = activeDecision === 'reject'
+      ? 'Reject this club asset request?'
+      : 'Approve this request and transfer the assets to the club?';
+    if (!window.confirm(message)) event.preventDefault();
+  });
   updateDecision();
 })();

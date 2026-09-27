@@ -8,6 +8,7 @@ $escape = static function ($value) {
 $pageStyles = [ROOT . '/assets/css/settings.css'];
 
 require __DIR__ . '/../partials/icons.view.php';
+$pageScripts = [ROOT . '/assets/js/settings.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $settingsInitials = strtoupper(
@@ -43,8 +44,8 @@ $settingsInitials = strtoupper(
                         <span class="profile-initials" aria-hidden="true"><?= $escape($settingsInitials) ?></span>
                     </div>
                     <div class="avatar-actions">
-                        <button type="button" class="btn-upload">Upload new picture</button>
-                        <button type="button" class="btn-delete">Delete</button>
+                        <button type="button" class="yn-btn yn-btn--primary btn-upload">Upload new picture</button>
+                        <button type="button" class="yn-btn yn-btn--danger btn-delete">Delete</button>
                     </div>
                 </div>
 
@@ -72,8 +73,8 @@ $settingsInitials = strtoupper(
                 </div>
 
                 <div class="form-footer">
-                    <button type="submit" class="btn-save">Save Changes</button>
-                    <button type="button" class="btn-cancel">Cancel</button>
+                    <button type="submit" class="yn-btn yn-btn--primary btn-save">Save Changes</button>
+                    <button type="button" class="yn-btn yn-btn--secondary btn-cancel">Cancel</button>
                 </div>
             </form>
         </section>
@@ -98,8 +99,8 @@ $settingsInitials = strtoupper(
                     <input type="password" id="confirm-password" placeholder="••••••••">
                 </div>
                 <div class="form-footer">
-                    <button type="button" class="btn-verify-code">Send Verification Code</button>
-                    <button type="submit" class="btn-save">Update Password</button>
+                    <button type="button" class="yn-btn yn-btn--secondary btn-verify-code">Send Verification Code</button>
+                    <button type="submit" class="yn-btn yn-btn--primary btn-save">Update Password</button>
                 </div>
             </form>
         </section>
@@ -133,12 +134,10 @@ $settingsInitials = strtoupper(
                 </div>
             </div>
             <div class="form-footer">
-                <button type="button" class="btn-save">Save Preferences</button>
+                <button type="button" class="yn-btn yn-btn--primary btn-save">Save Preferences</button>
             </div>
         </section>
     </div>
 </div>
-
-<script src="<?= ROOT ?>/assets/js/settings.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

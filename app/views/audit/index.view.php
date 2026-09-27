@@ -10,8 +10,9 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit';
 $pageDescription         = $pageDescription ?? 'National Youth Services Council — Statutory ledger reconciliation & fiscal compliance review';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css'];
 
+$pageScripts = [ROOT . '/assets/js/annualaudit.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // Formatters matching screenshot
@@ -58,24 +59,20 @@ $displayVariance = "LKR 0.00";
     <?php if (!empty($flashSuccess)): ?>
         <div class="audit-flash-alert audit-flash-success" role="alert">
             <div>&#10003;&nbsp; <?= htmlspecialchars($flashSuccess, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($flashError)): ?>
         <div class="audit-flash-alert audit-flash-error" role="alert">
             <div>&#9888;&nbsp; <?= htmlspecialchars($flashError, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
     <!-- Page head -->
     <div class="audit-page-head">
-        <div>
-            <h1>Annual Financial Audit</h1>
-            <p>National Youth Services Council — Statutory ledger reconciliation &amp; fiscal compliance review</p>
-        </div>
-        <div class="audit-head-right">
+        <div class="audit-head-right yn-ml-auto">
             <!-- FY Badge -->
             <span class="audit-fy-badge">FY <b><?= (int)$audit->financial_year ?></b></span>
 
@@ -94,28 +91,28 @@ $displayVariance = "LKR 0.00";
     <!-- Stat cards (4 cards) -->
     <div class="audit-stats">
         <!-- 1. Verified Revenue -->
-        <div class="audit-stat-card">
+        <div class="yn-stat-card audit-stat-card">
             <h3>Verified Revenue</h3>
             <div class="num"><?= htmlspecialchars($displayRevenue) ?></div>
             <div class="sub green">&#10003;&nbsp; 100% Reconciled</div>
         </div>
 
         <!-- 2. Operating Expenses -->
-        <div class="audit-stat-card">
+        <div class="yn-stat-card audit-stat-card">
             <h3>Operating Expenses</h3>
             <div class="num"><?= htmlspecialchars($displayExpenses) ?></div>
             <div class="sub gray">62.1% Utilization</div>
         </div>
 
         <!-- 3. Unutilized / Idle Funds -->
-        <div class="audit-stat-card">
+        <div class="yn-stat-card audit-stat-card">
             <h3>Unutilized / Idle Funds</h3>
             <div class="num num-amber"><?= htmlspecialchars($displayIdle) ?></div>
             <div class="sub amber">&#9888;&nbsp; Flagged unspent allocation</div>
         </div>
 
         <!-- 4. Audit Status (Action Required / Attention Needed) -->
-        <div class="audit-stat-card audit-stat-alert">
+        <div class="yn-stat-card audit-stat-card audit-stat-alert">
             <h3>Audit Status &nbsp;<span class="tag">Action Required</span></h3>
             <div class="attention">Attention Needed</div>
             <div class="sub red">&#9679;&nbsp; <?= htmlspecialchars($displayRedFlags) ?> Red Flags Identified</div>
@@ -151,11 +148,11 @@ $displayVariance = "LKR 0.00";
             <span class="audit-count-badge">3 items</span>
         </div>
         <div class="right">
-            <button type="button" class="audit-btn audit-btn-light" onclick="openClarifyModal()">
+            <button type="button" class="yn-btn yn-btn--secondary audit-btn audit-btn-light" onclick="openClarifyModal()">
                 Request Clarification
             </button>
             <!-- ALWAYS Approve & Sign-Off Audit button as explicitly instructed -->
-            <button type="button" class="audit-btn audit-btn-blue" onclick="openApproveModal()">
+            <button type="button" class="yn-btn yn-btn--primary audit-btn audit-btn-blue" onclick="openApproveModal()">
                 Approve &amp; Sign-Off Audit
             </button>
         </div>
@@ -172,7 +169,7 @@ $displayVariance = "LKR 0.00";
             <div class="title">PA Sound Rental &amp; Logistics — Provincial Youth Conference</div>
             <div class="detail">Beneficiary: SoundKraft Audio Services • Expense: <b>LKR 48, 500</b> (Exceeds LKR 5,000 threshold)</div>
         </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(1)">Request Receipt</button>
+        <button type="button" class="yn-btn yn-btn--secondary audit-btn-outline" onclick="openClarifyModal(1)">Request Receipt</button>
     </div>
 
     <!-- Item 2: Zonal Youth Sports Consumables -->
@@ -185,7 +182,7 @@ $displayVariance = "LKR 0.00";
             <div class="title">Zonal Youth Sports Consumables &amp; Hydration Units</div>
             <div class="detail">Beneficiary: Metro Sports Supplies • Expense: <b>LKR 18, 200</b> (Exceeds LKR 5,000 threshold)</div>
         </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(2)">Request Receipt</button>
+        <button type="button" class="yn-btn yn-btn--secondary audit-btn-outline" onclick="openClarifyModal(2)">Request Receipt</button>
     </div>
 
     <!-- Item 3: Youth Leadership Empowerment Grant -->
@@ -196,9 +193,9 @@ $displayVariance = "LKR 0.00";
                 <span class="audit-ex-ref">#CPH-GRANT-89</span>
             </div>
             <div class="title">Youth Leadership Empowerment Grant</div>
-            <div class="detail">Disbursed: <b>LKR 2.50M</b> • Unspent: <b style="color:#b45309;">LKR 2.22M (88.8% idle margin &gt; 20% limit)</b></div>
+            <div class="detail">Disbursed: <b>LKR 2.50M</b> • Unspent: <b class="audit-text-warning">LKR 2.22M (88.8% idle margin &gt; 20% limit)</b></div>
         </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(3)">View Justification</button>
+        <button type="button" class="yn-btn yn-btn--secondary audit-btn-outline" onclick="openClarifyModal(3)">View Justification</button>
     </div>
 
     <!-- Item 4: Discipline Notice -->
@@ -211,7 +208,7 @@ $displayVariance = "LKR 0.00";
             <div class="title">Kandy Zonal Sub-Ledger Void Rate: 14.2% (Permissible ceiling: 10%)</div>
             <div class="detail">18 voided entries recorded out of 127 journal transactions</div>
         </div>
-        <button type="button" class="audit-btn-outline" onclick="openClarifyModal(4)">Inspect Journal</button>
+        <button type="button" class="yn-btn yn-btn--secondary audit-btn-outline" onclick="openClarifyModal(4)">Inspect Journal</button>
     </div>
 
 </div><!-- /audit-content -->
@@ -273,8 +270,8 @@ $displayVariance = "LKR 0.00";
 
             <!-- Footer -->
             <div class="audit-modal-foot-approve">
-                <button type="button" class="audit-btn-cancel" onclick="closeApproveModal()">Cancel</button>
-                <button type="submit" class="audit-btn-confirm">
+                <button type="button" class="yn-btn yn-btn--secondary audit-btn-cancel" onclick="closeApproveModal()">Cancel</button>
+                <button type="submit" class="yn-btn yn-btn--primary audit-btn-confirm">
                     &#128274; Confirm Sign-Off &amp; Lock Ledger
                 </button>
             </div>
@@ -345,8 +342,8 @@ $displayVariance = "LKR 0.00";
             <div class="audit-modal-foot-clarify">
                 <div class="audit-foot-note">Note: Sending clarification will set audit status to Pending Review.</div>
                 <div class="audit-foot-btns">
-                    <button type="button" class="audit-btn-cancel-border" onclick="closeClarifyModal()">Cancel</button>
-                    <button type="submit" class="audit-btn-send">
+                    <button type="button" class="yn-btn yn-btn--secondary audit-btn-cancel-border" onclick="closeClarifyModal()">Cancel</button>
+                    <button type="submit" class="yn-btn yn-btn--primary audit-btn-send">
                         &#9655; Send Formal Clarification Query
                     </button>
                 </div>
@@ -362,6 +359,5 @@ $displayVariance = "LKR 0.00";
         csrfToken: '<?= htmlspecialchars($csrf_token ?? '', ENT_QUOTES) ?>'
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=<?= time() ?>" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
