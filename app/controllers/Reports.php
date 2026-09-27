@@ -268,8 +268,11 @@ class Reports extends Controller {
             'userName'    => $userName,
             'report'      => $report,
             'kpis'        => $previewData['kpis'],
-            'summaryRows' => $previewData['summaryRows'],
-            'rawRows'     => $previewData['rawRows'],
+            'summary'     => $previewData['summary'],
+            'raw'         => $previewData['raw'],
+            'syncLabel'   => $previewData['syncLabel'],
+            'noteTitle'   => $previewData['noteTitle'],
+            'note'        => $previewData['note'],
             'csrf_token'  => $_SESSION['csrf_token'],
         ]);
     }

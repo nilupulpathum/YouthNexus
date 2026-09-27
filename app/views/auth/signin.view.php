@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= htmlspecialchars($title) ?></title>
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css" />
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/signin.css" />
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css?v=20261001" />
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/signin.css?v=20260927-loading" />
 </head>
 <body>
   <div class="page">
@@ -65,14 +65,14 @@
           <p class="alert alert-success"><?= htmlspecialchars($success) ?></p>
         <?php endif; ?>
 
-        <form method="POST" action="<?= ROOT ?>/auth/signin">
+        <form method="POST" action="<?= ROOT ?>/auth/signin" id="signinForm">
           <label class="field-label" for="email">Email</label>
           <div class="input">
             <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="8" r="4"/>
               <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
             </svg>
-            <input id="email" name="email" type="email" placeholder="Enter your email" value="<?= $email ?>"/>
+            <input id="email" name="email" type="email" placeholder="Enter your email" value="<?= $email ?>" required/>
           </div>
 
           <div class="label-row">
@@ -84,7 +84,7 @@
               <rect x="4" y="10" width="16" height="10" rx="2"/>
               <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
             </svg>
-            <input id="password" name="password" type="password" placeholder="Enter your password"/>
+            <input id="password" name="password" type="password" placeholder="Enter your password" required/>
             <button type="button" class="toggle-pass" id="togglePass" aria-label="Show password">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
@@ -95,13 +95,15 @@
           </div>
 
           <br>
-          <button type="submit" class="signin-btn">
-            Sign In
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <button type="submit" class="signin-btn" id="signinSubmitBtn">
+            <span class="signin-btn__spinner" aria-hidden="true"></span>
+            <span class="signin-btn__label">Sign In</span>
+            <svg class="signin-btn__arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <line x1="5" y1="12" x2="19" y2="12"/>
               <polyline points="12 5 19 12 12 19"/>
             </svg>
           </button>
+          <p class="signin-progress" id="signinProgress" role="status" aria-live="polite" hidden>Checking your credentials and preparing verification…</p>
 
           <div class="notice">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -130,6 +132,26 @@
       const isText = pass.type === 'text';
       pass.type = isText ? 'password' : 'text';
       toggle.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+    });
+
+    const form = document.getElementById('signinForm');
+    const submit = document.getElementById('signinSubmitBtn');
+    const progress = document.getElementById('signinProgress');
+
+    form.addEventListener('submit', () => {
+      // A submit event fires only after native form validation succeeds.
+      submit.disabled = true;
+      submit.classList.add('is-loading');
+      submit.querySelector('.signin-btn__label').textContent = 'Signing in…';
+      progress.hidden = false;
+    });
+
+    // A back/forward cache restore can revive the old page without a new request.
+    window.addEventListener('pageshow', () => {
+      submit.disabled = false;
+      submit.classList.remove('is-loading');
+      submit.querySelector('.signin-btn__label').textContent = 'Sign In';
+      progress.hidden = true;
     });
   </script>
 </body>

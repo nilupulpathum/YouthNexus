@@ -4,10 +4,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--yn-bg-surface);
+  background: #ffffff;
   padding: 16px 20px;
-  border-radius: var(--yn-radius-lg, 12px);
-  border: 1px solid var(--yn-border, var(--yn-border-slate));
+  border-radius: var(--dw-radius-lg, 12px);
+  border: 1px solid var(--dw-border, #e2e8f0);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
@@ -39,7 +39,7 @@
 .nysc-filter-group label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--yn-text-muted, var(--yn-text-slate));
+  color: var(--dw-muted, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -48,19 +48,19 @@
 .nysc-filter-group input {
   height: 38px;
   padding: 0 12px;
-  border: 1px solid var(--yn-border, var(--yn-border-strong));
+  border: 1px solid var(--dw-border, #cbd5e1);
   border-radius: 8px;
   font-size: 13px;
-  color: var(--yn-text-primary, #1e293b);
-  background-color: var(--yn-bg-surface);
+  color: var(--dw-text, #1e293b);
+  background-color: #fff;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nysc-filter-group select:focus,
 .nysc-filter-group input:focus {
   outline: none;
-  border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  border-color: var(--dw-primary, #3154d8);
+  box-shadow: 0 0 0 3px rgba(49, 84, 216, 0.14);
 }
 
 .nysc-filter-buttons {
@@ -90,9 +90,9 @@
   gap: 4px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--yn-danger-soft-strong);
-  color: var(--yn-danger-hover);
-  border: 1px solid var(--yn-danger-border-strong);
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
   font-size: 10px;
   font-weight: 800;
   box-shadow: 0 1px 3px rgba(185, 28, 28, 0.15);
@@ -108,8 +108,8 @@
   display: inline-block;
   font-size: 10px;
   font-weight: 600;
-  color: var(--yn-text-secondary);
-  background: var(--yn-bg-surface-alt);
+  color: #475569;
+  background: #f1f5f9;
   padding: 2px 7px;
   border-radius: 4px;
   margin-top: 4px;
@@ -121,8 +121,8 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   padding: 16px;
-  background: var(--yn-bg-page);
-  border: 1px solid var(--yn-border-slate);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
 }
 
@@ -143,15 +143,15 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: var(--yn-bg-surface);
+  background: #ffffff;
   border-radius: 8px;
-  border: 1px solid var(--yn-border-slate);
+  border: 1px solid #e2e8f0;
 }
 
 .nysc-detail-metric span {
   font-size: 10px;
   font-weight: 700;
-  color: var(--yn-text-slate);
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -167,7 +167,7 @@
 }
 
 .nysc-detail-metric--warn strong {
-  color: var(--yn-danger-hover);
+  color: #b91c1c;
 }
 
 /* Disbandment Governance Action Bar */
@@ -177,8 +177,8 @@
   gap: 12px;
   padding: 16px 20px;
   border-radius: 12px;
-  background: var(--yn-danger-bg);
-  border: 1px solid var(--yn-danger-border);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
 .nysc-disband-actions__header {
@@ -203,42 +203,29 @@
   gap: 10px;
 }
 
-.nysc-btn-warning {
-  background: #d97706;
-  color: var(--yn-bg-surface);
-  border: none;
-  font-weight: 700;
-}
-
-.nysc-btn-warning:hover {
-  background: #b45309;
-}
-
-.nysc-btn-funds {
-  background: #059669;
-  color: var(--yn-bg-surface);
-  border: none;
-  font-weight: 700;
-}
-
-.nysc-btn-funds:hover {
-  background: #047857;
-}
-
+/* Governance action buttons use the project-wide primary palette
+   (navy #1e40af, white text) — same look as the shared db-primary-action
+   hook. White text is forced with !important to beat dashboard.css's
+   `.dashboard button { color: inherit; }`. */
+.nysc-btn-warning,
+.nysc-btn-funds,
 .nysc-btn-disband {
-  background: var(--yn-danger);
-  color: var(--yn-bg-surface);
-  border: none;
+  background: #1e40af;
+  color: #ffffff !important;
+  border: 1px solid #1e40af;
   font-weight: 700;
 }
 
+.nysc-btn-warning:hover,
+.nysc-btn-funds:hover,
 .nysc-btn-disband:hover:not(:disabled) {
-  background: var(--yn-danger-hover);
+  background: #1d3698;
+  border-color: #1d3698;
+  color: #ffffff !important;
 }
 
 .nysc-btn-disband:disabled {
-  background: var(--yn-border-strong);
-  color: #94a3b8;
+  opacity: .55;
   cursor: not-allowed;
 }
 
@@ -253,7 +240,10 @@
   line-height: 1.5;
 }
 
-.nysc-confirm-box strong {
+/* Only the box heading is a block; strongs inside list items stay
+   inline so sentences like "Club status is set to Disbanded and
+   archived." read on one line. */
+.nysc-confirm-box > strong {
   display: block;
   font-size: 14px;
   margin-bottom: 4px;
@@ -268,8 +258,3 @@
 .nysc-confirm-box li {
   margin-bottom: 4px;
 }
-
-.nch-lock-note { margin: 0; font-size: 12px; }
-.nch-recipient-label { font-size: 13px; font-weight: 600; color: var(--yn-text-strong); }
-.nch-retrieve-amount { color: #047857; font-size: 18px; }
-.nch-confirm-success { background: var(--yn-success-soft); border-color: #22c55e; color: var(--yn-success-hover); }

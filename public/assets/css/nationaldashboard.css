@@ -6,10 +6,10 @@
 }
 .nd-quick-card {
     flex: 1;
-    background: var(--yn-sidebar-bg);
-    color: var(--yn-bg-surface);
+    background: var(--db-sidebar-bg);
+    color: #fff;
     padding: 20px;
-    border-radius: var(--yn-radius-lg);
+    border-radius: var(--db-radius-lg);
     cursor: pointer;
     text-decoration: none;
     transition: background 0.2s;
@@ -34,10 +34,10 @@
 }
 .nd-stat-card {
     flex: 1;
-    background: var(--yn-bg-surface);
-    border-radius: var(--yn-radius-lg);
+    background: #fff;
+    border-radius: var(--db-radius-lg);
     padding: 20px;
-    border: 1px solid var(--yn-border);
+    border: 1px solid var(--db-border);
 }
 .nd-stat-top {
     display: flex;
@@ -47,7 +47,7 @@
 }
 .nd-stat-label {
     font-size: 11px;
-    color: var(--yn-text-placeholder);
+    color: #9ca3af;
 }
 .nd-stat-circle {
     width: 32px;
@@ -57,18 +57,18 @@
     align-items: center;
     justify-content: center;
 }
-.nd-stat-circle.blue { background: var(--yn-primary-bg); color: var(--yn-info); }
-.nd-stat-circle.orange { background: var(--yn-warning-bg); color: var(--yn-warning); }
-.nd-stat-circle.purple { background: #f5f3ff; color: var(--yn-purple); }
-.nd-stat-circle.green { background: var(--yn-success-soft); color: var(--yn-success); }
+.nd-stat-circle.blue { background: #eff6ff; color: #2563eb; }
+.nd-stat-circle.orange { background: #fff7ed; color: #ea580c; }
+.nd-stat-circle.purple { background: #f5f3ff; color: #7c3aed; }
+.nd-stat-circle.green { background: #f0fdf4; color: #16a34a; }
 .nd-stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
 }
 .nd-stat-desc {
     font-size: 12px;
-    color: var(--yn-text-muted);
+    color: var(--db-text-grey);
     margin-top: 2px;
 }
 
@@ -78,10 +78,10 @@
     margin-bottom: 24px;
 }
 .nd-panel {
-    background: var(--yn-bg-surface);
-    border-radius: var(--yn-radius-lg);
+    background: #fff;
+    border-radius: var(--db-radius-lg);
     padding: 20px;
-    border: 1px solid var(--yn-border);
+    border: 1px solid var(--db-border);
 }
 .nd-panel-left { flex: 1.2; }
 .nd-panel-right { flex: 1; }
@@ -94,11 +94,11 @@
 .nd-panel-header h3 {
     font-size: 15px;
     font-weight: 600;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
 }
 .nd-panel-header a {
     font-size: 12px;
-    color: var(--yn-info);
+    color: #2563eb;
     text-decoration: none;
 }
 .nd-bar-chart {
@@ -120,21 +120,21 @@
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: var(--yn-text-slate-700);
+    color: #374151;
 }
 .nd-bar {
     width: 80px;
     border-radius: 6px 6px 0 0;
     min-height: 20px;
 }
-.nd-bar-blue { background: var(--yn-sidebar-bg); }
-.nd-bar-orange { background: var(--yn-warning); }
-.nd-bar-red { background: var(--yn-danger); }
+.nd-bar-blue { background: var(--db-sidebar-bg); }
+.nd-bar-orange { background: #ea580c; }
+.nd-bar-red { background: #dc2626; }
 .nd-bar-label {
     position: absolute;
     bottom: -24px;
     font-size: 12px;
-    color: var(--yn-text-muted);
+    color: var(--db-text-grey);
 }
 
 .nd-bottleneck-list {
@@ -166,32 +166,32 @@
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 2px;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
 }
 .nd-b-info p {
     font-size: 12px;
-    color: var(--yn-text-muted);
+    color: var(--db-text-grey);
 }
 .nd-view-link {
     display: inline-block;
     margin-top: 12px;
     font-size: 12px;
-    color: var(--yn-info);
+    color: #2563eb;
     text-decoration: none;
     font-weight: 600;
 }
 
 .nd-activity-panel {
-    background: var(--yn-bg-surface);
-    border-radius: var(--yn-radius-lg);
+    background: #fff;
+    border-radius: var(--db-radius-lg);
     padding: 20px;
-    border: 1px solid var(--yn-border);
+    border: 1px solid var(--db-border);
 }
 .nd-activity-panel h3 {
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 16px;
-    color: var(--yn-text-primary);
+    color: var(--db-text-dark);
 }
 .nd-activity-list {
     list-style: none;
@@ -216,19 +216,19 @@
 .nd-a-dot {
     width: 6px;
     height: 6px;
-    background: var(--yn-info);
+    background: #2563eb;
     border-radius: 50%;
     margin-top: 6px;
     flex-shrink: 0;
 }
 .nd-activity-text {
     font-size: 13px;
-    color: var(--yn-text-slate-700);
+    color: #374151;
     line-height: 1.4;
 }
 .nd-activity-time {
     font-size: 12px;
-    color: var(--yn-text-placeholder);
+    color: #9ca3af;
     white-space: nowrap;
     margin-left: 12px;
 }

@@ -52,7 +52,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span class="dw-count"><?= count($links) ?> workspaces</span>
         </header>
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Workspace</th>

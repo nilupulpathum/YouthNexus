@@ -98,7 +98,14 @@ class ManageUserModel extends Model {
      */
     public function getUsers(array $filters = [], int $page = 1, int $perPage = 15): array {
         $params = [];
-        $where  = ["u.role IN ('" . implode("','", self::$NYSC_ROLES) . "')"];
+        $where  = [
+            "u.role IN ('" . implode("','", self::$NYSC_ROLES) . "')",
+            /*
+             * Suspended accounts are administratively removed — they never
+             * appear in the management list, with or without filters.
+             */
+            "u.status IN ('Active','Disabled')",
+        ];
 
         // ---- search ----
         $search = trim($filters['search'] ?? '');
@@ -130,7 +137,7 @@ class ManageUserModel extends Model {
         if ($status === 'Active') {
             $where[]  = "u.status = 'Active'";
         } elseif ($status === 'Inactive') {
-            $where[]  = "u.status IN ('Disabled','Suspended')";
+            $where[]  = "u.status = 'Disabled'";
         }
 
         $whereSQL = 'WHERE ' . implode(' AND ', $where);
@@ -288,7 +295,7 @@ class ManageUserModel extends Model {
      * @return bool
      */
     public function setStatus(int $id, string $newStatus): bool {
-        $allowed = ['Active', 'Disabled'];
+        $allowed = ['Active', 'Disabled', 'Suspended'];
         if (!in_array($newStatus, $allowed)) {
             return false;
         }

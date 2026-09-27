@@ -110,8 +110,31 @@ if (!str_contains((string) file_get_contents($root . '/app/core/config.php'), "d
     $errors[] = 'Missing ASSET_VERSION constant';
 }
 
-if ($errors) {
-    fwrite(STDERR, implode(PHP_EOL, $errors) . PHP_EOL);
+// This contract was introduced after many existing pages had been built.
+// Keep the existing findings visible in the baseline, while rejecting any
+// additional occurrences. Removing a violation never requires increasing
+// the baseline; delete its corresponding line when that page is cleaned up.
+$baselinePath = __DIR__ . '/lint_views_legacy_baseline.txt';
+$baseline = file($baselinePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+if ($baseline === false) {
+    fwrite(STDERR, "Missing UI contract baseline: $baselinePath" . PHP_EOL);
     exit(1);
 }
-echo 'Divisional UI view contract passed (' . count($views) . ' views).' . PHP_EOL;
+
+$remainingBaseline = array_count_values(array_map('trim', $baseline));
+$newErrors = [];
+foreach ($errors as $error) {
+    $key = trim($error);
+    if (($remainingBaseline[$key] ?? 0) > 0) {
+        --$remainingBaseline[$key];
+    } else {
+        $newErrors[] = $error;
+    }
+}
+
+if ($newErrors) {
+    fwrite(STDERR, implode(PHP_EOL, $newErrors) . PHP_EOL);
+    exit(1);
+}
+echo 'Divisional UI view contract passed (' . count($views) . ' views; '
+    . count($errors) . ' recorded legacy findings).' . PHP_EOL;

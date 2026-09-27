@@ -1,38 +1,41 @@
 <?php
 require_once __DIR__ . '/../partials/icons.view.php';
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$title = 'Create New Report - YouthNexus';
-$pageTitle = 'Create New Report';
-$pageDescription = 'Configure a report for your division';
+$title = 'Aggregate Reports - YouthNexus';
+$pageTitle = 'Aggregate Reports';
+$pageDescription = 'Bring together club activity across your division';
 $currentRoute = 'divisionalreports';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-reports.css'];
-$pageScripts = [ROOT . '/assets/js/divisional-report-create.js?v=1'];
+$pageScripts = [ROOT . '/assets/js/divisional-report-create.js'];
 
-$preferredTypeName = $aggregateMode ? 'Club Activity Aggregate' : '';
-$selectedType = null;
 $selectedCategory = '';
+$selectedType = null;
 foreach ($catalog as $category => $types) {
     foreach ($types as $type) {
-        if ($selectedType === null || $type->type_name === $preferredTypeName) {
+        if ($selectedType === null) {
             $selectedType = $type;
             $selectedCategory = $category;
         }
-        if ($type->type_name === $preferredTypeName) break 2;
+        if ($type->type_name === 'Club Activity Aggregate') {
+            $selectedType = $type;
+            $selectedCategory = $category;
+            break 2;
+        }
     }
 }
-$isAggregate = $selectedType && $selectedType->type_name === 'Club Activity Aggregate';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page dr-create" aria-label="Create divisional report">
+<section class="dw-page dr-create dr-create--aggregate" aria-label="Aggregate club reports">
   <?php if ($flash): ?><div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div><?php endif; ?>
+  <?php if (!$selectedType): ?><div class="dw-alert dw-alert--warning" role="status"><?= yn_icon('info') ?><span>No report types are available. Check the divisional report catalog.</span></div><?php endif; ?>
 
   <form class="dw-panel dr-create-card" action="<?= ROOT ?>/divisionalreports/generate" method="post" data-report-create-form>
     <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
 
     <header class="dr-create-card__header">
       <div>
-        <h2><?= $isAggregate ? 'Aggregate Club Reports' : 'Create New Report' ?></h2>
-        <p>Select the report, reporting period, and output format.</p>
+        <h2>Aggregate club reports</h2>
+        <p>Select the reporting period and output format for the division-wide club activity summary.</p>
       </div>
       <a class="dr-create-card__close" href="<?= ROOT ?>/divisionalreports" aria-label="Close report configuration"><?= yn_icon('close') ?></a>
     </header>
@@ -116,8 +119,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 
     <footer class="dr-create-card__footer">
-      <a class="dw-button dw-button--secondary db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
-      <button class="dw-button dw-button--primary db-confirm-action" type="submit" data-create-submit>Generate Report</button>
+      <a class="yn-btn yn-btn--secondary yn-btn-back dw-button dw-button--secondary db-view-button db-view-button--back" href="<?= ROOT ?>/divisionalreports">Back to Reports</a>
+      <button class="dw-button dw-button--primary db-confirm-action" type="submit" data-create-submit<?= $selectedType ? '' : ' disabled' ?>>Generate Selected Report</button>
     </footer>
   </form>
 </section>

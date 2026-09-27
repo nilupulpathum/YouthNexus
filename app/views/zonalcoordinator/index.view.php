@@ -21,7 +21,7 @@ $title = 'Zonal Overview - YouthNexus';
 $pageTitle = 'Zonal Overview';
 $pageDescription = 'Zone health and average club health per division';
 $currentRoute = 'zonalcoordinator';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 
 $summaryCards = [
@@ -53,7 +53,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </header>
 
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Division</th>
