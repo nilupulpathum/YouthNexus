@@ -3,8 +3,7 @@
 /**
  * Attendance Controller
  *
- * Supports both NYSC Administrator (National scope with cascading Zone/Division/Club filters)
- * and Divisional Secretary (Divisional scope).
+ * Supports NYSC Administrator, Zonal Secretary and Divisional Secretary scopes.
  */
 class Attendance extends Controller {
 
@@ -34,6 +33,14 @@ class Attendance extends Controller {
         header('Content-Type: application/json');
         echo json_encode(['error' => $message]);
         exit();
+    }
+
+    private function requireZonalId() {
+        $zonalId = (int)($_SESSION['zonal_id'] ?? 0);
+        if ($zonalId <= 0) {
+            $this->jsonError('Your zonal account has no zone assignment. Contact an administrator.', 403);
+        }
+        return $zonalId;
     }
 
     // ------------------------------------------------------------------
@@ -82,6 +89,24 @@ class Attendance extends Controller {
                 'userRole'    => $role,
             ]);
 
+        } elseif ($role === 'ZonalSecretary') {
+            // Zonal Secretary Scope
+            $zonalId = $this->requireZonalId();
+            $events  = $attendanceModel->getApprovedEventsByZone($zonalId);
+            $stats   = $attendanceModel->getZoneAttendanceStats($zonalId);
+
+            $this->view('attendance/session-list', [
+                'title'       => 'Manage Attendance — YouthNexus',
+                'pageTitle'   => 'Manage Attendance',
+                'pageDescription' => 'Log and review attendance for approved events in your zone',
+                'isNYSCAdmin' => false,
+                'events'      => $events,
+                'stats'       => $stats,
+                'csrf_token'  => $_SESSION['csrf_token'],
+                'userName'    => $_SESSION['user_name'] ?? 'Zonal Secretary',
+                'userRole'    => $role,
+            ]);
+
         } else {
             // Divisional Secretary Scope
             $divisionId = (int)($_SESSION['division_id'] ?? 0);
@@ -114,13 +139,17 @@ class Attendance extends Controller {
             $this->redirect('attendance');
         }
 
-        $attendanceModel = $this->model('AttendanceModel');
-        $isNYSCAdmin     = ($role === 'NYSCAdministrator');
-        $divisionId      = (int)($_SESSION['division_id'] ?? 0);
+        $attendanceModel  = $this->model('AttendanceModel');
+        $isNYSCAdmin      = ($role === 'NYSCAdministrator');
+        $isZonalSecretary = ($role === 'ZonalSecretary');
+        $divisionId       = (int)($_SESSION['division_id'] ?? 0);
+        $zonalId          = $isZonalSecretary ? $this->requireZonalId() : 0;
 
         // Fetch event based on scope
         if ($isNYSCAdmin) {
             $event = $attendanceModel->getApprovedEventNational($eventId);
+        } elseif ($isZonalSecretary) {
+            $event = $attendanceModel->getApprovedEventInZoneScope($eventId, $zonalId);
         } else {
             $event = $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
         }
@@ -134,9 +163,13 @@ class Attendance extends Controller {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
         $xReq   = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
         if (strpos($accept, 'application/json') !== false || strtolower($xReq) === 'xmlhttprequest') {
-            $roster = $isNYSCAdmin
-                ? $attendanceModel->getMemberRosterForEventNational($eventId)
-                : $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+            if ($isNYSCAdmin) {
+                $roster = $attendanceModel->getMemberRosterForEventNational($eventId);
+            } elseif ($isZonalSecretary) {
+                $roster = $attendanceModel->getMemberRosterForEventZone($eventId, $zonalId, $event->target_scope);
+            } else {
+                $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+            }
 
             header('Content-Type: application/json');
             echo json_encode(['members' => $roster, 'event' => $event]);
@@ -148,11 +181,15 @@ class Attendance extends Controller {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        $roster = $isNYSCAdmin
-            ? $attendanceModel->getMemberRosterForEventNational($eventId)
-            : $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+        if ($isNYSCAdmin) {
+            $roster = $attendanceModel->getMemberRosterForEventNational($eventId);
+        } elseif ($isZonalSecretary) {
+            $roster = $attendanceModel->getMemberRosterForEventZone($eventId, $zonalId, $event->target_scope);
+        } else {
+            $roster = $attendanceModel->getMemberRosterForEvent($eventId, $divisionId, $event->target_scope);
+        }
 
-        $aStats = $attendanceModel->getEventAttendanceStats($eventId);
+        $aStats = $attendanceModel->getEventAttendanceStats($eventId, $isZonalSecretary ? $zonalId : null);
 
         $present   = (int)($aStats->present_count ?? 0);
         $absent    = (int)($aStats->absent_count  ?? 0);
@@ -216,10 +253,25 @@ class Attendance extends Controller {
         $model       = $this->model('AttendanceModel');
         $isNYSCAdmin = ($role === 'NYSCAdministrator');
         $divisionId  = (int)($_SESSION['division_id'] ?? 0);
+        $zonalId     = $role === 'ZonalSecretary' ? $this->requireZonalId() : 0;
 
-        $roster = $isNYSCAdmin
-            ? $model->getMemberRosterForEventNational($eventId)
-            : $model->getMemberRosterForEvent($eventId, $divisionId);
+        // The roster must be tied to an approved event in this actor's scope.
+        $event = $isNYSCAdmin
+            ? $model->getApprovedEventNational($eventId)
+            : ($role === 'ZonalSecretary'
+                ? $model->getApprovedEventInZoneScope($eventId, $zonalId)
+                : $model->getApprovedEventInScope($eventId, $divisionId));
+        if (!$event) {
+            $this->jsonError('Event not found or not approved for your scope.', 403);
+        }
+
+        if ($isNYSCAdmin) {
+            $roster = $model->getMemberRosterForEventNational($eventId);
+        } elseif ($role === 'ZonalSecretary') {
+            $roster = $model->getMemberRosterForEventZone($eventId, $zonalId, $event->target_scope);
+        } else {
+            $roster = $model->getMemberRosterForEvent($eventId, $divisionId);
+        }
 
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'members' => $roster]);
@@ -242,7 +294,9 @@ class Attendance extends Controller {
 
         $mode        = trim($_POST['mode'] ?? 'single');
         $isNYSCAdmin = ($role === 'NYSCAdministrator');
-        $divisionId  = $isNYSCAdmin ? null : (int)($_SESSION['division_id'] ?? 0);
+        $isZonalSecretary = ($role === 'ZonalSecretary');
+        $divisionId  = $isNYSCAdmin || $isZonalSecretary ? null : (int)($_SESSION['division_id'] ?? 0);
+        $zonalId     = $isZonalSecretary ? $this->requireZonalId() : 0;
         $recordedBy  = (int)($_SESSION['user_id'] ?? 0);
 
         $attendanceModel = $this->model('AttendanceModel');
@@ -261,13 +315,18 @@ class Attendance extends Controller {
             // Verify event exists and is approved
             $event = $isNYSCAdmin
                 ? $attendanceModel->getApprovedEventNational($eventId)
-                : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+                : ($isZonalSecretary
+                    ? $attendanceModel->getApprovedEventInZoneScope($eventId, $zonalId)
+                    : $attendanceModel->getApprovedEventInScope($eventId, $divisionId));
 
             if (!$event) {
                 $this->jsonError('Event not found or not approved for your scope.', 403);
             }
 
-            if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope ?? 'AllInScope')) {
+            $memberAllowed = $isZonalSecretary
+                ? $attendanceModel->memberIsInZoneScope($memberId, $eventId, $zonalId, $event->target_scope)
+                : $attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope);
+            if (!$memberAllowed) {
                 $this->jsonError('Member is not active or not targeted by this event.', 422);
             }
 
@@ -301,7 +360,9 @@ class Attendance extends Controller {
 
             $event = $isNYSCAdmin
                 ? $attendanceModel->getApprovedEventNational($eventId)
-                : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+                : ($isZonalSecretary
+                    ? $attendanceModel->getApprovedEventInZoneScope($eventId, $zonalId)
+                    : $attendanceModel->getApprovedEventInScope($eventId, $divisionId));
 
             if (!$event) {
                 $this->jsonError('Event not found or not approved.', 403);
@@ -333,7 +394,10 @@ class Attendance extends Controller {
                     continue;
                 }
 
-                if (!$attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope ?? 'AllInScope')) {
+                $memberAllowed = $isZonalSecretary
+                    ? $attendanceModel->memberIsInZoneScope($memberId, $eventId, $zonalId, $event->target_scope)
+                    : $attendanceModel->memberIsInScope($memberId, $eventId, $divisionId, $event->target_scope);
+                if (!$memberAllowed) {
                     $skippedRows[] = "Row $rowNum: Member #$memberId not active or out of scope";
                     continue;
                 }
@@ -382,16 +446,19 @@ class Attendance extends Controller {
         $attendanceModel = $this->model('AttendanceModel');
         $isNYSCAdmin     = ($role === 'NYSCAdministrator');
         $divisionId      = (int)($_SESSION['division_id'] ?? 0);
+        $zonalId         = $role === 'ZonalSecretary' ? $this->requireZonalId() : 0;
 
         $event = $isNYSCAdmin
             ? $attendanceModel->getApprovedEventNational($eventId)
-            : $attendanceModel->getApprovedEventInScope($eventId, $divisionId);
+            : ($role === 'ZonalSecretary'
+                ? $attendanceModel->getApprovedEventInZoneScope($eventId, $zonalId)
+                : $attendanceModel->getApprovedEventInScope($eventId, $divisionId));
 
         if (!$event) {
             $this->redirect('attendance');
         }
 
-        $rows = $attendanceModel->getAttendanceForEvent($eventId);
+        $rows = $attendanceModel->getAttendanceForEvent($eventId, $role === 'ZonalSecretary' ? $zonalId : null);
 
         $filename = 'Attendance_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $event->title) . '_' . date('Ymd') . '.csv';
 

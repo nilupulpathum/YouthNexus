@@ -29,6 +29,7 @@ $defaultFrom     = date('Y-01-01');
 $defaultTo       = date('Y-06-30');
 $defaultScopeKey = 'National';
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -120,7 +121,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>Valid date range: <span id="dateLabel">Q1 - Q2 FY<?= date('Y') ?></span> (<span id="dateDays">181</span> days)</span>
             </div>
-            <div id="dateError" class="rpt-date-info rpt-date-info--invalid" style="display:none">
+            <div id="dateError" class="rpt-date-info rpt-date-info--invalid yn-hidden">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <span>Invalid date range: To Date must be after From Date</span>
             </div>

@@ -235,6 +235,7 @@ class ZoneTreasuryModel extends Model {
             $select = $pdo->prepare(
                 "SELECT vr.void_request_id, vr.status AS request_status,
                         le.entry_id, le.status AS entry_status, le.amount, le.type,
+                        le.description, le.category,
                         l.ledger_id, l.status AS ledger_status
                  FROM VoidRequest vr
                  INNER JOIN LedgerEntry le ON le.entry_id = vr.entry_id
@@ -260,6 +261,24 @@ class ZoneTreasuryModel extends Model {
                 if ($entryUpdate->rowCount() !== 1) {
                     throw new RuntimeException('The ledger entry is no longer eligible to be voided.');
                 }
+                $reversalType = $request['type'] === 'Income' ? 'Expense' : 'Income';
+                $reversal = $pdo->prepare(
+                    "INSERT INTO LedgerEntry
+                        (ledger_id, amount, type, category, description, status, reconciled,
+                         date, created_by, reversal_of_entry_id, void_request_id)
+                     VALUES (?, ?, ?, ?, ?, 'Approved', 0, CURDATE(), ?, ?, ?)"
+                );
+                $reversal->execute([
+                    $request['ledger_id'],
+                    $request['amount'],
+                    $reversalType,
+                    $request['category'],
+                    'Void reversal for ledger entry ' . $request['entry_id'] . ': ' . (string) $request['description'],
+                    $decidedBy,
+                    $request['entry_id'],
+                    $requestId,
+                ]);
+                $reversalId = (int) $pdo->lastInsertId();
                 $delta = $request['type'] === 'Income' ? -(float) $request['amount'] : (float) $request['amount'];
                 $pdo->prepare("UPDATE Ledger SET current_balance = current_balance + ? WHERE ledger_id = ?")
                     ->execute([$delta, $request['ledger_id']]);
@@ -273,7 +292,11 @@ class ZoneTreasuryModel extends Model {
             );
             $notify->execute(["Your void request was " . strtolower($newStatus) . ".", $requestId, $requestId]);
             $audit = $pdo->prepare("INSERT INTO AuditLog (actor_user_id, action_type, target_entity, target_id, details) VALUES (?, 'DECIDE_VOID', 'VoidRequest', ?, ?)");
-            $audit->execute([$decidedBy, $requestId, substr($remarks, 0, 200)]);
+            $auditDetails = substr($remarks, 0, 200);
+            if ($decision === 'approve') {
+                $auditDetails .= ' Reversal ledger entry ' . $reversalId . ' created.';
+            }
+            $audit->execute([$decidedBy, $requestId, $auditDetails]);
             $pdo->commit();
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {

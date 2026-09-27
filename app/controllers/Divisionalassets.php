@@ -101,6 +101,29 @@ class Divisionalassets extends Controller {
         });
     }
 
+    public function withdraw($requestId = null): void {
+        $this->mutate(function (DivisionalAssetModel $model, int $divisionId, int $userId) use ($requestId): void {
+            $model->withdrawZonalRequest(
+                $divisionId, (int) $requestId, $userId, trim((string) ($_POST['reason'] ?? ''))
+            );
+            $this->flash('success', 'The pending zonal asset request was withdrawn.');
+        });
+    }
+
+    public function retire(): void {
+        $this->mutate(function (DivisionalAssetModel $model, int $divisionId, int $userId): void {
+            $model->retireStock(
+                $divisionId,
+                (int) ($_POST['catalog_item_id'] ?? 0),
+                (int) ($_POST['quantity'] ?? 0),
+                $userId,
+                (string) ($_POST['action_type'] ?? ''),
+                trim((string) ($_POST['reason'] ?? ''))
+            );
+            $this->flash('success', 'The asset retirement was recorded without deleting inventory history.');
+        });
+    }
+
     private function mutate(callable $operation): void {
         $this->requireTreasurer();
         if (!$this->verifyPost()) {
@@ -121,6 +144,11 @@ class Divisionalassets extends Controller {
                 'Select a decision and provide remarks when rejecting.',
                 'Select an asset, quantity, and reason.',
                 'The selected catalog item was not found.',
+                'Only your pending zonal request can be withdrawn.',
+                'Provide a withdrawal reason between 5 and 1000 characters.',
+                'Select a valid retirement action and quantity.',
+                'Provide a retirement reason between 5 and 1000 characters.',
+                'The retirement quantity exceeds available divisional stock.',
             ];
             $this->flash('error', in_array($exception->getMessage(), $allowed, true)
                 ? $exception->getMessage() : 'The asset update could not be saved.');

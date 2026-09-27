@@ -1,0 +1,377 @@
+/* Divisional role presentation is loaded after page styles so shared pages
+   keep their existing National and Zonal layouts. */
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stats, .ea-stats, .me-stats-grid, .ann-stats) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.am-stats, .ann-stats--two) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.dashboard[data-user-role^="Divisional"] .dw-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+body.dashboard[data-user-role^="Divisional"] .db-primary-action::before { content: none; }
+
+body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--approve { background: var(--yn-success); color: var(--yn-bg-surface); }
+body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--approve:hover { background: var(--yn-success-hover); }
+body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--reject { background: var(--yn-danger); color: var(--yn-bg-surface); }
+body.dashboard[data-user-role^="Divisional"] .dw-button.yn-btn--reject:hover { background: var(--yn-danger-hover); }
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-toolbar, .ea-toolbar, .me-toolbar, .am-toolbar, .ann-toolbar, .dw-toolbar) {
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-top: 0;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-search-group, .me-search-group, .am-search-group, .ann-search-wrap, .dw-search input, .ea-toolbar__search input) {
+  height: 40px;
+  min-width: 0;
+  border: 1px solid var(--yn-border);
+  border-radius: var(--yn-radius);
+  background: var(--yn-bg-surface);
+  box-shadow: var(--yn-shadow-sm);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-btn, .me-filter-btn, .am-filter-btn, #annFilterBtn, .dw-toolbar [data-filter-toggle], #eaFilterBtn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 118px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--yn-border);
+  border-radius: 10px;
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-primary);
+  font: 600 13px var(--yn-font-family);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, .08);
+  white-space: nowrap;
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-toggle svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-btn, .me-filter-btn, .am-filter-btn, #annFilterBtn, .dw-toolbar [data-filter-toggle], #eaFilterBtn):hover {
+  border-color: var(--yn-border-strong);
+  background: var(--yn-bg-surface-alt);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-btn, .me-filter-btn, .am-filter-btn, #annFilterBtn, .dw-toolbar [data-filter-toggle], #eaFilterBtn)[aria-expanded="true"] {
+  border-color: var(--yn-primary);
+  background: var(--yn-primary-soft);
+  color: var(--yn-primary);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-search-group, .me-search-group, .am-search-group, .ann-search-wrap, .dw-search, .ea-toolbar__search):focus-within {
+  border-color: var(--yn-primary);
+  box-shadow: 0 0 0 3px var(--yn-primary-soft);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel, .dw-filter-panel, .ea-filter-panel) {
+  border-color: var(--yn-border);
+  border-radius: var(--yn-radius-lg);
+  background: var(--yn-bg-surface);
+  box-shadow: var(--yn-shadow);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-card, .ea-stat-card, .me-stat-card, .am-stat-card, .ann-stat-card, .dw-summary-card) {
+  min-height: 108px;
+  border-radius: var(--yn-radius-lg);
+  border-color: var(--yn-border);
+  box-shadow: var(--yn-shadow);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-card, .ea-stat-card, .ann-stat-card).is-active {
+  border-color: var(--yn-primary);
+  box-shadow: 0 0 0 2px var(--yn-primary-soft), var(--yn-shadow);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-icon, .ea-stat-icon, .me-stat-icon, .am-stat-icon, .ann-stat-icon, .dw-summary-card__icon) {
+  border-radius: var(--yn-radius);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-icon.pending, .ea-stat-icon.pending) { color: var(--yn-warning); }
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-icon.approved, .ea-stat-icon.approved) { color: var(--yn-success); }
+body.dashboard[data-user-role^="Divisional"] :is(.cr-stat-icon.rejected, .ea-stat-icon.rejected) { color: var(--yn-danger); }
+
+body.dashboard[data-user-role^="Divisional"] :is(.yn-status, .dw-status, .ea-badge, .cr-badge, .ann-badge, .am-status-badge) {
+  padding: 3px 8px;
+  border-radius: var(--yn-radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-btn-primary, .ea-btn-submit-decision, .me-btn-primary, .am-btn-primary, .ann-btn-primary, .db-primary-action) {
+  border-radius: var(--yn-radius);
+  background: var(--yn-primary);
+  border-color: var(--yn-primary);
+  color: var(--yn-bg-surface);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-btn-primary, .ea-btn-submit-decision, .me-btn-primary, .am-btn-primary, .ann-btn-primary, .db-primary-action):hover:not(:disabled) {
+  background: var(--yn-primary-hover);
+  border-color: var(--yn-primary-hover);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-btn-submit-decision.is-reject {
+  background: var(--yn-danger);
+  border-color: var(--yn-danger);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-btn-submit-decision.is-reject:hover:not(:disabled) {
+  background: var(--yn-danger-hover);
+  border-color: var(--yn-danger-hover);
+}
+
+/* Profile, Settings, and Help are shared routes reachable by Divisional users. */
+body.dashboard[data-user-role^="Divisional"] :is(.help-section, .settings-content, .cv-section, .cv-stats-grid .stat-card) {
+  border-color: var(--yn-border);
+  border-radius: var(--yn-radius-lg);
+  box-shadow: var(--yn-shadow);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.btn-submit-contact, .btn-save, .btn-upload, .btn-download-pdf, .btn-download-pdf-large) {
+  min-height: 40px;
+  border-radius: var(--yn-radius);
+  background: var(--yn-primary);
+  color: var(--yn-bg-surface);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.btn-submit-contact, .btn-save, .btn-upload, .btn-download-pdf, .btn-download-pdf-large):hover:not(:disabled) {
+  background: var(--yn-primary-hover);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.btn-share, .btn-cancel, .btn-verify-code, .btn-copy) {
+  min-height: 40px;
+  border: 1px solid var(--yn-border);
+  border-radius: var(--yn-radius);
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.dashboard[data-user-role^="Divisional"] .dw-summary-card.yn-stat-card {
+  flex-direction: row;
+  gap: 13px;
+  padding: 18px;
+}
+
+body.dashboard[data-user-role^="Divisional"] .dw-summary-card__icon.yn-stat-card__icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+body.dashboard[data-user-role^="Divisional"] .dr-kpi.yn-stat-card {
+  display: grid;
+  padding: 16px;
+  gap: 9px;
+}
+
+body.dashboard[data-user-role^="Divisional"] .dr-kpi-grid.yn-stat-grid { margin-bottom: 0; }
+
+body.dashboard[data-user-role^="Divisional"] .ea-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-toolbar__search {
+  flex: 1;
+  min-width: 0;
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-toolbar__search input { width: 100%; }
+
+body.dashboard[data-user-role^="Divisional"] .ea-filter-panel {
+  display: block;
+  margin: 0 0 14px;
+  box-shadow: var(--yn-shadow);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-filter-panel[hidden] { display: none; }
+
+body.dashboard[data-user-role^="Divisional"] .ea-filter-empty.is-visible {
+  display: block;
+  margin-top: 12px;
+  border: 1px dashed var(--yn-border);
+  border-radius: var(--yn-radius-lg);
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-muted);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ea-card[hidden],
+body.dashboard[data-user-role^="Divisional"] .ea-filter-empty[hidden] { display: none; }
+
+@media (max-width: 1100px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.cr-stats, .ea-stats, .me-stats-grid, .ann-stats, .am-stats) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.cr-stats, .ea-stats, .me-stats-grid, .ann-stats, .am-stats) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.dashboard[data-user-role^="Divisional"] .ea-toolbar { flex-wrap: wrap; }
+  body.dashboard[data-user-role^="Divisional"] .ea-toolbar__search { flex-basis: 100%; }
+}
+
+/* Advanced filter panel actions use the same secondary and primary treatments. */
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-actions, .cr-filter-actions, .me-filter-actions, .am-filter-actions, .yn-filter-actions) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.yn-filter-clear, .yn-filter-apply) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 116px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--yn-radius);
+  font: 600 12px var(--yn-font-family);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-clear {
+  border: 1px solid var(--yn-border);
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-primary);
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-clear:hover {
+  border-color: var(--yn-border-strong);
+  background: var(--yn-bg-surface-alt);
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-apply {
+  border: 1px solid var(--yn-primary);
+  background: var(--yn-primary);
+  color: var(--yn-bg-surface);
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-apply:hover {
+  border-color: var(--yn-primary-hover);
+  background: var(--yn-primary-hover);
+  color: var(--yn-bg-surface);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.yn-filter-clear, .yn-filter-apply):focus-visible {
+  outline: 2px solid var(--yn-primary);
+  outline-offset: 2px;
+}
+
+/* All Divisional filter panels follow the Reports advanced filter layout. */
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-panel__heading, .yn-filter-heading) {
+  width: 100%;
+  margin: 0 0 12px;
+  color: var(--yn-text-primary);
+  font: 700 13px/1.3 var(--yn-font-family);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel).open {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel) > .yn-filter-heading,
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-actions, .me-filter-actions, .am-filter-actions, .yn-filter-actions),
+body.dashboard[data-user-role^="Divisional"] .am-filter-panel > .yn-filter-heading {
+  grid-column: 1 / -1;
+}
+
+body.dashboard[data-user-role^="Divisional"] .am-filter-panel.open {
+  display: block;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-grid, .am-filter-grid, .yn-filter-fields) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+body.dashboard[data-user-role^="Divisional"] .yn-filter-fields { width: 100%; }
+body.dashboard[data-user-role^="Divisional"] .yn-filter-field { display: grid; gap: 6px; }
+
+body.dashboard[data-user-role^="Divisional"] :is(.dw-field, .cr-filter-field, .me-filter-field, .am-filter-field, .ann-filter-field, .yn-filter-field) {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-panel, .cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel, .ea-filter-panel) :is(.dw-field, .cr-filter-field, .me-filter-field, .am-filter-field, .ann-filter-field, .yn-filter-field) label {
+  color: var(--yn-text-secondary);
+  font: 700 10px/1.3 var(--yn-font-family);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-panel, .cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel, .ea-filter-panel) :is(.dw-field, .cr-filter-field, .me-filter-field, .am-filter-field, .ann-filter-field, .yn-filter-field) :is(select, input) {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--yn-border);
+  border-radius: var(--yn-radius);
+  background: var(--yn-bg-surface);
+  color: var(--yn-text-primary);
+  font: 400 13px var(--yn-font-family);
+}
+
+body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-panel, .cr-filter-panel, .me-filter-panel, .am-filter-panel, .ann-filter-panel, .ea-filter-panel) :is(.dw-filter-actions, .cr-filter-actions, .me-filter-actions, .am-filter-actions, .yn-filter-actions) {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--yn-border);
+  justify-content: flex-start;
+}
+
+body.dashboard[data-user-role^="Divisional"] .am-filter-panel > .am-filter-actions { margin-top: 12px; }
+body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-actions, .me-filter-actions, .am-filter-actions) { margin-left: 0; }
+body.dashboard[data-user-role^="Divisional"] .ann-filter-panel > .yn-filter-actions { grid-column: 1 / -1; }
+
+@media (max-width: 1000px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-panel, .me-filter-panel, .ann-filter-panel).open,
+  body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-grid, .am-filter-grid, .yn-filter-fields) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.cr-filter-panel, .me-filter-panel, .ann-filter-panel).open,
+  body.dashboard[data-user-role^="Divisional"] :is(.dw-filter-grid, .am-filter-grid, .yn-filter-fields) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

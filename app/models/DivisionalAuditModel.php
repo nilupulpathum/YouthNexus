@@ -25,7 +25,7 @@ class DivisionalAuditModel extends Model {
              ORDER BY
                  CASE
                      WHEN a.audit_id IS NULL THEN 1
-                     WHEN a.audit_status IN ('Pending','InProgress','Overdue','ClarificationRequested') THEN 2
+                     WHEN a.audit_status IN ('Pending','InProgress','Overdue','ClarificationRequested','Reopened') THEN 2
                      ELSE 3
                  END,
                  c.club_name",
@@ -36,7 +36,7 @@ class DivisionalAuditModel extends Model {
     public function getSummary(int $divisionId): array {
         $pending = $this->single(
             "SELECT
-                COALESCE(SUM(latest.audit_id IS NULL OR latest.audit_status IN ('Pending','InProgress','Overdue','ClarificationRequested')), 0) AS total
+                COALESCE(SUM(latest.audit_id IS NULL OR latest.audit_status IN ('Pending','InProgress','Overdue','ClarificationRequested','Reopened')), 0) AS total
              FROM Club c
              LEFT JOIN Audit latest ON latest.audit_id = (
                  SELECT a2.audit_id FROM Audit a2
@@ -93,7 +93,7 @@ class DivisionalAuditModel extends Model {
             $duplicate = $pdo->prepare(
                 "SELECT audit_id FROM Audit
                  WHERE scope_level = 'Club' AND scope_id = ?
-                   AND audit_status IN ('Pending','InProgress','ClarificationRequested','Overdue')
+                   AND audit_status IN ('Pending','InProgress','ClarificationRequested','Overdue','Reopened')
                  LIMIT 1 FOR UPDATE"
             );
             $duplicate->execute([$club->club_id]);
@@ -194,8 +194,8 @@ class DivisionalAuditModel extends Model {
         $pdo->beginTransaction();
         try {
             $audit = $this->lockAudit($pdo, $divisionId, $auditId);
-            if ($audit->audit_status === 'Completed') {
-                throw new RuntimeException('Completed audits cannot be recalculated.');
+            if (in_array($audit->audit_status, ['Completed', 'Cancelled'], true)) {
+                throw new RuntimeException('Completed or cancelled audits cannot be recalculated.');
             }
             $totals = $this->calculateTotals($pdo, (int) $audit->ledger_id, $audit->period_start, $audit->period_end);
             $update = $pdo->prepare(
@@ -222,8 +222,8 @@ class DivisionalAuditModel extends Model {
         $pdo->beginTransaction();
         try {
             $audit = $this->lockAudit($pdo, $divisionId, $auditId);
-            if ($audit->audit_status === 'Completed') {
-                throw new RuntimeException('Completed audits cannot receive audit notes.');
+            if (in_array($audit->audit_status, ['Completed', 'Cancelled'], true)) {
+                throw new RuntimeException('Completed or cancelled audits cannot receive audit notes.');
             }
             $recipient = $pdo->prepare(
                 "SELECT user_id FROM User
@@ -266,8 +266,8 @@ class DivisionalAuditModel extends Model {
         $pdo->beginTransaction();
         try {
             $audit = $this->lockAudit($pdo, $divisionId, $auditId);
-            if ($audit->audit_status === 'Completed') {
-                throw new RuntimeException('This audit is already completed.');
+            if (in_array($audit->audit_status, ['Completed', 'Cancelled'], true)) {
+                throw new RuntimeException('This audit is already completed or cancelled.');
             }
             $totals = $this->calculateTotals($pdo, (int) $audit->ledger_id, $audit->period_start, $audit->period_end);
             $this->syncMissingReceiptFlags($pdo, $auditId, (int) $audit->ledger_id, $audit->period_start, $audit->period_end);
@@ -291,6 +291,80 @@ class DivisionalAuditModel extends Model {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
+            throw $exception;
+        }
+    }
+
+    public function changeAuditLifecycle(
+        int $divisionId,
+        int $auditId,
+        int $userId,
+        string $action,
+        string $reason
+    ): void {
+        if (!in_array($action, ['cancel', 'reopen'], true)) {
+            throw new InvalidArgumentException('Select a valid audit lifecycle action.');
+        }
+        $reason = trim($reason);
+        if (strlen($reason) < 5 || strlen($reason) > 2000) {
+            throw new InvalidArgumentException('Provide a reason between 5 and 2000 characters.');
+        }
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $audit = $this->lockAudit($pdo, $divisionId, $auditId);
+            if ($action === 'cancel' && !in_array($audit->audit_status, ['Pending', 'InProgress', 'Overdue', 'ClarificationRequested', 'Reopened'], true)) {
+                throw new RuntimeException('Only an open audit can be cancelled.');
+            }
+            if ($action === 'reopen' && !in_array($audit->audit_status, ['Completed', 'Cancelled'], true)) {
+                throw new RuntimeException('Only a completed or cancelled audit can be reopened.');
+            }
+            $status = $action === 'cancel' ? 'Cancelled' : 'Reopened';
+            $locked = $action === 'cancel' ? 1 : 0;
+            $update = $pdo->prepare(
+                'UPDATE Audit SET audit_status = ?, locked = ?, lifecycle_reason = ?, lifecycle_changed_by = ?, lifecycle_changed_at = NOW() WHERE audit_id = ?'
+            );
+            $update->execute([$status, $locked, $reason, $userId, $auditId]);
+            $log = $pdo->prepare('INSERT INTO AuditLog (actor_user_id, action_type, target_entity, target_id, details) VALUES (?, ?, ?, ?, ?)');
+            $log->execute([$userId, 'AUDIT_' . strtoupper($status), 'Audit', $auditId, substr($reason, 0, 500)]);
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    public function changeFindingStatus(
+        int $divisionId,
+        int $auditId,
+        int $flagId,
+        int $userId,
+        string $action,
+        string $reason
+    ): void {
+        if (!in_array($action, ['resolve', 'escalate'], true)) {
+            throw new InvalidArgumentException('Select a valid finding action.');
+        }
+        $reason = trim($reason);
+        if (strlen($reason) < 5 || strlen($reason) > 1000) {
+            throw new InvalidArgumentException('Provide finding notes between 5 and 1000 characters.');
+        }
+        $pdo = Database::getInstance()->getConnection();
+        $pdo->beginTransaction();
+        try {
+            $this->lockAudit($pdo, $divisionId, $auditId);
+            $status = $action === 'resolve' ? 'Resolved' : 'Unresolved';
+            $update = $pdo->prepare(
+                "UPDATE RedFlag SET status = ?, description = CONCAT(description, '\nLifecycle note: ', ?)
+                 WHERE red_flag_id = ? AND audit_id = ? AND status <> ?"
+            );
+            $update->execute([$status, $reason, $flagId, $auditId, $status]);
+            if ($update->rowCount() !== 1) throw new RuntimeException('The audit finding is no longer available for this action.');
+            $log = $pdo->prepare('INSERT INTO AuditLog (actor_user_id, action_type, target_entity, target_id, details) VALUES (?, ?, ?, ?, ?)');
+            $log->execute([$userId, 'AUDIT_FINDING_' . strtoupper($action), 'RedFlag', $flagId, substr($reason, 0, 500)]);
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
             throw $exception;
         }
     }

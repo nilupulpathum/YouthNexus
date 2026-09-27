@@ -7,9 +7,18 @@ class AnnouncementAttachmentModel extends Model {
     }
 
     /** Keep deletion scoped to the announcement already locked by the controller. */
-    public function deleteFromAnnouncement($attachmentId, $announcementId) {
-        $this->query('DELETE FROM AnnouncementAttachment WHERE attachment_id = ? AND announcement_id = ?',
+    public function archiveFromAnnouncement($attachmentId, $announcementId, $userId) {
+        $attachment = $this->findById((int) $attachmentId);
+        if (!$attachment || (int) $attachment->announcement_id !== (int) $announcementId) return false;
+        $this->query(
+            'INSERT INTO AnnouncementAttachmentHistory
+                (announcement_id, original_attachment_id, file_name, file_path, file_size, removed_by)
+             VALUES (?, ?, ?, ?, ?, ?)',
+            [(int) $announcementId, (int) $attachmentId, $attachment->file_name, $attachment->file_path, (int) $attachment->file_size, (int) $userId]
+        );
+        $stmt = $this->query('DELETE FROM AnnouncementAttachment WHERE attachment_id = ? AND announcement_id = ?',
             [(int)$attachmentId, (int)$announcementId]);
+        return $stmt->rowCount() === 1;
     }
 
     /**

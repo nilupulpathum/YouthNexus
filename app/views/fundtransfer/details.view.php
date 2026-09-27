@@ -10,6 +10,7 @@ $currentRoute            = 'fundtransfer';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 $hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_name ? ' - ' . $transfer->target_hub_name : ''));
@@ -25,7 +26,7 @@ $isCompleted = ($transfer->status === 'Completed');
         </a>
     </div>
 
-    <div class="ft-popup ft-popup-wide" style="margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+    <div class="ft-popup ft-popup-wide ft-popup-centered">
         <div class="ft-top-strip"></div>
 
         <div class="ft-popup-header ft-details-header">

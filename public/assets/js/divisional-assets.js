@@ -8,19 +8,33 @@
   var quantity = document.querySelector('[data-asset-quantity]');
   var sort = document.querySelector('[data-asset-sort]');
 
+  var panelControls = [category, status, quantity, sort];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function applyFilters() {
     var query = search ? search.value.trim().toLowerCase() : '';
-    var categoryValue = category ? category.value : '';
-    var statusValue = status ? status.value : '';
-    var minimum = quantity && quantity.value !== '' ? Number(quantity.value) : null;
+    var categoryValue = selected(category);
+    var statusValue = selected(status);
+    var minimum = selected(quantity) !== '' ? Number(selected(quantity)) : null;
     rows.forEach(function (row) {
       var visible = (!query || (row.dataset.search || '').indexOf(query) !== -1)
         && (!categoryValue || row.dataset.category === categoryValue)
         && (!statusValue || row.dataset.status === statusValue)
         && (minimum === null || Number(row.dataset.quantity || 0) >= minimum);
       row.hidden = !visible;
+      row.dataset.filterMatch = visible ? 'true' : 'false';
     });
     ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(updateSection);
+    if (window.ynPager) window.ynPager.update();
   }
 
   function updateSection(section) {
@@ -42,7 +56,7 @@
   }
 
   function sortRows() {
-    var mode = sort ? sort.value : 'name';
+    var mode = selected(sort) || 'name';
     ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(function (section) {
       var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
       if (!sectionRows.length) return;
@@ -58,13 +72,14 @@
 
   if (search) search.addEventListener('input', applyFilters);
   var apply = document.querySelector('[data-asset-apply]');
-  if (apply) apply.addEventListener('click', function () { sortRows(); applyFilters(); });
+  if (apply) apply.addEventListener('click', function () { captureFilters(); sortRows(); applyFilters(); });
   var reset = document.querySelector('[data-asset-reset]');
   if (reset) reset.addEventListener('click', function () {
     if (category) category.value = '';
     if (status) status.value = '';
     if (quantity) quantity.value = '';
     if (sort) sort.value = 'name';
+    captureFilters();
     sortRows();
     applyFilters();
   });
@@ -88,10 +103,43 @@
     });
   });
 
+  document.querySelectorAll('[data-retire-asset]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.querySelector('[data-retire-id]').value = button.dataset.id;
+      document.querySelector('[data-retire-item]').textContent = button.dataset.item;
+      document.querySelector('[data-retire-available]').textContent = button.dataset.available + ' units available';
+      var input = document.querySelector('[data-retire-quantity]');
+      input.value = '';
+      input.max = button.dataset.available;
+    });
+  });
+
+  var withdrawForm = document.querySelector('[data-withdraw-asset-form]');
+  document.querySelectorAll('[data-withdraw-asset-request]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      withdrawForm.action = withdrawForm.dataset.actionBase + button.dataset.id;
+      document.querySelector('[data-withdraw-asset-ref]').textContent = button.dataset.ref;
+    });
+  });
+
   var reviewForm = document.querySelector('[data-review-form]');
+  var remarks = document.querySelector('[data-remarks]');
+  var required = document.querySelector('[data-remarks-required]');
+  var activeDecision = 'approve';
+  function updateDecision() {
+    var rejecting = activeDecision === 'reject';
+    if (remarks) {
+      remarks.required = rejecting;
+      remarks.minLength = rejecting ? 5 : 0;
+    }
+    if (required) required.hidden = !rejecting;
+  }
   document.querySelectorAll('[data-review-request]').forEach(function (button) {
     button.addEventListener('click', function () {
       reviewForm.action = reviewForm.dataset.decisionBase + button.dataset.requestId;
+      activeDecision = 'approve';
+      if (remarks) remarks.value = '';
+      updateDecision();
       document.querySelector('[data-review-ref]').textContent = button.dataset.requestRef;
       document.querySelector('[data-review-club]').textContent = button.dataset.club;
       document.querySelector('[data-review-item]').textContent = button.dataset.item;
@@ -103,14 +151,24 @@
     });
   });
 
-  var decision = document.querySelector('[data-decision]');
-  var remarks = document.querySelector('[data-remarks]');
-  var required = document.querySelector('[data-remarks-required]');
-  function updateDecision() {
-    var rejecting = decision && decision.value === 'reject';
-    if (remarks) remarks.required = rejecting;
-    if (required) required.hidden = !rejecting;
-  }
-  if (decision) decision.addEventListener('change', updateDecision);
+  document.querySelectorAll('[data-asset-submit-decision]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      activeDecision = button.value;
+      updateDecision();
+    });
+  });
+  if (reviewForm) reviewForm.addEventListener('submit', function (event) {
+    activeDecision = event.submitter ? event.submitter.value : activeDecision;
+    updateDecision();
+    if (!reviewForm.checkValidity()) {
+      event.preventDefault();
+      reviewForm.reportValidity();
+      return;
+    }
+    var message = activeDecision === 'reject'
+      ? 'Reject this club asset request?'
+      : 'Approve this request and transfer the assets to the club?';
+    if (!window.confirm(message)) event.preventDefault();
+  });
   updateDecision();
 })();

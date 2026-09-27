@@ -575,235 +575,7 @@ function mu_status_badge(string $status): string {
 .mu-empty h3 { font-size: 15px; color: #374151; margin-bottom: 6px; }
 .mu-empty p  { font-size: 13px; }
 
-/* ================================================================
-   MODAL OVERLAY
-   ================================================================ */
-.mu-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    backdrop-filter: blur(2px);
-}
-.mu-overlay.show { display: flex; }
-
-.mu-modal {
-    background: #fff;
-    width: 860px;
-    max-width: 100%;
-    max-height: 92vh;
-    overflow-y: auto;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
-    animation: muSlideIn .2s ease;
-}
-@keyframes muSlideIn {
-    from { opacity: 0; transform: translateY(-18px) scale(.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.mu-modal-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 26px 32px;
-    border-bottom: 1px solid #f0f0f0;
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 1;
-}
-.mu-modal-head h2 { font-size: 20px; color: #111827; font-weight: 700; }
-.mu-modal-head p  { font-size: 13px; color: var(--mu-gray); margin-top: 3px; }
-.mu-modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6b7280;
-    transition: background .15s;
-    flex-shrink: 0;
-}
-.mu-modal-close:hover { background: #f3f4f6; color: #111827; }
-
-.mu-modal-body { padding: 28px 32px; }
-
-.mu-section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 18px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-/* form grid */
-.mu-form-row { display: grid; gap: 18px; margin-bottom: 18px; }
-.mu-form-row.cols-2 { grid-template-columns: 1fr 1fr; }
-.mu-form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-@media (max-width: 640px) {
-    .mu-form-row.cols-2,
-    .mu-form-row.cols-3 { grid-template-columns: 1fr; }
-}
-
-.mu-field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 7px;
-}
-.mu-field label .req { color: var(--mu-red); }
-.mu-input-wrap { position: relative; }
-.mu-input-wrap .mu-field-icon {
-    position: absolute;
-    left: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-    display: flex;
-}
-.mu-input-wrap input,
-.mu-input-wrap select {
-    width: 100%;
-    padding: 12px 14px 12px 40px;
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
-    border-radius: 8px;
-    font-size: 13.5px;
-    color: #374151;
-    outline: none;
-    transition: border-color .15s, background .15s;
-    appearance: none;
-}
-.mu-input-wrap input:focus,
-.mu-input-wrap select:focus {
-    border-color: var(--mu-blue-lt);
-    background: #fff;
-}
-.mu-input-wrap select { cursor: pointer; }
-.mu-select-arrow {
-    position: absolute;
-    right: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: #9ca3af;
-}
-.mu-field-helper { font-size: 11.5px; color: #9ca3af; margin-top: 6px; }
-.mu-field-error  { font-size: 11.5px; color: var(--mu-red); margin-top: 5px; display: none; }
-.mu-field-error.show { display: block; }
-
-/* info box */
-.mu-info-box {
-    display: flex;
-    align-items: flex-start;
-    gap: 11px;
-    background: #eef2ff;
-    border: 1px solid #e0e7ff;
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-size: 13px;
-    color: #374151;
-    margin-top: 6px;
-    line-height: 1.5;
-}
-.mu-info-box svg { flex-shrink: 0; color: var(--mu-blue-lt); margin-top: 1px; }
-
-/* success box (shown after create with temp password) */
-.mu-success-box {
-    display: none;
-    background: #ecfdf5;
-    border: 1px solid #6ee7b7;
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 20px;
-}
-.mu-success-box.show { display: block; }
-.mu-success-box h4 { font-size: 14px; color: #065f46; margin-bottom: 8px; }
-.mu-temp-pass {
-    font-family: monospace;
-    font-size: 16px;
-    background: #fff;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid #a7f3d0;
-    display: inline-block;
-    color: #047857;
-    letter-spacing: .5px;
-    word-break: break-all;
-}
-
-/* modal footer */
-.mu-modal-foot {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 18px 32px;
-    border-top: 1px solid #f0f0f0;
-    position: sticky;
-    bottom: 0;
-    background: #fff;
-}
-.mu-btn-cancel {
-    background: #fff;
-    color: #374151;
-    border: 1px solid #d1d5db;
-}
-.mu-btn-submit {
-    background: var(--mu-blue);
-    color: #fff !important;
-    box-shadow: 0 2px 6px rgba(30,64,175,.2);
-}
-.mu-btn-submit:hover { background: #1d3c9f; color: #fff !important; }
-.mu-btn-submit:disabled { opacity: .6; cursor: not-allowed; }
-
-/* spinner inside button */
-.mu-spinner {
-    display: none;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255,255,255,.4);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: mu-spin .6s linear infinite;
-}
-@keyframes mu-spin { to { transform: rotate(360deg); } }
-
-/* ---- toast notification ---- */
-.mu-toast {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    padding: 14px 20px;
-    border-radius: 10px;
-    font-size: 13.5px;
-    font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0,0,0,.14);
-    z-index: 9999;
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity .25s, transform .25s;
-    max-width: 340px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.mu-toast.show { opacity: 1; transform: translateY(0); }
-.mu-toast-success { background: #065f46; color: #fff; }
-.mu-toast-error   { background: #991b1b; color: #fff; }
-.mu-toast-warning { background: #b45309; color: #fff; }
-</style>
+/* =========================================================
 
 <!-- ============================================================
      ACTION ROW
@@ -814,7 +586,7 @@ function mu_status_badge(string $status): string {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
         </button>
-        <button class="mu-btn mu-btn-primary db-primary-action" id="mu-add-user-btn" type="button">
+        <button class="yn-btn yn-btn--primary mu-btn mu-btn-primary db-primary-action" id="mu-add-user-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
             Add User
         </button>
@@ -963,13 +735,13 @@ function mu_status_badge(string $status): string {
         Showing <b><?= count($users) ?></b> of <b><?= $total ?></b> users
         <?php if ($filters['search'] || $filters['level'] || $filters['position'] || $filters['status']): ?>
             &nbsp;—&nbsp;
-            <a href="<?= ROOT ?>/manageuser" style="color:var(--mu-blue-lt);font-size:12.5px;">Clear filters</a>
+            <a href="<?= ROOT ?>/manageuser" class="mu-filter-clear">Clear filters</a>
         <?php endif; ?>
     </div>
 
     <!-- table -->
     <div class="mu-table-container">
-    <table class="mu-table">
+    <table class="yn-table mu-table">
         <thead>
             <tr>
                 <th>USER</th>
@@ -1088,7 +860,7 @@ function mu_status_badge(string $status): string {
     <!-- panel footer -->
     <div class="mu-panel-footer">
         <div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;opacity:.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mu-inline-icon-muted"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             Soft delete policy enforced: Deactivated accounts retain complete financial ledger audit history. Only accounts with no financial, audit, or operational history can be permanently deleted.
         </div>
 
@@ -1149,7 +921,7 @@ function mu_status_badge(string $status): string {
     <!-- success box (shown after creation) -->
     <div class="mu-success-box" id="mu-add-success">
         <h4>✅ User Created Successfully!</h4>
-        <p style="font-size:13px;color:#065f46;margin-bottom:8px;">
+        <p class="mu-form-success-note">
             Temporary credentials for the new account:
         </p>
         <div class="mu-temp-pass" id="mu-temp-pass-display">—</div>
@@ -1215,7 +987,7 @@ function mu_status_badge(string $status): string {
             </div>
 
             <!-- Section 2: Role & Jurisdiction -->
-            <div class="mu-section-title" style="margin-top:24px;">Role &amp; Jurisdiction</div>
+            <div class="mu-section-title yn-mt-6">Role &amp; Jurisdiction</div>
 
             <div class="mu-form-row cols-3">
                 <div class="mu-field">
@@ -1269,8 +1041,8 @@ function mu_status_badge(string $status): string {
         </div><!-- /modal-body -->
 
         <div class="mu-modal-foot">
-            <button type="button" class="mu-btn mu-btn-cancel" data-close="mu-add-modal">Cancel</button>
-            <button type="submit" class="mu-btn mu-btn-submit" id="mu-add-submit">
+            <button type="button" class="yn-btn yn-btn--secondary mu-btn mu-btn-cancel" data-close="mu-add-modal">Cancel</button>
+            <button type="submit" class="yn-btn yn-btn--primary mu-btn mu-btn-submit" id="mu-add-submit">
                 <div class="mu-spinner" id="mu-add-spinner"></div>
                 <svg id="mu-add-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><line x1="12" y1="15" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
                 Create User
@@ -1353,7 +1125,7 @@ function mu_status_badge(string $status): string {
                 </div>
             </div>
 
-            <div class="mu-section-title" style="margin-top:24px;">Role &amp; Jurisdiction</div>
+            <div class="mu-section-title yn-mt-6">Role &amp; Jurisdiction</div>
 
             <div class="mu-form-row cols-3">
                 <div class="mu-field">
@@ -1398,8 +1170,8 @@ function mu_status_badge(string $status): string {
         </div><!-- /modal-body -->
 
         <div class="mu-modal-foot">
-            <button type="button" class="mu-btn mu-btn-cancel" data-close="mu-edit-modal">Cancel</button>
-            <button type="submit" class="mu-btn mu-btn-submit" id="mu-edit-submit">
+            <button type="button" class="yn-btn yn-btn--secondary mu-btn mu-btn-cancel" data-close="mu-edit-modal">Cancel</button>
+            <button type="submit" class="yn-btn yn-btn--primary mu-btn mu-btn-submit" id="mu-edit-submit">
                 <div class="mu-spinner" id="mu-edit-spinner"></div>
                 <svg id="mu-edit-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Save Changes

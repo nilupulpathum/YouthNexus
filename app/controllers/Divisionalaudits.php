@@ -122,7 +122,7 @@ class Divisionalaudits extends Controller {
             );
             $this->setFlash('success', 'The audit totals and receipt checks were refreshed.');
         } catch (Throwable $exception) {
-            $message = $exception->getMessage() === 'Completed audits cannot be recalculated.'
+            $message = $exception->getMessage() === 'Completed or cancelled audits cannot be recalculated.'
                 ? $exception->getMessage()
                 : 'The audit could not be refreshed.';
             $this->setFlash('error', $message);
@@ -154,7 +154,7 @@ class Divisionalaudits extends Controller {
             $this->setFlash('success', 'The audit note was sent to the club treasurer.');
         } catch (Throwable $exception) {
             $allowed = [
-                'Completed audits cannot receive audit notes.',
+                'Completed or cancelled audits cannot receive audit notes.',
                 'The club does not have an active treasurer.',
             ];
             $this->setFlash('error', in_array($exception->getMessage(), $allowed, true)
@@ -190,12 +190,49 @@ class Divisionalaudits extends Controller {
             }
         } catch (Throwable $exception) {
             $allowed = [
-                'This audit is already completed.',
+                'This audit is already completed or cancelled.',
                 'Resolve the audit difference and open flags before completion.',
             ];
             $this->setFlash('error', in_array($exception->getMessage(), $allowed, true)
                 ? $exception->getMessage()
                 : 'The audit could not be completed.');
+        }
+        $this->redirect('divisionalaudits/review/' . (int) $auditId);
+    }
+
+    public function lifecycle($auditId = null): void {
+        $this->requireTreasurer();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf() || (int) $auditId < 1) {
+            $this->setFlash('error', 'The request could not be verified. Please try again.');
+            $this->redirect('divisionalaudits');
+        }
+        try {
+            $this->model('DivisionalAuditModel')->changeAuditLifecycle(
+                (int) $_SESSION['division_id'], (int) $auditId, (int) $_SESSION['user_id'],
+                (string) ($_POST['action'] ?? ''), trim((string) ($_POST['reason'] ?? ''))
+            );
+            $this->setFlash('success', ($_POST['action'] ?? '') === 'cancel' ? 'The audit was cancelled.' : 'The audit was reopened.');
+        } catch (Throwable $exception) {
+            $allowed = ['Select a valid audit lifecycle action.', 'Provide a reason between 5 and 2000 characters.', 'Only an open audit can be cancelled.', 'Only a completed or cancelled audit can be reopened.'];
+            $this->setFlash('error', in_array($exception->getMessage(), $allowed, true) ? $exception->getMessage() : 'The audit lifecycle could not be updated.');
+        }
+        $this->redirect('divisionalaudits/review/' . (int) $auditId);
+    }
+
+    public function finding($auditId = null, $flagId = null): void {
+        $this->requireTreasurer();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf() || (int) $auditId < 1 || (int) $flagId < 1) {
+            $this->setFlash('error', 'The request could not be verified. Please try again.');
+            $this->redirect('divisionalaudits');
+        }
+        try {
+            $this->model('DivisionalAuditModel')->changeFindingStatus(
+                (int) $_SESSION['division_id'], (int) $auditId, (int) $flagId, (int) $_SESSION['user_id'],
+                (string) ($_POST['action'] ?? ''), trim((string) ($_POST['reason'] ?? ''))
+            );
+            $this->setFlash('success', ($_POST['action'] ?? '') === 'resolve' ? 'The audit finding was resolved.' : 'The audit finding was escalated.');
+        } catch (Throwable $exception) {
+            $this->setFlash('error', $exception->getMessage());
         }
         $this->redirect('divisionalaudits/review/' . (int) $auditId);
     }

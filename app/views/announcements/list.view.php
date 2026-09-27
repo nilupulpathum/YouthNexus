@@ -23,6 +23,7 @@ $pageStyles      = [
 ];
 $pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';
 
@@ -53,6 +54,10 @@ $roleLabel = function ($role) {
         )
     );
 };
+
+$statusLabel = static function ($status) {
+    return $status === 'Retracted' ? 'Withdrawn from Publication' : (string) $status;
+};
 ?>
 
 
@@ -77,7 +82,7 @@ $roleLabel = function ($role) {
 <!-- Summary cards                                             -->
 <!-- ========================================================= -->
 
-<div class="ann-stats">
+<div class="ann-stats<?= $canManageAnnouncements ? '' : ' ann-stats--two' ?>">
 
     <?php
     $statCards = [
@@ -107,7 +112,7 @@ $roleLabel = function ($role) {
 
         <button
             type="button"
-            class="ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
+            class="yn-stat-card ann-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
             data-ann-status="<?= htmlspecialchars(
                 $statusValue,
                 ENT_QUOTES,
@@ -184,12 +189,12 @@ $roleLabel = function ($role) {
     <div class="ann-filter-actions">
         <button
             type="button"
-            class="ann-btn ann-btn-secondary"
+            class="ann-btn ann-btn-secondary yn-filter-toggle"
             id="annFilterBtn"
             aria-expanded="false"
             aria-controls="annFilterPanel"
         >
-            <?= $annIcon('filter') ?>
+            <?= yn_icon('filter') ?>
             Filters
         </button>
 
@@ -202,6 +207,8 @@ $roleLabel = function ($role) {
     class="ann-filter-panel"
     id="annFilterPanel"
 >
+
+    <h2 class="yn-filter-heading">Advanced Filters for Announcements</h2>
 
     <div class="ann-filter-field">
 
@@ -224,6 +231,8 @@ $roleLabel = function ($role) {
                 <option value="Draft">
                     Draft
                 </option>
+                <option value="Retracted">Withdrawn from Publication</option>
+                <option value="Archived">Archived</option>
 
             <?php endif; ?>
 
@@ -338,13 +347,10 @@ $roleLabel = function ($role) {
     </div>
 
 
-    <button
-        type="button"
-        class="ann-btn ann-btn-secondary"
-        id="annClearFilterBtn"
-    >
-        Clear Filter
-    </button>
+    <div class="yn-filter-actions">
+        <button type="button" class="ann-btn ann-btn-secondary yn-filter-clear" id="annClearFilterBtn">Clear filters</button>
+        <button type="button" class="ann-btn ann-btn-primary yn-filter-apply" id="annApplyFilterBtn">Apply filters</button>
+    </div>
 
 </div>
 
@@ -506,7 +512,7 @@ $roleLabel = function ($role) {
                                 : 'ann-badge-published' ?>"
                         >
                             <?= htmlspecialchars(
-                                $a->status,
+                                $statusLabel($a->status),
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -650,9 +656,7 @@ $roleLabel = function ($role) {
                     </span>
 
 
-                    <?php if (
-                        !empty($a->can_manage)
-                    ): ?>
+                    <?php if (!empty($a->can_manage) && in_array($a->status, ['Draft', 'Published'], true)): ?>
 
                         <button
                             type="button"

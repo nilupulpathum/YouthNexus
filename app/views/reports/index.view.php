@@ -11,6 +11,7 @@ $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // ── Category → icon mapping ────────────────────────────────────────
@@ -139,9 +140,9 @@ $formatColors = [
     <!-- ── Report cards ──────────────────────────────────────── -->
     <?php if (count($reports) === 0): ?>
         <div class="rpt-empty-box">
-            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" class="rpt-empty-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <p>No reports found for the selected filters.</p>
-            <p style="font-size:13px;color:#9ca3af">Try another category, report type, or keyword.</p>
+            <p class="rpt-empty-help">Try another category, report type, or keyword.</p>
         </div>
     <?php else: ?>
         <div class="rpt-cards" id="reports-grid">
@@ -182,7 +183,7 @@ $formatColors = [
 
                     <div class="rpt-card__foot">
                         <span class="rpt-card__date">Generated <?= $date ?></span>
-                        <a class="rpt-view-btn"
+                        <a class="yn-btn yn-btn--sm yn-btn--ghost rpt-view-btn"
                            href="<?= ROOT ?>/reports/preview/<?= (int)($r->report_id ?? 0) ?>"
                            id="view-report-<?= (int)($r->report_id ?? 0) ?>">
                             View
