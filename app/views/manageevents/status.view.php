@@ -30,7 +30,7 @@ $isClub       = !empty($event->organizer_club_id);
 
                 <!-- Back button -->
                 <a href="<?= ROOT ?>/manageevents" class="me-btn-secondary me-back-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    <?= yn_icon('arrow-left') ?>
                     Back to Manage Events
                 </a>
 
@@ -94,7 +94,7 @@ $isClub       = !empty($event->organizer_club_id);
                                 <span class="me-field-value">
                                     <?php if ($event->target_scope === 'AllInScope'): ?>
                                         <span class="me-target-all">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            <?= yn_icon('users') ?>
                                             <?= $isNational ? 'All Clubs Nationwide (All Zones & Divisions)' : 'All Clubs in Division' ?>
                                         </span>
                                     <?php elseif (!empty($targets)): ?>
@@ -296,7 +296,7 @@ $isClub       = !empty($event->organizer_club_id);
         <div class="me-modal-header">
             <h3><?= $isNational ? 'Edit National Event' : 'Edit Event' ?></h3>
             <button type="button" class="me-modal-close" aria-label="Close modal">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <?= yn_icon('close') ?>
             </button>
         </div>
 
@@ -335,14 +335,14 @@ $isClub       = !empty($event->organizer_club_id);
                             <label class="me-toggle-option">
                                 <input type="radio" name="target_scope" value="AllInScope" <?= ($event->target_scope === 'AllInScope') ? 'checked' : '' ?>>
                                 <span class="me-toggle-btn">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    <?= yn_icon('users') ?>
                                     <?= $isNational ? 'All Clubs Nationwide' : 'All Clubs' ?>
                                 </span>
                             </label>
                             <label class="me-toggle-option">
                                 <input type="radio" name="target_scope" value="SelectedClubs" <?= ($event->target_scope === 'SelectedClubs') ? 'checked' : '' ?>>
                                 <span class="me-toggle-btn">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                    <?= yn_icon('info') ?>
                                     Specific Clubs
                                 </span>
                             </label>
@@ -402,7 +402,7 @@ $isClub       = !empty($event->organizer_club_id);
                     <!-- Inline Datetime Alert Box -->
                     <div class="me-form-group me-form-full">
                         <div class="me-validation-alert" id="editDateAlert">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <?= yn_icon('info') ?>
                             <span class="me-validation-msg">Event start must be after now, and end must be after start</span>
                         </div>
                     </div>
