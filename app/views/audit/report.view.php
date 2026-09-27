@@ -10,7 +10,7 @@ $pageTitle               = $pageTitle ?? 'Annual Financial Audit Report';
 $pageDescription         = $pageDescription ?? 'Math verification, red flags and sign-off for the selected entity & financial year.';
 $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=20260927'];
+$pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -407,6 +407,6 @@ $steps = [
         csrfToken: <?= json_encode($csrf_token) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=20260927" defer></script>
+<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=20260929" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

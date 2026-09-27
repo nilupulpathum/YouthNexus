@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'National Reports Management';
 $pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports across all youth clubs, divisions, and zones';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260927'];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
