@@ -102,12 +102,18 @@ class Manageuser extends Controller {
             $errors['last_name'] = 'Last name is required.';
         }
 
-        // NIC: optional but unique if provided
+        // NIC: optional, format + plausibility validated, unique if provided
         if (!empty($data['NIC'])) {
             if (!preg_match('/^(\d{12}|\d{9}[VvXx])$/', $data['NIC'])) {
                 $errors['NIC'] = 'NIC must be 12 digits or 9 digits followed by V/X.';
-            } elseif ($model->nicExists($data['NIC'], $excludeId)) {
-                $errors['NIC'] = 'This NIC is already registered.';
+            } else {
+                $nicIssue = $this->validateSriLankanNic($data['NIC']);
+
+                if ($nicIssue !== null) {
+                    $errors['NIC'] = $nicIssue;
+                } elseif ($model->nicExists($data['NIC'], $excludeId)) {
+                    $errors['NIC'] = 'This NIC is already registered.';
+                }
             }
         }
 
@@ -135,6 +141,45 @@ class Manageuser extends Controller {
         }
 
         return $errors;
+    }
+
+    /**
+     * Plausibility validation for Sri Lankan NIC numbers.
+     *
+     * New format (12 digits):  YYYY + day-of-year (3) + serial (4) + check.
+     * Old format (9 digits + V/X): YY + day-of-year (3) + serial (3) + letter.
+     *
+     * The birth year must be a real, living-person year, and the day-of-year
+     * window follows the official rule: 001-366 (male) / 501-866 (female);
+     * 367-500 and 867-999 are never issued.
+     *
+     * @return string|null  Error message, or null when plausible.
+     */
+    private function validateSriLankanNic(string $nic): ?string {
+        $currentYear = (int) date('Y');
+
+        if (preg_match('/^\d{12}$/', $nic)) {
+            $birthYear = (int) substr($nic, 0, 4);
+            $dayOfYear = (int) substr($nic, 4, 3);
+        } else {
+            $yy        = (int) substr($nic, 0, 2);
+            $birthYear = $yy <= (int) date('y') ? 2000 + $yy : 1900 + $yy;
+            $dayOfYear = (int) substr($nic, 2, 3);
+        }
+
+        if ($birthYear < 1900 || $birthYear > $currentYear) {
+            return "The birth year in this NIC ({$birthYear}) is outside the valid "
+                . 'Sri Lankan NIC range (1900-' . $currentYear . ').';
+        }
+
+        if (!($dayOfYear >= 1 && $dayOfYear <= 366)
+            && !($dayOfYear >= 501 && $dayOfYear <= 866)
+        ) {
+            return 'The day-of-year digits in this NIC are outside the valid '
+                . 'Sri Lankan NIC range (001-366 or 501-866).';
+        }
+
+        return null;
     }
 
     // ================================================================
@@ -507,14 +552,28 @@ class Manageuser extends Controller {
         }
 
         // Preserve the soft-delete policy: accounts with any financial,
-        // audit, or operational history must stay for traceability.
+        // audit, or operational history keep their records. Such accounts
+        // are marked Suspended instead — they vanish from the management
+        // list (only Active/Disabled are listed) while history stays intact.
         $blockers = $model->getDeletionBlockers($userId);
         if (!empty($blockers)) {
+            $model->setStatus($userId, 'Suspended');
+
+            $auditModel = $this->model('AuditLogModel');
+            $auditModel->log(
+                $_SESSION['user_id'],
+                'USER_SUSPENDED',
+                'User',
+                $userId,
+                "NYSC Admin suspended user ID {$userId}: {$user->first_name} {$user->last_name} (permanent delete blocked: {$blockers[0]})"
+            );
+
             $this->json([
-                'success' => false,
-                'message' => 'This account cannot be permanently deleted because it has '
-                    . $blockers[0] . '. Deactivate it instead to retain the audit history.',
-            ], 409);
+                'success'   => false,
+                'suspended' => true,
+                'message'   => "This account cannot be permanently deleted because it has {$blockers[0]}. "
+                    . 'It has been marked as Suspended instead and will no longer appear in the user list.',
+            ]);
         }
 
         try {
