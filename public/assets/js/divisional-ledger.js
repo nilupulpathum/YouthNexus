@@ -19,14 +19,26 @@
     return element ? String(element.value || '').toLowerCase().trim() : '';
   }
 
+  var panelControls = [quickType, status, reconciliation, receipt, dateFrom, dateTo];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function applyFilters() {
     var query = valueOf(search);
-    var typeValue = valueOf(quickType);
-    var statusValue = valueOf(status);
-    var reconciliationValue = valueOf(reconciliation);
-    var receiptValue = valueOf(receipt);
-    var fromValue = dateFrom ? dateFrom.value : '';
-    var toValue = dateTo ? dateTo.value : '';
+    var typeValue = selected(quickType).toLowerCase().trim();
+    var statusValue = selected(status).toLowerCase().trim();
+    var reconciliationValue = selected(reconciliation).toLowerCase().trim();
+    var receiptValue = selected(receipt).toLowerCase().trim();
+    var fromValue = selected(dateFrom);
+    var toValue = selected(dateTo);
     var visible = 0;
 
     rows.forEach(function (row) {
@@ -38,21 +50,22 @@
         && (!fromValue || row.dataset.date >= fromValue)
         && (!toValue || row.dataset.date <= toValue);
       row.hidden = !matches;
+      row.dataset.filterMatch = matches ? 'true' : 'false';
       if (matches) visible += 1;
     });
 
     if (count) count.textContent = visible + (visible === 1 ? ' entry' : ' entries');
     if (empty) empty.classList.toggle('is-visible', visible === 0);
+    if (window.ynPager) window.ynPager.update();
   }
 
-  [search, quickType].forEach(function (control) {
-    if (control) control.addEventListener(control.tagName === 'INPUT' ? 'input' : 'change', applyFilters);
-  });
-  document.querySelector('[data-filter-apply]')?.addEventListener('click', applyFilters);
+  if (search) search.addEventListener('input', applyFilters);
+  document.querySelector('[data-filter-apply]')?.addEventListener('click', function () { captureFilters(); applyFilters(); });
   document.querySelector('[data-filter-reset]')?.addEventListener('click', function () {
     [search, quickType, status, reconciliation, receipt, dateFrom, dateTo].forEach(function (control) {
       if (control) control.value = '';
     });
+    captureFilters();
     applyFilters();
   });
 

@@ -11,6 +11,7 @@ $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -20,14 +21,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php if (!empty($flashSuccess)): ?>
         <div class="audit-flash-alert audit-flash-success" role="alert">
             <div>&#10003;&nbsp; <?= htmlspecialchars($flashSuccess, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($flashError)): ?>
         <div class="audit-flash-alert audit-flash-error" role="alert">
             <div>&#9888;&nbsp; <?= htmlspecialchars($flashError, ENT_QUOTES, 'UTF-8') ?></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="audit-flash-close">&times;</button>
         </div>
     <?php endif; ?>
 
@@ -85,7 +86,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <?php if (empty($audits)): ?>
         <div class="audit-empty-state">
-            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" class="audit-empty-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <h3>No audits compiled yet</h3>
             <p>Select an entity and financial year above, then click Compile Audit to produce the first report.</p>
         </div>

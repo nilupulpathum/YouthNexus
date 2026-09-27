@@ -21,7 +21,14 @@ class EventApproval extends Controller {
         $eventModel = $this->model('EventModel');
         $divisionId = (int)($_SESSION['division_id'] ?? 0);
 
-        $pendingEvents = $eventModel->findPendingClubEventsByDivision($divisionId);
+        $cancellationEvents = array_values(array_filter(
+            $eventModel->findClubEventsByDivisionAndStatus($divisionId, 'CancellationPending'),
+            static fn($event) => (int) ($event->organizer_division_id ?? 0) === $divisionId
+        ));
+        $pendingEvents = array_merge(
+            $eventModel->findPendingClubEventsByDivision($divisionId),
+            $cancellationEvents
+        );
         
         $counts = [
             'Pending'  => count($pendingEvents),
@@ -124,7 +131,9 @@ class EventApproval extends Controller {
             $this->jsonError('Event not found or out of scope.');
         }
 
-        $eventModel->updateEventStatus($event->event_id, 'Approved', $_SESSION['user_id'], null);
+        if (!$eventModel->decidePendingEvent($event->event_id, $divisionId, (int) $_SESSION['user_id'], 'Approved', null)) {
+            $this->jsonError('The event status changed before approval was saved.');
+        }
         $auditModel->log($_SESSION['user_id'], 'APPROVE_EVENT', 'Event', $event->event_id, "Approved event '{$event->title}'");
 
         header('Content-Type: application/json');
@@ -173,9 +182,49 @@ class EventApproval extends Controller {
             $this->jsonError('Event not found or out of scope.');
         }
 
-        $eventModel->updateEventStatus($event->event_id, 'Rejected', $_SESSION['user_id'], $remarks);
+        if (!$eventModel->decidePendingEvent($event->event_id, $divisionId, (int) $_SESSION['user_id'], 'Rejected', $remarks)) {
+            $this->jsonError('The event status changed before rejection was saved.');
+        }
         $auditModel->log($_SESSION['user_id'], 'REJECT_EVENT', 'Event', $event->event_id, $remarks);
 
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        exit();
+    }
+
+    public function cancellation($id = null) {
+        $this->requireCoordinator();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$id
+            || !isset($_POST['csrf_token'])
+            || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $_POST['csrf_token'])) {
+            $this->jsonError('Invalid request. Please refresh the page.');
+        }
+        $decision = (string) ($_POST['decision'] ?? '');
+        $remarks = trim((string) ($_POST['remarks'] ?? ''));
+        if (!in_array($decision, ['approve', 'reject'], true) || strlen($remarks) < 5 || strlen($remarks) > 1000) {
+            $this->jsonError('Select a decision and provide remarks between 5 and 1000 characters.');
+        }
+        $eventModel = $this->model('EventModel');
+        $event = $eventModel->findById((int) $id);
+        $divisionId = (int) ($_SESSION['division_id'] ?? 0);
+        if (!$event || (int) $event->organizer_division_id !== $divisionId || $event->status !== 'CancellationPending') {
+            $this->jsonError('Cancellation request not found or already processed.');
+        }
+        $changed = $eventModel->decideDivisionalCancellation(
+            (int) $id,
+            $divisionId,
+            (int) $_SESSION['user_id'],
+            $decision === 'approve',
+            $remarks
+        );
+        if (!$changed) $this->jsonError('The cancellation request changed before the decision was saved.');
+        $this->model('AuditLogModel')->log(
+            (int) $_SESSION['user_id'],
+            $decision === 'approve' ? 'APPROVE_EVENT_CANCELLATION' : 'REJECT_EVENT_CANCELLATION',
+            'Event',
+            (int) $id,
+            $remarks
+        );
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
         exit();

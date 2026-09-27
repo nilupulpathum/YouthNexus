@@ -15,6 +15,7 @@ $currentRoute = $listRoute;
 $unreadNotificationCount = $unreadNotificationCount ?? ($isZonalMode ? 2 : 0);
 $pageStyles = [ROOT . '/assets/css/fundtransfer.css'];
 
+$pageScripts = [ROOT . '/assets/js/fundtransfer.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // Formatters
@@ -46,11 +47,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
     <!-- Top Action Bar / Page Subtitle -->
     <div class="ft-header-bar">
-        <div class="ft-header-titles">
-            <h2 class="ft-section-title"><?= $isZonalMode ? 'Zonal Fund Distribution &amp; Division Ledger' : 'National Fund Disbursement &amp; Zonal Ledger' ?></h2>
-            <p class="ft-section-desc"><?= $isZonalMode ? 'Distribute zone funds received to its divisions. Allocations post to both ledgers.' : 'Manage inter-governmental grants, RTGS clearance, and zonal treasury allocations.' ?></p>
-        </div>
-        <div class="ft-header-actions">
+        <div class="ft-header-actions yn-ml-auto">
             <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline" id="btnDownloadLedger" title="Export Ledger to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Ledger
@@ -152,7 +149,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
     <!-- Transfers Table -->
     <div class="ft-table-card">
-        <table class="ft-table" id="transfersTable">
+        <table class="yn-table ft-table" id="transfersTable">
             <thead>
                 <tr>
                     <th>DATE &amp; REF</th>
@@ -461,6 +458,5 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         csrfToken: <?= json_encode($csrf_token) ?>,
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/fundtransfer.js" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

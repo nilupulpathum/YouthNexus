@@ -13,6 +13,7 @@ $flash = $flash ?? null;
 $deletableIds = (isset($deletableIds) && is_array($deletableIds)) ? array_map('intval', $deletableIds) : [];
 
 require __DIR__ . '/../partials/icons.view.php';
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 

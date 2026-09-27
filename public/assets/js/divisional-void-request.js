@@ -20,24 +20,37 @@
   var eligibleEmpty = document.querySelector('[data-eligible-empty]');
   var requestEmpty = document.querySelector('[data-request-empty]');
 
+  var panelControls = [typeFilter, statusFilter, minimum, maximum, dateFrom, dateTo, sort];
+  var appliedValues = new Map();
+  function captureFilters() {
+    panelControls.forEach(function (control) {
+      if (control) appliedValues.set(control, control.value);
+    });
+  }
+  function selected(control) {
+    return control ? String(appliedValues.get(control) || '') : '';
+  }
+  captureFilters();
+
   function value(control) {
     return control ? String(control.value || '').trim().toLowerCase() : '';
   }
 
   function numberValue(control) {
-    if (!control || control.value === '') return null;
-    var parsed = Number(control.value);
+    var current = selected(control);
+    if (current === '') return null;
+    var parsed = Number(current);
     return Number.isFinite(parsed) ? parsed : null;
   }
 
   function rowMatches(row, includeStatus) {
     var query = value(search);
-    var selectedType = value(typeFilter);
-    var selectedStatus = value(statusFilter);
+    var selectedType = selectedValue(typeFilter);
+    var selectedStatus = selectedValue(statusFilter);
     var min = numberValue(minimum);
     var max = numberValue(maximum);
-    var from = dateFrom ? dateFrom.value : '';
-    var to = dateTo ? dateTo.value : '';
+    var from = selected(dateFrom);
+    var to = selected(dateTo);
     var amount = Number(row.dataset.amount);
 
     return (!query || row.dataset.search.indexOf(query) !== -1)
@@ -49,9 +62,11 @@
       && (!to || row.dataset.date <= to);
   }
 
+  function selectedValue(control) { return selected(control).trim().toLowerCase(); }
+
   function sortRows(rows, body) {
     if (!body) return;
-    var selected = value(sort) || 'newest';
+    var selected = selectedValue(sort) || 'newest';
     rows.sort(function (left, right) {
       if (selected === 'oldest') return left.dataset.date.localeCompare(right.dataset.date);
       if (selected === 'amount-high') return Number(right.dataset.amount) - Number(left.dataset.amount);
@@ -83,12 +98,13 @@
   }
 
   search.addEventListener('input', applyFilters);
-  document.querySelector('[data-void-filter-apply]')?.addEventListener('click', applyFilters);
+  document.querySelector('[data-void-filter-apply]')?.addEventListener('click', function () { captureFilters(); applyFilters(); });
   document.querySelector('[data-void-filter-reset]')?.addEventListener('click', function () {
     [search, statusFilter, typeFilter, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
       if (control) control.value = '';
     });
     if (sort) sort.value = 'newest';
+    captureFilters();
     applyFilters();
   });
 
