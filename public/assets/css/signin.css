@@ -11,8 +11,8 @@ body {
 
 /* ---------- LEFT PANEL ---------- */
 .left {
-  background: linear-gradient(160deg, var(--yn-primary) 0%, var(--yn-info-strong) 60%, #1e3a8a 100%);
-  color: var(--yn-bg-surface);
+  background: linear-gradient(160deg, #1e40af 0%, #1d4ed8 60%, #1e3a8a 100%);
+  color: #fff;
   padding: 48px 56px;
   display: flex;
   flex-direction: column;
@@ -33,7 +33,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--yn-bg-surface);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,7 +235,7 @@ body {
   content: '';
   width: 6px;
   height: 11px;
-  border: solid var(--yn-bg-surface);
+  border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   margin-top: -2px;
@@ -246,7 +246,7 @@ body {
   align-items: flex-start;
   gap: 14px;
   padding: 18px 20px;
-  background: var(--yn-bg-page);
+  background: #f8fafc;
   border-radius: 12px;
   margin-top: 24px;
   color: var(--muted);
