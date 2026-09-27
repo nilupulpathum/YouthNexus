@@ -114,9 +114,10 @@
   }
 
   var decisionForm = document.querySelector('[data-decision-form]');
-  var decisionSelect = document.querySelector('[data-decision-select]');
+  var decisionButtons = decisionForm ? decisionForm.querySelectorAll('[data-submit-decision]') : [];
   var remarks = document.querySelector('[data-decision-remarks]');
   var remarksRequired = document.querySelector('[data-remarks-required]');
+  var activeDecision = 'approve';
   var evidence = {};
   var evidenceSource = document.getElementById('void-review-evidence');
   if (evidenceSource) {
@@ -202,13 +203,7 @@
   }
 
   function updateDecisionRequirements() {
-    var remarksNeeded = decisionSelect && decisionSelect.value === 'reject';
-    var submit = decisionForm && decisionForm.querySelector('[data-submit-decision]');
-    if (submit) {
-      submit.classList.toggle('yn-btn--approve', !remarksNeeded);
-      submit.classList.toggle('yn-btn--reject', !!remarksNeeded);
-      submit.textContent = remarksNeeded ? 'Reject Request' : 'Approve Request';
-    }
+    var remarksNeeded = activeDecision === 'reject';
     if (remarks) {
       remarks.required = remarksNeeded;
       remarks.minLength = remarksNeeded ? 5 : 0;
@@ -216,7 +211,12 @@
     if (remarksRequired) remarksRequired.hidden = !remarksNeeded;
   }
 
-  if (decisionSelect) decisionSelect.addEventListener('change', updateDecisionRequirements);
+  decisionButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      activeDecision = button.value;
+      updateDecisionRequirements();
+    });
+  });
 
   document.querySelectorAll('[data-review-request]').forEach(function (button) {
     button.addEventListener('click', function () {
@@ -231,7 +231,7 @@
       setText('[data-review-requester]', button.dataset.requester);
       setText('[data-review-date]', button.dataset.requestedAt);
       renderEvidence(button.dataset.requestId);
-      if (decisionSelect) decisionSelect.value = 'approve';
+      activeDecision = 'approve';
       if (remarks) remarks.value = '';
       updateDecisionRequirements();
     });
@@ -239,6 +239,7 @@
 
   if (decisionForm) {
     decisionForm.addEventListener('submit', function (event) {
+      activeDecision = event.submitter ? event.submitter.value : activeDecision;
       updateDecisionRequirements();
       if (!decisionForm.checkValidity()) {
         event.preventDefault();
@@ -246,7 +247,7 @@
         return;
       }
       var message = 'Approve this void request and update the club ledger balance?';
-      if (decisionSelect && decisionSelect.value === 'reject') {
+      if (activeDecision === 'reject') {
         message = 'Reject this void request?';
       }
       if (!window.confirm(message)) event.preventDefault();

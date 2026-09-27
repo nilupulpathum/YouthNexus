@@ -10,6 +10,8 @@ $currentRoute            = 'manageassets';
 $unreadNotificationCount = (int)($stats['low_stock_count'] ?? 0);
 $pageStyles              = [ROOT . '/assets/css/manageassets.css'];
 
+$pageScripts = [ROOT . '/assets/js/manageassets.js'];
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -25,18 +27,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <!-- Top Action Bar -->
     <div class="am-header-bar">
-        <div class="am-header-titles">
-            <h2 class="am-section-title">National Asset Management &amp; Warehouse Logistics</h2>
-            <p class="am-section-desc">National Youth Services Council — Central Logistics, Zonal Stock Allocation &amp; Deficit Surveillance</p>
-        </div>
-        <div class="am-header-actions">
+        <div class="am-header-actions yn-ml-auto">
             <a href="<?= ROOT ?>/manageassets/export?<?= http_build_query(['category' => $selCategory, 'zone' => $selZoneVal, 'search' => $searchQuery]) ?>" class="am-btn am-btn-outline" id="btnExportReport" title="Export Inventory to CSV">
                 <span>&#8681;</span> Export Inventory Report
             </a>
-            <button type="button" class="am-btn am-btn-sky" id="btnOpenDistribute">
+            <button type="button" class="yn-btn yn-btn--secondary am-btn am-btn-sky" id="btnOpenDistribute">
                 <span>🎯</span> Distribute to Zone
             </button>
-            <button type="button" class="am-btn am-btn-primary" id="btnOpenAddStock">
+            <button type="button" class="yn-btn yn-btn--primary am-btn am-btn-primary" id="btnOpenAddStock">
                 <span>+</span> Add National Stock
             </button>
         </div>
@@ -46,7 +44,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php if (!$isZoneView): ?>
     <div class="am-stats-grid">
         <!-- 1. Total Stock -->
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-head">
                 <span class="am-stat-title">TOTAL ITEMS IN STOCK</span>
             </div>
@@ -61,7 +59,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <!-- 2. Total Distributed -->
-        <div class="am-stat-card">
+        <div class="yn-stat-card am-stat-card">
             <div class="am-stat-head">
                 <span class="am-stat-title">TOTAL DISTRIBUTED ASSETS</span>
             </div>
@@ -78,10 +76,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php endif; ?>
 
     <!-- Filter & Search Toolbar -->
-    <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" style="margin: 0;">
+    <form method="GET" action="<?= ROOT ?>/manageassets" id="filterForm" class="yn-m-0">
         <div class="am-filter-bar">
             <div class="am-search-wrap">
-                <span class="am-search-icon">&#128269;</span>
+                <span class="am-search-icon" aria-hidden="true"><?= yn_icon('search') ?></span>
                 <input type="text" name="search" id="assetSearchInput" class="am-search-input"
                        placeholder="Search catalog items, SKUs, or specifications..."
                        value="<?= htmlspecialchars($searchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
@@ -123,22 +121,22 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <div class="am-table-responsive">
-            <table class="am-table">
+            <table class="yn-table am-table">
                 <thead>
                     <tr>
-                        <th style="width: 32px;"><input type="checkbox" aria-label="Select all items"></th>
+                        <th class="yn-table__col-check"><input type="checkbox" aria-label="Select all items"></th>
                         <th>Item Identifier &amp; Specification</th>
                         <th>Category</th>
                         <th>Warehouse Qty</th>
                         <th>Threshold</th>
                         <th>Status</th>
-                        <th style="text-align: right;">Actions</th>
+                        <th class="yn-text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($inventory)): ?>
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 36px; color: #9ca3af;">
+                            <td colspan="7" class="am-empty-cell">
                                 No catalog assets matched your search filters.
                             </td>
                         </tr>
@@ -166,16 +164,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="am-status-badge optimal">Optimal</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right;">
-                                    <div class="am-actions" style="justify-content: flex-end;">
-                                        <button type="button" class="am-btn-sm am-btn-distribute <?= ($item->quantity <= 0) ? 'disabled' : '' ?>"
+                                <td class="yn-text-right">
+                                    <div class="am-actions yn-flex-end">
+                                        <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-distribute <?= ($item->quantity <= 0) ? 'disabled' : '' ?>"
                                                 data-action="distribute-row"
                                                 data-item-id="<?= (int)$item->catalog_item_id ?>"
                                                 data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>"
                                                 <?= ($item->quantity <= 0) ? 'disabled' : '' ?>>
                                             Distribute
                                         </button>
-                                        <button type="button" class="am-btn-sm am-btn-addstock"
+                                        <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-addstock"
                                                 data-action="add-stock-row"
                                                 data-item-id="<?= (int)$item->catalog_item_id ?>"
                                                 data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>">
@@ -213,7 +211,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
     <div class="am-panel">
         <div class="am-table-responsive">
-            <table class="am-table">
+            <table class="yn-table am-table">
                 <thead>
                     <tr>
                         <th>Asset Name</th>
@@ -221,7 +219,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                         <th>Allocated Qty</th>
                         <th>Available Qty</th>
                         <th>Status</th>
-                        <th style="text-align: right;">Actions</th>
+                        <th class="yn-text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -231,7 +229,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     ?>
                     <?php if (empty($inventory)): ?>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 36px; color: #9ca3af;">
+                            <td colspan="6" class="am-empty-cell">
                                 No asset allocations found for this zone.
                             </td>
                         </tr>
@@ -262,8 +260,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                         <span class="am-status-badge optimal">Optimal</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right;">
-                                    <button type="button" class="am-btn-sm am-btn-distribute"
+                                <td class="yn-text-right">
+                                    <button type="button" class="yn-btn yn-btn--primary yn-btn--sm am-btn-sm am-btn-distribute"
                                             data-action="distribute-row"
                                             data-item-id="<?= (int)$item->catalog_item_id ?>"
                                             data-category="<?= htmlspecialchars($item->category, ENT_QUOTES, 'UTF-8') ?>">
@@ -345,8 +343,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <div class="am-popup-footer">
-                <button type="button" class="am-btn-cancel" data-close-modal="addStockModal">Cancel</button>
-                <button type="submit" class="am-btn-confirm">
+                <button type="button" class="yn-btn yn-btn--secondary am-btn-cancel" data-close-modal="addStockModal">Cancel</button>
+                <button type="submit" class="yn-btn yn-btn--primary am-btn-confirm">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="10.5" cy="13.5" r="8.5"></circle>
                         <path d="M7 13.5l2.5 2.5 5-5"></path>
@@ -427,8 +425,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
 
             <div class="am-popup-footer">
-                <button type="button" class="am-btn-cancel" data-close-modal="distributeModal">Cancel</button>
-                <button type="submit" class="am-btn-confirm">Confirm Distribution</button>
+                <button type="button" class="yn-btn yn-btn--secondary am-btn-cancel" data-close-modal="distributeModal">Cancel</button>
+                <button type="submit" class="yn-btn yn-btn--primary am-btn-confirm">Confirm Distribution</button>
             </div>
         </form>
     </div>
@@ -454,6 +452,5 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         ];
     }, $allCatalogItems)) ?>;
 </script>
-<script src="<?= ROOT ?>/assets/js/manageassets.js" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

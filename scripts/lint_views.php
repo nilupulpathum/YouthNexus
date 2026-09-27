@@ -64,6 +64,31 @@ foreach ($views as $view) {
     }
 }
 
+// The shared asset contract and static-style rule apply to every dashboard tier.
+foreach (glob($root . '/app/views/*/*.view.php') ?: [] as $view) {
+    $source = file_get_contents($view);
+    if ($source === false || !str_contains($source, 'dashboard-start.view.php')) {
+        continue;
+    }
+    $name = substr($view, strlen($root) + 1);
+    $setup = substr($source, 0, strpos($source, 'dashboard-start.view.php'));
+    foreach (['pageStyles', 'pageScripts'] as $variable) {
+        if (!preg_match('/\$' . $variable . '\s*=\s*\[/', $setup)) {
+            $errors[] = "$name: missing \$$variable array before dashboard layout";
+        }
+    }
+    if (preg_match('/<link\b[^>]*rel\s*=\s*["\x27]stylesheet|<script\b[^>]*\bsrc\s*=/i', $source)) {
+        $errors[] = "$name: load assets through the dashboard layout";
+    }
+    if (preg_match_all('/\bstyle\s*=\s*"([^"]*)"/i', $source, $styles)) {
+        foreach ($styles[1] as $style) {
+            if (!str_contains($style, '<?=') && !preg_match('/^\s*--[a-z0-9-]+\s*:/', $style)) {
+                $errors[] = "$name: static inline style: $style";
+            }
+        }
+    }
+}
+
 foreach (glob($root . '/public/assets/css/divisional*.css') ?: [] as $css) {
     $source = file_get_contents($css);
     $name = substr($css, strlen($root) + 1);

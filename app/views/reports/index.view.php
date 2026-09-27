@@ -9,8 +9,9 @@ $pageTitle               = $pageTitle ?? 'Manage Reports';
 $pageDescription         = $pageDescription ?? 'Create, filter, and aggregate reports up to the Zonal Secretary';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=' . time()];
+$pageStyles              = [ROOT . '/assets/css/managereports.css'];
 
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // ── Category → icon mapping ────────────────────────────────────────
@@ -58,11 +59,7 @@ $formatColors = [
 
     <!-- ── Page header ─────────────────────────────────────────── -->
     <div class="rpt-header-bar">
-        <div>
-            <h1 class="rpt-section-title"><?= htmlspecialchars($pageTitle) ?></h1>
-            <p class="rpt-section-desc"><?= htmlspecialchars($pageDescription) ?></p>
-        </div>
-        <div class="rpt-header-actions">
+        <div class="rpt-header-actions yn-ml-auto">
             <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline" id="btn-aggregate">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Aggregate Reports
@@ -79,7 +76,7 @@ $formatColors = [
 
         <!-- Combined category dropdown + keyword search pill -->
         <div class="rpt-filter-pill">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color:#9ca3af;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="rpt-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <span class="rpt-select-wrap">
                 <select name="category" id="categorySelect" onchange="this.form.submit()">
                     <option value="">All Reports</option>
@@ -105,7 +102,7 @@ $formatColors = [
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="rpt-select-arrow"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
 
-        <button type="submit" class="rpt-btn rpt-btn--ghost" id="btn-filter">
+        <button type="submit" class="yn-btn yn-btn--ghost rpt-btn rpt-btn--ghost" id="btn-filter">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
             Filter Options
         </button>
@@ -127,9 +124,9 @@ $formatColors = [
     <!-- ── Report cards ──────────────────────────────────────── -->
     <?php if (count($reports) === 0): ?>
         <div class="rpt-empty-box">
-            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" style="color:#d1d5db;margin-bottom:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" class="rpt-empty-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <p>No reports found for the selected filters.</p>
-            <p style="font-size:13px;color:#9ca3af">Try another category, report type, or keyword.</p>
+            <p class="rpt-empty-help">Try another category, report type, or keyword.</p>
         </div>
     <?php else: ?>
         <div class="rpt-cards" id="reports-grid">
@@ -170,7 +167,7 @@ $formatColors = [
 
                     <div class="rpt-card__foot">
                         <span class="rpt-card__date">Generated <?= $date ?></span>
-                        <a class="rpt-view-btn"
+                        <a class="yn-btn yn-btn--sm yn-btn--ghost rpt-view-btn"
                            href="<?= ROOT ?>/reports/preview/<?= (int)($r->report_id ?? 0) ?>"
                            id="view-report-<?= (int)($r->report_id ?? 0) ?>">
                             View

@@ -17,10 +17,9 @@
     const closeBtn         = document.getElementById('eaModalClose');
     const backBtn          = document.getElementById('eaBackToEventsBtn');
     const cancelBtn        = document.getElementById('eaCancelReviewBtn');
-    const resultSelect     = document.getElementById('eaReviewResultSelect');
+    const decisionButtons  = modal.querySelectorAll('[data-ea-decision]');
     const remarksField     = document.getElementById('eaRemarks');
     const impactAlert      = document.getElementById('eaImpactAlert');
-    const confirmBtn       = document.getElementById('eaConfirmSubmitBtn');
     const decisionPanel    = modal.querySelector('.ea-decision-panel');
 
     let activeEventId = null;
@@ -159,11 +158,17 @@
                     </div>
                 `;
 
-                resultSelect.value = 'approve';
-                resultSelect.options[0].textContent = isCancellation ? 'Approve Cancellation' : 'Approve Event';
-                resultSelect.options[1].textContent = isCancellation ? 'Keep Event Approved' : 'Reject Event';
+                decisionButtons.forEach(button => {
+                    const approval = button.dataset.eaDecision === 'approve';
+                    button.textContent = isCancellation
+                        ? (approval ? 'Approve Cancellation' : 'Keep Event Approved')
+                        : (approval ? 'Approve Event' : 'Reject Event');
+                    // Approving a cancellation ends the event; keeping it preserves approval.
+                    button.classList.toggle('yn-btn--approve', isCancellation ? !approval : approval);
+                    button.classList.toggle('yn-btn--reject', isCancellation ? approval : !approval);
+                });
                 remarksField.value = '';
-                updateImpactAlert();
+                updateImpactAlert('approve');
             })
             .catch(err => {
                 modalBody.innerHTML = '<div class="ea-modal-feedback ea-modal-feedback--error"><p>Error: ' + escapeHtml(err.message) + '</p></div>';
@@ -176,28 +181,25 @@
         activeEventStatus = null;
     }
 
-    function updateImpactAlert() {
-        const isReject = resultSelect.value === 'reject';
-        impactAlert.classList.toggle('approve', !isReject);
-        impactAlert.classList.toggle('reject', isReject);
+    function updateImpactAlert(decision) {
+        const isReject = decision === 'reject';
+        const isCancellation = activeEventStatus === 'CancellationPending';
+        const disruptive = isCancellation ? !isReject : isReject;
+        impactAlert.classList.toggle('approve', !disruptive);
+        impactAlert.classList.toggle('reject', disruptive);
         
         const titleEl = impactAlert.querySelector('strong');
         const textEl  = impactAlert.querySelector('p');
 
-        if (isReject) {
-            titleEl.textContent = 'IMPACT OF REJECTION';
-            textEl.textContent = 'Rejecting this event will notify the submitting club with your official remarks. The event will remain unapproved and will not be published to the division calendar.';
-            confirmBtn.classList.add('is-reject');
-            confirmBtn.textContent = 'Confirm & Reject Event';
-        } else {
-            titleEl.textContent = 'IMPACT OF APPROVAL';
-            textEl.textContent = "Approving this event will publish it to the division's event calendar and notify the submitting club. This event will then be visible to the Divisional Secretary and eligible for attendance tracking once it occurs.";
-            confirmBtn.classList.remove('is-reject');
-            confirmBtn.textContent = 'Confirm & Approve Event';
-        }
+        titleEl.textContent = isCancellation
+            ? (isReject ? 'IMPACT OF KEEPING THE EVENT' : 'IMPACT OF CANCELLATION')
+            : (isReject ? 'IMPACT OF REJECTION' : 'IMPACT OF APPROVAL');
+        textEl.textContent = isCancellation
+            ? (isReject ? 'The event stays approved and the cancellation request is declined.' : 'The cancellation is approved and the event is removed from the approved calendar.')
+            : (isReject
+                ? 'The submitting club will receive your remarks. The event will remain unapproved.'
+                : "The event will appear on the division calendar and be eligible for attendance tracking.");
     }
-
-    resultSelect.addEventListener('change', updateImpactAlert);
 
     function attachReviewButtons() {
         document.querySelectorAll('.ea-btn-review').forEach(btn => {
@@ -404,11 +406,12 @@
         }
     });
 
-    // Submit Decision
-    confirmBtn.addEventListener('click', function () {
+    // Keep the existing review and server routes, but make each decision explicit.
+    decisionButtons.forEach(button => button.addEventListener('click', function () {
         if (!activeEventId) return;
-        
-        const decision = resultSelect.value; // 'approve' | 'reject'
+
+        const decision = button.dataset.eaDecision;
+        updateImpactAlert(decision);
         const remarks   = remarksField.value.trim();
 
         if ((decision === 'reject' || activeEventStatus === 'CancellationPending') && remarks.length < 5) {
@@ -417,8 +420,12 @@
             return;
         }
 
-        confirmBtn.disabled = true;
-        confirmBtn.style.opacity = '0.7';
+        const message = activeEventStatus === 'CancellationPending'
+            ? (decision === 'approve' ? 'Approve the cancellation of this event?' : 'Decline the cancellation and keep the event approved?')
+            : (decision === 'approve' ? 'Approve this event?' : 'Reject this event?');
+        if (!window.confirm(message)) return;
+
+        decisionButtons.forEach(action => { action.disabled = true; });
 
         const endpoint = activeEventStatus === 'CancellationPending'
             ? '/eventapproval/cancellation/' + activeEventId
@@ -433,8 +440,7 @@
         })
         .then(r => r.json())
         .then(data => {
-            confirmBtn.disabled = false;
-            confirmBtn.style.opacity = '1';
+            decisionButtons.forEach(action => { action.disabled = false; });
             if (data.success) {
                 closeReview();
                 location.reload();
@@ -443,11 +449,10 @@
             }
         })
         .catch(err => {
-            confirmBtn.disabled = false;
-            confirmBtn.style.opacity = '1';
+            decisionButtons.forEach(action => { action.disabled = false; });
             alert('Error: ' + err.message);
         });
-    });
+    }));
 
     // Approved events are the coordinator's default landing view.
     if (statApproved) statApproved.click();
