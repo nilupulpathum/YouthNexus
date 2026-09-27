@@ -129,6 +129,7 @@ $navigation = [
         ['label' => 'Annual Audit',         'route' => 'audit',             'href' => $dashboardRoot . '/audit',             'icon' => 'audit'],
         ['label' => 'National Analytics',   'route' => 'nationalanalytics', 'href' => $dashboardRoot . '/nationalanalytics', 'icon' => 'national-analytics'],
         ['label' => 'Monitor Club Health',  'route' => 'clubhealth',        'href' => $dashboardRoot . '/clubhealth',        'icon' => 'club-health'],
+        ['label' => 'Broadcast Announcements', 'route' => 'announcements', 'href' => $dashboardRoot . '/announcements', 'icon' => 'megaphone'],
         ['label' => 'Settings',             'route' => 'settings',          'href' => $dashboardRoot . '/settings',          'icon' => 'settings'],
         ['label' => 'Help',                 'route' => 'help',              'href' => $dashboardRoot . '/help',              'icon' => 'help'],
     ],

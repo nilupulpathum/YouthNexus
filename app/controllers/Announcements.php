@@ -711,10 +711,39 @@ class Announcements extends Controller
      * target_users[ClubSecretary][] = 14
      * target_users[ClubSecretary][] = 29
      */
+    /**
+     * Zone filter for national-level broadcasts.
+     *
+     * Only meaningful for the NYSC manager level: an empty value means a
+     * national broadcast (every zone), a validated id narrows the broadcast
+     * to that zone. Ignored for club/divisional/zonal managers, whose scope
+     * already pins the zone.
+     */
+    private function broadcastZoneFilter($scope) {
+        if (($scope['level'] ?? null) !== 'NYSC') {
+            return null;
+        }
+
+        $raw = $_GET['zone_id'] ?? $_POST['broadcast_zone_id'] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $zoneId = filter_var(
+            $raw,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]
+        );
+
+        return $zoneId === false ? null : $zoneId;
+    }
+
     private function validateAudienceTargets(
         $user,
         array $scope,
-        $requireAtLeastOne
+        $requireAtLeastOne,
+        $zoneId = null
     ) {
         $modes =
             $_POST['target_modes']
@@ -883,7 +912,8 @@ class Announcements extends Controller
                         ->findAnnouncementRecipients(
                             $role,
                             $scope['level'],
-                            $scope['scope_id']
+                            $scope['scope_id'],
+                            $zoneId
                         );
 
 
@@ -1111,6 +1141,11 @@ class Announcements extends Controller
                         $user->role
                     ]
                     ?? [],
+
+                'zones' =>
+                    ($scope['level'] ?? null) === 'NYSC'
+                        ? $this->model('ManageUserModel')->getZones()
+                        : [],
             ]
         );
     }
@@ -1317,7 +1352,8 @@ class Announcements extends Controller
                 ->findAnnouncementRecipients(
                     $role,
                     $scope['level'],
-                    $scope['scope_id']
+                    $scope['scope_id'],
+                    $this->broadcastZoneFilter($scope)
                 );
 
 
@@ -1402,6 +1438,15 @@ class Announcements extends Controller
         $category =
             $this->formText('category');
 
+        /*
+         * National managers may narrow the broadcast to one zone.
+         * Empty = national broadcast (every zone).
+         */
+        $broadcastZoneId =
+            ($scope['level'] ?? null) === 'NYSC'
+                ? $this->broadcastZoneFilter($scope)
+                : null;
+
 
         if (
             $title === ''
@@ -1455,7 +1500,8 @@ class Announcements extends Controller
             $this->validateAudienceTargets(
                 $user,
                 $scope,
-                $publish
+                $publish,
+                $broadcastZoneId
             );
 
 
@@ -1555,9 +1601,10 @@ class Announcements extends Controller
                 ],
 
             'organizer_zonal_id' =>
-                $scope[
-                    'organizer_zonal_id'
-                ],
+                $broadcastZoneId
+                    ?: $scope[
+                        'organizer_zonal_id'
+                    ],
 
             'created_by' =>
                 (int)$user->user_id,
