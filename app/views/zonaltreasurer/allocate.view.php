@@ -29,8 +29,8 @@ $remBudget    = (float)($stats['remaining_budget'] ?? max(0, $budgetCap - $yearT
 $utilizedPct  = (int)($stats['utilized_pct'] ?? 0);
 $coreAccount  = $stats['core_account'] ?? null;
 
-// Filter states
-$activeSearch  = htmlspecialchars($filters['search'] ?? '', ENT_QUOTES);
+// Filter states (escaped once at output, not here)
+$activeSearch  = $filters['search'] ?? '';
 $activeZone    = (int)($filters['zone_id'] ?? 0);
 $activeStatus  = $filters['status'] ?? 'All';
 $activeQuarter = $filters['quarter'] ?? '';
@@ -180,7 +180,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                         $methodText   = ($t->disbursement_method === 'RTGS')
                             ? ('BOC Direct / RTGS - ' . substr($t->account_number ?? '0000', -4))
                             : ('Gov Cheque / SLIPS - ' . substr($t->reference_no, -6));
-                        $hubDetail    = trim(($t->target_province ?? '') . ($t->target_hub_name ? ' - ' . $t->target_hub_name : ''));
+                        $hubDetail    = trim(($t->target_province ?? '') . (!empty($t->target_hub_name) ? ' - ' . $t->target_hub_name : ''));
                     ?>
                     <tr class="ft-row" id="rowAlloc<?= (int)$t->allocation_id ?>">
                         <td class="ft-td-date">
