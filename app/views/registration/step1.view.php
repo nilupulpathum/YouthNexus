@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/registration.css">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/registration.css?v=20261001">
     <style>
         .card { padding: 35px; margin-bottom: 30px; }
         .form-row { display: flex; gap: 30px; margin-bottom: 25px; }

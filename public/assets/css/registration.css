@@ -20,7 +20,7 @@ body {
 
 /* Header */
 .header {
-    background-color: var(--yn-bg-surface);
+    background-color: #fff;
     border-bottom: 1px solid #e0e0e0;
     padding: 15px 40px;
     display: flex;
@@ -72,7 +72,7 @@ body {
     width: 36px;
     height: 36px;
     background-color: #1a237e;
-    color: var(--yn-bg-surface);
+    color: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -103,7 +103,7 @@ body {
 
 /* Card Base */
 .card {
-    background-color: var(--yn-bg-surface);
+    background-color: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
@@ -147,7 +147,7 @@ select {
 
 .btn-back,
 .btn-cancel {
-    background-color: var(--yn-bg-surface);
+    background-color: #fff;
     color: #555;
 }
 
@@ -159,7 +159,7 @@ select {
 
 .btn-next {
     background-color: #1a237e;
-    color: var(--yn-bg-surface);
+    color: #fff;
     border: none;
 }
 
@@ -169,7 +169,7 @@ select {
 
 /* Button Bar (used in registration3-7) */
 .button-bar {
-    background-color: var(--yn-bg-surface);
+    background-color: #fff;
     border-radius: 12px;
     padding: 20px 25px;
     display: flex;
