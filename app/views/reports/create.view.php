@@ -6,10 +6,9 @@
 
 $title                   = $title ?? 'Create New Report — YouthNexus';
 $pageTitle               = $pageTitle ?? 'Create New Report';
-$pageDescription         = $pageDescription ?? 'Select report parameters, aggregation scope, and export format.';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
+$pageStyles              = [ROOT . '/assets/css/managereports.css'];
 
 $catalog = $catalog ?? [];
 $scopes  = $scopes  ?? [
@@ -35,14 +34,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 <div class="rpt-content rpt-create-wrap">
 
-    <div class="rpt-preview-back">
-        <a href="<?= ROOT ?>/reports" class="rpt-btn rpt-btn--outline db-secondary-action">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Back to Reports
-        </a>
-    </div>
-
-
     <!-- modal card -->
     <div class="rpt-modal">
 
@@ -52,8 +43,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </a>
             <div class="rpt-modal__title-row">
+                <h1 class="rpt-modal__h1">Create New Report</h1>
                 <span class="rpt-phase-badge">PHASE 1: CONFIGURATION</span>
             </div>
+            <p class="rpt-modal__sub">Select report parameters, aggregation scope, and export format.</p>
         </div>
 
         <!-- Form body -->

@@ -59,8 +59,8 @@
 .nysc-filter-group select:focus,
 .nysc-filter-group input:focus {
   outline: none;
-  border-color: var(--dw-primary, #3154d8);
-  box-shadow: 0 0 0 3px rgba(49, 84, 216, 0.14);
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
 .nysc-filter-buttons {
@@ -203,29 +203,42 @@
   gap: 10px;
 }
 
-/* Governance action buttons use the project-wide primary palette
-   (navy #1e40af, white text) — same look as the shared db-primary-action
-   hook. White text is forced with !important to beat dashboard.css's
-   `.dashboard button { color: inherit; }`. */
-.nysc-btn-warning,
-.nysc-btn-funds,
-.nysc-btn-disband {
-  background: #1e40af;
-  color: #ffffff !important;
-  border: 1px solid #1e40af;
+.nysc-btn-warning {
+  background: #d97706;
+  color: var(--yn-bg-surface);
+  border: none;
   font-weight: 700;
 }
 
-.nysc-btn-warning:hover,
-.nysc-btn-funds:hover,
+.nysc-btn-warning:hover {
+  background: #b45309;
+}
+
+.nysc-btn-funds {
+  background: #059669;
+  color: var(--yn-bg-surface);
+  border: none;
+  font-weight: 700;
+}
+
+.nysc-btn-funds:hover {
+  background: #047857;
+}
+
+.nysc-btn-disband {
+  background: var(--yn-danger);
+  color: var(--yn-bg-surface);
+  border: none;
+  font-weight: 700;
+}
+
 .nysc-btn-disband:hover:not(:disabled) {
-  background: #1d3698;
-  border-color: #1d3698;
-  color: #ffffff !important;
+  background: var(--yn-danger-hover);
 }
 
 .nysc-btn-disband:disabled {
-  opacity: .55;
+  background: var(--yn-border-strong);
+  color: #94a3b8;
   cursor: not-allowed;
 }
 
