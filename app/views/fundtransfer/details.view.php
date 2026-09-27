@@ -8,7 +8,7 @@ $pageTitle               = 'Transaction Details: ' . htmlspecialchars($transfer-
 $pageDescription         = 'Fund disbursement transaction voucher and audit record';
 $currentRoute            = 'fundtransfer';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/fundtransfer.css'];
+$pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
