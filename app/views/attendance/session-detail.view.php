@@ -10,7 +10,7 @@ $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=20260927',
+    ROOT . '/assets/css/attendance.css?v=20260929',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 
@@ -244,6 +244,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         role: <?= json_encode($userRole ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=20260927"></script>
+<script src="<?= ROOT ?>/assets/js/attendance.js?v=20260929"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

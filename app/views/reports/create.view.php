@@ -9,7 +9,7 @@ $pageTitle               = $pageTitle ?? 'Create New Report';
 $pageDescription         = $pageDescription ?? 'Select report parameters, aggregation scope, and export format.';
 $currentRoute            = 'reports';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260927'];
+$pageStyles              = [ROOT . '/assets/css/managereports.css?v=20260929'];
 
 $catalog = $catalog ?? [];
 $scopes  = $scopes  ?? [
