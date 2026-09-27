@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($title) ?></title>
-  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css">
+  <link rel="stylesheet" href="<?= ROOT ?>/assets/css/common.css?v=20261001">
   <style>
     .brand-label { color: #002d72; font-size: 22px; font-weight: bold; margin-bottom: 30px; }
     h2 { color: #1a202c; font-size: 24px; margin: 0 0 12px; }

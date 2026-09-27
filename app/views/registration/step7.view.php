@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
-    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/registration.css">
+    <link rel="stylesheet" href="<?= ROOT ?>/assets/css/registration.css?v=20261001">
     <style>
         .page-title { margin-bottom: 10px; }
         .page-subtitle { line-height: 1.6; max-width: 600px; }
