@@ -12,7 +12,7 @@ $currentRoute            = 'audit';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/annualaudit.css?v=' . time()];
 
-$pageScripts = [];
+$pageScripts = [ROOT . '/assets/js/annualaudit.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 // ── Formatters ───────────────────────────────────────────────────
@@ -404,6 +404,4 @@ $steps = [
         csrfToken: <?= json_encode($csrf_token) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/annualaudit.js?v=<?= time() ?>" defer></script>
-
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
