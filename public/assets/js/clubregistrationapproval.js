@@ -1017,6 +1017,7 @@
                             '<div class="cr-field">' +
                                 '<label>REVIEW RESULT</label>' +
                                 '<select id="crReviewResultSelect">' +
+                                    '<option value="">Select a decision</option>' +
                                     '<option value="approve">Approve Registration</option>' +
                                     '<option value="reject">Reject Registration</option>' +
                                 '</select>' +
@@ -1030,7 +1031,7 @@
                             '<label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>' +
                             '<textarea id="crRemarks" placeholder="Provide detailed feedback for the club executives..."></textarea>' +
                         '</div>' +
-                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert">' +
+                        '<div class="cr-decision-impact-alert approve" id="crDecisionImpactAlert" hidden>' +
                             '<div class="cr-impact-icon-circle approve">' +
                                 '<svg viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17l-5-5"/></svg>' +
                             '</div>' +
@@ -1042,7 +1043,7 @@
                         '<div class="cr-decision-footer-bar">' +
                             '<div class="cr-decision-footer-actions">' +
                                 '<button type="button" class="cr-btn-cancel-link db-close-action" id="crCancelReviewBtn">Cancel Review</button>' +
-                                '<button type="button" class="cr-btn cr-btn-submit-decision db-confirm-action" id="crConfirmSubmitBtn">Confirm &amp; Submit Decision</button>' +
+                                '<button type="button" class="cr-btn cr-btn-submit-decision db-confirm-action" id="crConfirmSubmitBtn" disabled>Confirm &amp; Submit Decision</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1107,6 +1108,11 @@
 
             if (selectEl && alertEl) {
                 selectEl.addEventListener('change', function () {
+                    var decision = selectEl.value;
+                    var actionButton = document.getElementById('crConfirmSubmitBtn');
+                    if (actionButton) actionButton.disabled = !decision;
+                    alertEl.hidden = !decision;
+                    if (!decision) return;
                     if (selectEl.value === 'approve') {
                         alertEl.className = 'cr-decision-impact-alert approve';
                         alertEl.innerHTML = 
@@ -1137,6 +1143,10 @@
             var confirmBtn = document.getElementById('crConfirmSubmitBtn');
             if (confirmBtn && selectEl) {
                 confirmBtn.addEventListener('click', function () {
+                    if (selectEl.value !== 'approve' && selectEl.value !== 'reject') {
+                        selectEl.focus();
+                        return;
+                    }
                     submitDecision(app.application_id, selectEl.value, app.club_name);
                 });
             }

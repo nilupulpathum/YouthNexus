@@ -100,7 +100,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <option value="oldest">Oldest first</option>
                 </select>
                 <?php if ($can_publish): ?>
-                    <button type="button" class="publish-open-btn" id="announce-open">Publish Announcement</button>
+                    <button type="button" class="publish-open-btn" id="announce-open"><span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> Publish Announcement</button>
                 <?php endif; ?>
             </div>
         </header>

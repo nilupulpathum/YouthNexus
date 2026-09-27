@@ -160,6 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let editingPublished = false;
 
+  let editingInactive = false;
+
   let busy = false;
 
   let editRequest = 0;
@@ -912,6 +914,9 @@ document.addEventListener('DOMContentLoaded', () => {
     editingPublished =
       false;
 
+    editingInactive =
+      false;
+
 
     removedAttachmentIds.clear();
 
@@ -1134,6 +1139,10 @@ document.addEventListener('DOMContentLoaded', () => {
         announcement.status
         === 'Published';
 
+      editingInactive =
+        announcement.status === 'Archived'
+        || announcement.status === 'Retracted';
+
 
       const expectedStatus =
         document.getElementById(
@@ -1155,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (saveDraftButton) {
         saveDraftButton.hidden =
-          editingPublished;
+          editingPublished || editingInactive;
       }
 
 
@@ -1168,7 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (submitButton) {
 
         submitButton.textContent =
-          editingPublished
+          editingPublished || editingInactive
             ? 'Save Changes'
             : 'Publish Announcement';
       }
@@ -1183,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (modalTitle) {
 
         modalTitle.textContent =
-          editingPublished
+          editingPublished || editingInactive
             ? 'Edit Announcement'
             : 'Edit Draft';
       }
@@ -2075,7 +2084,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const requireAudience =
       publish
       ||
-      editingPublished;
+      editingPublished
+      ||
+      editingInactive;
 
 
     if (
@@ -2297,7 +2308,7 @@ document.addEventListener('DOMContentLoaded', () => {
        * submit -> Save Changes
        */
       save(
-        !editingPublished
+        !editingPublished && !editingInactive
       );
     }
   );
@@ -2371,6 +2382,69 @@ document.addEventListener('DOMContentLoaded', () => {
         );
       }
     };
+
+
+  const changeAnnouncementLifecycle =
+    (id, action) => {
+      if (busy) return;
+      const labels = {
+        archive: 'Archive Announcement',
+        restore: 'Restore Announcement'
+      };
+      if (!labels[action]) return;
+      const lifecycleModal = document.getElementById('annLifecycleModal');
+      const lifecycleForm = document.getElementById('annLifecycleForm');
+      const lifecycleTitle = document.getElementById('annLifecycleTitle');
+      const lifecycleSubmit = document.getElementById('annLifecycleSubmit');
+      const lifecycleReason = document.getElementById('annLifecycleReason');
+      if (!lifecycleModal || !lifecycleForm) return;
+      lifecycleForm.dataset.id = id;
+      lifecycleForm.dataset.action = action;
+      lifecycleTitle.textContent = labels[action];
+      lifecycleSubmit.textContent = labels[action];
+      lifecycleReason.value = '';
+      lifecycleModal.classList.add('open');
+      lifecycleModal.setAttribute('aria-hidden', 'false');
+      lifecycleReason.focus();
+    };
+
+  document.querySelectorAll('[data-ann-lifecycle-action]').forEach(button => {
+    button.addEventListener('click', () => {
+      changeAnnouncementLifecycle(
+        button.dataset.announcementId,
+        button.dataset.annLifecycleAction
+      );
+    });
+  });
+
+  const lifecycleForm = document.getElementById('annLifecycleForm');
+  const lifecycleModal = document.getElementById('annLifecycleModal');
+  document.querySelectorAll('[data-ann-lifecycle-close]').forEach(button => {
+    button.addEventListener('click', () => {
+      lifecycleModal?.classList.remove('open');
+      lifecycleModal?.setAttribute('aria-hidden', 'true');
+    });
+  });
+  lifecycleForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (busy) return;
+    const reason = document.getElementById('annLifecycleReason')?.value.trim() || '';
+    if (reason.length < 5) {
+      showToast('Provide a reason of at least 5 characters.');
+      return;
+    }
+    busy = true;
+    try {
+      await request(
+        `${lifecycleForm.dataset.action}/${encodeURIComponent(lifecycleForm.dataset.id)}`,
+        { method: 'POST', body: new URLSearchParams({ csrf_token: csrf, reason: reason }) }
+      );
+      window.location.reload();
+    } catch (error) {
+      busy = false;
+      showToast(error.message);
+    }
+  });
 
 
   // ============================================================
