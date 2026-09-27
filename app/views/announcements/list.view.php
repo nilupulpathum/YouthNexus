@@ -23,6 +23,7 @@ $pageStyles      = [
 ];
 $pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
+require_once __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 require __DIR__ . '/helpers.php';
 
