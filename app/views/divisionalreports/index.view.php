@@ -34,7 +34,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php if ($userRole === 'DivisionalSecretary' && $aggregateTypeAvailable): ?>
       <a class="dw-button dw-button--secondary db-secondary-action" href="<?= ROOT ?>/divisionalreports/create?mode=aggregate">Aggregate Reports</a>
     <?php endif; ?>
-    <a class="dw-button dw-button--primary db-primary-action" href="<?= ROOT ?>/divisionalreports/create">Generate Report</a>
+    <a class="dw-button dw-button--primary db-primary-action" href="<?= ROOT ?>/divisionalreports/create"><?= yn_icon('plus') ?> Generate Report</a>
   </div>
 
   <div class="dw-toolbar" aria-label="Report tools">
@@ -81,7 +81,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span>Generated <?= $e(date('d M Y', strtotime($report->generated_at))) ?></span>
             <div class="dr-report-card__actions">
               <?php if ($report->format === 'PDF'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/pdf/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as PDF"><?= yn_icon('download') ?> PDF</a><?php elseif ($report->format === 'CSV'): ?><a class="dw-button dw-button--ghost" href="<?= ROOT ?>/divisionalreports/export/<?= (int) $report->report_id ?>" aria-label="Download <?= $e($report->type_name) ?> as CSV"><?= yn_icon('download') ?> CSV</a><?php endif; ?>
-              <a class="dw-button dw-button--secondary db-view-button" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View Details</a>
+              <a class="dw-button dw-button--secondary db-view-button dr-report-card__details" href="<?= ROOT ?>/divisionalreports/preview/<?= (int) $report->report_id ?>">View Details</a>
             </div>
           </footer>
         </article>

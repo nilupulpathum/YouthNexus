@@ -25,7 +25,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="me-header-row me-header-row-actions">
                 <button type="button" class="me-btn-primary db-primary-action" id="btnOpenCreateModal">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?>
+                    <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> <?= $isNyscAdmin ? 'Create National Event' : 'Create Event' ?>
                 </button>
             </div>
 
@@ -222,7 +222,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <h3>No events found</h3>
                     <p><?= $isNyscAdmin ? 'No events match your current filter criteria or no events have been created yet.' : 'No events match your current filter criteria or no events have been scheduled yet in this division.' ?></p>
                     <button type="button" class="me-btn-primary db-primary-action" onclick="document.getElementById('btnOpenCreateModal').click()">
-                        <?= $isNyscAdmin ? 'Create National Event' : 'Create Your First Event' ?>
+                        <span class="divisional-create-icon" aria-hidden="true"><?= yn_icon('plus') ?></span> <?= $isNyscAdmin ? 'Create National Event' : 'Create Your First Event' ?>
                     </button>
                 </div>
             <?php else: ?>

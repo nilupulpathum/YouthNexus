@@ -113,6 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="ea-field">
                     <label>REVIEW RESULT</label>
                     <select id="eaReviewResultSelect">
+                        <option value="">Select a decision</option>
                         <option value="approve">Approve Event</option>
                         <option value="reject">Reject Event</option>
                     </select>
@@ -126,7 +127,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <label>OFFICIAL REVIEW REMARKS (REQUIRED IF REJECTING)</label>
                 <textarea id="eaRemarks" placeholder="Provide the reason for this decision..."></textarea>
             </div>
-            <div class="ea-decision-impact-alert approve" id="eaImpactAlert">
+            <div class="ea-decision-impact-alert approve" id="eaImpactAlert" hidden>
                 <div class="ea-impact-text-content">
                     <strong>IMPACT OF APPROVAL</strong>
                     <p>Approving this event will publish it to the division's event calendar and notify the submitting club. This event will then be visible to the Divisional Secretary and eligible for attendance tracking once it occurs.</p>
@@ -134,7 +135,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="ea-decision-footer-bar">
                 <button type="button" class="ea-btn-cancel-link db-close-action" id="eaCancelReviewBtn">Cancel</button>
-                <button type="button" class="ea-btn ea-btn-submit-decision db-confirm-action" id="eaConfirmSubmitBtn">Confirm &amp; Submit Decision</button>
+                <button type="button" class="ea-btn ea-btn-submit-decision db-confirm-action" id="eaConfirmSubmitBtn" disabled>Confirm &amp; Submit Decision</button>
             </div>
         </div>
     </div>

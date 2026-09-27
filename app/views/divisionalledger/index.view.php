@@ -22,7 +22,7 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Division general ledger" data-finance-refresh-on-change>
+<section class="dw-page dw-ledger-page" aria-label="Division general ledger" data-finance-refresh-on-change>
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?>
@@ -45,7 +45,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalledger/export">
       <?= yn_icon('download') ?> Export
     </a>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry">Add Entry</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-ledger-entry"><?= yn_icon('plus') ?> Add Entry</button>
   </div>
 
   <section class="dw-filter-panel" id="ledger-filters" hidden>
@@ -100,7 +100,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   </section>
 
-  <div class="dw-content-grid">
+  <div class="dw-content-grid dw-content-grid--ledger">
     <section class="dw-panel">
       <header class="dw-panel__header">
         <div>
@@ -110,7 +110,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         <span class="dw-count" data-entry-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
       </header>
       <div class="dw-table-wrap">
-        <table class="dw-table">
+        <table class="dw-table dw-ledger-table">
           <thead>
             <tr>
               <th>Date</th>
