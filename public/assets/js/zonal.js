@@ -165,7 +165,7 @@ document.querySelectorAll('[data-modal-open]').forEach(button=>button.addEventLi
 }
 
 /* ---- zonaltreasurer/audit ---- */
-if (document.getElementById('zonal-audit')) {
+if (document.getElementById('flag-modal')) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const close = (modal) => { modal.classList.remove('show'); document.body.style.overflow = ''; };
