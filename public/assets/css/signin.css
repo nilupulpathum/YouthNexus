@@ -3,6 +3,28 @@ body {
   overflow: hidden;
 }
 
+.signin-btn__spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, .45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: signin-spin .7s linear infinite;
+}
+
+.signin-btn.is-loading .signin-btn__spinner { display: inline-block; }
+.signin-btn.is-loading .signin-btn__arrow { display: none; }
+.signin-btn:disabled { cursor: progress; opacity: .85; }
+.signin-progress { margin-top: 10px; color: #475569; font-size: 13px; text-align: center; }
+.signin-progress[hidden] { display: none; }
+
+@keyframes signin-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-btn__spinner { animation-duration: 1.5s; }
+}
+
 .page {
   display: grid;
   grid-template-columns: 1fr 1fr;
