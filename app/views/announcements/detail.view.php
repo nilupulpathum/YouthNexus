@@ -386,6 +386,8 @@ switch ($announcement->level ?? '') {
         <!-- Actions                                            -->
         <!-- ================================================== -->
 
+        <?php if (!empty($canManage) || (!empty($isRecipient) && $announcement->status === 'Published')): ?>
+
         <div class="ann-side-card">
 
             <?php if (!empty($canManage)): ?>
@@ -464,6 +466,8 @@ switch ($announcement->level ?? '') {
             <?php endif; ?>
 
         </div>
+
+        <?php endif; ?>
 
 
         <!-- ================================================== -->
