@@ -945,8 +945,8 @@ function mu_status_badge(string $status): string {
             Temporary credentials for the new account:
         </p>
         <div class="mu-temp-pass" id="mu-temp-pass-display">—</div>
-        <p style="font-size:12px;color:#6b7280;margin-top:10px;">
-            An automated onboarding email has been queued. The user will be prompted to change this password on first login.
+        <p id="mu-email-status" style="font-size:12px;color:#6b7280;margin-top:10px;">
+            These credentials have also been emailed to the user, who will be prompted to change this password on first login.
         </p>
     </div>
 
@@ -1427,9 +1427,18 @@ function mu_status_badge(string $status): string {
             .then(data => {
                 setLoading('mu-add-submit', 'mu-add-spinner', 'mu-add-icon', false);
                 if (data.success) {
-                    // show temp password
+                    // show temp password + email delivery status
+                    const createdEmail = document.getElementById('add-email').value;
                     const sb = document.getElementById('mu-add-success');
                     document.getElementById('mu-temp-pass-display').textContent = data.tempPassword || '—';
+                    const emailStatus = document.getElementById('mu-email-status');
+                    if (data.emailSent) {
+                        emailStatus.textContent = 'Login details were emailed to ' + createdEmail + '. The user will be prompted to change this password on first login.';
+                        emailStatus.style.color = '#065f46';
+                    } else {
+                        emailStatus.textContent = 'The notification email could not be sent — share the temporary password with ' + createdEmail + ' directly.';
+                        emailStatus.style.color = '#b45309';
+                    }
                     sb.classList.add('show');
                     // Reset the form
                     this.reset();

@@ -446,7 +446,7 @@ class UserModel extends Model {
         return true;
     }
 
-    public function findAnnouncementRecipients($targetRole, $managerLevel, $scopeId = null) {
+    public function findAnnouncementRecipients($targetRole, $managerLevel, $scopeId = null, $zoneId = null) {
         $sql = "SELECT u.user_id, u.first_name, u.last_name, u.email, u.role, u.club_id,
                        c.club_name,
                        COALESCE(u.division_id, c.division_id) AS effective_division_id,
@@ -474,6 +474,14 @@ class UserModel extends Model {
                 $params[] = (int) $scopeId;
                 break;
             case 'NYSC':
+                /*
+                 * National managers broadcast to every zone by default; an
+                 * optional zone filter narrows the broadcast to one zone.
+                 */
+                if ($zoneId) {
+                    $sql .= " AND COALESCE(u.zonal_id, d.zonal_id) = ?";
+                    $params[] = (int) $zoneId;
+                }
                 break;
             default:
                 throw new InvalidArgumentException('Invalid announcement manager level.');

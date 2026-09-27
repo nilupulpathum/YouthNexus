@@ -1,5 +1,12 @@
 <?php
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once APP_ROOT . '/core/phpmailer/Exception.php';
+require_once APP_ROOT . '/core/phpmailer/PHPMailer.php';
+require_once APP_ROOT . '/core/phpmailer/SMTP.php';
+
 /**
  * Manageuser Controller
  * ============================================================
@@ -235,12 +242,82 @@ class Manageuser extends Controller {
             "NYSC Admin created user: {$data['first_name']} {$data['last_name']} ({$data['email']}), Role: {$data['role']}"
         );
 
+        // Email the login credentials to the new user. On localhost the
+        // bundled SMTP has no credentials, so log them for QA instead
+        // (same pragmatism as Settings::sendPasswordCodeEmail). The account
+        // is already created at this point, so a send failure never fails
+        // the request — the admin still sees the temp password in the modal.
+        $fullName = $data['first_name'] . ' ' . $data['last_name'];
+        $emailSent = $this->sendAccountCreatedEmail($data['email'], $fullName, $data['role'], $tempPassword);
+        if (!$emailSent && $this->isLocalRequest()) {
+            error_log('[YouthNexus] LOCAL-ONLY new-account credentials for ' . $data['email'] . ': ' . $tempPassword);
+        }
+
         $this->json([
             'success'      => true,
             'message'      => "User {$data['first_name']} {$data['last_name']} created successfully.",
             'tempPassword' => $tempPassword,
             'userId'       => $newUserId,
+            'emailSent'    => $emailSent,
         ]);
+    }
+
+    // ================================================================
+    // OUTBOUND EMAIL — account-created credentials
+    // ================================================================
+
+    private function isLocalRequest(): bool {
+        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+        return (bool) preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/', $host)
+            || php_sapi_name() === 'cli-server';
+    }
+
+    private function sendAccountCreatedEmail(string $email, string $name, string $role, string $tempPassword): bool {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = MAIL_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = MAIL_USER;
+            $mail->Password   = MAIL_PASS;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
+
+            $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+            $mail->addAddress($email);
+
+            $safeName  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+            $safeRole  = htmlspecialchars($role, ENT_QUOTES, 'UTF-8');
+            $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Your YouthNexus account has been created';
+            $mail->Body = '
+            <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#f4f7fb;padding:20px;">
+              <div style="background:#fff;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);text-align:center;">
+                <h2 style="color:#002d72;margin-top:0;">YouthNexus Pulse</h2>
+                <p>Hello ' . $safeName . ',</p>
+                <p>Your YouthNexus account has been created with the position <strong>' . $safeRole . '</strong>.
+                   Use the credentials below to sign in:</p>
+                <div style="margin:25px 0;text-align:left;background:#f0f4f8;padding:15px;border-radius:8px;font-size:14px;">
+                  <p style="margin:0 0 8px;"><strong>Sign in at:</strong> <a href="' . ROOT . '/auth/signin">' . ROOT . '/auth/signin</a></p>
+                  <p style="margin:0 0 8px;"><strong>Email:</strong> ' . $safeEmail . '</p>
+                  <p style="margin:0;"><strong>Temporary password:</strong> <span style="font-size:18px;font-weight:bold;letter-spacing:2px;color:#002d72;">' . htmlspecialchars($tempPassword, ENT_QUOTES, 'UTF-8') . '</span></p>
+                </div>
+                <p style="color:#666;font-size:13px;">For security, you will be asked to change this temporary password the first time you sign in. If you were not expecting this account, please ignore this email.</p>
+              </div>
+            </div>';
+            $mail->AltBody = "Hello $name,\n\nYour YouthNexus account ($role) has been created.\n"
+                . "Sign in at: " . ROOT . "/auth/signin\n"
+                . "Email: $email\n"
+                . "Temporary password: $tempPassword\n\n"
+                . "You will be asked to change this password the first time you sign in.";
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log('[YouthNexus] sendAccountCreatedEmail SMTP error for ' . $email . ': ' . $mail->ErrorInfo);
+            return false;
+        }
     }
 
     // ================================================================
