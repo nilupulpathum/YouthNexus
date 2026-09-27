@@ -22,6 +22,7 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
   </div>
 
   <div class="db-topbar-right dashboard-header__right">
+    <?php if (!str_starts_with((string) $userRole, 'Divisional')): ?>
     <label class="db-search-top" for="dashboard-global-search">
       <input id="dashboard-global-search" type="search" placeholder="Search..." autocomplete="off">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -29,6 +30,7 @@ $roleLabel = strtolower((string) $userRole) === 'clubmember' ? 'Member' : ucword
       </svg>
       <span class="visually-hidden">Search this workspace</span>
     </label>
+    <?php endif; ?>
 
     <div class="dashboard-notifications" data-notif-menu>
       <button class="db-icon-btn dashboard-notification" type="button" data-notif-toggle aria-controls="dashboard-notif-menu" aria-expanded="false" aria-label="Notifications<?= $unreadNotificationCount > 0 ? ', ' . $unreadNotificationCount . ' unread' : '' ?>">

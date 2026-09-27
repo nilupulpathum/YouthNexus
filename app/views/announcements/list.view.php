@@ -175,13 +175,13 @@ $statusLabel = static function ($status) {
             Search announcements
         </label>
 
+        <span class="ann-search-icon" aria-hidden="true"><?= $annIcon('search') ?></span>
+
         <input
             type="search"
             id="annSearchInput"
-            placeholder="Search announcements..."
+            placeholder="Search announcements by title or message"
         >
-
-        <?= $annIcon('search') ?>
 
     </div>
 

@@ -16,16 +16,20 @@ $summaryCards = [
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
-<section class="dw-page" aria-label="Club finance audit queue">
+<section class="dw-page dtn-audit-page" aria-label="Club finance audit queue">
   <?php if ($flash): ?>
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status">
       <?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span>
     </div>
   <?php endif; ?>
 
-  <div class="dw-page-actions" aria-label="Page actions">
+  <section class="dw-panel dtn-audit-start" aria-labelledby="audit-start-heading">
+    <div>
+      <h2 id="audit-start-heading">Start a Club Finance Audit</h2>
+      <p>Choose a club and audit period to review its ledger, receipts, and findings.</p>
+    </div>
     <button class="yn-btn yn-btn--primary dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>>Start Audit</button>
-  </div>
+  </section>
 
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Audit summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
@@ -34,7 +38,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <div class="dw-toolbar" aria-label="Audit tools">
     <div class="dw-toolbar__search yn-search dw-search">
       <label class="visually-hidden" for="audit-search">Search clubs</label>
-      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
+      <span class="yn-search__icon dw-search__icon" aria-hidden="true"><?= yn_icon('search') ?></span><input id="audit-search" type="search" placeholder="Search audits by club name" data-audit-search>
     </div>
     <button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-toggle" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false"><?= yn_icon('filter') ?> Filters</button>
   </div>
@@ -50,9 +54,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dw-filter-actions"><button class="yn-btn yn-btn--secondary dw-button dw-button--secondary yn-filter-clear" type="button" data-audit-filter-reset>Clear filters</button><button class="yn-btn yn-btn--primary dw-button dw-button--primary yn-filter-apply" type="button" data-audit-filter-apply>Apply filters</button></div>
   </section>
 
-  <div class="dw-section-header"><div><h2>Audit Queue</h2><p>Clubs within <?= $e($division->division_name) ?></p></div><span class="dw-count" data-audit-count><?= count($queue) ?> clubs</span></div>
-
-  <div class="dw-audit-grid" data-audit-grid>
+  <section class="dw-panel dtn-audit-register" aria-labelledby="audit-register-heading">
+    <header class="dw-panel__header"><div><h2 id="audit-register-heading">Club Audit Register</h2><p>Finance reviews for clubs in <?= $e($division->division_name) ?></p></div><span class="dw-count" data-audit-count><?= count($queue) ?> clubs</span></header>
+    <div class="yn-table-wrap dw-table-wrap"><table class="yn-table dw-table">
+      <thead><tr><th>Club</th><th>Audit cycle</th><th>Last activity</th><th>Findings</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody data-audit-grid>
     <?php foreach ($queue as $item): ?>
       <?php
       $statusText = $item->audit_id ? $item->audit_status : 'Not Started';
@@ -61,19 +67,19 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           : 'Not assigned';
       $lastDate = $item->signed_off_at ?: $item->initiated_at;
       ?>
-      <article class="dw-audit-card<?= (int) $item->open_flags > 0 ? ' dw-audit-card--flagged' : '' ?>"
+      <tr class="<?= (int) $item->open_flags > 0 ? 'dtn-audit-row--flagged' : '' ?>"
                data-audit-card
                data-search="<?= $e(strtolower($item->club_name)) ?>"
                data-type="<?= $e(strtolower($item->audit_type ?: 'notassigned')) ?>"
                data-status="<?= $e(strtolower(str_replace(' ', '', $statusText))) ?>"
                data-flags="<?= (int) $item->open_flags > 0 ? 'flagged' : 'clear' ?>"
                data-date="<?= $lastDate ? $e(date('Y-m-d', strtotime($lastDate))) : '' ?>">
-        <header class="dw-audit-card__header"><div><span class="dw-audit-card__cycle"><?= $e($typeText) ?></span><h3><?= $e($item->club_name) ?></h3></div><?php $status = $statusText; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></header>
-        <div class="dw-audit-card__details">
-          <span><?= $lastDate ? 'Last activity ' . $e(date('d M Y', strtotime($lastDate))) : 'No audit recorded' ?></span>
-          <span><?= (int) $item->open_flags ?> open <?= (int) $item->open_flags === 1 ? 'finding' : 'findings' ?></span>
-        </div>
-        <footer class="dw-audit-card__footer">
+        <td class="dw-table__description"><?= $e($item->club_name) ?></td>
+        <td><?= $e($typeText) ?></td>
+        <td><?= $lastDate ? $e(date('d M Y', strtotime($lastDate))) : 'No audit recorded' ?></td>
+        <td><?= (int) $item->open_flags ?> open <?= (int) $item->open_flags === 1 ? 'finding' : 'findings' ?></td>
+        <td><?php $status = $statusText; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+        <td>
           <?php if ($item->audit_id): ?>
             <a class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
           <?php elseif ((int) $item->has_active_ledger === 1): ?>
@@ -81,10 +87,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
           <?php else: ?>
             <button class="yn-btn yn-btn--ghost dw-button dw-button--ghost db-secondary-action" type="button" disabled>Ledger Unavailable</button>
           <?php endif; ?>
-        </footer>
-      </article>
+        </td>
+      </tr>
     <?php endforeach; ?>
-  </div>
+      </tbody>
+    </table></div>
+  </section>
   <?php $emptyTitle = 'No clubs found'; $emptyMessage = 'Change the current search and filters.'; $emptyVisible = count($queue) === 0; require __DIR__ . '/../partials/empty-state.view.php'; ?>
 </section>
 

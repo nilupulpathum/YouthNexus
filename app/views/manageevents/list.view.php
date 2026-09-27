@@ -92,10 +92,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <div class="me-toolbar">
                     <div class="me-search-group">
                         <div class="me-search-input-wrapper">
-                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, type..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
-                            <span class="me-search-icon">
+                            <span class="me-search-icon" aria-hidden="true">
                                 <?= yn_icon('search') ?>
                             </span>
+                            <input type="text" name="search" id="meSearchInput" class="me-search-input" placeholder="Search events by title, organizer, location, or type" value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
                         </div>
                     </div>
                     <button type="button" class="me-filter-btn yn-filter-toggle" id="meFilterBtn" aria-expanded="<?= $activeFilters > 0 ? 'true' : 'false' ?>" aria-controls="meFilterPanel">
