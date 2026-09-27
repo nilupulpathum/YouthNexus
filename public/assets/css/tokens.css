@@ -8,14 +8,13 @@
  * Naming: --yn-<concept>[-<variant>]
  *   e.g. --yn-primary, --yn-primary-hover, --yn-success-bg
  *
- * Migration: --db-*, --dw-*, and landing.css's parallel palette are
- * sunset in PR #9. Until then, feature CSS files may still reference
- * the legacy tokens; this file keeps both alive via fallback aliases.
+ * Dashboard and feature styles use the shared --yn-* namespace.
  */
 
 :root {
   /* ── Color: Primary ──────────────────────────────────────────────── */
   --yn-primary: #1e40af;
+  --yn-accent-orange: #f97316;
   --yn-primary-hover: #1d3a8a;
   --yn-primary-soft: #eef4ff;
   --yn-primary-bg: #eff6ff;
@@ -136,27 +135,9 @@
   --yn-sidebar-width: 240px;
   --yn-topbar-height: 66px;
 
-  /* ── Legacy aliases (sunset in PR #9) ───────────────────────────── */
-  --db-sidebar-bg: var(--yn-primary);
-  --db-topbar-height: var(--yn-topbar-height);
-  --db-text-dark: var(--yn-text-primary);
-  --db-text-grey: var(--yn-text-muted);
-  --db-border: var(--yn-border);
-  --db-bg-page: var(--yn-bg-page);
-  --db-radius: var(--yn-radius);
-  --db-radius-lg: var(--yn-radius-lg);
-  --db-font-family: var(--yn-font-family);
-  --dw-primary: var(--yn-primary);
-  --dw-success: var(--yn-success);
-  --dw-warning: var(--yn-warning);
-  --dw-danger: var(--yn-danger);
-  --dw-border: var(--yn-border);
-  --dw-muted: var(--yn-text-muted);
-  --dw-text: var(--yn-text-primary);
-  --dw-radius: var(--yn-radius);
-  --dw-radius-lg: var(--yn-radius-lg);
-  --dw-shadow: var(--yn-shadow);
 }
+
+.yn-ml-auto { margin-left: auto; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -185,3 +166,9 @@
 .yn-mt-4        { margin-top: var(--yn-space-4); }
 .yn-mb-2        { margin-bottom: var(--yn-space-2); }
 .yn-mb-4        { margin-bottom: var(--yn-space-4); }
+
+.yn-inline { display: inline; }
+.yn-m-0 { margin: 0; }
+.yn-mt-6 { margin-top: 24px; }
+.yn-mb-3 { margin-bottom: 12px; }
+.yn-mb-5 { margin-bottom: 20px; }

@@ -68,8 +68,7 @@ class DivisionalAssetModel extends Model {
              LEFT JOIN User decision_user ON decision_user.user_id = ar.decided_by
              WHERE ar.scope_direction = 'DivisionToZonal'
                AND ar.requester_level = 'Divisional' AND ar.requester_id = ?
-             ORDER BY ar.requested_at DESC, ar.asset_request_id DESC
-             LIMIT 20",
+             ORDER BY ar.requested_at DESC, ar.asset_request_id DESC",
             [$divisionId]
         );
     }
@@ -87,8 +86,7 @@ class DivisionalAssetModel extends Model {
              WHERE t.from_owner_level = 'Divisional'
                AND t.from_owner_id = ?
                AND t.to_owner_level = 'Club'
-             ORDER BY t.created_at DESC, t.transfer_id DESC
-             LIMIT 50",
+             ORDER BY t.created_at DESC, t.transfer_id DESC",
             [$divisionId, $divisionId]
         );
     }

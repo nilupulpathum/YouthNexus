@@ -91,7 +91,7 @@
     gap: 15px;
     min-height: 132px;
     padding: 24px 22px;
-    background: #fff;
+    background: var(--yn-bg-surface);
     border: 1px solid #e9edf5;
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(24, 43, 84, 0.05);
@@ -159,7 +159,7 @@
 
 .member-panel {
     min-width: 0;
-    background: #fff;
+    background: var(--yn-bg-surface);
     border: 1px solid #e9edf5;
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(24, 43, 84, 0.05);
@@ -398,7 +398,7 @@
     min-height: 290px;
     overflow: hidden;
     padding: 27px 32px 25px;
-    color: #fff;
+    color: var(--yn-bg-surface);
     background: #2347a8;
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(31, 65, 157, 0.18);
@@ -423,13 +423,13 @@
 }
 
 .member-cv-header h2 {
-    color: #fff;
+    color: var(--yn-bg-surface);
     font-size: 22px;
 }
 
 .member-cv-link {
     padding: 9px 13px;
-    color: #fff;
+    color: var(--yn-bg-surface);
     background: rgba(255, 255, 255, 0.13);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 999px;
@@ -479,13 +479,13 @@
 .member-cv-pill {
     padding: 6px 8px;
     color: #2347a8;
-    background: #fff;
+    background: var(--yn-bg-surface);
     border-radius: 5px;
     font-weight: 750;
 }
 
 .member-cv-pill--muted {
-    color: #fff;
+    color: var(--yn-bg-surface);
     background: rgba(255, 255, 255, 0.17);
 }
 
@@ -493,8 +493,8 @@
     margin-left: auto;
     padding: 11px 15px;
     color: #2347a8;
-    background: #fff;
-    border: 1px solid #fff;
+    background: var(--yn-bg-surface);
+    border: 1px solid var(--yn-bg-surface);
     border-radius: 8px;
     font: inherit;
     font-size: 12px;
@@ -507,7 +507,7 @@
 }
 
 .member-cv-button--ghost {
-    color: #fff;
+    color: var(--yn-bg-surface);
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.23);
 }
@@ -564,4 +564,4 @@
 
 /* Button text must beat `.dashboard button { color: inherit; }` (dashboard.css) */
 .dashboard .member-cv-button { color: #2347a8; }
-.dashboard .member-cv-button--ghost { color: #fff; }
+.dashboard .member-cv-button--ghost { color: var(--yn-bg-surface); }

@@ -2,6 +2,7 @@
 $escape = static function ($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); };
 require __DIR__ . '/../partials/icons.view.php';
 $pageStyles = [ROOT . '/assets/css/managereports.css'];
+$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 <section class="rpt-content" aria-labelledby="coordinator-reports-heading">

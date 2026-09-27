@@ -440,7 +440,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </button>
           </div>
         </div>
-        <p class="dw-alert dw-alert--warning" data-disband-lock-msg hidden style="margin: 0; font-size: 12px;"></p>
+        <p class="dw-alert dw-alert--warning nch-lock-note" data-disband-lock-msg hidden></p>
       </section>
 
       <!-- Profile & Performance Columns -->
@@ -470,7 +470,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
               </div>
             </div>
             <div class="dw-table-wrap">
-              <table class="dw-table">
+              <table class="yn-table dw-table">
                 <thead>
                   <tr>
                     <th>Event</th>
@@ -509,7 +509,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <div class="dw-impact-grid" data-detail-finance-summary></div>
         <div class="dw-table-wrap">
-          <table class="dw-table">
+          <table class="yn-table dw-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -541,7 +541,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
           </div>
           <div class="dw-table-wrap">
-            <table class="dw-table">
+            <table class="yn-table dw-table">
               <thead>
                 <tr>
                   <th>Month</th>
@@ -591,7 +591,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <div class="dw-detail-box dw-field--span-2">
         <span>Recipients (President &amp; Secretary)</span>
-        <span data-warning-recipients style="font-size: 13px; font-weight: 600; color: #334155;"></span>
+        <span data-warning-recipients class="nch-recipient-label"></span>
       </div>
       <div class="dw-field dw-field--span-2">
         <label for="warning-subject">Warning Notice Subject</label>
@@ -634,9 +634,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       </div>
       <div class="dw-detail-box dw-field--span-2">
         <span>Remaining Ledger Balance to Sweep</span>
-        <strong data-retrieve-amount style="color: #047857; font-size: 18px;"></strong>
+        <strong data-retrieve-amount class="nch-retrieve-amount"></strong>
       </div>
-      <div class="nysc-confirm-box dw-field--span-2" style="background: #f0fdf4; border-color: #22c55e; color: #15803d;">
+      <div class="nysc-confirm-box dw-field--span-2 nch-confirm-success">
         <strong>Treasury Fund Sweep Operation</strong>
         <ul>
           <li>A <strong>Fund Transfer Out</strong> expense entry is posted in the Club Ledger (Balance becomes 0.00).</li>

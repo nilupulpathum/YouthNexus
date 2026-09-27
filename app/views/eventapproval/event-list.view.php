@@ -144,10 +144,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <div class="ea-decision-fields-row">
                 <div class="ea-field">
                     <label>REVIEW RESULT</label>
-                    <select id="eaReviewResultSelect">
-                        <option value="approve">Approve Event</option>
-                        <option value="reject">Reject Event</option>
-                    </select>
+                    <p class="ea-decision-guidance">Choose an action below after reviewing the event.</p>
                 </div>
                 <div class="ea-field">
                     <label>REVIEWED BY</label>
@@ -166,7 +163,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             </div>
             <div class="ea-decision-footer-bar">
                 <button type="button" class="ea-btn-cancel-link db-close-action" id="eaCancelReviewBtn">Cancel</button>
-                <button type="button" class="ea-btn ea-btn-submit-decision db-confirm-action" id="eaConfirmSubmitBtn">Confirm &amp; Submit Decision</button>
+                <button type="button" class="yn-btn yn-btn--reject" data-ea-decision="reject">Reject Event</button>
+                <button type="button" class="yn-btn yn-btn--approve" data-ea-decision="approve">Approve Event</button>
             </div>
         </div>
     </div>

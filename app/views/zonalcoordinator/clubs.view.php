@@ -194,7 +194,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <section class="dw-field--span-2" aria-labelledby="ch-events-h">
                     <h3 id="ch-events-h" class="health-detail-label">Recent events</h3>
                     <div class="dw-table-wrap">
-                        <table class="dw-table">
+                        <table class="yn-table dw-table">
                             <thead>
                                 <tr>
                                     <th>Event Name</th>
