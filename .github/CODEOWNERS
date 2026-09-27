@@ -1,0 +1,11 @@
+# Zonal tier owned by Bimandi2004
+app/controllers/Zonal*.php @Bimandi2004
+app/models/Zone*.php @Bimandi2004
+app/views/zonal*/ @Bimandi2004
+app/views/zonaltreasurer/ @Bimandi2004
+app/views/zonalsecretary/ @Bimandi2004
+app/views/zonalcoordinator/ @Bimandi2004
+app/views/zonalreports/ @Bimandi2004
+app/views/zonalclubhealth/ @Bimandi2004
+public/assets/js/zonal.js @Bimandi2004
+database/*zonal* @Bimandi2004
