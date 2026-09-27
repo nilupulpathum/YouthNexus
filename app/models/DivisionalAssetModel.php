@@ -68,7 +68,8 @@ class DivisionalAssetModel extends Model {
              LEFT JOIN User decision_user ON decision_user.user_id = ar.decided_by
              WHERE ar.scope_direction = 'DivisionToZonal'
                AND ar.requester_level = 'Divisional' AND ar.requester_id = ?
-             ORDER BY ar.requested_at DESC, ar.asset_request_id DESC",
+             ORDER BY ar.requested_at DESC, ar.asset_request_id DESC
+             LIMIT 20",
             [$divisionId]
         );
     }
@@ -86,7 +87,8 @@ class DivisionalAssetModel extends Model {
              WHERE t.from_owner_level = 'Divisional'
                AND t.from_owner_id = ?
                AND t.to_owner_level = 'Club'
-             ORDER BY t.created_at DESC, t.transfer_id DESC",
+             ORDER BY t.created_at DESC, t.transfer_id DESC
+             LIMIT 50",
             [$divisionId, $divisionId]
         );
     }
@@ -227,74 +229,6 @@ class DivisionalAssetModel extends Model {
             foreach ($users->fetchAll(PDO::FETCH_COLUMN) as $recipientId) {
                 $notify->execute([$recipientId, "{$division->division_name} requested {$quantity} unit(s) of {$item->item_name}.", $requestId]);
             }
-            $pdo->commit();
-        } catch (Throwable $exception) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            throw $exception;
-        }
-    }
-
-    public function withdrawZonalRequest(int $divisionId, int $requestId, int $userId, string $reason): void {
-        $reason = trim($reason);
-        if (strlen($reason) < 5 || strlen($reason) > 1000) {
-            throw new InvalidArgumentException('Provide a withdrawal reason between 5 and 1000 characters.');
-        }
-        $pdo = Database::getInstance()->getConnection();
-        $pdo->beginTransaction();
-        try {
-            $update = $pdo->prepare(
-                "UPDATE AssetRequest
-                 SET status = 'Withdrawn', remarks = ?, decided_by = ?, decided_at = NOW()
-                 WHERE asset_request_id = ? AND requester_level = 'Divisional'
-                   AND requester_id = ? AND requested_by = ? AND scope_direction = 'DivisionToZonal'
-                   AND status = 'Pending'"
-            );
-            $update->execute([$reason, $userId, $requestId, $divisionId, $userId]);
-            if ($update->rowCount() !== 1) throw new RuntimeException('Only your pending zonal request can be withdrawn.');
-            $this->writeAudit($pdo, $userId, 'DivisionalAssetRequestWithdrawn', 'AssetRequest', $requestId, $reason);
-            $pdo->commit();
-        } catch (Throwable $exception) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            throw $exception;
-        }
-    }
-
-    public function retireStock(
-        int $divisionId,
-        int $catalogItemId,
-        int $quantity,
-        int $userId,
-        string $actionType,
-        string $reason
-    ): void {
-        if ($quantity < 1 || !in_array($actionType, ['Retired', 'WrittenOff'], true)) {
-            throw new InvalidArgumentException('Select a valid retirement action and quantity.');
-        }
-        $reason = trim($reason);
-        if (strlen($reason) < 5 || strlen($reason) > 1000) {
-            throw new InvalidArgumentException('Provide a retirement reason between 5 and 1000 characters.');
-        }
-        $pdo = Database::getInstance()->getConnection();
-        $pdo->beginTransaction();
-        try {
-            $select = $pdo->prepare(
-                "SELECT stock_id, quantity FROM AssetStock
-                 WHERE catalog_item_id = ? AND owner_level = 'Divisional' AND owner_id = ? FOR UPDATE"
-            );
-            $select->execute([$catalogItemId, $divisionId]);
-            $stock = $select->fetch();
-            if (!$stock || (int) $stock->quantity < $quantity) {
-                throw new RuntimeException('The retirement quantity exceeds available divisional stock.');
-            }
-            $pdo->prepare('UPDATE AssetStock SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP WHERE stock_id = ?')
-                ->execute([$quantity, $stock->stock_id]);
-            $insert = $pdo->prepare(
-                'INSERT INTO AssetRetirement (stock_id, quantity, action_type, reason, recorded_by) VALUES (?, ?, ?, ?, ?)'
-            );
-            $insert->execute([$stock->stock_id, $quantity, $actionType, $reason, $userId]);
-            $retirementId = (int) $pdo->lastInsertId();
-            $this->writeAudit($pdo, $userId, 'DivisionalAsset' . $actionType, 'AssetRetirement', $retirementId,
-                "{$quantity} unit(s). {$reason}");
             $pdo->commit();
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) $pdo->rollBack();

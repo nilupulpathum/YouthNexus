@@ -17,35 +17,22 @@
   var count = document.querySelector('[data-transaction-count]');
   var empty = document.querySelector('[data-empty-state]');
 
-  var panelControls = [type, category, receipt, sort, minimum, maximum, dateFrom, dateTo];
-  var appliedValues = new Map();
-  function captureFilters() {
-    panelControls.forEach(function (control) {
-      if (control) appliedValues.set(control, control.value);
-    });
-  }
-  function selected(control) {
-    return control ? String(appliedValues.get(control) || '') : '';
-  }
-  captureFilters();
-
   function textValue(control) {
     return control ? String(control.value || '').trim().toLowerCase() : '';
   }
 
   function numericValue(control) {
-    var current = selected(control);
-    if (current === '') return null;
-    var parsed = Number(current);
+    if (!control || control.value === '') return null;
+    var parsed = Number(control.value);
     return Number.isFinite(parsed) ? parsed : null;
   }
 
   function sortCards() {
-    var mode = selected(sort).trim().toLowerCase() || 'newest';
+    var selected = textValue(sort) || 'newest';
     cards.sort(function (left, right) {
-      if (mode === 'oldest') return left.dataset.date.localeCompare(right.dataset.date);
-      if (mode === 'amount-high') return Number(right.dataset.amount) - Number(left.dataset.amount);
-      if (mode === 'amount-low') return Number(left.dataset.amount) - Number(right.dataset.amount);
+      if (selected === 'oldest') return left.dataset.date.localeCompare(right.dataset.date);
+      if (selected === 'amount-high') return Number(right.dataset.amount) - Number(left.dataset.amount);
+      if (selected === 'amount-low') return Number(left.dataset.amount) - Number(right.dataset.amount);
       return right.dataset.date.localeCompare(left.dataset.date);
     });
     cards.forEach(function (card) { grid.appendChild(card); });
@@ -53,13 +40,13 @@
 
   function applyFilters() {
     var query = textValue(search);
-    var selectedType = selected(type).trim().toLowerCase();
-    var selectedCategory = selected(category).trim().toLowerCase();
-    var selectedReceipt = selected(receipt).trim().toLowerCase();
+    var selectedType = textValue(type);
+    var selectedCategory = textValue(category);
+    var selectedReceipt = textValue(receipt);
     var minimumAmount = numericValue(minimum);
     var maximumAmount = numericValue(maximum);
-    var from = selected(dateFrom);
-    var to = selected(dateTo);
+    var from = dateFrom ? dateFrom.value : '';
+    var to = dateTo ? dateTo.value : '';
     var visible = 0;
 
     cards.forEach(function (card) {
@@ -82,13 +69,12 @@
   }
 
   if (search) search.addEventListener('input', applyFilters);
-  document.querySelector('[data-transaction-filter-apply]')?.addEventListener('click', function () { captureFilters(); applyFilters(); });
+  document.querySelector('[data-transaction-filter-apply]')?.addEventListener('click', applyFilters);
   document.querySelector('[data-transaction-filter-reset]')?.addEventListener('click', function () {
     [search, type, category, receipt, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
       if (control) control.value = '';
     });
     if (sort) sort.value = 'newest';
-    captureFilters();
     applyFilters();
   });
 

@@ -102,7 +102,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span class="dw-count"><?= count($roster) ?> <?= count($roster) === 1 ? 'member' : 'members' ?></span>
         </header>
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -167,7 +167,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <span class="dw-count"><?= count($rejected) ?> <?= count($rejected) === 1 ? 'request' : 'requests' ?></span>
         </header>
         <div class="dw-table-wrap">
-            <table class="yn-table dw-table">
+            <table class="dw-table">
                 <thead>
                     <tr>
                         <th>Name</th>

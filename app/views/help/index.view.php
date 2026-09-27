@@ -5,10 +5,9 @@
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/help.css'];
+$pageStyles = [ROOT . '/assets/css/help.css?v=20261001'];
 
 require __DIR__ . '/../partials/icons.view.php';
-$pageScripts = [ROOT . '/assets/js/help.js'];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -59,10 +58,12 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <label for="contact-message">Message</label>
                     <textarea id="contact-message" rows="5" placeholder="How can we help you?" required></textarea>
                 </div>
-                <button type="submit" class="yn-btn yn-btn--primary btn-submit-contact">Submit Message</button>
+                <button type="submit" class="btn-submit-contact">Submit Message</button>
             </form>
         </section>
     </aside>
 </div>
+
+<script src="<?= ROOT ?>/assets/js/help.js"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
