@@ -21,7 +21,7 @@ $title = 'Zonal Overview - YouthNexus';
 $pageTitle = 'Zonal Overview';
 $pageDescription = 'Zone health and average club health per division';
 $currentRoute = 'zonalcoordinator';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/member-dashboard.css?v=20261001'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 
 $summaryCards = [

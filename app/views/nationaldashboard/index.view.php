@@ -9,9 +9,8 @@ $pageTitle               = $pageTitle ?? 'National Dashboard';
 $pageDescription         = $pageDescription ?? 'National governance overview';
 $currentRoute            = $currentRoute ?? 'nationaldashboard';
 $unreadNotificationCount = (int)($pendingApps ?? 0);
-$pageStyles              = [ROOT . '/assets/css/nationaldashboard.css'];
+$pageStyles              = [ROOT . '/assets/css/nationaldashboard.css?v=20261001'];
 
-$pageScripts = [];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 
@@ -29,7 +28,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <!-- Stats Row -->
             <div class="nd-stats-row">
-                <div class="yn-stat-card nd-stat-card">
+                <div class="nd-stat-card">
                     <div class="nd-stat-top">
                         <span class="nd-stat-label">All active clubs</span>
                         <div class="nd-stat-circle blue">
@@ -39,7 +38,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="nd-stat-value"><?= number_format($totalYouth) ?></div>
                     <div class="nd-stat-desc">Total Registered Youth</div>
                 </div>
-                <div class="yn-stat-card nd-stat-card">
+                <div class="nd-stat-card">
                     <div class="nd-stat-top">
                         <span class="nd-stat-label">Across all zones</span>
                         <div class="nd-stat-circle orange">
@@ -49,7 +48,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="nd-stat-value"><?= number_format($totalClubs) ?></div>
                     <div class="nd-stat-desc">Total Active Clubs</div>
                 </div>
-                <div class="yn-stat-card nd-stat-card">
+                <div class="nd-stat-card">
                     <div class="nd-stat-top">
                         <span class="nd-stat-label">This year</span>
                         <div class="nd-stat-circle purple">
@@ -59,7 +58,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="nd-stat-value"><?= number_format($totalHours) ?></div>
                     <div class="nd-stat-desc">National Volunteer Hours</div>
                 </div>
-                <div class="yn-stat-card nd-stat-card">
+                <div class="nd-stat-card">
                     <div class="nd-stat-top">
                         <span class="nd-stat-label">Sum of active fund balances</span>
                         <div class="nd-stat-circle green">
