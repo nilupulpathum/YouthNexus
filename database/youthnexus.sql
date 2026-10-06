@@ -147,6 +147,9 @@ CREATE TABLE Club (
     overall_health_score  DECIMAL(5,2) DEFAULT 0,
     health_status        ENUM('Green', 'Yellow', 'Red') DEFAULT 'Green',
     flagged              BOOLEAN NOT NULL DEFAULT FALSE,
+    disband_reason       TEXT NULL,
+    disbanded_at         DATETIME NULL,
+    disbanded_by         INT NULL,
     source_application_id INT NULL,
 
     FOREIGN KEY (division_id) REFERENCES Division(division_id),

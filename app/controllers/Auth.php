@@ -60,6 +60,9 @@ class Auth extends Controller {
                     // Send 2FA verification email
                     if ($this->sendVerificationEmail($user->email, $_SESSION['temp_login']['user_name'], $code)) {
                         $this->redirect('auth/verify');
+                    } elseif ($this->isLocalRequest()) {
+                        $_SESSION['local_2fa_code'] = $code;
+                        $this->redirect('auth/verify?code=' . $code);
                     } else {
                         $data['error'] = 'Failed to send 2FA verification email. Please try again.';
                         $data['email'] = htmlspecialchars($email, ENT_QUOTES);
@@ -161,9 +164,10 @@ class Auth extends Controller {
             $resent = true;
         }
 
+        $localCode = $_GET['code'] ?? ($_SESSION['local_2fa_code'] ?? '');
         $data = [
             'title'   => 'Verify Code — YouthNexus Pulse',
-            'msg'     => $resent ? 'A new verification code has been sent to ' . htmlspecialchars($targetEmail, ENT_QUOTES) . '.' : '',
+            'msg'     => $localCode ? 'Local dev mode: Verification code is ' . htmlspecialchars($localCode) : ($resent ? 'A new verification code has been sent to ' . htmlspecialchars($targetEmail, ENT_QUOTES) . '.' : ''),
             'email'   => htmlspecialchars($targetEmail, ENT_QUOTES),
             'success' => false,
             'error'   => false,
@@ -489,5 +493,11 @@ class Auth extends Controller {
             error_log('[YouthNexus] sendResetEmail SMTP error: ' . $mail->ErrorInfo);
             return false;
         }
+    }
+
+    private function isLocalRequest(): bool {
+        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+        return (bool) preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/', $host)
+            || php_sapi_name() === 'cli-server';
     }
 }

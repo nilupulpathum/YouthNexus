@@ -1,5 +1,9 @@
 <?php
 
+if (file_exists(__DIR__ . '/config.local.php')) {
+    require_once __DIR__ . '/config.local.php';
+}
+
 if (($_SERVER['SERVER_NAME'] ?? 'localhost') === 'localhost') {
     $port = $_SERVER['SERVER_PORT'] ?? '80';
     if (php_sapi_name() === 'cli-server') {
