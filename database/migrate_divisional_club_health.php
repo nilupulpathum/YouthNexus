@@ -34,6 +34,18 @@ try {
         }
     }
 
+    // Ensure Club has required disbandment columns
+    $clubCols = $pdo->query("SHOW COLUMNS FROM `Club`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('disband_reason', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disband_reason` TEXT NULL AFTER `flagged`");
+    }
+    if (!in_array('disbanded_at', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disbanded_at` DATETIME NULL AFTER `disband_reason`");
+    }
+    if (!in_array('disbanded_by', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disbanded_by` INT NULL AFTER `disbanded_at`");
+    }
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS `ClubHealthSnapshot` (
         `snapshot_id` INT AUTO_INCREMENT PRIMARY KEY,
         `club_id` INT NOT NULL,
