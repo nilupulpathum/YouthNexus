@@ -111,6 +111,15 @@ try {
     if (!in_array('health_status', $clubCols)) {
         $pdo->exec("ALTER TABLE `Club` ADD COLUMN `health_status` ENUM('Green','Yellow','Red') NOT NULL DEFAULT 'Green'");
     }
+    if (!in_array('disband_reason', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disband_reason` TEXT NULL AFTER `flagged`");
+    }
+    if (!in_array('disbanded_at', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disbanded_at` DATETIME NULL AFTER `disband_reason`");
+    }
+    if (!in_array('disbanded_by', $clubCols)) {
+        $pdo->exec("ALTER TABLE `Club` ADD COLUMN `disbanded_by` INT NULL AFTER `disbanded_at`");
+    }
 
     // 6. SEED BASELINE DATA IF NEEDED
     echo "Seeding baseline data if empty...\n";
