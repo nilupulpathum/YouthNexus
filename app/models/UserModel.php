@@ -107,6 +107,59 @@ class UserModel extends Model {
     }
 
     /**
+     * Update the Edit Profile fields of one user.
+     *
+     * @param  int    $userId
+     * @param  string $firstName
+     * @param  string $lastName
+     * @param  string $email
+     * @param  string $phone
+     * @param  string $address
+     * @return bool
+     */
+    public function updateProfile($userId, $firstName, $lastName, $email, $phone, $address) {
+        $this->query(
+            "UPDATE User
+             SET first_name = ?, last_name = ?, email = ?, phone_number = ?, address = ?
+             WHERE user_id = ?",
+            [$firstName, $lastName, $email, $phone, $address, (int) $userId]
+        );
+        return true;
+    }
+
+    /**
+     * Set (or clear, with $url = null) a user's profile picture. $url is the
+     * repo-relative path "uploads/profile_pictures/<file>".
+     *
+     * @param  int         $userId
+     * @param  string|null $url
+     * @return bool
+     */
+    public function updateProfilePicture($userId, $url) {
+        $this->query(
+            "UPDATE User SET profile_picture_url = ? WHERE user_id = ?",
+            [($url === '' ? null : $url), (int) $userId]
+        );
+        return true;
+    }
+
+    /**
+     * Update the Notifications-tab preferences of one user.
+     *
+     * @param  int  $userId
+     * @param  bool $emailEnabled
+     * @param  bool $announcementsEmail
+     * @return bool
+     */
+    public function updateNotificationPrefs($userId, $emailEnabled, $announcementsEmail) {
+        $this->query(
+            "UPDATE User SET email_notifications_enabled = ?, announcement_email_enabled = ? WHERE user_id = ?",
+            [$emailEnabled ? 1 : 0, $announcementsEmail ? 1 : 0, (int) $userId]
+        );
+        return true;
+    }
+
+    /**
      * Verify login credentials. Returns user object on success (if active), false on failure.
      *
      * @param  string      $email

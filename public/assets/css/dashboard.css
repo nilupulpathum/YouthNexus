@@ -446,33 +446,6 @@ body.dashboard {
   flex-shrink: 0;
 }
 
-.db-search-top {
-  width: 200px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border: 1px solid var(--db-border);
-  border-radius: var(--db-radius);
-  background: var(--db-bg-page);
-  color: var(--db-text-grey);
-}
-
-.db-search-top input {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--db-text-dark);
-  font-size: 13px;
-}
-
-.db-search-top input::placeholder {
-  color: #9ca3af;
-}
-
 .db-icon-btn,
 .dashboard-icon-button {
   width: 36px;
@@ -1143,12 +1116,6 @@ body.dashboard {
   .db-topbar,
   .dashboard-header {
     padding: 12px 20px;
-  }
-}
-
-@media (max-width: 860px) {
-  .db-search-top {
-    display: none;
   }
 }
 

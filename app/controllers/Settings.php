@@ -25,8 +25,8 @@ class Settings extends Controller {
         $headerNotif = ZoneOverview::headerNotifications($this);
 
         $data = [
-            'title' => 'Settings — YouthNexus Pulse',
-            'pageTitle' => 'Settings',
+            'title' => 'Profile Settings — YouthNexus Pulse',
+            'pageTitle' => 'Profile Settings',
             'pageDescription' => 'Manage your profile, security, and notification preferences.',
             'currentRoute' => 'settings',
             'userRole' => $_SESSION['user_role'] ?? 'ClubMember',
@@ -257,6 +257,214 @@ class Settings extends Controller {
         $this->jsonResponse(200, ['ok' => true]);
     }
 
+    /**
+     * Edit Profile pane: validate and persist the profile form to the User
+     * row, then refresh the session identity (header/popup/masked email).
+     * POST only, JSON in/out.
+     */
+    public function updateProfile() {
+        if (empty($_SESSION['user_id'])) {
+            $this->redirect('auth/signin');
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->jsonResponse(405, ['ok' => false, 'error' => 'This action requires POST.']);
+        }
+        if (!$this->verifyCsrf()) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Invalid request. Please refresh the page.']);
+        }
+
+        $userId = (int) $_SESSION['user_id'];
+        $row = $this->model('UserModel')->findByUserId($userId);
+        if (!$row) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Your user account could not be loaded.']);
+        }
+
+        $firstName = trim((string) ($_POST['first_name'] ?? ''));
+        $lastName = trim((string) ($_POST['last_name'] ?? ''));
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $phone = trim((string) ($_POST['phone'] ?? ''));
+        $address = trim((string) ($_POST['address'] ?? ''));
+
+        if ($firstName === '' || $lastName === '') {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'First name and last name are required.']);
+        }
+        if (mb_strlen($firstName) > 50 || mb_strlen($lastName) > 50) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'Names must be 50 characters or fewer.']);
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 100) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'Enter a valid email address.']);
+        }
+        if (strcasecmp($email, (string) $row->email) !== 0
+            && $this->model('UserModel')->emailOrNicTaken($email, '', $userId)) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'That email address is already in use by another account.']);
+        }
+        if ($phone !== '' && !preg_match('/^[0-9+()\-\s.]{6,20}$/', $phone)) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'Enter a valid phone number (up to 20 characters).']);
+        }
+        if (mb_strlen($address) > 255) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => 'Address must be 255 characters or fewer.']);
+        }
+
+        $this->model('UserModel')->updateProfile($userId, $firstName, $lastName, $email, $phone, $address);
+        $this->model('AuditLogModel')->log($userId, 'PROFILE_UPDATE', 'User', $userId, 'Updated profile details');
+
+        // Keep the session identity in step with the saved row (topbar popup,
+        // masked email in the password modal, next page loads).
+        $_SESSION['user_name'] = trim($firstName . ' ' . $lastName);
+        $_SESSION['user_email'] = $email;
+        $_SESSION['user_initials'] = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
+        $this->jsonResponse(200, [
+            'ok' => true,
+            'user' => [
+                'name' => $_SESSION['user_name'],
+                'email' => $email,
+                'initials' => $_SESSION['user_initials'],
+            ],
+        ]);
+    }
+
+    /**
+     * Edit Profile pane: upload a new profile picture. Multipart POST, JSON out.
+     */
+    public function uploadPicture() {
+        if (empty($_SESSION['user_id'])) {
+            $this->redirect('auth/signin');
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->jsonResponse(405, ['ok' => false, 'error' => 'This action requires POST.']);
+        }
+        if (!$this->verifyCsrf()) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Invalid request. Please refresh the page.']);
+        }
+
+        $userId = (int) $_SESSION['user_id'];
+        $row = $this->model('UserModel')->findByUserId($userId);
+        if (!$row) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Your user account could not be loaded.']);
+        }
+
+        [$path, $error] = $this->handleProfilePictureUpload($_FILES['picture'] ?? null);
+        if ($error !== null) {
+            $this->jsonResponse(422, ['ok' => false, 'error' => $error]);
+        }
+
+        // Replacing: drop the previous file so uploads/profile_pictures stays tidy.
+        $this->removeProfilePictureFile((string) ($row->profile_picture_url ?? ''));
+        $this->model('UserModel')->updateProfilePicture($userId, $path);
+        $this->model('AuditLogModel')->log($userId, 'PROFILE_PICTURE_UPDATE', 'User', $userId, 'Uploaded a new profile picture');
+
+        $this->jsonResponse(200, [
+            'ok' => true,
+            'url' => (defined('ROOT') ? ROOT : '') . '/../' . $path,
+        ]);
+    }
+
+    /**
+     * Edit Profile pane: remove the profile picture (reverts to initials).
+     * POST only, JSON in/out.
+     */
+    public function deletePicture() {
+        if (empty($_SESSION['user_id'])) {
+            $this->redirect('auth/signin');
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->jsonResponse(405, ['ok' => false, 'error' => 'This action requires POST.']);
+        }
+        if (!$this->verifyCsrf()) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Invalid request. Please refresh the page.']);
+        }
+
+        $userId = (int) $_SESSION['user_id'];
+        $row = $this->model('UserModel')->findByUserId($userId);
+        if (!$row) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Your user account could not be loaded.']);
+        }
+
+        $this->removeProfilePictureFile((string) ($row->profile_picture_url ?? ''));
+        $this->model('UserModel')->updateProfilePicture($userId, null);
+        $this->model('AuditLogModel')->log($userId, 'PROFILE_PICTURE_DELETE', 'User', $userId, 'Removed the profile picture');
+
+        $this->jsonResponse(200, ['ok' => true]);
+    }
+
+    /**
+     * Notifications pane: persist both toggle preferences. POST only, JSON in/out.
+     */
+    public function updateNotificationPrefs() {
+        if (empty($_SESSION['user_id'])) {
+            $this->redirect('auth/signin');
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->jsonResponse(405, ['ok' => false, 'error' => 'This action requires POST.']);
+        }
+        if (!$this->verifyCsrf()) {
+            $this->jsonResponse(403, ['ok' => false, 'error' => 'Invalid request. Please refresh the page.']);
+        }
+
+        $userId = (int) $_SESSION['user_id'];
+        $emailEnabled = ($_POST['email_enabled'] ?? '') === '1';
+        $announcementsEmail = ($_POST['announcements_email'] ?? '') === '1';
+
+        $this->model('UserModel')->updateNotificationPrefs($userId, $emailEnabled, $announcementsEmail);
+        $this->model('AuditLogModel')->log(
+            $userId,
+            'NOTIFICATION_PREFS_UPDATE',
+            'User',
+            $userId,
+            'Email notifications ' . ($emailEnabled ? 'on' : 'off') . ', announcement emails ' . ($announcementsEmail ? 'on' : 'off')
+        );
+
+        $this->jsonResponse(200, ['ok' => true]);
+    }
+
+    /**
+     * Validate and store an uploaded picture under
+     * uploads/profile_pictures/. Returns [repoRelativePath, null] on
+     * success or [null, errorMessage].
+     */
+    private function handleProfilePictureUpload($file) {
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return [null, 'Upload failed. Please choose a picture and try again.'];
+        }
+        if ($file['size'] > 2 * 1024 * 1024) {
+            return [null, 'The picture must be 2 MB or smaller.'];
+        }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (!isset($allowed[$mime])) {
+            return [null, 'Use a JPG, PNG or WEBP picture.'];
+        }
+        $dir = dirname(__DIR__, 2) . '/uploads/profile_pictures';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        $name = uniqid('yn_', true) . '.' . $allowed[$mime];
+        if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) {
+            return [null, 'Could not save the picture. Please try again.'];
+        }
+        return ['uploads/profile_pictures/' . $name, null];
+    }
+
+    /**
+     * Delete a previously stored profile picture. Only paths inside
+     * uploads/profile_pictures/ are ever touched.
+     */
+    private function removeProfilePictureFile($relativePath) {
+        if (!is_string($relativePath) || $relativePath === '') {
+            return;
+        }
+        if (!preg_match('#^uploads/profile_pictures/[^/\\\\]+$#', $relativePath)) {
+            return;
+        }
+        $path = dirname(__DIR__, 2) . '/' . $relativePath;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
     private function sendPasswordCodeEmail($email, $name, $code) {
         $mail = new PHPMailer(true);
         try {
@@ -296,7 +504,9 @@ class Settings extends Controller {
 
     /**
      * Edit Profile form values from the viewer's own live User row, never
-     * another person's. Saving stays presentation-only (see settings.js).
+     * another person's — including the stored picture and the real
+     * notification preferences (persisted by updateProfile /
+     * updateNotificationPrefs, see settings.js).
      */
     private function profileFormValues(): array {
         $row = $this->model('UserModel')->findByUserId((int) ($_SESSION['user_id'] ?? 0));
@@ -308,9 +518,10 @@ class Settings extends Controller {
             'email' => $row->email ?? ($_SESSION['user_email'] ?? ''),
             'phone' => $row->phone_number ?? '',
             'address' => $row->address ?? '',
+            'profile_picture_url' => $row->profile_picture_url ?? '',
             'notifications' => [
-                'email_enabled' => true,
-                'announcements_email' => true
+                'email_enabled' => (bool) ($row->email_notifications_enabled ?? 1),
+                'announcements_email' => (bool) ($row->announcement_email_enabled ?? 1),
             ],
         ];
     }
