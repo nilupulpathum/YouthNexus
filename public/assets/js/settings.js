@@ -1,10 +1,11 @@
 /**
  * Settings Interaction — CRUD-03
  *
- * Tabs + presentation-only forms keep their existing behaviour. The Security
- * pane is real: Update Password validates, emails a 6-digit code, and a
- * modal confirms the code before the change is applied (see Settings.php).
- * All calls are same-origin fetch POST, JSON in/out.
+ * Every pane is real: Edit Profile saves to the User row and uploads the
+ * picture, Notifications persists the toggles, and the Security pane
+ * emails a 6-digit code that a modal confirms before the password change
+ * is applied (see Settings.php). All calls are same-origin fetch POST,
+ * JSON in/out.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,55 +26,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    const forms = document.querySelectorAll('.settings-form');
-    forms.forEach(form => {
-        // The security form has its own real handler below.
-        if (form.id === 'security-form') {
-            return;
-        }
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('Settings updated successfully!');
-        });
-    });
-
     const securityForm = document.getElementById('security-form');
-    const base = securityForm ? (securityForm.dataset.actionBase || '') : '';
-
-    if (!securityForm) {
+    const profileForm = document.getElementById('profile-form');
+    if (!securityForm && !profileForm) {
         return;
     }
-
-    const modal = document.getElementById('pw-code-modal');
-    const modalBody = document.getElementById('pw-code-body');
-    const modalSuccess = document.getElementById('pw-code-success');
-    const modalFooter = document.getElementById('pw-code-footer');
-    const codeInput = document.getElementById('pw-code-input');
-    const confirmBtn = document.getElementById('pw-code-confirm');
-    const resendBtn = document.getElementById('pw-code-resend');
-    const cooldownNote = document.getElementById('pw-code-cooldown');
-    const formError = document.getElementById('pw-form-error');
-    const modalError = document.getElementById('pw-code-error');
-    const csrfToken = securityForm.querySelector('input[name="csrf_token"]');
-
-    let cooldownTimer = null;
+    const base = (profileForm || securityForm).dataset.actionBase || '';
+    const csrfInput = document.querySelector('input[name="csrf_token"]');
 
     function post(action, params) {
         const body = new URLSearchParams(params);
-        if (csrfToken) {
-            body.append('csrf_token', csrfToken.value);
+        if (csrfInput) {
+            body.append('csrf_token', csrfInput.value);
         }
-        return fetch(base + '/settings/' + action, {
+        return fetch(base + '/' + action, {
             method: 'POST',
             headers: { 'Accept': 'application/json' },
             body,
         }).then(response => response.json().catch(() => ({ ok: false, error: 'Unexpected response. Please try again.' })));
     }
 
-    function showError(el, message) {
+    function showNote(el, message, ok) {
         if (!el) {
             return;
         }
+        el.classList.toggle('is-ok', !!ok);
         if (!message) {
             el.hidden = true;
             el.textContent = '';
@@ -83,15 +60,249 @@ document.addEventListener('DOMContentLoaded', () => {
         el.textContent = message;
     }
 
+    /* ---------------------------------------------------------------
+     * Edit Profile — picture, fields, save/cancel
+     * --------------------------------------------------------------- */
+
+    const uploadBtn = document.getElementById('btn-upload');
+    const avatarInput = document.getElementById('avatar-input');
+    const deletePictureBtn = document.getElementById('btn-delete-picture');
+    const avatarMessage = document.getElementById('avatar-message');
+    const preview = document.getElementById('avatar-preview');
+    let previewImg = document.getElementById('avatar-preview-img');
+    const previewInitials = document.getElementById('avatar-preview-initials');
+
+    function showAvatarPicture(url) {
+        if (url) {
+            if (previewImg) {
+                previewImg.src = url;
+                previewImg.hidden = false;
+            } else {
+                previewImg = document.createElement('img');
+                previewImg.id = 'avatar-preview-img';
+                previewImg.alt = 'Profile picture';
+                previewImg.src = url;
+                preview.prepend(previewImg);
+            }
+            if (previewInitials) {
+                previewInitials.hidden = true;
+            }
+        } else {
+            if (previewImg) {
+                previewImg.hidden = true;
+            }
+            if (previewInitials) {
+                previewInitials.hidden = false;
+            }
+        }
+    }
+
+    if (uploadBtn && avatarInput) {
+        uploadBtn.addEventListener('click', () => avatarInput.click());
+        avatarInput.addEventListener('change', () => {
+            const file = avatarInput.files && avatarInput.files[0];
+            avatarInput.value = '';
+            if (!file) {
+                return;
+            }
+            if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+                showNote(avatarMessage, 'Use a JPG, PNG or WEBP picture.');
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                showNote(avatarMessage, 'The picture must be 2 MB or smaller.');
+                return;
+            }
+            showNote(avatarMessage, '');
+            uploadBtn.disabled = true;
+            if (deletePictureBtn) {
+                deletePictureBtn.disabled = true;
+            }
+            const body = new FormData();
+            body.append('picture', file);
+            if (csrfInput) {
+                body.append('csrf_token', csrfInput.value);
+            }
+            fetch(base + '/uploadPicture', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body,
+            }).then(response => response.json().catch(() => ({ ok: false, error: 'Unexpected response. Please try again.' })))
+                .then(data => {
+                    uploadBtn.disabled = false;
+                    if (deletePictureBtn) {
+                        deletePictureBtn.disabled = false;
+                    }
+                    if (data && data.ok) {
+                        showAvatarPicture(data.url);
+                        showNote(avatarMessage, 'Picture updated.', true);
+                        return;
+                    }
+                    showNote(avatarMessage, (data && data.error) || 'Upload failed. Please try again.');
+                })
+                .catch(() => {
+                    uploadBtn.disabled = false;
+                    if (deletePictureBtn) {
+                        deletePictureBtn.disabled = false;
+                    }
+                    showNote(avatarMessage, 'Network error. Please try again.');
+                });
+        });
+    }
+
+    if (deletePictureBtn) {
+        deletePictureBtn.addEventListener('click', () => {
+            uploadBtn.disabled = true;
+            deletePictureBtn.disabled = true;
+            post('deletePicture', {})
+                .then(data => {
+                    uploadBtn.disabled = false;
+                    deletePictureBtn.disabled = false;
+                    if (data && data.ok) {
+                        showAvatarPicture('');
+                        showNote(avatarMessage, 'Picture removed.', true);
+                        return;
+                    }
+                    showNote(avatarMessage, (data && data.error) || 'Could not remove the picture. Please try again.');
+                })
+                .catch(() => {
+                    uploadBtn.disabled = false;
+                    deletePictureBtn.disabled = false;
+                    showNote(avatarMessage, 'Network error. Please try again.');
+                });
+        });
+    }
+
+    if (profileForm) {
+        const profileMessage = document.getElementById('profile-form-message');
+        const original = {};
+        ['first_name', 'last_name', 'email', 'phone', 'address'].forEach(name => {
+            const input = profileForm.querySelector('[name="' + name + '"]');
+            if (input) {
+                original[name] = input.value;
+            }
+        });
+
+        profileForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const payload = {};
+            Object.keys(original).forEach(name => {
+                payload[name] = profileForm.querySelector('[name="' + name + '"]').value.trim();
+            });
+            if (!payload.first_name || !payload.last_name) {
+                showNote(profileMessage, 'First name and last name are required.');
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+                showNote(profileMessage, 'Enter a valid email address.');
+                return;
+            }
+            showNote(profileMessage, '');
+            const saveBtn = profileForm.querySelector('button[type="submit"]');
+            saveBtn.disabled = true;
+            post('updateProfile', payload)
+                .then(data => {
+                    saveBtn.disabled = false;
+                    if (data && data.ok) {
+                        Object.keys(original).forEach(name => {
+                            original[name] = payload[name];
+                        });
+                        showNote(profileMessage, 'Profile updated successfully.', true);
+                        return;
+                    }
+                    showNote(profileMessage, (data && data.error) || 'Could not save your profile. Please try again.');
+                })
+                .catch(() => {
+                    saveBtn.disabled = false;
+                    showNote(profileMessage, 'Network error. Please try again.');
+                });
+        });
+
+        const cancelBtn = document.getElementById('btn-cancel-profile');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                Object.keys(original).forEach(name => {
+                    const input = profileForm.querySelector('[name="' + name + '"]');
+                    if (input) {
+                        input.value = original[name];
+                    }
+                });
+                showNote(profileMessage, '');
+            });
+        }
+    }
+
+    /* ---------------------------------------------------------------
+     * Notifications — persist the toggles
+     * --------------------------------------------------------------- */
+
+    const saveNotifsBtn = document.getElementById('btn-save-notifs');
+    const notifMessage = document.getElementById('notif-form-message');
+    if (saveNotifsBtn) {
+        saveNotifsBtn.addEventListener('click', () => {
+            saveNotifsBtn.disabled = true;
+            post('updateNotificationPrefs', {
+                email_enabled: document.getElementById('pref-email-enabled').checked ? '1' : '0',
+                announcements_email: document.getElementById('pref-announcements-email').checked ? '1' : '0',
+            })
+                .then(data => {
+                    saveNotifsBtn.disabled = false;
+                    if (data && data.ok) {
+                        showNote(notifMessage, 'Preferences saved.', true);
+                        return;
+                    }
+                    showNote(notifMessage, (data && data.error) || 'Could not save preferences. Please try again.');
+                })
+                .catch(() => {
+                    saveNotifsBtn.disabled = false;
+                    showNote(notifMessage, 'Network error. Please try again.');
+                });
+        });
+    }
+
+    /* ---------------------------------------------------------------
+     * Security — password change confirmed by an emailed 6-digit code
+     * --------------------------------------------------------------- */
+
+    if (!securityForm) {
+        return;
+    }
+
+    const modal = document.getElementById('pw-code-modal');
+    const modalBody = document.getElementById('pw-code-body');
+    const modalSuccess = document.getElementById('pw-code-success');
+    const modalFooter = document.getElementById('pw-code-footer');
+    const codeBoxes = Array.from(document.querySelectorAll('.pw-code-box'));
+    const confirmBtn = document.getElementById('pw-code-confirm');
+    const resendBtn = document.getElementById('pw-code-resend');
+    const cooldownNote = document.getElementById('pw-code-cooldown');
+    const formError = document.getElementById('pw-form-error');
+    const modalError = document.getElementById('pw-code-error');
+
+    let cooldownTimer = null;
+
+    function codeValue() {
+        return codeBoxes.map(box => box.value.trim()).join('');
+    }
+
+    function clearCode() {
+        codeBoxes.forEach(box => { box.value = ''; });
+        if (codeBoxes.length) {
+            codeBoxes[0].focus();
+        }
+    }
+
     function openModal() {
-        showError(modalError, '');
-        codeInput.value = '';
+        showNote(modalError, '');
+        clearCode();
         modalBody.hidden = false;
         modalSuccess.hidden = true;
         modalFooter.hidden = false;
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
-        codeInput.focus();
+        if (codeBoxes.length) {
+            codeBoxes[0].focus();
+        }
     }
 
     function closeModal() {
@@ -132,24 +343,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Same six-box behaviour as the sign-in verification page: auto-advance,
+    // Backspace returns, pasting a code fills the boxes.
+    codeBoxes.forEach((box, i) => {
+        box.addEventListener('input', () => {
+            box.value = box.value.replace(/\D/g, '').slice(0, 1);
+            if (box.value.length === 1 && i < codeBoxes.length - 1) {
+                codeBoxes[i + 1].focus();
+            }
+        });
+        box.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && box.value === '' && i > 0) {
+                codeBoxes[i - 1].focus();
+            }
+        });
+        box.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+            digits.split('').forEach((digit, j) => {
+                if (codeBoxes[j]) {
+                    codeBoxes[j].value = digit;
+                }
+            });
+            (codeBoxes[Math.min(digits.length, 5)] || codeBoxes[5]).focus();
+        });
+    });
+
     securityForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const current = document.getElementById('current-password').value;
         const next = document.getElementById('new-password').value;
         const confirm = document.getElementById('confirm-password').value;
         if (!current || !next || !confirm) {
-            showError(formError, 'Fill in all three password fields.');
+            showNote(formError, 'Fill in all three password fields.');
             return;
         }
         if (next.length < 8) {
-            showError(formError, 'New password must be at least 8 characters.');
+            showNote(formError, 'New password must be at least 8 characters.');
             return;
         }
         if (next !== confirm) {
-            showError(formError, 'New passwords do not match.');
+            showNote(formError, 'New passwords do not match.');
             return;
         }
-        showError(formError, '');
+        showNote(formError, '');
         const submitBtn = securityForm.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         post('updatePassword', { current, new: next, confirm })
@@ -160,21 +397,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     startCooldown(60);
                     return;
                 }
-                showError(formError, (data && data.error) || 'Could not start the change. Please try again.');
+                showNote(formError, (data && data.error) || 'Could not start the change. Please try again.');
             })
             .catch(() => {
                 submitBtn.disabled = false;
-                showError(formError, 'Network error. Please try again.');
+                showNote(formError, 'Network error. Please try again.');
             });
     });
 
     confirmBtn.addEventListener('click', () => {
-        const code = codeInput.value.trim();
+        const code = codeValue();
         if (!/^\d{6}$/.test(code)) {
-            showError(modalError, 'Enter the 6-digit code.');
+            showNote(modalError, 'Enter the 6-digit code.');
             return;
         }
-        showError(modalError, '');
+        showNote(modalError, '');
         confirmBtn.disabled = true;
         post('confirmPassword', { code })
             .then(data => {
@@ -188,16 +425,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('confirm-password').value = '';
                     return;
                 }
-                showError(modalError, (data && data.error) || 'Could not confirm. Please try again.');
+                showNote(modalError, (data && data.error) || 'Could not confirm. Please try again.');
             })
             .catch(() => {
                 confirmBtn.disabled = false;
-                showError(modalError, 'Network error. Please try again.');
+                showNote(modalError, 'Network error. Please try again.');
             });
     });
 
     resendBtn.addEventListener('click', () => {
-        showError(modalError, '');
+        showNote(modalError, '');
         resendBtn.disabled = true;
         post('resendCode', {})
             .then(data => {
@@ -206,11 +443,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 resendBtn.disabled = false;
-                showError(modalError, (data && data.error) || 'Could not resend. Please try again.');
+                showNote(modalError, (data && data.error) || 'Could not resend. Please try again.');
             })
             .catch(() => {
                 resendBtn.disabled = false;
-                showError(modalError, 'Network error. Please try again.');
+                showNote(modalError, 'Network error. Please try again.');
             });
     });
 });

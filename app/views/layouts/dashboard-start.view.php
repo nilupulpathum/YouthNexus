@@ -20,7 +20,8 @@ $userName = $userName ?? ($_SESSION['user_name'] ?? 'YouthNexus User');
 $userEmail = $userEmail ?? ($_SESSION['user_email'] ?? '');
 $unreadNotificationCount = (int) ($unreadNotificationCount ?? 0);
 // Zonal, divisional and NYSC actors have no Social CV: their avatar
-// "My profile" link goes to Settings, which opens on the Edit Profile pane
+// "My profile" link goes to Profile Settings, which opens on the
+// Edit Profile pane
 // (the CV page still serves a hardcoded mock person, including a NIC, to
 // every viewer). Club roles keep /profile. A page may still pass its own
 // $profileUrl to override this default.

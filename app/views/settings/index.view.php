@@ -1,14 +1,15 @@
 <?php
 /**
- * Settings View — CRUD-03
+ * Profile Settings View — CRUD-03
  */
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css?v=20261001'];
-$pageScripts = [ROOT . '/assets/js/settings.js'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/settings.css?v=20261016'];
+$pageScripts = [ROOT . '/assets/js/settings.js?v=20261016'];
 $maskedEmail = $maskedEmail ?? '';
 $csrfToken = $csrf_token ?? '';
+$profilePictureUrl = trim((string) ($user['profile_picture_url'] ?? ''));
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -40,43 +41,52 @@ $settingsInitials = strtoupper(
                 <h2>Profile Information</h2>
                 <p>Update your personal details and how others see you.</p>
             </div>
-            <form class="settings-form">
+            <form class="settings-form" id="profile-form" data-action-base="<?= ROOT ?>/settings">
+                <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
                 <div class="avatar-edit-section">
-                    <div class="profile-avatar-preview">
-                        <span class="profile-initials" aria-hidden="true"><?= $escape($settingsInitials) ?></span>
+                    <div class="profile-avatar-preview" id="avatar-preview">
+                        <?php if ($profilePictureUrl !== ''): ?>
+                            <img id="avatar-preview-img" src="<?= ROOT ?>/../<?= $escape($profilePictureUrl) ?>" alt="Profile picture">
+                            <span class="profile-initials" id="avatar-preview-initials" aria-hidden="true" hidden><?= $escape($settingsInitials) ?></span>
+                        <?php else: ?>
+                            <span class="profile-initials" id="avatar-preview-initials" aria-hidden="true"><?= $escape($settingsInitials) ?></span>
+                        <?php endif; ?>
                     </div>
                     <div class="avatar-actions">
-                        <button type="button" class="btn-upload">Upload new picture</button>
-                        <button type="button" class="btn-delete">Delete</button>
+                        <button type="button" class="btn-upload" id="btn-upload">Upload new picture</button>
+                        <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" hidden>
+                        <button type="button" class="btn-delete" id="btn-delete-picture">Delete</button>
                     </div>
                 </div>
+                <p id="avatar-message" class="dw-field-error" hidden></p>
 
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="first-name">First Name</label>
-                        <input type="text" id="first-name" value="<?= $escape($user['first_name']) ?>">
+                        <input type="text" id="first-name" name="first_name" maxlength="50" value="<?= $escape($user['first_name']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="last-name">Last Name</label>
-                        <input type="text" id="last-name" value="<?= $escape($user['last_name']) ?>">
+                        <input type="text" id="last-name" name="last_name" maxlength="50" value="<?= $escape($user['last_name']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" value="<?= $escape($user['email']) ?>">
+                        <input type="email" id="email" name="email" maxlength="100" value="<?= $escape($user['email']) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="phone">Phone Number</label>
-                        <input type="text" id="phone" value="<?= $escape($user['phone']) ?>">
+                        <input type="text" id="phone" name="phone" maxlength="20" value="<?= $escape($user['phone']) ?>">
                     </div>
                     <div class="form-group full-width">
                         <label for="address">Address</label>
-                        <input type="text" id="address" value="<?= $escape($user['address']) ?>">
+                        <input type="text" id="address" name="address" maxlength="255" value="<?= $escape($user['address']) ?>">
                     </div>
                 </div>
 
+                <p id="profile-form-message" class="dw-field-error" hidden></p>
                 <div class="form-footer">
                     <button type="submit" class="btn-save">Save Changes</button>
-                    <button type="button" class="btn-cancel">Cancel</button>
+                    <button type="button" class="btn-cancel" id="btn-cancel-profile">Cancel</button>
                 </div>
             </form>
         </section>
@@ -121,7 +131,7 @@ $settingsInitials = strtoupper(
                         <p>Receive general account updates via email.</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" <?= $user['notifications']['email_enabled'] ? 'checked' : '' ?>>
+                        <input type="checkbox" id="pref-email-enabled" <?= $user['notifications']['email_enabled'] ? 'checked' : '' ?>>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -131,13 +141,15 @@ $settingsInitials = strtoupper(
                         <p>Get notified about new announcements directly in your inbox.</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" <?= $user['notifications']['announcements_email'] ? 'checked' : '' ?>>
+                        <input type="checkbox" id="pref-announcements-email" <?= $user['notifications']['announcements_email'] ? 'checked' : '' ?>>
                         <span class="slider round"></span>
                     </label>
                 </div>
             </div>
+            <p id="notif-form-message" class="dw-field-error" hidden></p>
             <div class="form-footer">
-                <button type="button" class="btn-save">Save Preferences</button>
+                <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+                <button type="button" class="btn-save" id="btn-save-notifs">Save Preferences</button>
             </div>
         </section>
     </div>
@@ -157,8 +169,12 @@ $settingsInitials = strtoupper(
         <div class="dw-modal__body" id="pw-code-body">
             <p>We sent a 6-digit code<?php if ($maskedEmail !== ''): ?> to <?= $escape($maskedEmail) ?><?php endif; ?>. It expires in 15 minutes.</p>
             <div class="dw-field dw-field--span-2">
-                <label for="pw-code-input">Verification code</label>
-                <input id="pw-code-input" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••">
+                <label for="pw-code-1">Verification code</label>
+                <div class="pw-code-inputs" id="pw-code-inputs">
+                    <?php for ($i = 1; $i <= 6; $i++): ?>
+                        <input id="pw-code-<?= $i ?>" class="pw-code-box" type="text" inputmode="numeric" maxlength="1" autocomplete="<?= $i === 1 ? 'one-time-code' : 'off' ?>" <?= $i === 1 ? 'autofocus' : '' ?>>
+                    <?php endfor; ?>
+                </div>
             </div>
             <p id="pw-code-error" class="dw-field-error" hidden></p>
             <p id="pw-code-resend-wrap">Didn't get it? <button type="button" id="pw-code-resend" class="dw-button dw-button--ghost">Resend code</button> <span id="pw-code-cooldown"></span></p>

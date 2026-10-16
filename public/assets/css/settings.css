@@ -311,3 +311,41 @@ input:checked + .slider:before {
 .dashboard .btn-cancel, .dashboard .btn-verify-code { color: var(--db-text-dark); }
 .dashboard .btn-upload { color: #fff; }
 .dashboard .btn-delete { color: #ef4444; }
+
+/* Inline form notes: red errors by default, green with .is-ok */
+.dw-field-error.is-ok {
+    color: #16a34a;
+}
+
+/* Six-box verification code (same feel as the sign-in verify page) */
+.pw-code-inputs {
+    display: flex;
+    gap: 8px;
+}
+
+.pw-code-box {
+    width: 42px;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--db-border);
+    border-radius: 8px;
+    background: #fff;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--db-text-dark);
+    outline: none;
+}
+
+.pw-code-box:focus {
+    border-color: var(--db-sidebar-bg);
+    box-shadow: 0 0 0 2px rgba(30, 64, 175, .12);
+}
+
+@media (max-width: 480px) {
+    .pw-code-box {
+        width: 36px;
+        height: 42px;
+    }
+}
+
