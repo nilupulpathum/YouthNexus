@@ -8,6 +8,20 @@
   var quantity = document.querySelector('[data-asset-quantity]');
   var sort = document.querySelector('[data-asset-sort]');
 
+  var TAB_MAP = {
+    'club-request': 'pending',
+    inventory: 'inventory',
+    'transfer-history': 'transfers',
+    'zonal-request': 'zonal'
+  };
+
+  var SECTION_MAP = {
+    'club-request': ['[data-club-request-count]', '[data-club-request-empty]', 'club-request-tbody'],
+    inventory: ['[data-inventory-count]', '[data-inventory-empty]', 'inventory-tbody'],
+    'transfer-history': ['[data-transfer-count]', '[data-transfer-empty]', 'transfer-tbody'],
+    'zonal-request': ['[data-zonal-count]', '[data-zonal-empty]', 'zonal-tbody']
+  };
+
   function applyFilters() {
     var query = search ? search.value.trim().toLowerCase() : '';
     var categoryValue = category ? category.value : '';
@@ -18,27 +32,51 @@
         && (!categoryValue || row.dataset.category === categoryValue)
         && (!statusValue || row.dataset.status === statusValue)
         && (minimum === null || Number(row.dataset.quantity || 0) >= minimum);
+      row.dataset.filterMatch = visible ? 'true' : 'false';
       row.hidden = !visible;
     });
+
+    sortRows();
+
     ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(updateSection);
+
+    if (window.ynPager && typeof window.ynPager.update === 'function') {
+      window.ynPager.update();
+    }
+
+    ['club-request', 'inventory', 'transfer-history', 'zonal-request'].forEach(function (section) {
+      var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
+      var matches = sectionRows.filter(function (row) { return row.dataset.filterMatch !== 'false'; });
+      var pagerNav = document.querySelector('[data-yn-pagination][data-yn-page-target="' + SECTION_MAP[section][2] + '"]');
+      if (pagerNav && matches.length === 0) {
+        pagerNav.hidden = true;
+      }
+    });
+
+    document.dispatchEvent(new CustomEvent('divisional:filtered'));
   }
 
   function updateSection(section) {
     var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
-    var visible = sectionRows.filter(function (row) { return !row.hidden; }).length;
-    var map = {
-      'club-request': ['[data-club-request-count]', '[data-club-request-empty]'],
-      inventory: ['[data-inventory-count]', '[data-inventory-empty]'],
-      'transfer-history': ['[data-transfer-count]', '[data-transfer-empty]'],
-      'zonal-request': ['[data-zonal-count]', '[data-zonal-empty]']
-    };
-    var count = document.querySelector(map[section][0]);
-    var empty = document.querySelector(map[section][1]);
+    var visible = sectionRows.filter(function (row) { return row.dataset.filterMatch !== 'false'; }).length;
+    var count = document.querySelector(SECTION_MAP[section][0]);
+    var empty = document.querySelector(SECTION_MAP[section][1]);
     if (count) {
       var label = section === 'inventory' ? ' items' : (section === 'transfer-history' ? ' transfers' : ' requests');
       count.textContent = visible + label;
     }
     if (empty) empty.classList.toggle('is-visible', visible === 0);
+
+    var tabKey = TAB_MAP[section];
+    if (tabKey) {
+      var tabBadge = document.querySelector('[data-tab-count="' + tabKey + '"]');
+      if (tabBadge) {
+        tabBadge.textContent = String(visible);
+        if (tabKey === 'pending') {
+          tabBadge.classList.toggle('dv-tab__badge--attention', visible > 0);
+        }
+      }
+    }
   }
 
   function sortRows() {
@@ -58,14 +96,13 @@
 
   if (search) search.addEventListener('input', applyFilters);
   var apply = document.querySelector('[data-asset-apply]');
-  if (apply) apply.addEventListener('click', function () { sortRows(); applyFilters(); });
+  if (apply) apply.addEventListener('click', applyFilters);
   var reset = document.querySelector('[data-asset-reset]');
   if (reset) reset.addEventListener('click', function () {
     if (category) category.value = '';
     if (status) status.value = '';
     if (quantity) quantity.value = '';
     if (sort) sort.value = 'name';
-    sortRows();
     applyFilters();
   });
 
@@ -113,4 +150,5 @@
   }
   if (decision) decision.addEventListener('change', updateDecision);
   updateDecision();
+  applyFilters();
 })();
