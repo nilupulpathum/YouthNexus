@@ -10,8 +10,8 @@
 
   if (!tabs.length || !panels.length) return;
 
-  var TAB_WHITELIST = ['pending', 'inventory', 'transfers', 'zonal'];
-  var DEFAULT_TAB = 'pending';
+  var tabKeys = tabs.map(function (tab) { return tab.dataset.tab; }).filter(Boolean);
+  var DEFAULT_TAB = container.dataset.defaultTab || tabKeys[0] || 'pending';
 
   // Progressive enhancement: only hide inactive panels when JS initializes
   container.classList.add('js-tabs');
@@ -20,7 +20,7 @@
     try {
       var params = new URLSearchParams(window.location.search);
       var tab = params.get('tab');
-      if (tab && TAB_WHITELIST.indexOf(tab) !== -1) {
+      if (tab && tabKeys.indexOf(tab) !== -1) {
         return tab;
       }
     } catch (e) {}
@@ -40,10 +40,10 @@
   var currentActiveTab = getUrlTab();
 
   function updateAttentionBadge() {
-    var pendingBadge = document.querySelector('[data-tab-count="pending"]');
-    if (pendingBadge) {
-      var count = Number(pendingBadge.textContent || 0);
-      pendingBadge.classList.toggle('dv-tab__badge--attention', count > 0);
+    var attentionBadge = document.querySelector('[data-tab-attention]') || document.querySelector('[data-tab-count="pending"]');
+    if (attentionBadge) {
+      var count = Number(attentionBadge.textContent || 0);
+      attentionBadge.classList.toggle('dv-tab__badge--attention', count > 0);
     }
   }
 
@@ -55,7 +55,7 @@
     var activeCount = activeBadge ? Number(activeBadge.textContent || 0) : 0;
 
     var otherMatches = 0;
-    TAB_WHITELIST.forEach(function (key) {
+    tabKeys.forEach(function (key) {
       if (key !== activeTabKey) {
         var badge = document.querySelector('[data-tab-count="' + key + '"]');
         if (badge) {
@@ -81,7 +81,7 @@
   }
 
   function setActiveTab(tabKey, moveFocus) {
-    if (TAB_WHITELIST.indexOf(tabKey) === -1) {
+    if (tabKeys.indexOf(tabKey) === -1) {
       tabKey = DEFAULT_TAB;
     }
     currentActiveTab = tabKey;
@@ -157,20 +157,27 @@
     'units in division store': 'inventory',
     'asset types': 'inventory',
     'pending club requests': 'pending',
+    'pending requests': 'pending',
     'requests to zonal': 'zonal'
   };
 
   var summaryCards = Array.prototype.slice.call(document.querySelectorAll('.dw-summary-card'));
   summaryCards.forEach(function (card) {
+    var targetTab = card.dataset.tabTarget;
+    if (!targetTab) {
+      var labelEl = card.querySelector('.dw-summary-card__label');
+      if (!labelEl) return;
+      var normalized = labelEl.textContent.trim().toLowerCase();
+      targetTab = CARD_LABEL_MAP[normalized];
+    }
+    if (!targetTab || tabKeys.indexOf(targetTab) === -1) return;
+
     var labelEl = card.querySelector('.dw-summary-card__label');
-    if (!labelEl) return;
-    var normalized = labelEl.textContent.trim().toLowerCase();
-    var targetTab = CARD_LABEL_MAP[normalized];
-    if (!targetTab) return;
+    var labelText = labelEl ? labelEl.textContent.trim() : targetTab;
 
     card.setAttribute('tabindex', '0');
     card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', 'Show ' + labelEl.textContent.trim());
+    card.setAttribute('aria-label', 'Show ' + labelText);
 
     card.addEventListener('click', function () {
       setActiveTab(targetTab, false);
