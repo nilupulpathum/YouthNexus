@@ -25,7 +25,7 @@
 
     rows.forEach(function (row) {
       var amount = Number(row.dataset.amount || 0);
-      var visible = (!term || row.dataset.search.indexOf(term) !== -1)
+      var visible = (!term || (row.dataset.search || '').indexOf(term) !== -1)
         && (!value(filters.club) || row.dataset.club === value(filters.club))
         && (!value(filters.category) || row.dataset.category === value(filters.category))
         && (!value(filters.status) || row.dataset.status === value(filters.status))
@@ -33,11 +33,28 @@
         && (max === null || amount <= max)
         && (!value(filters.from) || row.dataset.date >= value(filters.from))
         && (!value(filters.to) || row.dataset.date <= value(filters.to));
+      row.dataset.filterMatch = visible ? 'true' : 'false';
       row.hidden = !visible;
     });
 
     sortRows();
     updateSections();
+
+    if (window.ynPager && typeof window.ynPager.update === 'function') {
+      window.ynPager.update();
+    }
+
+    ['pending', 'history'].forEach(function (section) {
+      var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
+      var matches = sectionRows.filter(function (row) { return row.dataset.filterMatch !== 'false'; });
+      var targetId = section === 'pending' ? 'allocation-pending-tbody' : 'allocation-history-tbody';
+      var pagerNav = document.querySelector('[data-yn-pagination][data-yn-page-target="' + targetId + '"]');
+      if (pagerNav && matches.length === 0) {
+        pagerNav.hidden = true;
+      }
+    });
+
+    document.dispatchEvent(new CustomEvent('divisional:filtered'));
   }
 
   function sortRows() {
@@ -47,10 +64,10 @@
       if (!body) return;
       var sectionRows = rows.filter(function (row) { return row.dataset.section === section; });
       sectionRows.sort(function (a, b) {
-        if (mode === 'oldest') return a.dataset.date.localeCompare(b.dataset.date);
-        if (mode === 'amount-high') return Number(b.dataset.amount) - Number(a.dataset.amount);
-        if (mode === 'amount-low') return Number(a.dataset.amount) - Number(b.dataset.amount);
-        return b.dataset.date.localeCompare(a.dataset.date);
+        if (mode === 'oldest') return (a.dataset.date || '').localeCompare(b.dataset.date || '');
+        if (mode === 'amount-high') return Number(b.dataset.amount || 0) - Number(a.dataset.amount || 0);
+        if (mode === 'amount-low') return Number(a.dataset.amount || 0) - Number(b.dataset.amount || 0);
+        return (b.dataset.date || '').localeCompare(a.dataset.date || '');
       });
       sectionRows.forEach(function (row) { body.appendChild(row); });
     });
@@ -60,13 +77,20 @@
     ['pending', 'history'].forEach(function (name) {
       var section = document.querySelector('[data-allocation-section="' + name + '"]');
       if (!section) return;
-      var visible = rows.filter(function (row) {
-        return row.dataset.section === name && !row.hidden;
-      }).length;
+      var sectionRows = rows.filter(function (row) { return row.dataset.section === name; });
+      var visible = sectionRows.filter(function (row) { return row.dataset.filterMatch !== 'false'; }).length;
       var count = section.querySelector('[data-allocation-count]');
       var empty = section.querySelector('[data-empty-state]');
       if (count) count.textContent = visible + (name === 'pending' ? ' pending' : ' records');
       if (empty) empty.classList.toggle('is-visible', visible === 0);
+
+      var tabBadge = document.querySelector('[data-tab-count="' + name + '"]');
+      if (tabBadge) {
+        tabBadge.textContent = String(visible);
+        if (name === 'pending') {
+          tabBadge.classList.toggle('dv-tab__badge--attention', visible > 0);
+        }
+      }
     });
   }
 

@@ -7,10 +7,15 @@ $title = 'Allocate Funds - YouthNexus';
 $pageTitle = 'Allocate Funds';
 $pageDescription = 'Review club requests and allocate funds from the division ledger';
 $currentRoute = 'divisionalallocations';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-allocations.js',
+    ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
     ['value' => $money($summary['balance']), 'label' => 'Division Balance', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
@@ -35,9 +40,22 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php endif; ?>
 
   <div class="dw-summary-grid dw-summary-grid--two" aria-label="Allocation summary">
-    <?php foreach ($summaryCards as $card): ?>
-      <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
-    <?php endforeach; ?>
+    <article class="dw-summary-card dw-summary-card--blue">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e($money($summary['balance'])) ?></strong>
+        <span class="dw-summary-card__label">Division Balance</span>
+        <small class="dw-summary-card__note"><?= $e($division->division_name) ?></small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="pending">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['pending']) ?></strong>
+        <span class="dw-summary-card__label">Pending Requests</span>
+        <small class="dw-summary-card__note">Awaiting review</small>
+      </div>
+    </article>
   </div>
 
   <div class="dw-toolbar" aria-label="Allocation tools">
@@ -113,100 +131,123 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   </section>
 
-  <section class="dw-panel" data-allocation-section="pending">
-    <header class="dw-panel__header">
-      <div><h2>Pending Fund Requests</h2><p>Requests submitted by clubs in <?= $e($division->division_name) ?></p></div>
-      <span class="dw-count" data-allocation-count="pending"><?= count($pendingRequests) ?> pending</span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Club</th><th>Purpose</th><th>Category</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
-        <tbody data-allocation-rows="pending">
-          <?php foreach ($pendingRequests as $request): ?>
-            <?php $searchText = strtolower(implode(' ', [$request->club_name, $request->reference_no, $request->purpose_description, $request->fund_category])); ?>
-            <tr data-allocation-row
-                data-section="pending"
-                data-search="<?= $e($searchText) ?>"
-                data-club="<?= (int) $request->to_id ?>"
-                data-category="<?= $e(strtolower((string) $request->fund_category)) ?>"
-                data-status="pendingapproval"
-                data-amount="<?= $e($request->amount) ?>"
-                data-date="<?= $e(date('Y-m-d', strtotime($request->created_at))) ?>">
-              <td class="dw-table__description"><?= $e($request->club_name) ?></td>
-              <td><?= $e($request->purpose_description) ?></td>
-              <td><?= $e($request->fund_category ?: 'Uncategorised') ?></td>
-              <td class="dw-money"><?= $e($money($request->amount)) ?></td>
-              <td><?= $e(date('d M Y', strtotime($request->created_at))) ?></td>
-              <td>
-                <div class="dw-row-actions">
-                  <button class="dw-button dw-button--primary" type="button"
-                          data-review-allocation
-                          data-modal-open="review-allocation"
-                          data-action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>"
-                          data-club-name="<?= $e($request->club_name) ?>"
-                          data-reference="<?= $e($request->reference_no) ?>"
-                          data-purpose="<?= $e($request->purpose_description) ?>"
-                          data-category-label="<?= $e($request->fund_category ?: 'Uncategorised') ?>"
-                          data-amount-label="<?= $e($money($request->amount)) ?>"
-                          data-requested-label="<?= $e(date('d M Y', strtotime($request->created_at))) ?>">Allocate</button>
-                  <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
-                    <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
-                    <input type="hidden" name="decision" value="reject">
-                    <button class="dw-button dw-button--danger" type="submit">Reject</button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+  <div class="dv-tabs-container" data-tab-container>
+    <div class="dv-tablist" role="tablist" aria-label="Fund allocation sections">
+      <button class="dv-tab" type="button" role="tab" id="tab-pending" data-tab="pending" aria-controls="panel-pending" aria-selected="true" tabindex="0">
+        <span>Pending Requests</span>
+        <span class="dv-tab__badge" data-tab-count="pending" data-tab-attention><?= count($pendingRequests) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-history" data-tab="history" aria-controls="panel-history" aria-selected="false" tabindex="-1">
+        <span>Allocation History</span>
+        <span class="dv-tab__badge" data-tab-count="history"><?= count($history) ?></span>
+      </button>
     </div>
-    <?php
-    $emptyTitle = 'No pending requests found';
-    $emptyMessage = 'There are no club fund requests matching the current search and filters.';
-    $emptyVisible = count($pendingRequests) === 0;
-    require __DIR__ . '/../partials/divisional/empty-state.view.php';
-    ?>
-  </section>
 
-  <section class="dw-panel" data-allocation-section="history">
-    <header class="dw-panel__header">
-      <div><h2>Allocation History</h2><p>Reviewed and completed club allocations</p></div>
-      <span class="dw-count" data-allocation-count="history"><?= count($history) ?> records</span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody data-allocation-rows="history">
-          <?php foreach ($history as $allocation): ?>
-            <?php $searchText = strtolower(implode(' ', [$allocation->club_name, $allocation->reference_no, $allocation->purpose_description, $allocation->fund_category])); ?>
-            <tr data-allocation-row
-                data-section="history"
-                data-search="<?= $e($searchText) ?>"
-                data-club="<?= (int) $allocation->to_id ?>"
-                data-category="<?= $e(strtolower((string) $allocation->fund_category)) ?>"
-                data-status="<?= $e(strtolower($allocation->status)) ?>"
-                data-amount="<?= $e($allocation->amount) ?>"
-                data-date="<?= $e($allocation->transfer_date) ?>">
-              <td class="dw-table__reference"><?= $e($allocation->reference_no) ?></td>
-              <td class="dw-table__description"><?= $e($allocation->club_name) ?></td>
-              <td class="dw-money"><?= $e($money($allocation->amount)) ?></td>
-              <td><?= $e($allocation->fund_category ?: 'Uncategorised') ?></td>
-              <td><?= $e(date('d M Y', strtotime($allocation->transfer_date))) ?></td>
-              <td><?= $allocation->disbursement_method === 'RTGS' ? 'Bank Transfer' : 'Cheque / SLIPS' ?></td>
-              <td><?php $status = $allocation->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-pending" aria-labelledby="tab-pending" data-tab="pending">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" data-allocation-section="pending">
+        <header class="dw-panel__header">
+          <div><h2>Pending Fund Requests</h2><p>Requests submitted by clubs in <?= $e($division->division_name) ?></p></div>
+          <span class="dw-count" data-allocation-count="pending"><?= count($pendingRequests) ?> pending</span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Club</th><th>Purpose</th><th>Category</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
+            <tbody id="allocation-pending-tbody" data-allocation-rows="pending">
+              <?php foreach ($pendingRequests as $request): ?>
+                <?php $searchText = strtolower(implode(' ', [$request->club_name, $request->reference_no, $request->purpose_description, $request->fund_category])); ?>
+                <tr data-allocation-row
+                    data-section="pending"
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-club="<?= (int) $request->to_id ?>"
+                    data-category="<?= $e(strtolower((string) $request->fund_category)) ?>"
+                    data-status="pendingapproval"
+                    data-amount="<?= $e($request->amount) ?>"
+                    data-date="<?= $e(date('Y-m-d', strtotime($request->created_at))) ?>">
+                  <td class="dw-table__description"><?= $e($request->club_name) ?></td>
+                  <td><?= $e($request->purpose_description) ?></td>
+                  <td><?= $e($request->fund_category ?: 'Uncategorised') ?></td>
+                  <td class="dw-money"><?= $e($money($request->amount)) ?></td>
+                  <td><?= $e(date('d M Y', strtotime($request->created_at))) ?></td>
+                  <td>
+                    <div class="dw-row-actions">
+                      <button class="dw-button dw-button--primary" type="button"
+                              data-review-allocation
+                              data-modal-open="review-allocation"
+                              data-action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>"
+                              data-club-name="<?= $e($request->club_name) ?>"
+                              data-reference="<?= $e($request->reference_no) ?>"
+                              data-purpose="<?= $e($request->purpose_description) ?>"
+                              data-category-label="<?= $e($request->fund_category ?: 'Uncategorised') ?>"
+                              data-amount-label="<?= $e($money($request->amount)) ?>"
+                              data-requested-label="<?= $e(date('d M Y', strtotime($request->created_at))) ?>">Allocate</button>
+                      <form action="<?= ROOT ?>/divisionalallocations/decide/<?= (int) $request->allocation_id ?>" method="post" data-reject-allocation-form>
+                        <input type="hidden" name="csrf_token" value="<?= $e($csrfToken) ?>">
+                        <input type="hidden" name="decision" value="reject">
+                        <button class="dw-button dw-button--danger" type="submit">Reject</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="allocation-pending-tbody" data-yn-page-size="10"></nav>
+        <?php
+        $emptyTitle = 'No pending requests found';
+        $emptyMessage = 'There are no club fund requests matching the current search and filters.';
+        $emptyVisible = count($pendingRequests) === 0;
+        require __DIR__ . '/../partials/divisional/empty-state.view.php';
+        ?>
+      </section>
     </div>
-    <?php
-    $emptyTitle = 'No allocation history found';
-    $emptyMessage = 'Create an allocation or change the current search and filters.';
-    $emptyVisible = count($history) === 0;
-    require __DIR__ . '/../partials/divisional/empty-state.view.php';
-    ?>
-  </section>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-history" aria-labelledby="tab-history" data-tab="history">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" data-allocation-section="history">
+        <header class="dw-panel__header">
+          <div><h2>Allocation History</h2><p>Reviewed and completed club allocations</p></div>
+          <span class="dw-count" data-allocation-count="history"><?= count($history) ?> records</span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Reference</th><th>Club</th><th>Amount</th><th>Fund Category</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody id="allocation-history-tbody" data-allocation-rows="history">
+              <?php foreach ($history as $allocation): ?>
+                <?php $searchText = strtolower(implode(' ', [$allocation->club_name, $allocation->reference_no, $allocation->purpose_description, $allocation->fund_category])); ?>
+                <tr data-allocation-row
+                    data-section="history"
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-club="<?= (int) $allocation->to_id ?>"
+                    data-category="<?= $e(strtolower((string) $allocation->fund_category)) ?>"
+                    data-status="<?= $e(strtolower($allocation->status)) ?>"
+                    data-amount="<?= $e($allocation->amount) ?>"
+                    data-date="<?= $e($allocation->transfer_date) ?>">
+                  <td class="dw-table__reference"><?= $e($allocation->reference_no) ?></td>
+                  <td class="dw-table__description"><?= $e($allocation->club_name) ?></td>
+                  <td class="dw-money"><?= $e($money($allocation->amount)) ?></td>
+                  <td><?= $e($allocation->fund_category ?: 'Uncategorised') ?></td>
+                  <td><?= $e(date('d M Y', strtotime($allocation->transfer_date))) ?></td>
+                  <td><?= $allocation->disbursement_method === 'RTGS' ? 'Bank Transfer' : 'Cheque / SLIPS' ?></td>
+                  <td><?php $status = $allocation->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="allocation-history-tbody" data-yn-page-size="10"></nav>
+        <?php
+        $emptyTitle = 'No allocation history found';
+        $emptyMessage = 'Create an allocation or change the current search and filters.';
+        $emptyVisible = count($history) === 0;
+        require __DIR__ . '/../partials/divisional/empty-state.view.php';
+        ?>
+      </section>
+    </div>
+  </div>
 </section>
 
 <div class="dw-modal" id="new-allocation" role="dialog" aria-modal="true" aria-labelledby="new-allocation-title" aria-hidden="true" hidden>
