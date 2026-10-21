@@ -3,7 +3,6 @@
 
   var cards = Array.prototype.slice.call(document.querySelectorAll('[data-health-card]'));
   var search = document.querySelector('[data-health-search]');
-  var statusFilter = document.querySelector('[data-health-status]');
   var flagFilter = document.querySelector('[data-health-flag]');
   var minScore = document.querySelector('[data-health-min]');
   var maxScore = document.querySelector('[data-health-max]');
@@ -71,50 +70,88 @@
 
   function applyFilters() {
     var query = search ? search.value.trim().toLowerCase() : '';
-    var selectedStatus = statusFilter ? statusFilter.value : '';
     var selectedFlag = flagFilter ? flagFilter.value : '';
     var minimum = minScore && minScore.value !== '' ? Number(minScore.value) : null;
     var maximum = maxScore && maxScore.value !== '' ? Number(maxScore.value) : null;
-    var visible = 0;
+
+    var counts = { green: 0, yellow: 0, red: 0 };
+
     cards.forEach(function (card) {
       var score = Number(card.dataset.score || 0);
       var flags = Number(card.dataset.flags || 0);
+      var cardStatus = card.dataset.status;
+
       var show = (!query || (card.dataset.search || '').indexOf(query) !== -1)
-        && (!selectedStatus || card.dataset.status === selectedStatus)
         && (!selectedFlag || (selectedFlag === 'flagged' ? flags > 0 : flags === 0))
         && (minimum === null || score >= minimum)
         && (maximum === null || score <= maximum);
+
       card.hidden = !show;
-      if (show) visible++;
+      if (show && counts.hasOwnProperty(cardStatus)) {
+        counts[cardStatus]++;
+      }
     });
-    var count = document.querySelector('[data-health-count]');
-    var empty = document.querySelector('[data-health-empty]');
-    if (count) count.textContent = visible + ' clubs';
-    if (empty) empty.classList.toggle('is-visible', visible === 0);
+
+    ['green', 'yellow', 'red'].forEach(function (status) {
+      var visible = counts[status];
+      var count = document.querySelector('[data-health-count="' + status + '"]');
+      var empty = document.querySelector('[data-health-empty="' + status + '"]');
+      if (count) count.textContent = visible + (visible === 1 ? ' club' : ' clubs');
+      if (empty) empty.classList.toggle('is-visible', visible === 0);
+
+      var tabBadge = document.querySelector('[data-tab-count="' + status + '"]');
+      if (tabBadge) {
+        tabBadge.textContent = String(visible);
+        if (status === 'yellow') {
+          tabBadge.classList.toggle('dv-tab__badge--attention', visible > 0);
+        }
+      }
+    });
+
+    document.dispatchEvent(new CustomEvent('divisional:filtered'));
   }
 
   function sortCards() {
-    var grid = document.querySelector('[data-health-grid]');
     var mode = sort ? sort.value : 'score-high';
-    cards.sort(function (a, b) {
+    var comparator = function (a, b) {
       if (mode === 'score-low') return Number(a.dataset.score) - Number(b.dataset.score);
       if (mode === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
       if (mode === 'flags') return Number(b.dataset.flags) - Number(a.dataset.flags);
       return Number(b.dataset.score) - Number(a.dataset.score);
-    }).forEach(function (card) { grid.appendChild(card); });
+    };
+
+    ['green', 'yellow', 'red'].forEach(function (status) {
+      var grid = document.querySelector('[data-health-grid="' + status + '"]');
+      if (!grid) return;
+      var statusCards = cards.filter(function (card) {
+        return card.dataset.status === status;
+      });
+      statusCards.sort(comparator).forEach(function (card) {
+        grid.appendChild(card);
+      });
+    });
   }
 
   if (search) search.addEventListener('input', applyFilters);
-  document.querySelector('[data-health-apply]').addEventListener('click', function () { sortCards(); applyFilters(); });
-  document.querySelector('[data-health-reset]').addEventListener('click', function () {
-    statusFilter.value = '';
-    flagFilter.value = '';
-    minScore.value = '';
-    maxScore.value = '';
-    sort.value = 'score-high';
-    sortCards();
-    applyFilters();
-  });
+  var applyBtn = document.querySelector('[data-health-apply]');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', function () {
+      sortCards();
+      applyFilters();
+    });
+  }
+  var resetBtn = document.querySelector('[data-health-reset]');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      if (search) search.value = '';
+      if (flagFilter) flagFilter.value = '';
+      if (minScore) minScore.value = '';
+      if (maxScore) maxScore.value = '';
+      if (sort) sort.value = 'score-high';
+      sortCards();
+      applyFilters();
+    });
+  }
 
   function populateClubInfo(record) {
     var target = document.querySelector('[data-detail-club-info]');
@@ -303,18 +340,30 @@
     populateFlags(record);
   }
 
-  document.querySelectorAll('[data-club-details]').forEach(function (button) {
-    button.addEventListener('click', function () { openDetails(button.dataset.clubDetails); });
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-club-details]');
+    if (button) {
+      openDetails(button.dataset.clubDetails);
+    }
   });
 
   var flagForm = document.querySelector('[data-health-flag-form]');
-  document.querySelector('[data-open-health-flag]').addEventListener('click', function () {
-    var record = details[activeClubId];
-    if (!record) return;
-    flagForm.action = flagForm.dataset.actionBase + activeClubId;
-    document.querySelector('[data-flag-club-name]').textContent = record.club.club_name;
-    var detailModal = document.getElementById('club-health-details');
-    detailModal.hidden = true;
-    detailModal.setAttribute('aria-hidden', 'true');
-  });
+  var openFlagBtn = document.querySelector('[data-open-health-flag]');
+  if (openFlagBtn) {
+    openFlagBtn.addEventListener('click', function () {
+      var record = details[activeClubId];
+      if (!record || !flagForm) return;
+      flagForm.action = flagForm.dataset.actionBase + activeClubId;
+      var flagClubName = document.querySelector('[data-flag-club-name]');
+      if (flagClubName) flagClubName.textContent = record.club.club_name;
+      var detailModal = document.getElementById('club-health-details');
+      if (detailModal) {
+        detailModal.hidden = true;
+        detailModal.setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
+  sortCards();
+  applyFilters();
 })();
