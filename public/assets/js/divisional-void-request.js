@@ -66,80 +66,118 @@
     var requestVisible = 0;
     eligibleRows.forEach(function (row) {
       var matches = rowMatches(row, false);
+      row.dataset.filterMatch = matches ? 'true' : 'false';
       row.hidden = !matches;
       if (matches) eligibleVisible += 1;
     });
     requestRows.forEach(function (row) {
       var matches = rowMatches(row, true);
+      row.dataset.filterMatch = matches ? 'true' : 'false';
       row.hidden = !matches;
       if (matches) requestVisible += 1;
     });
+
     sortRows(eligibleRows, eligibleBody);
     sortRows(requestRows, requestBody);
+
     if (eligibleCount) eligibleCount.textContent = eligibleVisible + (eligibleVisible === 1 ? ' entry' : ' entries');
     if (requestCount) requestCount.textContent = requestVisible + (requestVisible === 1 ? ' request' : ' requests');
     if (eligibleEmpty) eligibleEmpty.classList.toggle('is-visible', eligibleVisible === 0);
     if (requestEmpty) requestEmpty.classList.toggle('is-visible', requestVisible === 0);
+
+    var eligibleBadge = document.querySelector('[data-tab-count="eligible"]');
+    if (eligibleBadge) eligibleBadge.textContent = String(eligibleVisible);
+
+    var requestBadge = document.querySelector('[data-tab-count="requests"]');
+    if (requestBadge) requestBadge.textContent = String(requestVisible);
+
+    if (window.ynPager && typeof window.ynPager.update === 'function') {
+      window.ynPager.update();
+    }
+
+    var eligiblePager = document.querySelector('[data-yn-pagination][data-yn-page-target="void-eligible-tbody"]');
+    if (eligiblePager && eligibleVisible === 0) {
+      eligiblePager.hidden = true;
+    }
+
+    var requestPager = document.querySelector('[data-yn-pagination][data-yn-page-target="void-request-tbody"]');
+    if (requestPager && requestVisible === 0) {
+      requestPager.hidden = true;
+    }
+
+    document.dispatchEvent(new CustomEvent('divisional:filtered'));
   }
 
   search.addEventListener('input', applyFilters);
-  document.querySelector('[data-void-filter-apply]')?.addEventListener('click', applyFilters);
-  document.querySelector('[data-void-filter-reset]')?.addEventListener('click', function () {
-    [search, statusFilter, typeFilter, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
-      if (control) control.value = '';
+  var applyBtn = document.querySelector('[data-void-filter-apply]');
+  if (applyBtn) applyBtn.addEventListener('click', applyFilters);
+
+  var resetBtn = document.querySelector('[data-void-filter-reset]');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      [search, statusFilter, typeFilter, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
+        if (control) control.value = '';
+      });
+      if (sort) sort.value = 'newest';
+      applyFilters();
     });
-    if (sort) sort.value = 'newest';
-    applyFilters();
-  });
+  }
 
   var entrySelect = document.querySelector('[data-void-entry-select]');
-  document.querySelectorAll('[data-request-entry]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      if (entrySelect) entrySelect.value = button.dataset.requestEntry;
-    });
-  });
 
   function setText(selector, text) {
     var target = document.querySelector(selector);
     if (target) target.textContent = text || '';
   }
 
-  document.querySelectorAll('[data-request-status]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var status = button.dataset.statusLabel;
-      var pending = status === 'Pending';
-      var canWithdraw = button.dataset.canWithdraw === '1';
-      setText('[data-status-request-reference]', button.dataset.requestReference);
-      setText('[data-status-entry]', button.dataset.entryReference + ' - ' + button.dataset.amountLabel);
-      setText('[data-status-description]', button.dataset.entryDescription);
-      setText('[data-status-reason]', button.dataset.reason);
-      setText('[data-status-recipient]', button.dataset.recipient);
-      setText('[data-status-state]', status);
-      setText('[data-status-submitted-date]', button.dataset.requestedAt);
-      setText('[data-status-review-copy]', pending ? 'Awaiting response from ' + button.dataset.recipient : 'Review completed');
-      setText('[data-status-decision-copy]', pending ? 'Pending' : status + (button.dataset.decidedAt ? ' on ' + button.dataset.decidedAt : ''));
+  function populateStatusModal(button) {
+    var status = button.dataset.statusLabel;
+    var pending = status === 'Pending';
+    var canWithdraw = button.dataset.canWithdraw === '1';
+    setText('[data-status-request-reference]', button.dataset.requestReference);
+    setText('[data-status-entry]', button.dataset.entryReference + ' - ' + button.dataset.amountLabel);
+    setText('[data-status-description]', button.dataset.entryDescription);
+    setText('[data-status-reason]', button.dataset.reason);
+    setText('[data-status-recipient]', button.dataset.recipient);
+    setText('[data-status-state]', status);
+    setText('[data-status-submitted-date]', button.dataset.requestedAt);
+    setText('[data-status-review-copy]', pending ? 'Awaiting response from ' + button.dataset.recipient : 'Review completed');
+    setText('[data-status-decision-copy]', pending ? 'Pending' : status + (button.dataset.decidedAt ? ' on ' + button.dataset.decidedAt : ''));
 
-      var reviewStep = document.querySelector('[data-status-review-step]');
-      var decisionStep = document.querySelector('[data-status-decision-step]');
-      if (reviewStep) reviewStep.classList.toggle('is-complete', !pending);
-      if (decisionStep) decisionStep.classList.toggle('is-complete', !pending);
+    var reviewStep = document.querySelector('[data-status-review-step]');
+    var decisionStep = document.querySelector('[data-status-decision-step]');
+    if (reviewStep) reviewStep.classList.toggle('is-complete', !pending);
+    if (decisionStep) decisionStep.classList.toggle('is-complete', !pending);
 
-      var remarksRow = document.querySelector('[data-status-remarks-row]');
-      if (remarksRow) remarksRow.hidden = !button.dataset.remarks;
-      setText('[data-status-remarks]', button.dataset.remarks);
+    var remarksRow = document.querySelector('[data-status-remarks-row]');
+    if (remarksRow) remarksRow.hidden = !button.dataset.remarks;
+    setText('[data-status-remarks]', button.dataset.remarks);
 
-      var withdrawForm = document.querySelector('[data-withdraw-form]');
-      if (withdrawForm) {
-        withdrawForm.hidden = !pending || !canWithdraw;
-        withdrawForm.action = withdrawForm.dataset.withdrawBase + button.dataset.requestId;
-      }
-    });
-  });
+    var withdrawForm = document.querySelector('[data-withdraw-form]');
+    if (withdrawForm) {
+      withdrawForm.hidden = !pending || !canWithdraw;
+      withdrawForm.action = withdrawForm.dataset.withdrawBase + button.dataset.requestId;
+    }
+  }
 
-  document.querySelectorAll('[data-confirm]').forEach(function (button) {
-    button.addEventListener('click', function (event) {
-      if (!window.confirm(button.dataset.confirm)) event.preventDefault();
-    });
+  document.addEventListener('click', function (event) {
+    var requestButton = event.target.closest('[data-request-entry]');
+    if (requestButton) {
+      if (entrySelect) entrySelect.value = requestButton.dataset.requestEntry;
+      return;
+    }
+
+    var statusButton = event.target.closest('[data-request-status]');
+    if (statusButton) {
+      populateStatusModal(statusButton);
+      return;
+    }
+
+    var confirmButton = event.target.closest('[data-confirm]');
+    if (confirmButton) {
+      if (!window.confirm(confirmButton.dataset.confirm)) event.preventDefault();
+      return;
+    }
   });
 
   applyFilters();
