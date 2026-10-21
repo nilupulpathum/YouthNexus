@@ -8,10 +8,15 @@ $title = 'Approve Void Requests - YouthNexus';
 $pageTitle = 'Approve Void Requests';
 $pageDescription = 'Review club ledger-entry void requests within your division';
 $currentRoute = 'divisionalvoidapproval';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-void-approval.js',
+    ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
     ['value' => $summary['pending'], 'label' => 'Pending From Clubs', 'note' => $division->division_name, 'icon' => 'clock', 'tone' => 'amber'],
@@ -43,9 +48,30 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php endif; ?>
 
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Void approval summary">
-    <?php foreach ($summaryCards as $card): ?>
-      <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
-    <?php endforeach; ?>
+    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="pending">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['pending']) ?></strong>
+        <span class="dw-summary-card__label">Pending From Clubs</span>
+        <small class="dw-summary-card__note"><?= $e($division->division_name) ?></small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--green" data-tab-target="decided">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['approved']) ?></strong>
+        <span class="dw-summary-card__label">Approved This Year</span>
+        <small class="dw-summary-card__note">Club ledger requests</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--red" data-tab-target="decided">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('close') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['rejected']) ?></strong>
+        <span class="dw-summary-card__label">Rejected This Year</span>
+        <small class="dw-summary-card__note">Club ledger requests</small>
+      </div>
+    </article>
   </div>
 
   <div class="dw-toolbar" aria-label="Void approval tools">
@@ -122,101 +148,124 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   </section>
 
-  <section class="dw-panel" aria-labelledby="pending-void-title">
-    <header class="dw-panel__header">
-      <div><h2 id="pending-void-title">Pending Void Requests</h2><p>Club requests waiting for your decision</p></div>
-      <span class="dw-count" data-pending-count><?= count($pendingRequests) ?> <?= count($pendingRequests) === 1 ? 'request' : 'requests' ?></span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead>
-        <tbody data-pending-body>
-          <?php foreach ($pendingRequests as $request): ?>
-            <?php
-            $reference = $requestReference($request->void_request_id);
-            $searchText = strtolower(implode(' ', [$reference, $request->club_name, $request->reference_no, $request->description, $request->reason, $request->requester_name]));
-            ?>
-            <tr data-approval-row
-                data-section="pending"
-                data-search="<?= $e($searchText) ?>"
-                data-club="<?= (int) $request->club_id ?>"
-                data-status="pending"
-                data-type="<?= $e(strtolower($request->type)) ?>"
-                data-reason="<?= $e(strtolower($request->reason)) ?>"
-                data-amount="<?= $e($request->amount) ?>"
-                data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
-              <td class="dw-table__reference"><?= $e($reference) ?></td>
-              <td><?= $e($request->club_name) ?></td>
-              <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
-              <td class="dw-table__description"><?= $e($request->reason) ?></td>
-              <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
-              <td>
-                <button class="dw-button dw-button--primary" type="button"
-                        data-review-request
-                        data-request-id="<?= (int) $request->void_request_id ?>"
-                        data-request-reference="<?= $e($reference) ?>"
-                        data-club-name="<?= $e($request->club_name) ?>"
-                        data-entry-reference="<?= $e($request->reference_no) ?>"
-                        data-entry-description="<?= $e($request->description) ?>"
-                        data-amount-label="<?= $e($money($request->amount)) ?>"
-                        data-type-label="<?= $e($request->type) ?>"
-                        data-reason-label="<?= $e($request->reason) ?>"
-                        data-requester="<?= $e(trim((string) $request->requester_name) ?: 'Club Treasurer') ?>"
-                        data-requested-at="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>"
-                        data-modal-open="review-void-request">Review</button>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+  <div class="dv-tabs-container" data-tab-container data-default-tab="pending">
+    <div class="dv-tablist" role="tablist" aria-label="Void approval sections">
+      <button class="dv-tab" type="button" role="tab" id="tab-pending" data-tab="pending" aria-controls="panel-pending" aria-selected="true" tabindex="0">
+        <span>Pending Requests</span>
+        <span class="dv-tab__badge" data-tab-count="pending" data-tab-attention><?= count($pendingRequests) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-decided" data-tab="decided" aria-controls="panel-decided" aria-selected="false" tabindex="-1">
+        <span>Recently Decided</span>
+        <span class="dv-tab__badge" data-tab-count="decided"><?= count($decidedRequests) ?></span>
+      </button>
     </div>
-    <div class="dw-empty-state<?= !$pendingRequests ? ' is-visible' : '' ?>" data-pending-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
-      <strong>No pending void requests</strong>
-      <p>New requests from clubs in your division appear here.</p>
-    </div>
-  </section>
 
-  <section class="dw-panel" aria-labelledby="decided-void-title">
-    <header class="dw-panel__header">
-      <div><h2 id="decided-void-title">Recently Decided</h2><p>Completed club void-request decisions</p></div>
-      <span class="dw-count" data-decided-count><?= count($decidedRequests) ?> <?= count($decidedRequests) === 1 ? 'request' : 'requests' ?></span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Decided On</th><th>Decision</th><th>Remarks</th></tr></thead>
-        <tbody data-decided-body>
-          <?php foreach ($decidedRequests as $request): ?>
-            <?php
-            $reference = $requestReference($request->void_request_id);
-            $searchText = strtolower(implode(' ', [$reference, $request->club_name, $request->reference_no, $request->description, $request->reason, $request->remarks, $request->status]));
-            ?>
-            <tr data-approval-row
-                data-section="decided"
-                data-search="<?= $e($searchText) ?>"
-                data-club="<?= (int) $request->club_id ?>"
-                data-status="<?= $e(strtolower($request->status)) ?>"
-                data-type="<?= $e(strtolower($request->type)) ?>"
-                data-reason="<?= $e(strtolower($request->reason)) ?>"
-                data-amount="<?= $e($request->amount) ?>"
-                data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
-              <td class="dw-table__reference"><?= $e($reference) ?></td>
-              <td><?= $e($request->club_name) ?></td>
-              <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
-              <td><?= $e($request->decided_at ? date('d M Y', strtotime($request->decided_at)) : '-') ?></td>
-              <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-              <td class="dw-table__description"><?= $e($request->remarks ?: '-') ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-pending" aria-labelledby="tab-pending" data-tab="pending">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="pending-void-title">
+        <header class="dw-panel__header">
+          <div><h2 id="pending-void-title">Pending Void Requests</h2><p>Club requests waiting for your decision</p></div>
+          <span class="dw-count" data-pending-count><?= count($pendingRequests) ?> <?= count($pendingRequests) === 1 ? 'request' : 'requests' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead>
+            <tbody id="approval-pending-tbody" data-pending-body>
+              <?php foreach ($pendingRequests as $request): ?>
+                <?php
+                $reference = $requestReference($request->void_request_id);
+                $searchText = strtolower(implode(' ', [$reference, $request->club_name, $request->reference_no, $request->description, $request->reason, $request->requester_name]));
+                ?>
+                <tr data-approval-row
+                    data-section="pending"
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-club="<?= (int) $request->club_id ?>"
+                    data-status="pending"
+                    data-type="<?= $e(strtolower($request->type)) ?>"
+                    data-reason="<?= $e(strtolower($request->reason)) ?>"
+                    data-amount="<?= $e($request->amount) ?>"
+                    data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
+                  <td class="dw-table__reference"><?= $e($reference) ?></td>
+                  <td><?= $e($request->club_name) ?></td>
+                  <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
+                  <td class="dw-table__description"><?= $e($request->reason) ?></td>
+                  <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
+                  <td>
+                    <button class="dw-button dw-button--primary" type="button"
+                            data-review-request
+                            data-request-id="<?= (int) $request->void_request_id ?>"
+                            data-request-reference="<?= $e($reference) ?>"
+                            data-club-name="<?= $e($request->club_name) ?>"
+                            data-entry-reference="<?= $e($request->reference_no) ?>"
+                            data-entry-description="<?= $e($request->description) ?>"
+                            data-amount-label="<?= $e($money($request->amount)) ?>"
+                            data-type-label="<?= $e($request->type) ?>"
+                            data-reason-label="<?= $e($request->reason) ?>"
+                            data-requester="<?= $e(trim((string) $request->requester_name) ?: 'Club Treasurer') ?>"
+                            data-requested-at="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>"
+                            data-modal-open="review-void-request">Review</button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="approval-pending-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$pendingRequests ? ' is-visible' : '' ?>" data-pending-empty data-empty-state>
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+          <strong>No pending void requests</strong>
+          <p>New requests from clubs in your division appear here.</p>
+        </div>
+      </section>
     </div>
-    <div class="dw-empty-state<?= !$decidedRequests ? ' is-visible' : '' ?>" data-decided-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No decisions found</strong>
-      <p>Approved and rejected requests appear here.</p>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-decided" aria-labelledby="tab-decided" data-tab="decided">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="decided-void-title">
+        <header class="dw-panel__header">
+          <div><h2 id="decided-void-title">Recently Decided</h2><p>Completed club void-request decisions</p></div>
+          <span class="dw-count" data-decided-count><?= count($decidedRequests) ?> <?= count($decidedRequests) === 1 ? 'request' : 'requests' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Request ID</th><th>Club</th><th>Ledger Entry</th><th>Decided On</th><th>Decision</th><th>Remarks</th></tr></thead>
+            <tbody id="approval-decided-tbody" data-decided-body>
+              <?php foreach ($decidedRequests as $request): ?>
+                <?php
+                $reference = $requestReference($request->void_request_id);
+                $searchText = strtolower(implode(' ', [$reference, $request->club_name, $request->reference_no, $request->description, $request->reason, $request->remarks, $request->status]));
+                ?>
+                <tr data-approval-row
+                    data-section="decided"
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-club="<?= (int) $request->club_id ?>"
+                    data-status="<?= $e(strtolower($request->status)) ?>"
+                    data-type="<?= $e(strtolower($request->type)) ?>"
+                    data-reason="<?= $e(strtolower($request->reason)) ?>"
+                    data-amount="<?= $e($request->amount) ?>"
+                    data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
+                  <td class="dw-table__reference"><?= $e($reference) ?></td>
+                  <td><?= $e($request->club_name) ?></td>
+                  <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
+                  <td><?= $e($request->decided_at ? date('d M Y', strtotime($request->decided_at)) : '-') ?></td>
+                  <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                  <td class="dw-table__description"><?= $e($request->remarks ?: '-') ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="approval-decided-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$decidedRequests ? ' is-visible' : '' ?>" data-decided-empty data-empty-state>
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+          <strong>No decisions found</strong>
+          <p>Approved and rejected requests appear here.</p>
+        </div>
+      </section>
     </div>
-  </section>
+  </div>
 </section>
 
 <script type="application/json" id="void-review-evidence"><?= $reviewEvidenceJson ?></script>

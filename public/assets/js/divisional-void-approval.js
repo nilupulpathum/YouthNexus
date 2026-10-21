@@ -67,6 +67,7 @@
         && (max === null || amount <= max)
         && (!from || row.dataset.date >= from)
         && (!to || row.dataset.date <= to);
+      row.dataset.filterMatch = matches ? 'true' : 'false';
       row.hidden = !matches;
       if (matches && row.dataset.section === 'pending') pendingVisible += 1;
       if (matches && row.dataset.section === 'decided') decidedVisible += 1;
@@ -74,21 +75,53 @@
 
     sortRows(rows.filter(function (row) { return row.dataset.section === 'pending'; }), pendingBody);
     sortRows(rows.filter(function (row) { return row.dataset.section === 'decided'; }), decidedBody);
+
     if (pendingCount) pendingCount.textContent = pendingVisible + (pendingVisible === 1 ? ' request' : ' requests');
     if (decidedCount) decidedCount.textContent = decidedVisible + (decidedVisible === 1 ? ' request' : ' requests');
     if (pendingEmpty) pendingEmpty.classList.toggle('is-visible', pendingVisible === 0);
     if (decidedEmpty) decidedEmpty.classList.toggle('is-visible', decidedVisible === 0);
+
+    var pendingBadge = document.querySelector('[data-tab-count="pending"]');
+    if (pendingBadge) {
+      pendingBadge.textContent = String(pendingVisible);
+      pendingBadge.classList.toggle('dv-tab__badge--attention', pendingVisible > 0);
+    }
+
+    var decidedBadge = document.querySelector('[data-tab-count="decided"]');
+    if (decidedBadge) {
+      decidedBadge.textContent = String(decidedVisible);
+    }
+
+    if (window.ynPager && typeof window.ynPager.update === 'function') {
+      window.ynPager.update();
+    }
+
+    var pendingPager = document.querySelector('[data-yn-pagination][data-yn-page-target="approval-pending-tbody"]');
+    if (pendingPager && pendingVisible === 0) {
+      pendingPager.hidden = true;
+    }
+
+    var decidedPager = document.querySelector('[data-yn-pagination][data-yn-page-target="approval-decided-tbody"]');
+    if (decidedPager && decidedVisible === 0) {
+      decidedPager.hidden = true;
+    }
+
+    document.dispatchEvent(new CustomEvent('divisional:filtered'));
   }
 
   search.addEventListener('input', applyFilters);
-  document.querySelector('[data-approval-filter-apply]')?.addEventListener('click', applyFilters);
-  document.querySelector('[data-approval-filter-reset]')?.addEventListener('click', function () {
-    [search, club, status, type, reason, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
-      if (control) control.value = '';
+  var applyBtn = document.querySelector('[data-approval-filter-apply]');
+  if (applyBtn) applyBtn.addEventListener('click', applyFilters);
+  var resetBtn = document.querySelector('[data-approval-filter-reset]');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      [search, club, status, type, reason, minimum, maximum, dateFrom, dateTo].forEach(function (control) {
+        if (control) control.value = '';
+      });
+      if (sort) sort.value = 'newest';
+      applyFilters();
     });
-    if (sort) sort.value = 'newest';
-    applyFilters();
-  });
+  }
 
   function setText(selector, text) {
     var target = document.querySelector(selector);
@@ -194,23 +227,23 @@
 
   if (decisionSelect) decisionSelect.addEventListener('change', updateDecisionRequirements);
 
-  document.querySelectorAll('[data-review-request]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      if (!decisionForm) return;
-      decisionForm.action = decisionForm.dataset.decisionBase + button.dataset.requestId;
-      setText('[data-review-reference]', button.dataset.requestReference);
-      setText('[data-review-club]', button.dataset.clubName);
-      setText('[data-review-entry]', button.dataset.entryReference + ' - ' + button.dataset.amountLabel);
-      setText('[data-review-description]', button.dataset.entryDescription);
-      setText('[data-review-type]', button.dataset.typeLabel);
-      setText('[data-review-reason]', button.dataset.reasonLabel);
-      setText('[data-review-requester]', button.dataset.requester);
-      setText('[data-review-date]', button.dataset.requestedAt);
-      renderEvidence(button.dataset.requestId);
-      if (decisionSelect) decisionSelect.value = 'approve';
-      if (remarks) remarks.value = '';
-      updateDecisionRequirements();
-    });
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-review-request]');
+    if (!button || !decisionForm) return;
+
+    decisionForm.action = decisionForm.dataset.decisionBase + button.dataset.requestId;
+    setText('[data-review-reference]', button.dataset.requestReference);
+    setText('[data-review-club]', button.dataset.clubName);
+    setText('[data-review-entry]', button.dataset.entryReference + ' - ' + button.dataset.amountLabel);
+    setText('[data-review-description]', button.dataset.entryDescription);
+    setText('[data-review-type]', button.dataset.typeLabel);
+    setText('[data-review-reason]', button.dataset.reasonLabel);
+    setText('[data-review-requester]', button.dataset.requester);
+    setText('[data-review-date]', button.dataset.requestedAt);
+    renderEvidence(button.dataset.requestId);
+    if (decisionSelect) decisionSelect.value = 'approve';
+    if (remarks) remarks.value = '';
+    updateDecisionRequirements();
   });
 
   if (decisionForm) {
