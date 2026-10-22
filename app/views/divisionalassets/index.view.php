@@ -6,8 +6,16 @@ $title = 'Manage Assets - YouthNexus';
 $pageTitle = 'Manage Assets';
 $pageDescription = 'Manage divisional inventory and club asset requests';
 $currentRoute = 'divisionalassets';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
-$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-assets.js'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
+$pageScripts = [
+    ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
+    ROOT . '/assets/js/divisional-assets.js',
+    ROOT . '/assets/js/divisional-tabs.js',
+];
 $summaryCards = [
     ['value' => $summary['units'], 'label' => 'Units In Division Store', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
     ['value' => $summary['items'], 'label' => 'Asset Types', 'note' => 'With available stock', 'icon' => 'file', 'tone' => 'green'],
@@ -48,60 +56,97 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dw-filter-actions"><button class="dw-button dw-button--secondary" type="button" data-asset-reset>Reset all</button><button class="dw-button dw-button--primary" type="button" data-asset-apply>Apply filters</button></div>
   </section>
 
-  <section class="dw-panel" aria-labelledby="club-asset-request-title">
-    <header class="dw-panel__header"><div><h2 id="club-asset-request-title">Pending Club Requests</h2><p>Review requests from active clubs in your division</p></div><span class="dw-count" data-club-request-count><?= count($clubRequests) ?> requests</span></header>
-    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Club</th><th>Item</th><th>Qty</th><th>Available</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead><tbody data-club-request-body>
-      <?php foreach ($clubRequests as $request): ?>
-        <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->club_name, $request->item_name, $request->category, $request->reason])); ?>
-        <tr data-asset-row data-section="club-request" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="pending" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>">
-          <td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td><?= $e($request->club_name) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= (int) $request->available_quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
-          <td><button class="dw-button dw-button--secondary db-view-button" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody></table></div>
-    <div class="dw-empty-state<?= !$clubRequests ? ' is-visible' : '' ?>" data-club-request-empty><span class="dw-empty-state__icon"><?= yn_icon('check') ?></span><strong>No pending club requests</strong><p>New asset requests from clubs appear here.</p></div>
-  </section>
+  <div class="dv-tabs-container" data-tab-container>
+    <div class="dv-tablist" role="tablist" aria-label="Asset management sections">
+      <button class="dv-tab" type="button" role="tab" id="tab-pending" data-tab="pending" aria-controls="panel-pending" aria-selected="true" tabindex="0">
+        <span>Pending Club Requests</span>
+        <span class="dv-tab__badge" data-tab-count="pending"><?= count($clubRequests) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-inventory" data-tab="inventory" aria-controls="panel-inventory" aria-selected="false" tabindex="-1">
+        <span>Division Inventory</span>
+        <span class="dv-tab__badge" data-tab-count="inventory"><?= count($inventory) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-transfers" data-tab="transfers" aria-controls="panel-transfers" aria-selected="false" tabindex="-1">
+        <span>Transfer History</span>
+        <span class="dv-tab__badge" data-tab-count="transfers"><?= count($transferHistory) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-zonal" data-tab="zonal" aria-controls="panel-zonal" aria-selected="false" tabindex="-1">
+        <span>Requests to Zonal</span>
+        <span class="dv-tab__badge" data-tab-count="zonal"><?= count($zonalRequests) ?></span>
+      </button>
+    </div>
 
-  <section class="dw-panel" aria-labelledby="division-inventory-title">
-    <header class="dw-panel__header"><div><h2 id="division-inventory-title">Division Inventory</h2><p>Assets currently held by the division store</p></div><span class="dw-count" data-inventory-count><?= count($inventory) ?> items</span></header>
-    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Item</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Custodian</th><th>Updated</th><th>Action</th></tr></thead><tbody data-inventory-body>
-      <?php foreach ($inventory as $item): ?>
-        <?php $search = strtolower(implode(' ', [$item->item_name, $item->sku, $item->category, $item->specifications])); ?>
-        <tr data-asset-row data-section="inventory" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($item->category)) ?>" data-status="" data-quantity="<?= (int) $item->quantity ?>" data-date="<?= $e(substr($item->updated_at, 0, 10)) ?>">
-          <td class="dw-table__description"><?= $e($item->item_name) ?></td><td class="dw-table__reference"><?= $e($item->sku) ?></td><td><?= $e($item->category) ?></td><td><?= (int) $item->quantity ?> <?= $e($item->unit) ?></td><td>Division Store</td><td><?= $e(date('d M Y', strtotime($item->updated_at))) ?></td>
-          <td><div class="dw-row-actions"><button class="dw-button dw-button--ghost" type="button" data-adjust-asset data-modal-open="adjust-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-quantity="<?= (int) $item->quantity ?>">Adjust</button><button class="dw-button dw-button--ghost" type="button" data-transfer-asset data-modal-open="transfer-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-available="<?= (int) $item->quantity ?>">Transfer</button></div></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody></table></div>
-    <div class="dw-empty-state<?= !$inventory ? ' is-visible' : '' ?>" data-inventory-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No divisional inventory</strong><p>Add an existing catalog asset or request stock from Zonal.</p></div>
-  </section>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-pending" aria-labelledby="tab-pending" data-tab="pending">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="club-asset-request-title">
+        <header class="dw-panel__header"><div><h2 id="club-asset-request-title">Pending Club Requests</h2><p>Review requests from active clubs in your division</p></div><span class="dw-count" data-club-request-count><?= count($clubRequests) ?> requests</span></header>
+        <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Club</th><th>Item</th><th>Qty</th><th>Available</th><th>Reason</th><th>Requested</th><th>Action</th></tr></thead><tbody id="club-request-tbody" data-club-request-body>
+          <?php foreach ($clubRequests as $request): ?>
+            <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->club_name, $request->item_name, $request->category, $request->reason])); ?>
+            <tr data-asset-row data-section="club-request" data-filter-match="true" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="pending" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>">
+              <td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td><?= $e($request->club_name) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= (int) $request->available_quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
+              <td><button class="dw-button dw-button--secondary db-view-button" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="club-request-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$clubRequests ? ' is-visible' : '' ?>" data-club-request-empty><span class="dw-empty-state__icon"><?= yn_icon('check') ?></span><strong>No pending club requests</strong><p>New asset requests from clubs appear here.</p></div>
+      </section>
+    </div>
 
-  <section class="dw-panel" aria-labelledby="asset-transfer-history-title">
-    <header class="dw-panel__header"><div><h2 id="asset-transfer-history-title">Transfer History</h2><p>Recorded asset movements from the division store to clubs</p></div><span class="dw-count" data-transfer-count><?= count($transferHistory) ?> transfers</span></header>
-    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Transfer</th><th>Club</th><th>Item</th><th>Quantity</th><th>Transfer Date</th><th>Authorized By</th><th>Status</th><th>Notes</th></tr></thead><tbody data-transfer-body>
-      <?php foreach ($transferHistory as $transfer): ?>
-        <?php
-        $transferReference = 'TRF-' . str_pad((string) $transfer->transfer_id, 4, '0', STR_PAD_LEFT);
-        $search = strtolower(implode(' ', [$transferReference, $transfer->club_name, $transfer->item_name, $transfer->sku, $transfer->category, $transfer->transferred_by_name, $transfer->status, $transfer->notes]));
-        ?>
-        <tr data-asset-row data-section="transfer-history" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($transfer->category)) ?>" data-status="<?= $e(strtolower($transfer->status)) ?>" data-quantity="<?= (int) $transfer->quantity ?>" data-date="<?= $e($transfer->transfer_date) ?>">
-          <td class="dw-table__reference"><?= $e($transferReference) ?></td><td><?= $e($transfer->club_name) ?></td><td class="dw-table__description"><?= $e($transfer->item_name) ?><br><small><?= $e($transfer->sku) ?></small></td><td><?= (int) $transfer->quantity ?> <?= $e($transfer->unit) ?></td><td><?= $e(date('d M Y', strtotime($transfer->transfer_date))) ?></td><td><?= $e(trim((string) $transfer->transferred_by_name) ?: 'Divisional Treasurer') ?></td><td><?php $status = $transfer->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($transfer->notes ?: '-') ?></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody></table></div>
-    <div class="dw-empty-state<?= !$transferHistory ? ' is-visible' : '' ?>" data-transfer-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No club transfers recorded</strong><p>Direct transfers and approved club requests appear here.</p></div>
-  </section>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-inventory" aria-labelledby="tab-inventory" data-tab="inventory">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="division-inventory-title">
+        <header class="dw-panel__header"><div><h2 id="division-inventory-title">Division Inventory</h2><p>Assets currently held by the division store</p></div><span class="dw-count" data-inventory-count><?= count($inventory) ?> items</span></header>
+        <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Item</th><th>SKU</th><th>Category</th><th>Quantity</th><th>Custodian</th><th>Updated</th><th>Action</th></tr></thead><tbody id="inventory-tbody" data-inventory-body>
+          <?php foreach ($inventory as $item): ?>
+            <?php $search = strtolower(implode(' ', [$item->item_name, $item->sku, $item->category, $item->specifications])); ?>
+            <tr data-asset-row data-section="inventory" data-filter-match="true" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($item->category)) ?>" data-status="" data-quantity="<?= (int) $item->quantity ?>" data-date="<?= $e(substr($item->updated_at, 0, 10)) ?>">
+              <td class="dw-table__description"><?= $e($item->item_name) ?></td><td class="dw-table__reference"><?= $e($item->sku) ?></td><td><?= $e($item->category) ?></td><td><?= (int) $item->quantity ?> <?= $e($item->unit) ?></td><td>Division Store</td><td><?= $e(date('d M Y', strtotime($item->updated_at))) ?></td>
+              <td><div class="dw-row-actions"><button class="dw-button dw-button--ghost" type="button" data-adjust-asset data-modal-open="adjust-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-quantity="<?= (int) $item->quantity ?>">Adjust</button><button class="dw-button dw-button--ghost" type="button" data-transfer-asset data-modal-open="transfer-divisional-asset" data-id="<?= (int) $item->catalog_item_id ?>" data-item="<?= $e($item->item_name) ?>" data-available="<?= (int) $item->quantity ?>">Transfer</button></div></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="inventory-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$inventory ? ' is-visible' : '' ?>" data-inventory-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No divisional inventory</strong><p>Add an existing catalog asset or request stock from Zonal.</p></div>
+      </section>
+    </div>
 
-  <section class="dw-panel" aria-labelledby="zonal-request-title">
-    <header class="dw-panel__header"><div><h2 id="zonal-request-title">Requests to Zonal</h2><p>Track asset requests sent by your division</p></div><span class="dw-count" data-zonal-count><?= count($zonalRequests) ?> requests</span></header>
-    <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Item</th><th>Quantity</th><th>Reason</th><th>Requested</th><th>Status</th><th>Remarks</th></tr></thead><tbody data-zonal-body>
-      <?php foreach ($zonalRequests as $request): ?>
-        <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->item_name, $request->category, $request->reason, $request->status, $request->remarks])); ?>
-        <tr data-asset-row data-section="zonal-request" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="<?= $e(strtolower($request->status)) ?>" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>"><td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td><td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($request->remarks ?: '-') ?></td></tr>
-      <?php endforeach; ?>
-    </tbody></table></div>
-    <div class="dw-empty-state<?= !$zonalRequests ? ' is-visible' : '' ?>" data-zonal-empty><span class="dw-empty-state__icon"><?= yn_icon('upload') ?></span><strong>No zonal asset requests</strong><p>Requests you send to Zonal appear here.</p></div>
-  </section>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-transfers" aria-labelledby="tab-transfers" data-tab="transfers">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="asset-transfer-history-title">
+        <header class="dw-panel__header"><div><h2 id="asset-transfer-history-title">Transfer History</h2><p>Recorded asset movements from the division store to clubs</p></div><span class="dw-count" data-transfer-count><?= count($transferHistory) ?> transfers</span></header>
+        <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Transfer</th><th>Club</th><th>Item</th><th>Quantity</th><th>Transfer Date</th><th>Authorized By</th><th>Status</th><th>Notes</th></tr></thead><tbody id="transfer-tbody" data-transfer-body>
+          <?php foreach ($transferHistory as $transfer): ?>
+            <?php
+            $transferReference = 'TRF-' . str_pad((string) $transfer->transfer_id, 4, '0', STR_PAD_LEFT);
+            $search = strtolower(implode(' ', [$transferReference, $transfer->club_name, $transfer->item_name, $transfer->sku, $transfer->category, $transfer->transferred_by_name, $transfer->status, $transfer->notes]));
+            ?>
+            <tr data-asset-row data-section="transfer-history" data-filter-match="true" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($transfer->category)) ?>" data-status="<?= $e(strtolower($transfer->status)) ?>" data-quantity="<?= (int) $transfer->quantity ?>" data-date="<?= $e($transfer->transfer_date) ?>">
+              <td class="dw-table__reference"><?= $e($transferReference) ?></td><td><?= $e($transfer->club_name) ?></td><td class="dw-table__description"><?= $e($transfer->item_name) ?><br><small><?= $e($transfer->sku) ?></small></td><td><?= (int) $transfer->quantity ?> <?= $e($transfer->unit) ?></td><td><?= $e(date('d M Y', strtotime($transfer->transfer_date))) ?></td><td><?= $e(trim((string) $transfer->transferred_by_name) ?: 'Divisional Treasurer') ?></td><td><?php $status = $transfer->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($transfer->notes ?: '-') ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="transfer-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$transferHistory ? ' is-visible' : '' ?>" data-transfer-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No club transfers recorded</strong><p>Direct transfers and approved club requests appear here.</p></div>
+      </section>
+    </div>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-zonal" aria-labelledby="tab-zonal" data-tab="zonal">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="zonal-request-title">
+        <header class="dw-panel__header"><div><h2 id="zonal-request-title">Requests to Zonal</h2><p>Track asset requests sent by your division</p></div><span class="dw-count" data-zonal-count><?= count($zonalRequests) ?> requests</span></header>
+        <div class="dw-table-wrap"><table class="dw-table"><thead><tr><th>Request</th><th>Item</th><th>Quantity</th><th>Reason</th><th>Requested</th><th>Status</th><th>Remarks</th></tr></thead><tbody id="zonal-tbody" data-zonal-body>
+          <?php foreach ($zonalRequests as $request): ?>
+            <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->item_name, $request->category, $request->reason, $request->status, $request->remarks])); ?>
+            <tr data-asset-row data-section="zonal-request" data-filter-match="true" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="<?= $e(strtolower($request->status)) ?>" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>"><td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td><td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td><td><?= $e($request->remarks ?: '-') ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table></div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="zonal-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$zonalRequests ? ' is-visible' : '' ?>" data-zonal-empty><span class="dw-empty-state__icon"><?= yn_icon('upload') ?></span><strong>No zonal asset requests</strong><p>Requests you send to Zonal appear here.</p></div>
+      </section>
+    </div>
+  </div>
 </section>
 
 <?php

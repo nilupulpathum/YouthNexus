@@ -8,10 +8,15 @@ $title = 'Request Void - YouthNexus';
 $pageTitle = 'Request Void';
 $pageDescription = 'Request Zonal review of division ledger entries';
 $currentRoute = 'divisionalvoidrequest';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-pagination.js',
     ROOT . '/assets/js/divisional-void-request.js',
+    ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
     ['value' => $summary['sent_this_month'], 'label' => 'Sent This Month', 'note' => 'Division to Zonal', 'icon' => 'file', 'tone' => 'blue'],
@@ -37,9 +42,30 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php endif; ?>
 
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Void request summary">
-    <?php foreach ($summaryCards as $card): ?>
-      <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
-    <?php endforeach; ?>
+    <article class="dw-summary-card dw-summary-card--blue" data-tab-target="requests">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['sent_this_month']) ?></strong>
+        <span class="dw-summary-card__label">Sent This Month</span>
+        <small class="dw-summary-card__note">Division to Zonal</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="requests">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['pending']) ?></strong>
+        <span class="dw-summary-card__label">Awaiting Zonal Review</span>
+        <small class="dw-summary-card__note">Pending requests</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--green" data-tab-target="requests">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['approved']) ?></strong>
+        <span class="dw-summary-card__label">Approved by Zonal</span>
+        <small class="dw-summary-card__note">All recorded requests</small>
+      </div>
+    </article>
   </div>
 
   <div class="dw-toolbar" aria-label="Void request tools">
@@ -108,111 +134,134 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   </section>
 
-  <section class="dw-panel" aria-labelledby="eligible-entries-title">
-    <header class="dw-panel__header">
-      <div>
-        <h2 id="eligible-entries-title">Division Ledger - Eligible Entries</h2>
-        <p>Approved entries without a pending void request</p>
-      </div>
-      <span class="dw-count" data-eligible-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Entry ID</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Action</th></tr></thead>
-        <tbody data-eligible-body>
-          <?php foreach ($entries as $entry): ?>
-            <?php $searchText = strtolower(implode(' ', [$entry->reference_no, $entry->description, $entry->category, $entry->type])); ?>
-            <tr data-eligible-row
-                data-search="<?= $e($searchText) ?>"
-                data-type="<?= $e(strtolower($entry->type)) ?>"
-                data-amount="<?= $e($entry->amount) ?>"
-                data-date="<?= $e($entry->date) ?>">
-              <td class="dw-table__reference"><?= $e($entry->reference_no) ?></td>
-              <td><?= $e(date('d M Y', strtotime($entry->date))) ?></td>
-              <td class="dw-table__description"><?= $e($entry->description) ?></td>
-              <td class="dw-money"><?= $e($money($entry->amount)) ?></td>
-              <td><?php $status = $entry->type; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-              <td>
-                <button class="dw-button dw-button--ghost" type="button"
-                        data-request-entry="<?= (int) $entry->entry_id ?>"
-                        data-modal-open="new-void-request"<?= !$recipient ? ' disabled' : '' ?>>Request Void</button>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+  <div class="dv-tabs-container" data-tab-container data-default-tab="eligible">
+    <div class="dv-tablist" role="tablist" aria-label="Void request sections">
+      <button class="dv-tab" type="button" role="tab" id="tab-eligible" data-tab="eligible" aria-controls="panel-eligible" aria-selected="true" tabindex="0">
+        <span>Eligible Entries</span>
+        <span class="dv-tab__badge" data-tab-count="eligible"><?= count($entries) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-requests" data-tab="requests" aria-controls="panel-requests" aria-selected="false" tabindex="-1">
+        <span>Sent Void Requests</span>
+        <span class="dv-tab__badge" data-tab-count="requests"><?= count($requests) ?></span>
+      </button>
     </div>
-    <div class="dw-empty-state<?= !$entries ? ' is-visible' : '' ?>" data-eligible-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No eligible entries found</strong>
-      <p>Approved entries appear here when they do not have a pending void request.</p>
-    </div>
-  </section>
 
-  <section class="dw-panel" aria-labelledby="sent-requests-title">
-    <header class="dw-panel__header">
-      <div>
-        <h2 id="sent-requests-title">Sent Void Requests - Status</h2>
-        <p>Requests submitted from <?= $e($division->division_name) ?> to the Zonal Treasurer</p>
-      </div>
-      <span class="dw-count" data-request-count><?= count($requests) ?> <?= count($requests) === 1 ? 'request' : 'requests' ?></span>
-    </header>
-    <div class="dw-table-wrap">
-      <table class="dw-table">
-        <thead><tr><th>Request ID</th><th>Ledger Entry</th><th>Reason</th><th>Sent To</th><th>Date Sent</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody data-request-body>
-          <?php foreach ($requests as $request): ?>
-            <?php
-            $sentTo = trim((string) $request->recipient_name) ?: (($request->zonal_name ?: 'Zonal') . ' Treasurer');
-            $searchText = strtolower(implode(' ', [
-                $requestReference($request->void_request_id),
-                $request->reference_no,
-                $request->description,
-                $request->reason,
-                $sentTo,
-                $request->status,
-            ]));
-            ?>
-            <tr data-request-row
-                data-search="<?= $e($searchText) ?>"
-                data-status="<?= $e(strtolower($request->status)) ?>"
-                data-type="<?= $e(strtolower($request->type)) ?>"
-                data-amount="<?= $e($request->amount) ?>"
-                data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
-              <td class="dw-table__reference"><?= $e($requestReference($request->void_request_id)) ?></td>
-              <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
-              <td class="dw-table__description"><?= $e($request->reason) ?></td>
-              <td><?= $e($sentTo) ?></td>
-              <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
-              <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
-              <td>
-                <button class="dw-button dw-button--ghost db-view-button" type="button"
-                        data-request-status
-                        data-request-id="<?= (int) $request->void_request_id ?>"
-                        data-request-reference="<?= $e($requestReference($request->void_request_id)) ?>"
-                        data-entry-reference="<?= $e($request->reference_no) ?>"
-                        data-entry-description="<?= $e($request->description) ?>"
-                        data-amount-label="<?= $e($money($request->amount)) ?>"
-                        data-reason="<?= $e($request->reason) ?>"
-                        data-recipient="<?= $e($sentTo) ?>"
-                        data-status-label="<?= $e($request->status) ?>"
-                        data-can-withdraw="<?= (int) $request->requested_by === (int) $currentUserId ? '1' : '0' ?>"
-                        data-requested-at="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>"
-                        data-decided-at="<?= $request->decided_at ? $e(date('d M Y, H:i', strtotime($request->decided_at))) : '' ?>"
-                        data-remarks="<?= $e($request->remarks ?: '') ?>"
-                        data-modal-open="void-request-status">View Status</button>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div class="dv-tabpanel" role="tabpanel" id="panel-eligible" aria-labelledby="tab-eligible" data-tab="eligible">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="eligible-entries-title">
+        <header class="dw-panel__header">
+          <div>
+            <h2 id="eligible-entries-title">Division Ledger - Eligible Entries</h2>
+            <p>Approved entries without a pending void request</p>
+          </div>
+          <span class="dw-count" data-eligible-count><?= count($entries) ?> <?= count($entries) === 1 ? 'entry' : 'entries' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Entry ID</th><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Action</th></tr></thead>
+            <tbody id="void-eligible-tbody" data-eligible-body>
+              <?php foreach ($entries as $entry): ?>
+                <?php $searchText = strtolower(implode(' ', [$entry->reference_no, $entry->description, $entry->category, $entry->type])); ?>
+                <tr data-eligible-row
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-type="<?= $e(strtolower($entry->type)) ?>"
+                    data-amount="<?= $e($entry->amount) ?>"
+                    data-date="<?= $e($entry->date) ?>">
+                  <td class="dw-table__reference"><?= $e($entry->reference_no) ?></td>
+                  <td><?= $e(date('d M Y', strtotime($entry->date))) ?></td>
+                  <td class="dw-table__description"><?= $e($entry->description) ?></td>
+                  <td class="dw-money"><?= $e($money($entry->amount)) ?></td>
+                  <td><?php $status = $entry->type; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                  <td>
+                    <button class="dw-button dw-button--ghost" type="button"
+                            data-request-entry="<?= (int) $entry->entry_id ?>"
+                            data-modal-open="new-void-request"<?= !$recipient ? ' disabled' : '' ?>>Request Void</button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="void-eligible-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$entries ? ' is-visible' : '' ?>" data-eligible-empty data-empty-state>
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+          <strong>No eligible entries found</strong>
+          <p>Approved entries appear here when they do not have a pending void request.</p>
+        </div>
+      </section>
     </div>
-    <div class="dw-empty-state<?= !$requests ? ' is-visible' : '' ?>" data-request-empty>
-      <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <strong>No void requests found</strong>
-      <p>Submitted requests and their review status appear here.</p>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-requests" aria-labelledby="tab-requests" data-tab="requests">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section class="dw-panel" aria-labelledby="sent-requests-title">
+        <header class="dw-panel__header">
+          <div>
+            <h2 id="sent-requests-title">Sent Void Requests - Status</h2>
+            <p>Requests submitted from <?= $e($division->division_name) ?> to the Zonal Treasurer</p>
+          </div>
+          <span class="dw-count" data-request-count><?= count($requests) ?> <?= count($requests) === 1 ? 'request' : 'requests' ?></span>
+        </header>
+        <div class="dw-table-wrap">
+          <table class="dw-table">
+            <thead><tr><th>Request ID</th><th>Ledger Entry</th><th>Reason</th><th>Sent To</th><th>Date Sent</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="void-request-tbody" data-request-body>
+              <?php foreach ($requests as $request): ?>
+                <?php
+                $sentTo = trim((string) $request->recipient_name) ?: (($request->zonal_name ?: 'Zonal') . ' Treasurer');
+                $searchText = strtolower(implode(' ', [
+                    $requestReference($request->void_request_id),
+                    $request->reference_no,
+                    $request->description,
+                    $request->reason,
+                    $sentTo,
+                    $request->status,
+                ]));
+                ?>
+                <tr data-request-row
+                    data-filter-match="true"
+                    data-search="<?= $e($searchText) ?>"
+                    data-status="<?= $e(strtolower($request->status)) ?>"
+                    data-type="<?= $e(strtolower($request->type)) ?>"
+                    data-amount="<?= $e($request->amount) ?>"
+                    data-date="<?= $e(substr((string) $request->requested_at, 0, 10)) ?>">
+                  <td class="dw-table__reference"><?= $e($requestReference($request->void_request_id)) ?></td>
+                  <td><?= $e($request->reference_no) ?> - <?= $e($money($request->amount)) ?></td>
+                  <td class="dw-table__description"><?= $e($request->reason) ?></td>
+                  <td><?= $e($sentTo) ?></td>
+                  <td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
+                  <td><?php $status = $request->status; require __DIR__ . '/../partials/divisional/status-pill.view.php'; ?></td>
+                  <td>
+                    <button class="dw-button dw-button--ghost db-view-button" type="button"
+                            data-request-status
+                            data-request-id="<?= (int) $request->void_request_id ?>"
+                            data-request-reference="<?= $e($requestReference($request->void_request_id)) ?>"
+                            data-entry-reference="<?= $e($request->reference_no) ?>"
+                            data-entry-description="<?= $e($request->description) ?>"
+                            data-amount-label="<?= $e($money($request->amount)) ?>"
+                            data-reason="<?= $e($request->reason) ?>"
+                            data-recipient="<?= $e($sentTo) ?>"
+                            data-status-label="<?= $e($request->status) ?>"
+                            data-can-withdraw="<?= (int) $request->requested_by === (int) $currentUserId ? '1' : '0' ?>"
+                            data-requested-at="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>"
+                            data-decided-at="<?= $request->decided_at ? $e(date('d M Y, H:i', strtotime($request->decided_at))) : '' ?>"
+                            data-remarks="<?= $e($request->remarks ?: '') ?>"
+                            data-modal-open="void-request-status">View Status</button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <nav class="yn-pagination" data-yn-pagination data-yn-page-target="void-request-tbody" data-yn-page-size="10"></nav>
+        <div class="dw-empty-state<?= !$requests ? ' is-visible' : '' ?>" data-request-empty data-empty-state>
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+          <strong>No void requests found</strong>
+          <p>Submitted requests and their review status appear here.</p>
+        </div>
+      </section>
     </div>
-  </section>
+  </div>
 </section>
 
 <div class="dw-modal" id="new-void-request" role="dialog" aria-modal="true" aria-labelledby="new-void-request-title" aria-hidden="true" hidden>

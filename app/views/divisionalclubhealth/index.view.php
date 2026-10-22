@@ -13,14 +13,63 @@ $title = 'Monitor Club Health - YouthNexus';
 $pageTitle = 'Monitor Club Health';
 $pageDescription = 'Review calculated club performance and concerns within your division';
 $currentRoute = 'divisionalclubhealth';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-club-health.css'];
-$pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-club-health.js'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-club-health.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
+$pageScripts = [
+    ROOT . '/assets/js/divisional-workflows.js',
+    ROOT . '/assets/js/divisional-club-health.js',
+    ROOT . '/assets/js/divisional-tabs.js',
+];
 $summaryCards = [
     ['value' => $summary['green'], 'label' => 'Healthy Clubs', 'note' => 'Score above 70', 'icon' => 'check', 'tone' => 'green'],
     ['value' => $summary['yellow'], 'label' => 'At Risk Clubs', 'note' => 'Score from 30 to 70', 'icon' => 'clock', 'tone' => 'amber'],
     ['value' => $summary['red'], 'label' => 'Dormant Clubs', 'note' => 'Score below 30', 'icon' => 'info', 'tone' => 'red'],
     ['value' => $summary['flagged'], 'label' => 'Open Concerns', 'note' => 'Clubs requiring review', 'icon' => 'file', 'tone' => 'red'],
 ];
+$greenClubs = array_values(array_filter($clubs, static fn($c) => strtolower($c->score['health_status']) === 'green'));
+$yellowClubs = array_values(array_filter($clubs, static fn($c) => strtolower($c->score['health_status']) === 'yellow'));
+$redClubs = array_values(array_filter($clubs, static fn($c) => strtolower($c->score['health_status']) === 'red'));
+
+$renderCard = static function ($club) use ($statusTone, $statusLabel, $mediaUrl, $e): void {
+    $score = $club->score;
+    $tone = $statusTone($score['health_status']);
+    $label = $statusLabel($score['health_status']);
+    $initials = '';
+    foreach (preg_split('/\s+/', trim($club->club_name)) as $word) {
+        if ($word !== '') $initials .= strtoupper(substr($word, 0, 1));
+    }
+    $initials = substr($initials, 0, 2) ?: 'CL';
+    $search = strtolower(implode(' ', [$club->club_name, $club->club_code, $club->division_name, $label]));
+    ?>
+    <article class="dch-card dch-card--<?= $e($tone) ?>" data-health-card data-search="<?= $e($search) ?>" data-status="<?= $e(strtolower($score['health_status'])) ?>" data-score="<?= $e($score['overall_score']) ?>" data-flags="<?= (int) $club->open_flags ?>" data-name="<?= $e(strtolower($club->club_name)) ?>">
+      <div class="dch-card__visual">
+        <div class="dch-card__avatar dch-card__avatar--<?= $e($tone) ?>">
+          <?php if (!empty($club->club_logo_path)): ?>
+            <img src="<?= $mediaUrl($club->club_logo_path) ?>" alt="<?= $e($club->club_name) ?> profile image">
+          <?php else: ?>
+            <span><?= $e($initials) ?></span>
+          <?php endif; ?>
+        </div>
+        <?php if ((int) $club->open_flags > 0): ?>
+          <span class="dch-card__concern" title="<?= (int) $club->open_flags ?> open <?= (int) $club->open_flags === 1 ? 'concern' : 'concerns' ?>"><?= (int) $club->open_flags ?></span>
+        <?php endif; ?>
+      </div>
+      <div class="dch-card__score"><strong><?= $e(number_format($score['overall_score'], 0)) ?></strong><span>/100</span></div>
+      <span class="dw-status dw-status--<?= $e(strtolower($score['health_status'])) ?>"><?= $e($label) ?></span>
+      <div class="dch-card__identity"><h3><?= $e($club->club_name) ?></h3><p><?= $e($club->division_name) ?> - <?= (int) $club->active_members ?> active members</p></div>
+      <div class="dch-components" aria-label="Score components">
+        <div><span>Events</span><strong><?= $e(number_format($score['event_score'], 0)) ?></strong></div>
+        <div><span>Finance</span><strong><?= $e(number_format($score['finance_score'], 0)) ?></strong></div>
+        <div><span>Attendance</span><strong><?= $e(number_format($score['attendance_score'], 0)) ?></strong></div>
+      </div>
+      <button class="dw-button dw-button--ghost dch-card__action" type="button" data-club-details="<?= (int) $club->club_id ?>" data-modal-open="club-health-details"><?= yn_icon('eye') ?> View details</button>
+    </article>
+    <?php
+};
+
 $flagLabels = [
     'DivisionalTreasurer' => 'Raise Financial Concern',
     'DivisionalSecretary' => 'Raise Event or Attendance Concern',
@@ -40,7 +89,38 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <?php endif; ?>
 
   <div class="dw-summary-grid" aria-label="Club health summary">
-    <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
+    <article class="dw-summary-card dw-summary-card--green" data-tab-target="green">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['green']) ?></strong>
+        <span class="dw-summary-card__label">Healthy Clubs</span>
+        <small class="dw-summary-card__note">Score above 70</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="yellow">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['yellow']) ?></strong>
+        <span class="dw-summary-card__label">At Risk Clubs</span>
+        <small class="dw-summary-card__note">Score from 30 to 70</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--red" data-tab-target="red">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('info') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['red']) ?></strong>
+        <span class="dw-summary-card__label">Dormant Clubs</span>
+        <small class="dw-summary-card__note">Score below 30</small>
+      </div>
+    </article>
+    <article class="dw-summary-card dw-summary-card--red">
+      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
+      <div>
+        <strong class="dw-summary-card__value"><?= $e((string) $summary['flagged']) ?></strong>
+        <span class="dw-summary-card__label">Open Concerns</span>
+        <small class="dw-summary-card__note">Clubs requiring review</small>
+      </div>
+    </article>
   </div>
 
   <div class="dw-toolbar" aria-label="Club health tools">
@@ -52,7 +132,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
   <section class="dw-filter-panel" id="health-filters" hidden>
     <h2 class="dw-filter-panel__heading">Advanced Filters for Club Health</h2>
     <div class="dw-filter-grid">
-      <div class="dw-field"><label for="health-status-filter">Health status</label><select id="health-status-filter" data-health-status><option value="">All statuses</option><option value="green">Healthy</option><option value="yellow">At Risk</option><option value="red">Dormant</option></select></div>
       <div class="dw-field"><label for="health-flag-filter">Concern status</label><select id="health-flag-filter" data-health-flag><option value="">All clubs</option><option value="flagged">Has open concern</option><option value="clear">No open concern</option></select></div>
       <div class="dw-field"><label for="health-min-score">Minimum score</label><input id="health-min-score" type="number" min="0" max="100" data-health-min></div>
       <div class="dw-field"><label for="health-max-score">Maximum score</label><input id="health-max-score" type="number" min="0" max="100" data-health-max></div>
@@ -66,38 +145,85 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <button class="dw-button dw-button--ghost" type="button" data-modal-open="health-formula-modal">View formula</button>
   </section>
 
-  <section aria-labelledby="club-health-list-title">
-    <div class="dw-section-header"><div><h2 id="club-health-list-title">Clubs in <?= $e($division->division_name) ?></h2><p>Open a club to review the records behind its score</p></div><span class="dw-count" data-health-count><?= count($clubs) ?> clubs</span></div>
-    <div class="dch-grid" data-health-grid>
-      <?php foreach ($clubs as $club): ?>
-        <?php
-        $score = $club->score;
-        $tone = $statusTone($score['health_status']);
-        $label = $statusLabel($score['health_status']);
-        $initials = '';
-        foreach (preg_split('/\s+/', trim($club->club_name)) as $word) if ($word !== '') $initials .= strtoupper(substr($word, 0, 1));
-        $initials = substr($initials, 0, 2) ?: 'CL';
-        $search = strtolower(implode(' ', [$club->club_name, $club->club_code, $club->division_name, $label]));
-        ?>
-        <article class="dch-card dch-card--<?= $e($tone) ?>" data-health-card data-search="<?= $e($search) ?>" data-status="<?= $e(strtolower($score['health_status'])) ?>" data-score="<?= $e($score['overall_score']) ?>" data-flags="<?= (int) $club->open_flags ?>" data-name="<?= $e(strtolower($club->club_name)) ?>">
-          <div class="dch-card__visual">
-            <div class="dch-card__avatar dch-card__avatar--<?= $e($tone) ?>"><?php if (!empty($club->club_logo_path)): ?><img src="<?= $mediaUrl($club->club_logo_path) ?>" alt="<?= $e($club->club_name) ?> profile image"><?php else: ?><span><?= $e($initials) ?></span><?php endif; ?></div>
-            <?php if ((int) $club->open_flags > 0): ?><span class="dch-card__concern" title="<?= (int) $club->open_flags ?> open <?= (int) $club->open_flags === 1 ? 'concern' : 'concerns' ?>"><?= (int) $club->open_flags ?></span><?php endif; ?>
-          </div>
-          <div class="dch-card__score"><strong><?= $e(number_format($score['overall_score'], 0)) ?></strong><span>/100</span></div>
-          <span class="dw-status dw-status--<?= $e(strtolower($score['health_status'])) ?>"><?= $e($label) ?></span>
-          <div class="dch-card__identity"><h3><?= $e($club->club_name) ?></h3><p><?= $e($club->division_name) ?> - <?= (int) $club->active_members ?> active members</p></div>
-          <div class="dch-components" aria-label="Score components">
-            <div><span>Events</span><strong><?= $e(number_format($score['event_score'], 0)) ?></strong></div>
-            <div><span>Finance</span><strong><?= $e(number_format($score['finance_score'], 0)) ?></strong></div>
-            <div><span>Attendance</span><strong><?= $e(number_format($score['attendance_score'], 0)) ?></strong></div>
-          </div>
-          <button class="dw-button dw-button--ghost dch-card__action" type="button" data-club-details="<?= (int) $club->club_id ?>" data-modal-open="club-health-details"><?= yn_icon('eye') ?> View details</button>
-        </article>
-      <?php endforeach; ?>
+  <div class="dv-tabs-container" data-tab-container data-default-tab="yellow">
+    <div class="dv-tablist" role="tablist" aria-label="Club health status">
+      <button class="dv-tab" type="button" role="tab" id="tab-green" data-tab="green" aria-controls="panel-green" aria-selected="false" tabindex="-1">
+        <span>Healthy</span>
+        <span class="dv-tab__badge" data-tab-count="green"><?= count($greenClubs) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-yellow" data-tab="yellow" aria-controls="panel-yellow" aria-selected="true" tabindex="0">
+        <span>At Risk</span>
+        <span class="dv-tab__badge" data-tab-count="yellow" data-tab-attention><?= count($yellowClubs) ?></span>
+      </button>
+      <button class="dv-tab" type="button" role="tab" id="tab-red" data-tab="red" aria-controls="panel-red" aria-selected="false" tabindex="-1">
+        <span>Dormant</span>
+        <span class="dv-tab__badge" data-tab-count="red"><?= count($redClubs) ?></span>
+      </button>
     </div>
-    <div class="dw-empty-state<?= !$clubs ? ' is-visible' : '' ?>" data-health-empty><span class="dw-empty-state__icon"><?= yn_icon('file') ?></span><strong>No clubs found</strong><p>No clubs match the current division and filters.</p></div>
-  </section>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-green" aria-labelledby="tab-green" data-tab="green" hidden>
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section aria-labelledby="healthy-clubs-title">
+        <div class="dw-section-header">
+          <div>
+            <h2 id="healthy-clubs-title">Healthy Clubs in <?= $e($division->division_name) ?></h2>
+            <p>Clubs with health score above 70</p>
+          </div>
+          <span class="dw-count" data-health-count="green"><?= count($greenClubs) ?> <?= count($greenClubs) === 1 ? 'club' : 'clubs' ?></span>
+        </div>
+        <div class="dch-grid" data-health-grid="green">
+          <?php foreach ($greenClubs as $club) $renderCard($club); ?>
+        </div>
+        <div class="dw-empty-state<?= !$greenClubs ? ' is-visible' : '' ?>" data-health-empty="green">
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
+          <strong>No healthy clubs found</strong>
+          <p>Clubs scoring above 70 appear here.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-yellow" aria-labelledby="tab-yellow" data-tab="yellow">
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section aria-labelledby="at-risk-clubs-title">
+        <div class="dw-section-header">
+          <div>
+            <h2 id="at-risk-clubs-title">At Risk Clubs in <?= $e($division->division_name) ?></h2>
+            <p>Clubs with health score from 30 to 70</p>
+          </div>
+          <span class="dw-count" data-health-count="yellow"><?= count($yellowClubs) ?> <?= count($yellowClubs) === 1 ? 'club' : 'clubs' ?></span>
+        </div>
+        <div class="dch-grid" data-health-grid="yellow">
+          <?php foreach ($yellowClubs as $club) $renderCard($club); ?>
+        </div>
+        <div class="dw-empty-state<?= !$yellowClubs ? ' is-visible' : '' ?>" data-health-empty="yellow">
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
+          <strong>No at-risk clubs found</strong>
+          <p>Clubs scoring from 30 to 70 appear here.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="dv-tabpanel" role="tabpanel" id="panel-red" aria-labelledby="tab-red" data-tab="red" hidden>
+      <div class="dv-tab-search-hint" data-tab-hint hidden></div>
+      <section aria-labelledby="dormant-clubs-title">
+        <div class="dw-section-header">
+          <div>
+            <h2 id="dormant-clubs-title">Dormant Clubs in <?= $e($division->division_name) ?></h2>
+            <p>Clubs with health score below 30</p>
+          </div>
+          <span class="dw-count" data-health-count="red"><?= count($redClubs) ?> <?= count($redClubs) === 1 ? 'club' : 'clubs' ?></span>
+        </div>
+        <div class="dch-grid" data-health-grid="red">
+          <?php foreach ($redClubs as $club) $renderCard($club); ?>
+        </div>
+        <div class="dw-empty-state<?= !$redClubs ? ' is-visible' : '' ?>" data-health-empty="red">
+          <span class="dw-empty-state__icon" aria-hidden="true"><?= yn_icon('info') ?></span>
+          <strong>No dormant clubs found</strong>
+          <p>Clubs scoring below 30 appear here.</p>
+        </div>
+      </section>
+    </div>
+  </div>
 </section>
 
 <script type="application/json" id="club-health-data" data-root="<?= $e(ROOT) ?>"><?= $detailsJson ?></script>

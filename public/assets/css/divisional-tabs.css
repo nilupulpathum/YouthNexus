@@ -1,0 +1,175 @@
+/**
+ * Divisional Tabs Component Styles
+ * Scoped styling for tabbed tables and tab panels.
+ * Strictly adheres to YouthNexus UI contract: tokens only, no hex colors.
+ */
+
+.dv-tabs-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Tab Bar Navigation ───────────────────────────────────────────── */
+.dv-tablist {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--yn-border, rgba(231, 233, 240, 1));
+  margin: 0 0 16px 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.dv-tablist::-webkit-scrollbar {
+  height: 4px;
+}
+
+.dv-tablist::-webkit-scrollbar-thumb {
+  background: var(--yn-border, rgba(231, 233, 240, 1));
+  border-radius: 4px;
+}
+
+/* ── Tab Item Button ──────────────────────────────────────────────── */
+.dv-tab {
+  /* Reset */
+  box-sizing: border-box;
+  background: var(--yn-bg-surface-alt, rgba(241, 245, 249, 1));
+  border: 0;
+  border-bottom: 3px solid var(--yn-border, rgba(231, 233, 240, 1));
+  border-radius: 8px 8px 0 0;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+
+  /* Target specs */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--yn-text-secondary, rgba(71, 85, 105, 1));
+  margin-bottom: -1px;
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.dv-tab:hover:not([aria-selected="true"]) {
+  color: var(--yn-text-primary, rgba(18, 20, 26, 1));
+  background: var(--yn-border-slate, var(--yn-border, rgba(226, 232, 240, 1)));
+  border-bottom-color: var(--yn-border-strong, rgba(203, 213, 225, 1));
+}
+
+.dv-tab[aria-selected="true"] {
+  background: var(--yn-bg-surface, rgba(255, 255, 255, 1));
+  color: var(--yn-primary, rgba(30, 64, 175, 1));
+  border-bottom-color: var(--yn-primary, rgba(30, 64, 175, 1));
+  font-weight: 600;
+}
+
+.dv-tab:focus-visible {
+  outline: 2px solid var(--yn-primary, rgba(30, 64, 175, 1));
+  outline-offset: 2px;
+}
+
+.dv-tab:focus-visible .dv-tab__badge {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ── Count Badges ─────────────────────────────────────────────────── */
+.dv-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  /* Neutral: subtle surface background, muted text */
+  background: var(--yn-bg-surface-alt, var(--yn-border, rgba(231, 233, 240, 1)));
+  color: var(--yn-text-muted, rgba(107, 114, 128, 1));
+}
+
+/* Active tab badge: primary tint background, primary text */
+.dv-tab[aria-selected="true"] .dv-tab__badge {
+  background: var(--yn-primary-soft, var(--yn-primary-bg, rgba(30, 64, 175, 0.08)));
+  color: var(--yn-primary, rgba(30, 64, 175, 1));
+  border-color: transparent;
+}
+
+/* Attention (Pending with count > 0, active OR inactive): warning bg, warning text, 1px solid warning border; attention wins over active/neutral */
+.dv-tab__badge--attention,
+.dv-tab[data-tab="pending"] .dv-tab__badge.dv-tab__badge--attention,
+.dv-tab[data-tab="pending"][aria-selected="true"] .dv-tab__badge.dv-tab__badge--attention {
+  background: var(--yn-warning-bg, var(--yn-warning-soft, rgba(255, 247, 237, 1)));
+  color: var(--yn-warning-text, var(--yn-warning, rgba(146, 64, 14, 1)));
+  border-color: var(--yn-warning-border, var(--yn-warning-accent, rgba(254, 243, 199, 1)));
+}
+
+/* ── Responsive Viewports ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dv-tab {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
+/* ── Progressive Enhancement: Inactive Panel Hiding ──────────────── */
+.dv-tabs-container.js-tabs .dv-tabpanel[hidden] {
+  display: none;
+}
+
+/* In-panel count is superseded by tab badge under JS tabs */
+.dv-tabs-container.js-tabs .dw-count {
+  display: none;
+}
+
+/* ── Cross-Tab Filter Result Hint ─────────────────────────────────── */
+.dv-tab-search-hint {
+  display: flex;
+  align-items: center;
+  margin: 12px 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--yn-bg-surface-alt, var(--yn-bg-page, rgba(241, 245, 249, 1)));
+  border: 1px solid var(--yn-border, rgba(231, 233, 240, 1));
+  color: var(--yn-text-muted, var(--yn-text-secondary, rgba(107, 114, 128, 1)));
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dv-tab-search-hint[hidden] {
+  display: none;
+}
+
+/* ── Interactive Summary Cards under JS Tabs ──────────────────────── */
+.js-tabs .dw-summary-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.js-tabs .dw-summary-card:hover {
+  border-color: var(--yn-border-strong, rgba(203, 213, 225, 1));
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.js-tabs .dw-summary-card:focus-visible {
+  outline: 2px solid var(--yn-primary, rgba(30, 64, 175, 1));
+  outline-offset: 2px;
+}
