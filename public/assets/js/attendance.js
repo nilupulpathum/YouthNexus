@@ -323,33 +323,232 @@
     }
 
     /* =================================================================
-       SESSION DETAIL PAGE (Roster Search, Filter & Quick Update)
+       SESSION DETAIL PAGE (Cascading Filters & Dynamic Roster Filtering)
        ================================================================= */
-    const tableSearch = document.getElementById('amTableSearch');
-    const statusFilter = document.getElementById('amTableStatusFilter');
+    const detailZoneSelect     = document.getElementById('detailFilterZone');
+    const detailDivisionSelect = document.getElementById('detailFilterDivision');
+    const detailClubSelect     = document.getElementById('detailFilterClub');
+    const detailResetBtn       = document.getElementById('amDetailResetFilterBtn');
+    const scopeBadge           = document.getElementById('amScopeBadge');
+    const tableSearch          = document.getElementById('amTableSearch');
+    const statusFilter         = document.getElementById('amTableStatusFilter');
+    const rosterCountEl        = document.getElementById('amRosterCount');
+    const presentCountEl       = document.getElementById('amPresentCount');
+    const absentCountEl        = document.getElementById('amAbsentCount');
+    const rateCountEl          = document.getElementById('amAttendanceRate');
+    const rosterEmptyRow       = document.getElementById('amRosterEmptyRow');
+    const eventOrganizerLevel  = window.eventOrganizerLevel || 'National';
 
-    function filterRosterRows() {
-        const query  = (tableSearch?.value || '').toLowerCase().trim();
-        const status = statusFilter?.value || '';
-        const rows   = document.querySelectorAll('.am-roster-row');
+    // Helper: Escape HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
-        rows.forEach(row => {
-            const name   = row.dataset.name  || '';
-            const email  = row.dataset.email || '';
-            const club   = row.dataset.club  || '';
-            const rStat  = row.dataset.status|| '';
+    // 1. Zone dropdown change listener (National Events)
+    if (detailZoneSelect) {
+        detailZoneSelect.addEventListener('change', async function () {
+            const zoneId = this.value;
 
-            const matchQuery  = !query  || name.includes(query) || email.includes(query) || club.includes(query);
-            const matchStatus = !status || rStat === status;
+            if (detailDivisionSelect) {
+                if (zoneId) {
+                    detailDivisionSelect.disabled = false;
+                    detailDivisionSelect.innerHTML = '<option value="">Loading divisions…</option>';
+                    if (detailClubSelect) {
+                        detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                        detailClubSelect.disabled = true;
+                    }
 
-            row.style.display = (matchQuery && matchStatus) ? '' : 'none';
+                    try {
+                        const res  = await fetch(`${ROOT}/attendance/getdivisions?zone_id=${encodeURIComponent(zoneId)}`);
+                        const data = await res.json();
+                        detailDivisionSelect.innerHTML = '<option value="">All Divisions</option>';
+                        if (data.success && data.divisions && data.divisions.length > 0) {
+                            data.divisions.forEach(d => {
+                                const opt = document.createElement('option');
+                                opt.value = d.division_id;
+                                opt.textContent = d.division_name;
+                                detailDivisionSelect.appendChild(opt);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error fetching divisions:', e);
+                        detailDivisionSelect.innerHTML = '<option value="">All Divisions</option>';
+                    }
+                } else {
+                    // All Zones selected -> reset Division and Club dropdowns
+                    detailDivisionSelect.innerHTML = '<option value="">All Divisions</option>';
+                    detailDivisionSelect.disabled = true;
+                    if (detailClubSelect) {
+                        detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                        detailClubSelect.disabled = true;
+                    }
+                }
+            }
+
+            applyDetailFilters();
         });
     }
 
-    if (tableSearch)  tableSearch.addEventListener('input', filterRosterRows);
-    if (statusFilter) statusFilter.addEventListener('change', filterRosterRows);
+    // 2. Division dropdown change listener (National and Zonal Events)
+    if (detailDivisionSelect) {
+        detailDivisionSelect.addEventListener('change', async function () {
+            const divId = this.value;
 
-    // Quick Update Modal on Detail Page
+            if (detailClubSelect) {
+                if (divId) {
+                    detailClubSelect.disabled = false;
+                    detailClubSelect.innerHTML = '<option value="">Loading clubs…</option>';
+
+                    try {
+                        const res  = await fetch(`${ROOT}/attendance/getclubs?division_id=${encodeURIComponent(divId)}`);
+                        const data = await res.json();
+                        detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                        if (data.success && data.clubs && data.clubs.length > 0) {
+                            data.clubs.forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.club_id;
+                                opt.textContent = c.club_name;
+                                detailClubSelect.appendChild(opt);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error fetching clubs:', e);
+                        detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                    }
+                } else {
+                    // All Divisions selected
+                    detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                    if (eventOrganizerLevel !== 'Division') {
+                        detailClubSelect.disabled = true;
+                    }
+                }
+            }
+
+            applyDetailFilters();
+        });
+    }
+
+    // 3. Club dropdown change listener
+    if (detailClubSelect) {
+        detailClubSelect.addEventListener('change', () => {
+            applyDetailFilters();
+        });
+    }
+
+    // 4. Reset Filters Button
+    if (detailResetBtn) {
+        detailResetBtn.addEventListener('click', () => {
+            if (detailZoneSelect) {
+                detailZoneSelect.value = '';
+            }
+            if (detailDivisionSelect) {
+                detailDivisionSelect.value = '';
+                if (eventOrganizerLevel === 'National') {
+                    detailDivisionSelect.innerHTML = '<option value="">All Divisions</option>';
+                    detailDivisionSelect.disabled = true;
+                }
+            }
+            if (detailClubSelect) {
+                detailClubSelect.value = '';
+                if (eventOrganizerLevel === 'National' || eventOrganizerLevel === 'Zonal') {
+                    detailClubSelect.innerHTML = '<option value="">All Clubs</option>';
+                    detailClubSelect.disabled = true;
+                }
+            }
+            if (tableSearch)  tableSearch.value = '';
+            if (statusFilter) statusFilter.value = '';
+            applyDetailFilters();
+        });
+    }
+
+    // --- Main Roster Filtering Logic ---------------------------------
+    function applyDetailFilters() {
+        const zoneId   = detailZoneSelect ? detailZoneSelect.value : '';
+        const divId    = detailDivisionSelect ? detailDivisionSelect.value : '';
+        const clubId   = detailClubSelect ? detailClubSelect.value : '';
+        const query    = (tableSearch?.value || '').toLowerCase().trim();
+        const statVal  = statusFilter?.value || '';
+        const allRows  = Array.from(document.querySelectorAll('.am-roster-row'));
+
+        let visibleCount = 0;
+        let presentCount = 0;
+        let absentCount  = 0;
+
+        // Filter rows in table
+        allRows.forEach(row => {
+            const rZoneId  = row.dataset.zoneId || '';
+            const rDivId   = row.dataset.divisionId || '';
+            const rClubId  = row.dataset.clubId || '';
+            const rStatus  = row.dataset.status || '';
+            const rName    = row.dataset.name || '';
+            const rEmail   = row.dataset.email || '';
+            const rClub    = row.dataset.club || '';
+
+            const matchZone     = !zoneId || rZoneId === zoneId;
+            const matchDivision = !divId  || rDivId === divId;
+            const matchClub     = !clubId || rClubId === clubId;
+            const matchStatus   = !statVal || rStatus === statVal;
+            const matchQuery    = !query || rName.includes(query) || rEmail.includes(query) || rClub.includes(query);
+
+            const isVisible = matchZone && matchDivision && matchClub && matchStatus && matchQuery;
+            row.style.display = isVisible ? '' : 'none';
+
+            if (isVisible) {
+                visibleCount++;
+                if (rStatus === 'Present') presentCount++;
+                else if (rStatus === 'Absent') absentCount++;
+            }
+        });
+
+        // Show/hide empty row message
+        if (rosterEmptyRow) {
+            rosterEmptyRow.style.display = (allRows.length > 0 && visibleCount === 0) ? '' : 'none';
+        }
+
+        // Update Top Summary Stat Cards
+        const totalInScope = visibleCount;
+        const rate = totalInScope > 0 ? Math.round((presentCount / totalInScope) * 100) : 0;
+
+        if (presentCountEl) presentCountEl.textContent = String(presentCount);
+        if (absentCountEl)  absentCountEl.textContent  = String(absentCount);
+        if (rateCountEl)    rateCountEl.textContent    = `${rate}%`;
+        if (rosterCountEl)  rosterCountEl.textContent  = String(totalInScope);
+
+        // Update Scope Badge Note
+        if (scopeBadge) {
+            let scopeText = 'All records for this event';
+            const parts = [];
+            if (detailZoneSelect && detailZoneSelect.selectedIndex > 0) {
+                parts.push(detailZoneSelect.options[detailZoneSelect.selectedIndex].text);
+            }
+            if (detailDivisionSelect && detailDivisionSelect.selectedIndex > 0) {
+                parts.push(detailDivisionSelect.options[detailDivisionSelect.selectedIndex].text);
+            }
+            if (detailClubSelect && detailClubSelect.selectedIndex > 0) {
+                parts.push(detailClubSelect.options[detailClubSelect.selectedIndex].text);
+            }
+
+            if (parts.length > 0) {
+                scopeText = 'Filtered: ' + parts.join(' › ');
+            }
+            scopeBadge.textContent = scopeText;
+        }
+    }
+
+    if (tableSearch)  tableSearch.addEventListener('input', applyDetailFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyDetailFilters);
+
+    // Initial calculation on page load
+    if (document.querySelectorAll('.am-roster-row').length > 0) {
+        applyDetailFilters();
+    }
+
+    // Quick Update Modal on Detail Page (for authorized secretaries)
     const quickModal = document.getElementById('amQuickUpdateModal');
     const quickClose = document.getElementById('amQuickClose');
     const quickCancel= document.getElementById('amQuickCancel');
@@ -387,23 +586,6 @@
     quickModal?.addEventListener('click', event => {
         if (event.target === quickModal) closeQuickModal();
     });
-
-    function updateDetailSummary() {
-        const rows = Array.from(document.querySelectorAll('.am-roster-row'));
-        if (!rows.length) return;
-
-        const present = rows.filter(row => (row.dataset.status || '').toLowerCase() === 'present').length;
-        const absent = rows.filter(row => (row.dataset.status || '').toLowerCase() === 'absent').length;
-        const rate = Math.round((present / rows.length) * 100);
-
-        const presentCount = document.getElementById('amPresentCount');
-        const absentCount = document.getElementById('amAbsentCount');
-        const attendanceRate = document.getElementById('amAttendanceRate');
-
-        if (presentCount) presentCount.textContent = String(present);
-        if (absentCount) absentCount.textContent = String(absent);
-        if (attendanceRate) attendanceRate.textContent = `${rate}%`;
-    }
 
     function currentLocalDateTimeValue() {
         const now = new Date();
@@ -465,8 +647,7 @@
             updateButton.dataset.currentRemark = remark;
         }
 
-        updateDetailSummary();
-        filterRosterRows();
+        applyDetailFilters();
     }
 
     if (quickSave) {

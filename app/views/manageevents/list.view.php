@@ -361,6 +361,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     <?= $isNyscAdmin ? 'All Clubs Nationwide' : 'All Clubs' ?>
                                 </span>
                             </label>
+                            <?php if (!$isNyscAdmin): ?>
                             <label class="me-toggle-option">
                                 <input type="radio" name="target_scope" value="SelectedClubs">
                                 <span class="me-toggle-btn">
@@ -368,8 +369,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                     Specific Clubs
                                 </span>
                             </label>
+                            <?php endif; ?>
                         </div>
 
+                        <?php if (!$isNyscAdmin): ?>
                         <!-- Club checklist (shown only when Specific Clubs is selected) -->
                         <div class="me-club-checklist hidden" id="createClubChecklist">
                             <?php foreach ($clubs as $club): ?>
@@ -394,6 +397,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                                 <p class="me-club-checklist-empty">No active clubs found.</p>
                             <?php endif; ?>
                         </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="me-form-group">

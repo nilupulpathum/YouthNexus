@@ -1,7 +1,8 @@
 <?php
 /**
  * Attendance — Session Detail (Member Roster for one event)
- * Supports both NYSC Administrator (National Scope) and Divisional Secretary.
+ * Supports NYSC Administrator (National / Zonal / Divisional filter panel)
+ * and Divisional / Zonal Secretary.
  */
 $title                   = $title ?? 'Event Attendance — YouthNexus';
 $pageTitle               = htmlspecialchars($event->title ?? 'Event Attendance');
@@ -9,10 +10,16 @@ $pageDescription         = 'View and verify member attendance for this event';
 $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
+$isZonalSecretary        = !empty($isZonalSecretary);
+$canEditRoster           = !$isNYSCAdmin; // Administrators review attendance; secretaries edit/record
 $pageStyles              = [
-    ROOT . '/assets/css/attendance.css?v=20260929',
+    ROOT . '/assets/css/attendance.css?v=20261024',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+
+$eventLevel = $event->organizer_level ?? 'National';
+$eventZoneId = $event->organizer_zonal_id ?? $event->division_zonal_id ?? null;
+$eventDivisionId = $event->organizer_division_id ?? $event->club_division_id ?? null;
 
 $orgHierarchy = [];
 if (!empty($event->organizer_club_name))     $orgHierarchy[] = $event->organizer_club_name;
@@ -48,14 +55,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <!-- Event Summary Information -->
     <div class="am-event-summary-card">
         <div class="am-event-summary-line">
-            <span class="am-badge <?= strtolower($event->organizer_level ?? 'club') ?>"><?= htmlspecialchars($event->organizer_level ?? 'Event') ?></span>
+            <span class="am-badge <?= strtolower($eventLevel) ?>"><?= htmlspecialchars($eventLevel) ?></span>
             <?php if (!empty($event->event_type)): ?>
                 <span class="am-badge type"><?= htmlspecialchars($event->event_type) ?></span>
             <?php endif; ?>
             <span class="am-event-summary-meta">
                 <?= $organiser ?> &nbsp;&bull;&nbsp;
                 <?= date('M j, Y \a\t g:i A', strtotime($event->start_datetime)) ?>
-                <?= $event->location ? ' &nbsp;&bull;&nbsp; ' . htmlspecialchars($event->location) : '' ?>
+                <?= !empty($event->location) ? ' &nbsp;&bull;&nbsp; ' . htmlspecialchars($event->location) : '' ?>
             </span>
         </div>
     </div>
@@ -88,6 +95,82 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
 
     <!-- ============================================================
+         Filter Panel for Scope-based Review
+         ============================================================ -->
+    <?php
+    $showZoneFilter     = ($isNYSCAdmin && $eventLevel === 'National');
+    $showDivisionFilter = ($isNYSCAdmin && in_array($eventLevel, ['National', 'Zonal'])) 
+                       || ($isZonalSecretary && in_array($eventLevel, ['National', 'Zonal']));
+    $showClubFilter     = in_array($eventLevel, ['National', 'Zonal', 'Division']);
+    $showScopeFilter    = ($showZoneFilter || $showDivisionFilter || $showClubFilter);
+    ?>
+    <?php if ($showScopeFilter): ?>
+    <div class="am-detail-filter-card" id="amDetailFilterCard">
+        <div class="am-detail-filter-header">
+            <div class="am-detail-filter-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                Filter Attendance by Scope
+            </div>
+            <div class="am-detail-filter-actions">
+                <span class="am-scope-badge" id="amScopeBadge">
+                    All records for this event
+                </span>
+                <button type="button" class="am-filter-reset-btn" id="amDetailResetFilterBtn">
+                    Reset Filter
+                </button>
+            </div>
+        </div>
+
+        <div class="am-detail-filter-grid">
+            <?php if ($showZoneFilter): ?>
+            <!-- 1. Zone Filter (for National events) -->
+            <div class="am-detail-filter-field" id="zoneFilterField">
+                <label for="detailFilterZone">ZONAL OFFICE</label>
+                <select id="detailFilterZone">
+                    <option value="">All Zones (<?= count($detailZones ?? []) ?>)</option>
+                    <?php foreach (($detailZones ?? []) as $z): ?>
+                        <option value="<?= (int)$z->zonal_id ?>">
+                            <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' (' . htmlspecialchars($z->province) . ')' : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($showDivisionFilter): ?>
+            <!-- 2. Division Filter (for National and Zonal events) -->
+            <div class="am-detail-filter-field" id="divisionFilterField">
+                <label for="detailFilterDivision">DIVISIONAL SECRETARIAT</label>
+                <select id="detailFilterDivision" <?= ($eventLevel === 'National' && empty($detailDivisions)) ? 'disabled' : '' ?>>
+                    <option value="">All Divisions<?= !empty($detailDivisions) ? ' (' . count($detailDivisions) . ')' : '' ?></option>
+                    <?php foreach (($detailDivisions ?? []) as $d): ?>
+                        <option value="<?= (int)$d->division_id ?>">
+                            <?= htmlspecialchars($d->division_name) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($showClubFilter): ?>
+            <!-- 3. Club Filter (for National, Zonal, and Division events) -->
+            <div class="am-detail-filter-field" id="clubFilterField">
+                <label for="detailFilterClub">YOUTH CLUB</label>
+                <select id="detailFilterClub" <?= ($eventLevel !== 'Division' && empty($detailClubs)) ? 'disabled' : '' ?>>
+                    <option value="">All Clubs<?= !empty($detailClubs) ? ' (' . count($detailClubs) . ')' : '' ?></option>
+                    <?php foreach (($detailClubs ?? []) as $c): ?>
+                        <option value="<?= (int)$c->club_id ?>">
+                            <?= htmlspecialchars($c->club_name) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- ============================================================
          Member Roster Table
          ============================================================ -->
     <div class="am-table-wrapper">
@@ -104,7 +187,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <option value="Absent">Absent</option>
                 <option value="unmarked">Not Recorded</option>
             </select>
-            <span style="font-size:13px;color:#6b7280;margin-left:auto;"><strong><?= count($roster) ?></strong> members in scope</span>
+            <span style="font-size:13px;color:#6b7280;margin-left:auto;">
+                <strong id="amRosterCount"><?= count($roster) ?></strong> members in scope
+            </span>
         </div>
 
         <?php if (empty($roster)): ?>
@@ -117,11 +202,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 <tr>
                     <th>Member</th>
                     <th>Club / Division</th>
+                    <?php if ($isNYSCAdmin && $eventLevel === 'National'): ?>
+                    <th>Zone</th>
+                    <?php endif; ?>
                     <th>Status</th>
                     <th>Check-in Time</th>
                     <th>Remark</th>
                     <th>Recorded By</th>
+                    <?php if ($canEditRoster): ?>
                     <th style="text-align:right;">Actions</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
             <tbody>
@@ -135,18 +225,28 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     $recordedBy = !empty($row->recorded_by_name)
                         ? htmlspecialchars($row->recorded_by_name) . (!empty($row->recorded_by_role) ? ' <small class="am-recorder-role">(' . htmlspecialchars($row->recorded_by_role) . ')</small>' : '')
                         : '<span class="am-muted">—</span>';
+                    $zoneIdVal     = (int)($row->zonal_id ?? 0);
+                    $divisionIdVal = (int)($row->division_id ?? 0);
+                    $clubIdVal     = (int)($row->club_id ?? 0);
                 ?>
                 <tr class="am-roster-row"
                     data-member-id="<?= (int)$row->user_id ?>"
+                    data-zone-id="<?= $zoneIdVal ?>"
+                    data-division-id="<?= $divisionIdVal ?>"
+                    data-club-id="<?= $clubIdVal ?>"
                     data-name="<?= htmlspecialchars(strtolower($mName)) ?>"
                     data-email="<?= htmlspecialchars(strtolower($row->email ?? '')) ?>"
                     data-club="<?= htmlspecialchars(strtolower($row->club_name ?? '')) ?>"
+                    data-division="<?= htmlspecialchars(strtolower($row->division_name ?? '')) ?>"
                     data-status="<?= htmlspecialchars($attStatus) ?>">
                     <td>
                         <strong><?= htmlspecialchars($mName) ?></strong><br>
                         <small style="color:#64748b;"><?= htmlspecialchars($row->email ?? '') ?></small>
                     </td>
                     <td><?= $clubLoc ?></td>
+                    <?php if ($isNYSCAdmin && $eventLevel === 'National'): ?>
+                    <td><?= htmlspecialchars($row->zonal_name ?? '—') ?></td>
+                    <?php endif; ?>
                     <td>
                         <?php if ($attStatus === 'Present'): ?>
                             <span class="am-status-badge present">&#9679; Present</span>
@@ -168,6 +268,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             <div style="font-size:11px;color:#94a3b8;margin-top:2px;"><?= date('M j, H:i', strtotime($row->recorded_at)) ?></div>
                         <?php endif; ?>
                     </td>
+                    <?php if ($canEditRoster): ?>
                     <td style="text-align:right;">
                         <button type="button"
                                 class="am-btn am-btn-quick-update"
@@ -179,8 +280,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                             Update
                         </button>
                     </td>
+                    <?php endif; ?>
                 </tr>
                 <?php endforeach; ?>
+                <tr id="amRosterEmptyRow" style="display:none;">
+                    <td colspan="<?= ($isNYSCAdmin && $eventLevel === 'National') ? ($canEditRoster ? 9 : 8) : ($canEditRoster ? 8 : 7) ?>" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;">
+                        No members match the selected filter criteria.
+                    </td>
+                </tr>
             </tbody>
         </table>
         <?php endif; ?>
@@ -188,8 +295,9 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
 </div>
 
+<?php if ($canEditRoster): ?>
 <!-- ============================================================
-     Quick Update Modal
+     Quick Update Modal (Only for authorized editors)
      ============================================================ -->
 <div class="am-modal-backdrop" id="amQuickUpdateModal">
     <div class="am-modal" style="max-width:440px;">
@@ -232,6 +340,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="am-toast" id="amToast"></div>
 
@@ -239,11 +348,16 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <script>
     window.ROOT = "<?= ROOT ?>";
     window.currentEventId = <?= (int)$event->event_id ?>;
+    window.isNYSCAdmin = <?= $isNYSCAdmin ? 'true' : 'false' ?>;
+    window.isZonalSecretary = <?= $isZonalSecretary ? 'true' : 'false' ?>;
+    window.eventOrganizerLevel = <?= json_encode($eventLevel) ?>;
+    window.eventZoneId = <?= json_encode($eventZoneId) ?>;
+    window.eventDivisionId = <?= json_encode($eventDivisionId) ?>;
     window.currentAttendanceUser = {
         name: <?= json_encode($userName ?? 'Administrator', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
         role: <?= json_encode($userRole ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
 </script>
-<script src="<?= ROOT ?>/assets/js/attendance.js?v=20260929"></script>
+<script src="<?= ROOT ?>/assets/js/attendance.js?v=20261024"></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
