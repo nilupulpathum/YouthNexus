@@ -197,19 +197,57 @@ class Attendance extends Controller {
         $total     = count($roster);
         $rate      = $total > 0 ? round(($present / $total) * 100) : 0;
 
+        // For detail page: supply zone/division/club dropdowns for cascading filters
+        $detailZones     = [];
+        $detailDivisions = [];
+        $detailClubs     = [];
+
+        $eventLevel      = $event->organizer_level ?? 'National';
+        $eventZoneId     = $event->organizer_zonal_id ?? $event->division_zonal_id ?? null;
+        $eventDivisionId = $event->organizer_division_id ?? $event->club_division_id ?? null;
+
+        if ($isNYSCAdmin) {
+            if ($eventLevel === 'National') {
+                // National event: admin can filter by any Zone, then Division, then Club
+                $detailZones = $attendanceModel->getAllZones();
+            } elseif ($eventLevel === 'Zonal' && !empty($eventZoneId)) {
+                // Zonal event: zone is fixed, admin can filter by Divisions in this Zone, then Club
+                $detailDivisions = $attendanceModel->getDivisionsByZone($eventZoneId);
+            } elseif ($eventLevel === 'Division' && !empty($eventDivisionId)) {
+                // Division event: division is fixed, admin can filter by Clubs in this Division
+                $detailClubs = $attendanceModel->getClubsByScope($eventDivisionId);
+            }
+            // Club event: no scope filter needed
+        } elseif ($isZonalSecretary) {
+            if ($eventLevel === 'National' || $eventLevel === 'Zonal') {
+                $detailDivisions = $attendanceModel->getDivisionsByZone($zonalId);
+            } elseif ($eventLevel === 'Division' && !empty($eventDivisionId)) {
+                $detailClubs = $attendanceModel->getClubsByScope($eventDivisionId);
+            }
+        } elseif (!empty($divisionId)) {
+            if ($eventLevel !== 'Club') {
+                $detailClubs = $attendanceModel->getClubsByScope($divisionId);
+            }
+        }
+
         $this->view('attendance/session-detail', [
-            'title'       => 'Event Attendance — YouthNexus',
-            'isNYSCAdmin' => $isNYSCAdmin,
-            'event'       => $event,
-            'roster'      => $roster,
-            'present'     => $present,
-            'absent'      => $absent,
-            'recorded'    => $recorded,
-            'total'       => $total,
-            'rate'        => $rate,
-            'csrf_token'  => $_SESSION['csrf_token'],
-            'userName'    => $_SESSION['user_name'] ?? 'Administrator',
-            'userRole'    => $role,
+            'title'           => 'Event Attendance — YouthNexus',
+            'isNYSCAdmin'     => $isNYSCAdmin,
+            'isZonalSecretary'=> $isZonalSecretary,
+            'event'           => $event,
+            'roster'          => $roster,
+            'present'         => $present,
+            'absent'          => $absent,
+            'recorded'        => $recorded,
+            'total'           => $total,
+            'rate'            => $rate,
+            'csrf_token'      => $_SESSION['csrf_token'],
+            'userName'        => $_SESSION['user_name'] ?? 'Administrator',
+            'userRole'        => $role,
+            'detailZones'     => $detailZones,
+            'detailDivisions' => $detailDivisions,
+            'detailClubs'     => $detailClubs,
+            'sessionZonalId'  => $zonalId,
         ]);
     }
 
@@ -239,6 +277,57 @@ class Attendance extends Controller {
 
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'clubs' => $clubs]);
+        exit();
+    }
+
+    /**
+     * AJAX: Return filtered attendance stats + roster for the detail-page filter panel.
+     * Called when admin selects zone/division/club on session-detail.
+     */
+    public function detailfilter() {
+        $role = $this->requireAuthorizedUser();
+        $eventId    = (int)($_GET['event_id']    ?? 0);
+        $zoneId     = !empty($_GET['zone_id'])     ? (int)$_GET['zone_id']     : null;
+        $divisionId = !empty($_GET['division_id']) ? (int)$_GET['division_id'] : null;
+        $clubId     = !empty($_GET['club_id'])     ? (int)$_GET['club_id']     : null;
+
+        if (!$eventId) {
+            $this->jsonError('Missing event_id.', 400);
+        }
+
+        $model = $this->model('AttendanceModel');
+
+        // Divisions cascade
+        $divisions = [];
+        if ($zoneId) {
+            $divisions = $model->getDivisionsByZone($zoneId);
+        }
+
+        // Clubs cascade
+        $clubs = [];
+        if ($divisionId) {
+            $clubs = $model->getClubsByScope($divisionId, null);
+        } elseif ($zoneId) {
+            $clubs = $model->getClubsByScope(null, $zoneId);
+        }
+
+        // Filtered stats
+        $stats = $model->getEventAttendanceStatsByFilter($eventId, $zoneId, $divisionId, $clubId);
+        $present  = (int)($stats->present_count  ?? 0);
+        $absent   = (int)($stats->absent_count   ?? 0);
+        $recorded = (int)($stats->recorded_count ?? 0);
+        $rate     = $recorded > 0 ? round(($present / $recorded) * 100) : 0;
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success'    => true,
+            'divisions'  => $divisions,
+            'clubs'      => $clubs,
+            'present'    => $present,
+            'absent'     => $absent,
+            'recorded'   => $recorded,
+            'rate'       => $rate,
+        ]);
         exit();
     }
 

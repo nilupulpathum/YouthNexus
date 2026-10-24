@@ -282,6 +282,8 @@ CREATE TABLE Attendance (
     check_in_time DATETIME NULL,
     check_out_time DATETIME NULL,
     remark VARCHAR(500) NULL,
+    location VARCHAR(255) NULL,
+    photo_url VARCHAR(255) NULL,
     recorded_by INT NOT NULL,
     recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (event_id) REFERENCES Event(event_id),

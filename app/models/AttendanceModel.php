@@ -273,9 +273,12 @@ class AttendanceModel extends Model {
                             CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                             u.email,
                             u.role,
+                            cu.club_id,
                             cu.club_name,
                             cu.club_code,
+                            dv.division_id,
                             dv.division_name,
+                            dv.zonal_id,
                             zn.zonal_name,
                             a.attendance_id,
                             a.status        AS att_status,
@@ -310,9 +313,12 @@ class AttendanceModel extends Model {
                         CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                         u.email,
                         u.role,
+                        cu.club_id,
                         cu.club_name,
                         cu.club_code,
+                        dv.division_id,
                         dv.division_name,
+                        dv.zonal_id,
                         zn.zonal_name,
                         a.attendance_id,
                         a.status        AS att_status,
@@ -346,9 +352,12 @@ class AttendanceModel extends Model {
                         CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                         u.email,
                         u.role,
+                        cu.club_id,
                         cu.club_name,
                         cu.club_code,
+                        dv.division_id,
                         dv.division_name,
+                        dv.zonal_id,
                         zn.zonal_name,
                         a.attendance_id,
                         a.status        AS att_status,
@@ -381,9 +390,12 @@ class AttendanceModel extends Model {
                     CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                     u.email,
                     u.role,
+                    cu.club_id,
                     cu.club_name,
                     cu.club_code,
+                    dv.division_id,
                     dv.division_name,
+                    dv.zonal_id,
                     zn.zonal_name,
                     a.attendance_id,
                     a.status        AS att_status,
@@ -418,9 +430,12 @@ class AttendanceModel extends Model {
                             CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                             u.email,
                             u.role,
+                            cu.club_id,
                             cu.club_name,
                             cu.club_code,
+                            dv.division_id,
                             dv.division_name,
+                            dv.zonal_id,
                             zn.zonal_name,
                             a.attendance_id,
                             a.status        AS att_status,
@@ -545,8 +560,10 @@ class AttendanceModel extends Model {
                         CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                         u.email,
                         u.role,
+                        cu.club_id,
                         cu.club_name,
                         cu.club_code,
+                        cu.division_id,
                         a.attendance_id,
                         a.status        AS att_status,
                         a.check_in_time,
@@ -570,8 +587,10 @@ class AttendanceModel extends Model {
                         CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                         u.email,
                         u.role,
+                        cu.club_id,
                         cu.club_name,
                         cu.club_code,
+                        cu.division_id,
                         a.attendance_id,
                         a.status        AS att_status,
                         a.check_in_time,
@@ -702,9 +721,12 @@ class AttendanceModel extends Model {
                     CONCAT(u.first_name, ' ', u.last_name) AS member_name,
                     u.email,
                     u.role,
+                    cu.club_id,
                     cu.club_name,
                     cu.club_code,
+                    cd.division_id,
                     cd.division_name,
+                    cd.zonal_id,
                     a.attendance_id,
                     a.status        AS att_status,
                     a.check_in_time,
@@ -837,6 +859,44 @@ class AttendanceModel extends Model {
                 WHERE event_id = ?";
         return $this->single($sql, [(int)$eventId]);
     }
+
+    /**
+     * Attendance stats for one event scoped by optional zone / division / club.
+     * Used by the AJAX filter endpoint on the detail page.
+     *
+     * @param  int      $eventId
+     * @param  int|null $zoneId
+     * @param  int|null $divisionId
+     * @param  int|null $clubId
+     * @return object
+     */
+    public function getEventAttendanceStatsByFilter($eventId, $zoneId = null, $divisionId = null, $clubId = null) {
+        $sql = "SELECT
+                    SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+                    SUM(CASE WHEN a.status = 'Absent'  THEN 1 ELSE 0 END) AS absent_count,
+                    COUNT(*) AS recorded_count
+                FROM Attendance a
+                JOIN User u ON u.user_id = a.user_id
+                JOIN Club c ON c.club_id = u.club_id
+                JOIN Division d ON d.division_id = c.division_id
+                WHERE a.event_id = ?";
+        $params = [(int)$eventId];
+
+        if (!empty($clubId)) {
+            $sql .= " AND c.club_id = ?";
+            $params[] = (int)$clubId;
+        } elseif (!empty($divisionId)) {
+            $sql .= " AND d.division_id = ?";
+            $params[] = (int)$divisionId;
+        } elseif (!empty($zoneId)) {
+            $sql .= " AND d.zonal_id = ?";
+            $params[] = (int)$zoneId;
+        }
+
+        return $this->single($sql, $params);
+    }
+
+
 
     /**
      * Year-level summary stats for the session-list view stat cards.
