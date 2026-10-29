@@ -11,7 +11,7 @@ $listRoute = $listRoute ?? $transferRoute;
 $isZonalDemo = $isZonalDemo ?? false;
 $currentRoute = $listRoute;
 $unreadNotificationCount = $isZonalDemo ? 2 : 0;
-$pageStyles = [ROOT . '/assets/css/fundtransfer.css?v=20260929'];
+$pageStyles = [ROOT . '/assets/css/fundtransfer.css?v=20261029b'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -430,9 +430,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
         <!-- Popup Footer -->
         <div class="ft-popup-footer">
-            <div class="ft-authorizer">
-                Authorizing as: <strong><?= htmlspecialchars($userName ?? 'N. Fernando') ?></strong> (<?= htmlspecialchars($userDesignation ?? 'Div. Secretary') ?>)
-            </div>
+    
             <div class="ft-footer-buttons">
                 <button type="button" class="ft-btn ft-btn-cancel" id="btnCancelAllocModal">Cancel</button>
                 <button type="submit" form="fundAllocationForm" class="ft-btn ft-btn-authorize" id="btnSubmitAlloc">
@@ -583,6 +581,6 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         }
     })();
 </script>
-<script src="<?= ROOT ?>/assets/js/fundtransfer.js" defer></script>
+<script src="<?= ROOT ?>/assets/js/fundtransfer.js?v=20261029" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>
