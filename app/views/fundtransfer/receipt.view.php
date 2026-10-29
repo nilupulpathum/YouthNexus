@@ -113,7 +113,7 @@ $hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_na
                     <div class="data-row"><span class="k"><?= !empty($isZonalDemo) ? 'Target Division:' : 'Target Zone:' ?></span><span class="v"><?= htmlspecialchars($transfer->target_zone_name) ?></span></div>
                     <div class="data-row"><span class="k">Receiving Bank:</span><span class="v"><?= htmlspecialchars($transfer->recipient_bank_name ?? 'People\'s Bank') ?></span></div>
                     <div class="data-row"><span class="k">Branch:</span><span class="v"><?= htmlspecialchars($transfer->recipient_branch_name ?? 'Zonal Branch') ?></span></div>
-                    <div class="data-row"><span class="k">Account Number:</span><span class="v"><strong><?= htmlspecialchars($transfer->recipient_account_number ?? '—') ?></strong> (<?= htmlspecialchars($transfer->recipient_verification_status ?? 'Verified') ?>)</span></div>
+                    <div class="data-row"><span class="k">Account Number:</span><span class="v"><strong><?= htmlspecialchars($transfer->recipient_account_number ?? '—') ?></strong></span></div>
                     <div class="data-row"><span class="k">Beneficiary Title:</span><span class="v"><?= htmlspecialchars($transfer->recipient_account_name ?? 'Zonal Treasury Fund') ?></span></div>
                 </div>
             </div>

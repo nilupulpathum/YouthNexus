@@ -241,12 +241,10 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                                 data-sender-branch="<?= htmlspecialchars($t->source_branch_name ?? $t->branch_name ?? 'Colombo Fort (001)', ENT_QUOTES) ?>"
                                 data-sender-account="<?= htmlspecialchars($t->source_account_number ?? $t->account_number ?? '8620-0012-3456-7890', ENT_QUOTES) ?>"
                                 data-sender-label="<?= htmlspecialchars($t->source_account_name ?? $t->bank_account_name ?? 'NYSC Colombo Operational Fund', ENT_QUOTES) ?>"
-                                data-sender-gateway="<?= htmlspecialchars($t->source_gateway_type ?? $t->gateway_type ?? 'RTGS', ENT_QUOTES) ?>"
                                 data-recipient-bank="<?= htmlspecialchars($t->recipient_bank_name ?? 'People\'s Bank', ENT_QUOTES) ?>"
                                 data-recipient-branch="<?= htmlspecialchars($t->recipient_branch_name ?? 'Zonal Branch', ENT_QUOTES) ?>"
                                 data-recipient-account="<?= htmlspecialchars($t->recipient_account_number ?? '—', ENT_QUOTES) ?>"
                                 data-recipient-label="<?= htmlspecialchars($t->recipient_account_name ?? 'Zonal Treasury Fund', ENT_QUOTES) ?>"
-                                data-recipient-status="<?= htmlspecialchars($t->recipient_verification_status ?? 'Verified', ENT_QUOTES) ?>"
                                 data-bank="<?= htmlspecialchars($t->recipient_bank_name ?? $t->bank_name ?? 'Bank of Ceylon', ENT_QUOTES) ?>"
                                 data-branch="<?= htmlspecialchars($t->recipient_branch_name ?? $t->branch_name ?? 'Colombo Fort', ENT_QUOTES) ?>"
                                 data-account="<?= htmlspecialchars($t->recipient_account_number ?? $t->account_number ?? '', ENT_QUOTES) ?>"
@@ -581,6 +579,6 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         }
     })();
 </script>
-<script src="<?= ROOT ?>/assets/js/fundtransfer.js?v=20261029" defer></script>
+<script src="<?= ROOT ?>/assets/js/fundtransfer.js?v=20261029_2" defer></script>
 
 <?php require __DIR__ . '/../layouts/dashboard-end.view.php'; ?>

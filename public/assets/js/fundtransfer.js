@@ -119,11 +119,7 @@
         const acc = (config.zonalAccounts && config.zonalAccounts[zoneId]) ? config.zonalAccounts[zoneId] : null;
 
         if (acc) {
-            if (acc.verification_status === 'Verified' || acc.is_verified == 1) {
-                applyVerifiedAccount(acc);
-            } else {
-                applyWarningNoAccount();
-            }
+            applyVerifiedAccount(acc);
             return;
         }
 
@@ -133,7 +129,7 @@
         })
         .then(res => res.json())
         .then(data => {
-            if (data.success && data.account && (data.account.verification_status === 'Verified' || data.account.is_verified == 1)) {
+            if (data.success && data.account) {
                 applyVerifiedAccount(data.account);
             } else {
                 applyWarningNoAccount();

@@ -13,11 +13,10 @@ class DivisionalAllocationModel extends Model {
 
     public function getSourceAccount(int $divisionId) {
         return $this->single(
-            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label,
-                    gateway_type, verification_status
+            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label
              FROM BankAccount
              WHERE owner_level = 'Divisional' AND owner_id = ? AND status = 'Active'
-             ORDER BY verification_status = 'Verified' DESC, bank_account_id
+             ORDER BY bank_account_id ASC
              LIMIT 1",
             [$divisionId]
         );

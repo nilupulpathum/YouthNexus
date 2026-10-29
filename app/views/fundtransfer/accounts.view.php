@@ -91,8 +91,6 @@ $maskAccount = function ($acc) {
                     <th>Bank &amp; Branch</th>
                     <th>Account Number</th>
                     <th>Beneficiary Title</th>
-                    <th>Gateway</th>
-                    <th>Verification</th>
                     <th>Status</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
@@ -100,7 +98,7 @@ $maskAccount = function ($acc) {
             <tbody>
                 <?php if (empty($accounts)): ?>
                     <tr>
-                        <td colspan="8" class="ft-td-empty">
+                        <td colspan="6" class="ft-td-empty">
                             <div class="ft-empty-state">
                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="21" width="18" height="2" rx="1"/><polygon points="12 2 2 7 22 7"/><line x1="5" y1="10" x2="5" y2="18"/><line x1="10" y1="10" x2="10" y2="18"/><line x1="14" y1="10" x2="14" y2="18"/><line x1="19" y1="10" x2="19" y2="18"/></svg>
                                 <p>No zonal bank accounts registered yet.</p>
@@ -126,16 +124,7 @@ $maskAccount = function ($acc) {
                             <td>
                                 <span class="ft-beneficiary-label"><?= htmlspecialchars($acc->account_label) ?></span>
                             </td>
-                            <td>
-                                <span class="ft-badge ft-badge-gray"><?= htmlspecialchars($acc->gateway_type) ?></span>
-                            </td>
-                            <td>
-                                <?php if ($acc->verification_status === 'Verified'): ?>
-                                    <span class="ft-badge ft-badge-green">Verified</span>
-                                <?php else: ?>
-                                    <span class="ft-badge ft-badge-yellow">Unverified</span>
-                                <?php endif; ?>
-                            </td>
+
                             <td>
                                 <?php if ($acc->status === 'Active'): ?>
                                     <span class="ft-badge ft-badge-blue">Active</span>
@@ -151,9 +140,7 @@ $maskAccount = function ($acc) {
                                     data-bank="<?= htmlspecialchars($acc->bank_name, ENT_QUOTES) ?>"
                                     data-branch="<?= htmlspecialchars($acc->branch_name, ENT_QUOTES) ?>"
                                     data-account="<?= htmlspecialchars($acc->account_number, ENT_QUOTES) ?>"
-                                    data-label="<?= htmlspecialchars($acc->account_label, ENT_QUOTES) ?>"
-                                    data-gateway="<?= htmlspecialchars($acc->gateway_type, ENT_QUOTES) ?>"
-                                    data-verification="<?= htmlspecialchars($acc->verification_status, ENT_QUOTES) ?>">
+                                    data-label="<?= htmlspecialchars($acc->account_label, ENT_QUOTES) ?>">
                                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                                     Edit
                                 </button>
@@ -234,36 +221,16 @@ $maskAccount = function ($acc) {
                 </div>
             </div>
 
-            <div class="ft-form-row">
-                <div class="ft-field">
-                    <label for="acc_number">Full Account Number <span class="ft-required">*</span></label>
-                    <input type="text" class="ft-input" name="account_number" id="acc_number" placeholder="e.g. 9005-0011-7457-2716" required>
-                    <div class="ft-hint">Account numbers in tables will automatically be masked as (****-last4).</div>
-                </div>
-                <div class="ft-field">
-                    <label for="acc_gateway">Preferred Gateway</label>
-                    <select class="ft-input" name="gateway_type" id="acc_gateway">
-                        <option value="SLIPS" selected>SLIPS (Inter-bank automated)</option>
-                        <option value="RTGS">RTGS (High-value real-time)</option>
-                        <option value="API">Direct Bank API Gateway</option>
-                        <option value="Cheque">Government Cheque</option>
-                    </select>
-                </div>
+            <div class="ft-field">
+                <label for="acc_number">Full Account Number <span class="ft-required">*</span></label>
+                <input type="text" class="ft-input" name="account_number" id="acc_number" placeholder="e.g. 9005-0011-7457-2716" required>
+                <div class="ft-hint">Account numbers in tables will automatically be masked as (****-last4).</div>
             </div>
 
             <div class="ft-field">
                 <label for="acc_label">Account Title / Beneficiary Name <span class="ft-required">*</span></label>
                 <input type="text" class="ft-input" name="account_label" id="acc_label" placeholder="e.g. Western Zone Zonal Treasury Fund" required>
                 <div class="ft-hint">The official registered entity title verified with the commercial bank.</div>
-            </div>
-
-            <div class="ft-field">
-                <label for="acc_verification">Verification Status <span class="ft-required">*</span></label>
-                <select class="ft-input" name="verification_status" id="acc_verification" required>
-                    <option value="Verified" selected>Verified (Authorized for RTGS / SLIPS Fund Allocation)</option>
-                    <option value="Unverified">Unverified (Pending Bank Statement Confirmation)</option>
-                </select>
-                <div class="ft-hint">Only verified accounts can be chosen in the New Fund Allocation popup.</div>
             </div>
         </form>
 
@@ -294,8 +261,6 @@ $maskAccount = function ($acc) {
     var inpBranch     = document.getElementById('acc_branch_name');
     var inpNumber     = document.getElementById('acc_number');
     var inpLabel      = document.getElementById('acc_label');
-    var selGateway    = document.getElementById('acc_gateway');
-    var selVerif      = document.getElementById('acc_verification');
 
     function openRegisterModal() {
         if (!modal) return;
@@ -306,8 +271,6 @@ $maskAccount = function ($acc) {
 
         inpId.value = '';
         form.reset();
-        selGateway.value = 'SLIPS';
-        selVerif.value = 'Verified';
 
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
@@ -335,8 +298,6 @@ $maskAccount = function ($acc) {
         inpBranch.value    = btn.dataset.branch || '';
         inpNumber.value    = btn.dataset.account || '';
         inpLabel.value     = btn.dataset.label || '';
-        selGateway.value   = btn.dataset.gateway || 'SLIPS';
-        selVerif.value     = btn.dataset.verification || 'Verified';
 
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');

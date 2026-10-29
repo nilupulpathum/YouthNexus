@@ -23,7 +23,7 @@ class ZoneFundTransferMock {
     public function account() {
         return (object)['bank_account_id' => 1, 'bank_name' => 'Demo zonal account',
             'branch_name' => 'Gampaha', 'account_number' => 'DEMO-ZONE-001',
-            'account_label' => 'Gampaha Zone — NYSC funds received', 'gateway_type' => 'Demo'];
+            'account_label' => 'Gampaha Zone — NYSC funds received'];
     }
 
     public function snapshot() { return $this->state(); }

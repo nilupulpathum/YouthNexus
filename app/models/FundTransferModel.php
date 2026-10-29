@@ -42,19 +42,14 @@ class FundTransferModel extends Model {
                     ba.branch_name         AS source_branch_name,
                     ba.account_number      AS source_account_number,
                     ba.account_label       AS source_account_name,
-                    ba.gateway_type        AS source_gateway_type,
-                    ba.verification_status AS source_verification_status,
                     ba.bank_name,
                     ba.branch_name,
                     ba.account_number,
                     ba.account_label       AS bank_account_name,
-                    ba.gateway_type,
-                    ba.verification_status,
                     rba.bank_name          AS recipient_bank_name,
                     rba.branch_name        AS recipient_branch_name,
                     rba.account_number     AS recipient_account_number,
                     rba.account_label      AS recipient_account_name,
-                    rba.verification_status AS recipient_verification_status,
                     CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
                     u.role                 AS authorizer_role
                 FROM FundAllocation fa
@@ -156,19 +151,14 @@ class FundTransferModel extends Model {
                     ba.branch_name         AS source_branch_name,
                     ba.account_number      AS source_account_number,
                     ba.account_label       AS source_account_name,
-                    ba.gateway_type        AS source_gateway_type,
-                    ba.verification_status AS source_verification_status,
                     ba.bank_name,
                     ba.branch_name,
                     ba.account_number,
                     ba.account_label       AS bank_account_name,
-                    ba.gateway_type,
-                    ba.verification_status,
                     rba.bank_name          AS recipient_bank_name,
                     rba.branch_name        AS recipient_branch_name,
                     rba.account_number     AS recipient_account_number,
                     rba.account_label      AS recipient_account_name,
-                    rba.verification_status AS recipient_verification_status,
                     CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
                     u.role                 AS authorizer_role
                 FROM FundAllocation fa
@@ -246,7 +236,7 @@ class FundTransferModel extends Model {
         $coreAccount = $this->single(
             "SELECT * FROM BankAccount
              WHERE owner_level = 'National' AND status = 'Active'
-             ORDER BY verification_status = 'Verified' DESC, bank_account_id ASC
+             ORDER BY bank_account_id ASC
              LIMIT 1"
         );
 
@@ -464,10 +454,10 @@ class FundTransferModel extends Model {
      */
     public function getActiveBankAccounts() {
         return $this->resultSet(
-            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label, gateway_type, verification_status, status
+            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label, status
              FROM BankAccount
              WHERE status = 'Active'
-             ORDER BY (owner_level = 'National') DESC, (verification_status = 'Verified') DESC, bank_account_id ASC"
+             ORDER BY (owner_level = 'National') DESC, bank_account_id ASC"
         );
     }
 
@@ -516,7 +506,6 @@ class FundTransferModel extends Model {
              JOIN Zone z ON ba.owner_id = z.zonal_id
              WHERE ba.owner_level = 'Zonal'
                AND ba.owner_id = ?
-               AND ba.verification_status = 'Verified'
                AND ba.status = 'Active'
              LIMIT 1",
             [(int)$zoneId]
@@ -554,14 +543,10 @@ class FundTransferModel extends Model {
                     branch_name,
                     account_number,
                     account_label,
-                    gateway_type,
-                    verification_status,
                     status,
                     created_at
                 ) VALUES (
                     'Zonal',
-                    ?,
-                    ?,
                     ?,
                     ?,
                     ?,
@@ -577,8 +562,6 @@ class FundTransferModel extends Model {
             trim($data['branch_name']),
             trim($data['account_number']),
             trim($data['account_label']),
-            $data['gateway_type'] ?? 'SLIPS',
-            $data['verification_status'] ?? 'Verified',
         ]);
 
         return (int)Database::getInstance()->getConnection()->lastInsertId();
@@ -597,9 +580,7 @@ class FundTransferModel extends Model {
                     bank_name = ?,
                     branch_name = ?,
                     account_number = ?,
-                    account_label = ?,
-                    gateway_type = ?,
-                    verification_status = ?
+                    account_label = ?
                 WHERE bank_account_id = ? AND owner_level = 'Zonal'";
 
         $stmt = $this->query($sql, [
@@ -608,8 +589,6 @@ class FundTransferModel extends Model {
             trim($data['branch_name']),
             trim($data['account_number']),
             trim($data['account_label']),
-            $data['gateway_type'] ?? 'SLIPS',
-            $data['verification_status'] ?? 'Verified',
             (int)$id,
         ]);
 

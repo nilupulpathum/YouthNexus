@@ -88,7 +88,6 @@ $isCompleted = ($transfer->status === 'Completed');
                     <span class="ft-dk">Account Number</span>
                     <span class="ft-dv">
                         <strong><?= htmlspecialchars($transfer->recipient_account_number ?? '—') ?></strong>
-                        <span class="ft-verified-tag">(<?= htmlspecialchars($transfer->recipient_verification_status ?? 'Verified') ?>)</span>
                     </span>
                 </div>
                 <div class="ft-detail-row">

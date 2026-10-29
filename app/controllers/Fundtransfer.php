@@ -69,7 +69,7 @@ class Fundtransfer extends Controller {
         $rawZonalAccounts = $model->getAllZonalBankAccounts();
         $zonalAccountsMap = [];
         foreach ($rawZonalAccounts as $za) {
-            if ($za->status === 'Active' && $za->verification_status === 'Verified') {
+            if ($za->status === 'Active') {
                 $cleanAcc = preg_replace('/[^\d]/', '', $za->account_number);
                 $masked = strlen($cleanAcc) >= 4 ? '****-' . substr($cleanAcc, -4) : '****-' . substr($za->account_number, -4);
                 $zonalAccountsMap[(int)$za->owner_id] = [
@@ -79,8 +79,6 @@ class Fundtransfer extends Controller {
                     'account_number'      => $za->account_number,
                     'masked_account'      => $masked,
                     'account_label'       => $za->account_label,
-                    'gateway_type'        => $za->gateway_type,
-                    'verification_status' => $za->verification_status,
                 ];
             }
         }
@@ -147,13 +145,11 @@ class Fundtransfer extends Controller {
                     'sender_branch'        => $transfer->source_branch_name ?? $transfer->branch_name ?? 'Colombo Fort (001)',
                     'sender_account'       => $transfer->source_account_number ?? $transfer->account_number ?? '8620-0012-3456-7890',
                     'sender_account_label' => $transfer->source_account_name ?? $transfer->bank_account_name ?? 'NYSC Colombo Operational Fund',
-                    'sender_gateway'       => $transfer->source_gateway_type ?? $transfer->gateway_type ?? 'RTGS',
                     // Recipient details
                     'recipient_bank'          => $transfer->recipient_bank_name ?? 'People\'s Bank',
                     'recipient_branch'        => $transfer->recipient_branch_name ?? 'Zonal Branch',
                     'recipient_account'       => $transfer->recipient_account_number ?? '—',
                     'recipient_account_label' => $transfer->recipient_account_name ?? 'Zonal Treasury Fund',
-                    'recipient_verification'  => $transfer->recipient_verification_status ?? 'Verified',
                     // Legacy flat fields
                     'bank'        => $transfer->recipient_bank_name ?? $transfer->bank_name ?? 'People\'s Bank',
                     'branch'      => $transfer->recipient_branch_name ?? $transfer->branch_name ?? 'Zonal Branch',
@@ -490,8 +486,6 @@ class Fundtransfer extends Controller {
                 'account_number'      => $acc->account_number,
                 'masked_account'      => $masked,
                 'account_label'       => $acc->account_label,
-                'gateway_type'        => $acc->gateway_type,
-                'verification_status' => $acc->verification_status,
                 'status'              => $acc->status,
                 'zone_name'           => $acc->zonal_name,
             ],
@@ -529,8 +523,6 @@ class Fundtransfer extends Controller {
         $branchName     = trim($_POST['branch_name'] ?? '');
         $accountNumber  = trim($_POST['account_number'] ?? '');
         $accountLabel   = trim($_POST['account_label'] ?? '');
-        $gatewayType    = trim($_POST['gateway_type'] ?? 'SLIPS');
-        $verification   = trim($_POST['verification_status'] ?? 'Verified');
 
         $errors = [];
         if (!$zoneId) $errors['zone_id'] = 'Target Zonal Office is required.';
@@ -557,8 +549,6 @@ class Fundtransfer extends Controller {
             'branch_name'         => $branchName,
             'account_number'      => $accountNumber,
             'account_label'       => $accountLabel,
-            'gateway_type'        => in_array($gatewayType, ['RTGS', 'SLIPS', 'API', 'Cheque']) ? $gatewayType : 'SLIPS',
-            'verification_status' => in_array($verification, ['Verified', 'Unverified']) ? $verification : 'Verified',
         ]);
 
         $_SESSION['flash_success'] = "Zonal receiving account for {$bankName} registered successfully.";
@@ -620,8 +610,6 @@ class Fundtransfer extends Controller {
         $branchName     = trim($_POST['branch_name'] ?? '');
         $accountNumber  = trim($_POST['account_number'] ?? '');
         $accountLabel   = trim($_POST['account_label'] ?? '');
-        $gatewayType    = trim($_POST['gateway_type'] ?? 'SLIPS');
-        $verification   = trim($_POST['verification_status'] ?? 'Verified');
 
         $errors = [];
         if (!$zoneId) $errors['zone_id'] = 'Target Zonal Office is required.';
@@ -647,8 +635,6 @@ class Fundtransfer extends Controller {
             'branch_name'         => $branchName,
             'account_number'      => $accountNumber,
             'account_label'       => $accountLabel,
-            'gateway_type'        => in_array($gatewayType, ['RTGS', 'SLIPS', 'API', 'Cheque']) ? $gatewayType : 'SLIPS',
-            'verification_status' => in_array($verification, ['Verified', 'Unverified']) ? $verification : 'Verified',
         ]);
 
         $_SESSION['flash_success'] = "Account details for {$bankName} updated successfully.";
