@@ -48,42 +48,68 @@ $isCompleted = ($transfer->status === 'Completed');
             <div class="ft-amount-band-datetime">&#128337; <?= date('Y-m-d - h:i A', strtotime($transfer->created_at)) ?></div>
         </div>
 
-        <div class="ft-details-grid">
+        <div class="ft-details-grid ft-details-grid-3">
+            <!-- 1. Source Paying Account -->
             <div class="ft-detail-info-card">
-                <h2>&#127974; Recipient &amp; Account</h2>
+                <h2>&#127974; Paying Account (HQ Source)</h2>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Source Organization</span>
+                    <span class="ft-dv">NYSC Central Headquarters</span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Paying Bank</span>
+                    <span class="ft-dv"><?= htmlspecialchars($transfer->source_bank_name ?? $transfer->bank_name ?? 'Bank of Ceylon') ?> (<?= htmlspecialchars($transfer->source_branch_name ?? $transfer->branch_name ?? 'Colombo Fort 001') ?>)</span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Account Number</span>
+                    <span class="ft-dv">
+                        <strong><?= htmlspecialchars($transfer->source_account_number ?? $transfer->account_number ?? '8620-0012-3456-7890') ?></strong>
+                        <span class="ft-verified-tag">(Verified Core Account)</span>
+                    </span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Account Title</span>
+                    <span class="ft-dv"><?= htmlspecialchars($transfer->source_account_name ?? $transfer->bank_account_name ?? 'NYSC Colombo Operational Fund') ?></span>
+                </div>
+            </div>
+
+            <!-- 2. Crediting Account -->
+            <div class="ft-detail-info-card">
+                <h2>&#127974; Crediting Account (Recipient)</h2>
                 <div class="ft-detail-row">
                     <span class="ft-dk">Target Zonal Office</span>
                     <span class="ft-dv"><?= htmlspecialchars($transfer->target_zone_name) ?><?= $hubDetail ? " ({$hubDetail})" : '' ?></span>
                 </div>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Bank</span>
-                    <span class="ft-dv"><?= htmlspecialchars($transfer->bank_name) ?></span>
-                </div>
-                <div class="ft-detail-row">
-                    <span class="ft-dk">Branch</span>
-                    <span class="ft-dv"><?= htmlspecialchars($transfer->branch_name) ?></span>
+                    <span class="ft-dk">Receiving Bank</span>
+                    <span class="ft-dv"><?= htmlspecialchars($transfer->recipient_bank_name ?? 'People\'s Bank') ?> (<?= htmlspecialchars($transfer->recipient_branch_name ?? 'Zonal Branch') ?>)</span>
                 </div>
                 <div class="ft-detail-row">
                     <span class="ft-dk">Account Number</span>
                     <span class="ft-dv">
-                        <?= htmlspecialchars($transfer->account_number) ?>
-                        <span class="ft-verified-tag">(Verified Core Account)</span>
+                        <strong><?= htmlspecialchars($transfer->recipient_account_number ?? '—') ?></strong>
+                        <span class="ft-verified-tag">(<?= htmlspecialchars($transfer->recipient_verification_status ?? 'Verified') ?>)</span>
                     </span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Beneficiary Title</span>
+                    <span class="ft-dv"><?= htmlspecialchars($transfer->recipient_account_name ?? 'Zonal Treasury Fund') ?></span>
                 </div>
             </div>
 
+            <!-- 3. Payment & Clearance -->
             <div class="ft-detail-info-card">
-                <h2>&#128196; Payment &amp; Authorization</h2>
+                <h2>&#128196; Payment &amp; Clearance</h2>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Reference / Cheque No.</span>
-                    <span class="ft-dv"><?= htmlspecialchars($transfer->reference_no) ?></span>
+                    <span class="ft-dk">Reference No.</span>
+                    <span class="ft-dv"><strong><?= htmlspecialchars($transfer->reference_no) ?></strong></span>
                 </div>
                 <div class="ft-detail-row">
                     <span class="ft-dk">Payment Method</span>
                     <span class="ft-dv"><?= ($transfer->disbursement_method === 'RTGS') ? 'BOC SLIPS / RTGS Direct' : 'Gov Cheque / SLIPS' ?></span>
                 </div>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Date of Transfer</span>
+                    <span class="ft-dk">Value Date</span>
                     <span class="ft-dv"><?= date('F j, Y', strtotime($transfer->transfer_date)) ?></span>
                 </div>
                 <div class="ft-detail-row">

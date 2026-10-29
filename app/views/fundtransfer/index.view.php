@@ -45,6 +45,10 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
     <!-- Top Action Bar -->
     <div class="ft-header-bar ft-action-row db-action-row">
         <div class="ft-header-actions">
+            <a href="<?= ROOT ?>/fundtransfer/accounts" class="ft-btn ft-btn-outline" id="btnManageBankAccounts" title="Configure receiving accounts for provincial zones">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="21" width="18" height="2" rx="1"/><polygon points="12 2 2 7 22 7"/><line x1="5" y1="10" x2="5" y2="18"/><line x1="10" y1="10" x2="10" y2="18"/><line x1="14" y1="10" x2="14" y2="18"/><line x1="19" y1="10" x2="19" y2="18"/></svg>
+                Manage Bank Accounts
+            </a>
             <a href="<?= ROOT ?>/<?= htmlspecialchars($transferRoute) ?>/exportledger?<?= http_build_query($filters) ?>" class="ft-btn ft-btn-outline db-secondary-action" id="btnDownloadLedger" title="Export Ledger to CSV">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Ledger
@@ -56,21 +60,22 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
     </div>
 
-    <!-- Stat Cards (4 Cards from fundTransfer.php) -->
+    <!-- Stat Cards (3 Cards) -->
     <div class="ft-cards-row">
-        <!-- 1. Fiscal Window -->
+        <!-- 1. Disbursed This Quarter -->
         <div class="ft-stat-card">
             <div class="ft-stat-head">
-                <span class="ft-stat-title"><?= htmlspecialchars(strtoupper($qLabel)) ?> FISCAL WINDOW</span>
+                <span class="ft-stat-title">Disbursed This Quarter</span>
+                <span class="ft-badge ft-badge-blue"><?= htmlspecialchars($qLabel) ?></span>
             </div>
             <div class="ft-stat-big"><?= $fmtLKR($stats['quarter_total'] ?? 0) ?></div>
             <div class="ft-stat-sub">Total across <?= count($zones) ?> <?= $isZonalDemo ? 'Divisions' : 'Zonal Offices' ?></div>
         </div>
 
-        <!-- 2. In-flight Transfers -->
+        <!-- 2. Awaiting Settlement -->
         <div class="ft-stat-card">
             <div class="ft-stat-head">
-                <span class="ft-stat-title">IN-FLIGHT CLEARANCE</span>
+                <span class="ft-stat-title">Awaiting Settlement</span>
                 <?php if (($stats['in_flight_count'] ?? 0) > 0): ?>
                     <span class="ft-badge ft-badge-yellow">Needs Action</span>
                 <?php endif; ?>
@@ -93,17 +98,6 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
             <div class="ft-progress-wrap" title="<?= $utilizedPct ?>% Utilized">
                 <div class="ft-progress-bar" style="width: <?= min(100, $utilizedPct) ?>%;"></div>
             </div>
-        </div>
-
-        <!-- 4. Core Bank Account Gateway -->
-        <div class="ft-stat-card ft-stat-card-bank">
-            <div class="ft-stat-head">
-                <span class="ft-stat-title">CORE SETTLEMENT ACCOUNT</span>
-                <span class="ft-badge ft-badge-green">Active</span>
-            </div>
-            <div class="ft-stat-big"><?= htmlspecialchars($coreAccount->bank_name ?? 'Bank of Ceylon') ?></div>
-            <div class="ft-stat-sub"><?= htmlspecialchars($coreAccount->branch_name ?? 'Colombo Fort Direct API Gateway (001)') ?></div>
-            <div class="ft-stat-detail"><?= htmlspecialchars($coreAccount->gateway_type ?? 'RTGS') ?> / SLIPS Connected</div>
         </div>
     </div>
 
@@ -243,9 +237,19 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                                 data-datetime="<?= date('Y-m-d - h:i A', strtotime($t->created_at)) ?>"
                                 data-date="<?= date('F j, Y', strtotime($t->transfer_date)) ?>"
                                 data-zone="<?= htmlspecialchars(($t->target_zone_name ?? '') . ($hubDetail ? " ({$hubDetail})" : ''), ENT_QUOTES) ?>"
-                                data-bank="<?= htmlspecialchars($t->bank_name ?? 'Bank of Ceylon', ENT_QUOTES) ?>"
-                                data-branch="<?= htmlspecialchars($t->branch_name ?? 'Colombo Fort', ENT_QUOTES) ?>"
-                                data-account="<?= htmlspecialchars($t->account_number ?? '', ENT_QUOTES) ?>"
+                                data-sender-bank="<?= htmlspecialchars($t->source_bank_name ?? $t->bank_name ?? 'Bank of Ceylon', ENT_QUOTES) ?>"
+                                data-sender-branch="<?= htmlspecialchars($t->source_branch_name ?? $t->branch_name ?? 'Colombo Fort (001)', ENT_QUOTES) ?>"
+                                data-sender-account="<?= htmlspecialchars($t->source_account_number ?? $t->account_number ?? '8620-0012-3456-7890', ENT_QUOTES) ?>"
+                                data-sender-label="<?= htmlspecialchars($t->source_account_name ?? $t->bank_account_name ?? 'NYSC Colombo Operational Fund', ENT_QUOTES) ?>"
+                                data-sender-gateway="<?= htmlspecialchars($t->source_gateway_type ?? $t->gateway_type ?? 'RTGS', ENT_QUOTES) ?>"
+                                data-recipient-bank="<?= htmlspecialchars($t->recipient_bank_name ?? 'People\'s Bank', ENT_QUOTES) ?>"
+                                data-recipient-branch="<?= htmlspecialchars($t->recipient_branch_name ?? 'Zonal Branch', ENT_QUOTES) ?>"
+                                data-recipient-account="<?= htmlspecialchars($t->recipient_account_number ?? '—', ENT_QUOTES) ?>"
+                                data-recipient-label="<?= htmlspecialchars($t->recipient_account_name ?? 'Zonal Treasury Fund', ENT_QUOTES) ?>"
+                                data-recipient-status="<?= htmlspecialchars($t->recipient_verification_status ?? 'Verified', ENT_QUOTES) ?>"
+                                data-bank="<?= htmlspecialchars($t->recipient_bank_name ?? $t->bank_name ?? 'Bank of Ceylon', ENT_QUOTES) ?>"
+                                data-branch="<?= htmlspecialchars($t->recipient_branch_name ?? $t->branch_name ?? 'Colombo Fort', ENT_QUOTES) ?>"
+                                data-account="<?= htmlspecialchars($t->recipient_account_number ?? $t->account_number ?? '', ENT_QUOTES) ?>"
                                 data-method="<?= htmlspecialchars(($t->disbursement_method === 'RTGS') ? 'BOC SLIPS / RTGS Direct' : 'Gov Cheque / SLIPS', ENT_QUOTES) ?>"
                                 data-authorized="<?= htmlspecialchars($t->authorized_by_name ? $t->authorized_by_name . ' (' . ($t->authorizer_role ?? 'NYSC Admin') . ')' : 'NYSC Administrator', ENT_QUOTES) ?>"
                                 data-purpose="<?= htmlspecialchars($t->purpose_description, ENT_QUOTES) ?>"
@@ -310,19 +314,75 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 </select>
             </div>
 
-            <!-- Core Bank Account Card -->
-            <div class="ft-bank-box">
-                <div class="ft-bank-info">
-                    <div class="ft-bank-icon" aria-hidden="true"></div>
-                    <div>
-                        <h2><?= htmlspecialchars($coreAccount->bank_name ?? 'Bank of Ceylon') ?>
-                            <span class="ft-bank-sub">(<?= htmlspecialchars($coreAccount->branch_name ?? 'Colombo Fort 001') ?>)</span>
-                        </h2>
-                        <p>Account: <?= htmlspecialchars($coreAccount->account_number ?? '8620-0012-3456-7890') ?> &nbsp;&bull;&nbsp; <?= htmlspecialchars($coreAccount->account_label ?? 'NYSC Colombo Operational Fund') ?></p>
+            <!-- Paired Settlement Accounts (Paying from -> Crediting to) -->
+            <div class="ft-paired-accounts">
+                <!-- 1. Sender: Paying From (NYSC HQ Core Account) -->
+                <div class="ft-bank-box ft-bank-box-sender">
+                    <div class="ft-bank-label">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 8 12 12 16"/><line x1="16" y1="12" x2="8" y2="12"/></svg>
+                        Paying From (NYSC HQ)
                     </div>
+                    <div class="ft-bank-content-row">
+                        <div class="ft-bank-info">
+                            <div class="ft-bank-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="21" width="18" height="2" rx="1"/><polygon points="12 2 2 7 22 7"/><line x1="5" y1="10" x2="5" y2="18"/><line x1="10" y1="10" x2="10" y2="18"/><line x1="14" y1="10" x2="14" y2="18"/><line x1="19" y1="10" x2="19" y2="18"/></svg>
+                            </div>
+                            <div>
+                                <h2><?= htmlspecialchars($coreAccount->bank_name ?? 'Bank of Ceylon') ?>
+                                    <span class="ft-bank-sub">(<?= htmlspecialchars($coreAccount->branch_name ?? 'Colombo Fort 001') ?>)</span>
+                                </h2>
+                                <p>Account: <?= htmlspecialchars($coreAccount->account_number ?? '8620-0012-3456-7890') ?> &nbsp;&bull;&nbsp; <?= htmlspecialchars($coreAccount->account_label ?? 'NYSC Colombo Operational Fund') ?></p>
+                            </div>
+                        </div>
+                        <span class="ft-verified-badge"><?= $isZonalDemo ? 'Demo Zonal Account' : 'Verified Core Account' ?></span>
+                    </div>
+                    <input type="hidden" name="bank_account_id" value="<?= (int)($coreAccount->bank_account_id ?? 1) ?>">
                 </div>
-                <input type="hidden" name="bank_account_id" value="<?= (int)($coreAccount->bank_account_id ?? 1) ?>">
-                <span class="ft-verified-badge"><?= $isZonalDemo ? 'Demo Zonal Account' : 'Verified Core Account' ?></span>
+
+                <!-- 2. Recipient: Crediting To (Target Zonal Office Account) -->
+                <div class="ft-bank-box ft-bank-box-recipient ft-state-empty" id="recipientAccountBox">
+                    <div class="ft-bank-label">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        Crediting To (Zonal Recipient)
+                    </div>
+
+                    <!-- State A: No zone selected yet -->
+                    <div class="ft-bank-empty" id="recipientEmptyState">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>Select a target zonal office above to load registered recipient account.</span>
+                    </div>
+
+                    <!-- State B: Verified Account loaded -->
+                    <div class="ft-bank-content-row" id="recipientLoadedState" style="display: none;">
+                        <div class="ft-bank-info">
+                            <div class="ft-bank-icon ft-bank-icon-recipient" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div>
+                                <h2 id="recipientBankName">— <span class="ft-bank-sub" id="recipientBranchName">—</span></h2>
+                                <p>Account: <strong id="recipientAccountMasked" class="ft-account-code">—</strong> &nbsp;&bull;&nbsp; <span id="recipientAccountLabel">—</span></p>
+                            </div>
+                        </div>
+                        <span class="ft-verified-badge" id="recipientBadge">Verified Zonal Account</span>
+                    </div>
+
+                    <!-- State C: Amber Warning when zone has no verified account -->
+                    <div class="ft-bank-warning" id="recipientWarningState" style="display: none;">
+                        <div class="ft-warning-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        <div class="ft-warning-text">
+                            <strong>No verified bank account registered for this zone.</strong>
+                            <p>An official commercial receiving account must be registered before tranches can be dispatched. You cannot enter an account number inline.</p>
+                            <a href="<?= ROOT ?>/fundtransfer/accounts" class="ft-warning-link" target="_blank">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Register Zonal Bank Account in Management &rarr;
+                            </a>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="recipient_bank_account_id" id="alloc_recipient_bank_account_id" value="">
+                </div>
             </div>
 
             <!-- Amount + Date Row -->
@@ -411,45 +471,69 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
             <div class="ft-amount-band-datetime" id="dtModalDatetime">2026-10-28 - 10:42 AM</div>
         </div>
 
-        <!-- Two Info Cards Grid -->
-        <div class="ft-details-grid">
-            <!-- Recipient & Account -->
+        <!-- Three Info Cards Grid: Paying Account, Crediting Account, Payment & Clearance -->
+        <div class="ft-details-grid ft-details-grid-3">
+            <!-- 1. Paying Account (Source) -->
             <div class="ft-detail-info-card">
-                <h2>Recipient &amp; Account</h2>
+                <h2>Paying Account (HQ Source)</h2>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Source Organization</span>
+                    <span class="ft-dv">NYSC Central Headquarters</span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Bank &amp; Branch</span>
+                    <span class="ft-dv" id="dtModalSenderBank">Bank of Ceylon (Colombo Fort 001)</span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Account Number</span>
+                    <span class="ft-dv">
+                        <strong id="dtModalSenderAccount" style="letter-spacing: 0.5px;">8620-0012-3456-7890</strong>
+                        <span class="ft-verified-tag" id="dtModalSenderBadge">(Verified Core Account)</span>
+                    </span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Account Title</span>
+                    <span class="ft-dv" id="dtModalSenderLabel">NYSC Colombo Operational Fund</span>
+                </div>
+            </div>
+
+            <!-- 2. Crediting Account (Recipient) -->
+            <div class="ft-detail-info-card">
+                <h2>Crediting Account (Recipient)</h2>
                 <div class="ft-detail-row">
                     <span class="ft-dk"><?= $isZonalDemo ? 'Target Division' : 'Target Zonal Office' ?></span>
                     <span class="ft-dv" id="dtModalZone">Colombo Zone</span>
                 </div>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Bank</span>
-                    <span class="ft-dv" id="dtModalBank">Bank of Ceylon</span>
-                </div>
-                <div class="ft-detail-row">
-                    <span class="ft-dk">Branch</span>
-                    <span class="ft-dv" id="dtModalBranch">Colombo Fort Branch (001)</span>
+                    <span class="ft-dk">Receiving Bank</span>
+                    <span class="ft-dv" id="dtModalRecipientBank">People's Bank</span>
                 </div>
                 <div class="ft-detail-row">
                     <span class="ft-dk">Account Number</span>
-                    <span class="ft-dv" id="dtModalAccount">
-                        8620-0012-3456-7890
-                        <span class="ft-verified-tag">(<?= $isZonalDemo ? 'Demo Zonal Account' : 'Verified Core Account' ?>)</span>
+                    <span class="ft-dv">
+                        <strong id="dtModalRecipientAccount" style="letter-spacing: 0.5px;">—</strong>
+                        <span class="ft-verified-tag" id="dtModalRecipientBadge">(Verified Zonal Account)</span>
                     </span>
+                </div>
+                <div class="ft-detail-row">
+                    <span class="ft-dk">Beneficiary Title</span>
+                    <span class="ft-dv" id="dtModalRecipientLabel">Zonal Treasury Fund</span>
                 </div>
             </div>
 
-            <!-- Payment & Authorization -->
+            <!-- 3. Payment & Central Authorization -->
             <div class="ft-detail-info-card">
-                <h2>Payment &amp; Authorization</h2>
+                <h2>Payment &amp; Clearance</h2>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Reference / Cheque No.</span>
+                    <span class="ft-dk">Reference No.</span>
                     <span class="ft-dv" id="dtModalRef2">TRF-2026-0048</span>
                 </div>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Payment Method</span>
+                    <span class="ft-dk">Disbursement Method</span>
                     <span class="ft-dv" id="dtModalMethod">BOC SLIPS / RTGS Direct</span>
                 </div>
                 <div class="ft-detail-row">
-                    <span class="ft-dk">Date of Transfer</span>
+                    <span class="ft-dk">Value Date</span>
                     <span class="ft-dv" id="dtModalDate">October 28, 2026</span>
                 </div>
                 <div class="ft-detail-row">
@@ -484,6 +568,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         route: <?= json_encode($transferRoute) ?>,
         listRoute: <?= json_encode($listRoute) ?>,
         csrfToken: <?= json_encode($csrf_token) ?>,
+        zonalAccounts: <?= json_encode($zonalAccountsMap ?? []) ?>,
     };
 
     // Filter panel toggle (attendance-style)
