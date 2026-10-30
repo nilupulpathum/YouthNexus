@@ -1247,3 +1247,16 @@ table.am-table {
     .am-page-container { width: 100%; max-width: none; margin: 0; }
     .am-table-wrapper { border: none; box-shadow: none; }
 }
+
+/* ── Empty Roster Filter Result ── */
+.am-roster-empty-row {
+    display: none;
+}
+
+.am-roster-empty-cell {
+    text-align: center;
+    padding: 36px 16px;
+    color: #64748b;
+    font-size: 14px;
+}
+

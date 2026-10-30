@@ -283,8 +283,8 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <?php endif; ?>
                 </tr>
                 <?php endforeach; ?>
-                <tr id="amRosterEmptyRow" style="display:none;">
-                    <td colspan="<?= ($isNYSCAdmin && $eventLevel === 'National') ? ($canEditRoster ? 9 : 8) : ($canEditRoster ? 8 : 7) ?>" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;">
+                <tr id="amRosterEmptyRow" class="am-roster-empty-row">
+                    <td colspan="<?= ($isNYSCAdmin && $eventLevel === 'National') ? ($canEditRoster ? 9 : 8) : ($canEditRoster ? 8 : 7) ?>" class="am-roster-empty-cell">
                         No members match the selected filter criteria.
                     </td>
                 </tr>

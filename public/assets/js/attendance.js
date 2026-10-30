@@ -507,7 +507,7 @@
 
         // Show/hide empty row message
         if (rosterEmptyRow) {
-            rosterEmptyRow.style.display = (allRows.length > 0 && visibleCount === 0) ? '' : 'none';
+            rosterEmptyRow.style.display = (allRows.length > 0 && visibleCount === 0) ? 'table-row' : 'none';
         }
 
         // Update Top Summary Stat Cards
