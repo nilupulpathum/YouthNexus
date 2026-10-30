@@ -351,7 +351,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                     </div>
 
                     <!-- State B: Verified Account loaded -->
-                    <div class="ft-bank-content-row" id="recipientLoadedState" style="display: none;">
+                    <div class="ft-bank-content-row" id="recipientLoadedState">
                         <div class="ft-bank-info">
                             <div class="ft-bank-icon ft-bank-icon-recipient" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -365,7 +365,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                     </div>
 
                     <!-- State C: Amber Warning when zone has no verified account -->
-                    <div class="ft-bank-warning" id="recipientWarningState" style="display: none;">
+                    <div class="ft-bank-warning" id="recipientWarningState">
                         <div class="ft-warning-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
@@ -483,7 +483,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 <div class="ft-detail-row">
                     <span class="ft-dk">Account Number</span>
                     <span class="ft-dv">
-                        <strong id="dtModalSenderAccount" style="letter-spacing: 0.5px;">8620-0012-3456-7890</strong>
+                        <strong id="dtModalSenderAccount">8620-0012-3456-7890</strong>
                         <span class="ft-verified-tag" id="dtModalSenderBadge">(Verified Core Account)</span>
                     </span>
                 </div>
@@ -507,7 +507,7 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
                 <div class="ft-detail-row">
                     <span class="ft-dk">Account Number</span>
                     <span class="ft-dv">
-                        <strong id="dtModalRecipientAccount" style="letter-spacing: 0.5px;">—</strong>
+                        <strong id="dtModalRecipientAccount">—</strong>
                         <span class="ft-verified-tag" id="dtModalRecipientBadge">(Verified Zonal Account)</span>
                     </span>
                 </div>

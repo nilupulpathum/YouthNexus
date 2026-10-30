@@ -1479,3 +1479,47 @@
     align-items: flex-start;
     gap: 10px;
 }
+
+/* ── UI Contract / View Linting Clean Classes ── */
+.ft-back-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ft-error-list {
+    margin: 4px 0 0 16px;
+    padding: 0;
+}
+
+.ft-text-right {
+    text-align: right;
+}
+
+.ft-bank-title {
+    color: #0f172a;
+}
+
+.ft-actions-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ft-inline-form {
+    display: inline-block;
+    margin-left: 6px;
+}
+
+.ft-popup-account {
+    max-width: 580px;
+}
+
+#recipientLoadedState,
+#recipientWarningState {
+    display: none;
+}
+
+#dtModalSenderAccount,
+#dtModalRecipientAccount {
+    letter-spacing: 0.5px;
+}

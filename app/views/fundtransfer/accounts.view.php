@@ -10,6 +10,7 @@ $currentRoute            = 'fundtransfer';
 $transferRoute           = 'fundtransfer';
 $unreadNotificationCount = 0;
 $pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20261029'];
+$pageScripts             = [];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 
@@ -27,8 +28,8 @@ $maskAccount = function ($acc) {
 <div class="fund-transfer-module">
 
     <!-- Top Action Bar -->
-    <div class="ft-header-bar ft-action-row db-action-row" style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
+    <div class="ft-header-bar ft-action-row db-action-row">
+        <div class="ft-back-nav">
             <a href="<?= ROOT ?>/fundtransfer" class="ft-btn ft-btn-outline db-secondary-action" id="btnBackToLedger">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Back to Fund Transfer Ledger
@@ -62,7 +63,7 @@ $maskAccount = function ($acc) {
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div>
                 <strong>Please correct the following errors:</strong>
-                <ul style="margin: 4px 0 0 16px; padding: 0;">
+                <ul class="ft-error-list">
                     <?php foreach ($flashErrors as $e): ?>
                         <li><?= htmlspecialchars($e) ?></li>
                     <?php endforeach; ?>
@@ -92,7 +93,7 @@ $maskAccount = function ($acc) {
                     <th>Account Number</th>
                     <th>Beneficiary Title</th>
                     <th>Status</th>
-                    <th style="text-align: right;">Actions</th>
+                    <th class="ft-text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,7 +116,7 @@ $maskAccount = function ($acc) {
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <strong style="color: #0f172a;"><?= htmlspecialchars($acc->bank_name) ?></strong>
+                                <strong class="ft-bank-title"><?= htmlspecialchars($acc->bank_name) ?></strong>
                                 <div class="ft-val-sub"><?= htmlspecialchars($acc->branch_name) ?></div>
                             </td>
                             <td>
@@ -132,7 +133,7 @@ $maskAccount = function ($acc) {
                                     <span class="ft-badge ft-badge-red">Inactive</span>
                                 <?php endif; ?>
                             </td>
-                            <td style="text-align: right; white-space: nowrap;">
+                            <td class="ft-actions-cell">
                                 <button type="button" class="ft-action-icon-btn btnEditAccount"
                                     title="Edit Account Details"
                                     data-id="<?= (int)$acc->bank_account_id ?>"
@@ -145,7 +146,7 @@ $maskAccount = function ($acc) {
                                     Edit
                                 </button>
                                 
-                                <form method="POST" action="<?= ROOT ?>/fundtransfer/toggleaccountstatus" style="display: inline-block; margin-left: 6px;" onsubmit="return confirm('<?= $acc->status === 'Active' ? 'Deactivate this bank account? Existing transfer history will remain completely intact.' : 'Reactivate this bank account for future transfers?' ?>');">
+                                <form method="POST" action="<?= ROOT ?>/fundtransfer/toggleaccountstatus" class="ft-inline-form" onsubmit="return confirm('<?= $acc->status === 'Active' ? 'Deactivate this bank account? Existing transfer history will remain completely intact.' : 'Reactivate this bank account for future transfers?' ?>');">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
                                     <input type="hidden" name="bank_account_id" value="<?= (int)$acc->bank_account_id ?>">
                                     <button type="submit" class="ft-action-icon-btn <?= $acc->status === 'Active' ? 'ft-btn-deactivate' : 'ft-btn-activate' ?>" title="<?= $acc->status === 'Active' ? 'Deactivate account' : 'Reactivate account' ?>">
@@ -171,7 +172,7 @@ $maskAccount = function ($acc) {
      MODAL: Register / Edit Zonal Bank Account
      ========================================================================= -->
 <div class="ft-overlay" id="accountModal" hidden aria-hidden="true" role="dialog" aria-labelledby="accModalTitle">
-    <div class="ft-popup" id="accountPopup" style="max-width: 580px;">
+    <div class="ft-popup ft-popup-account" id="accountPopup">
         <div class="ft-top-strip"></div>
 
         <div class="ft-popup-header">
