@@ -37,18 +37,114 @@
     }
 
     // ── Modal 1: New Fund Allocation ──────────────────────────
-    const allocModal      = $('fundAllocationModal');
-    const btnOpenAlloc    = $('btnOpenCreateModal');
-    const btnCloseAlloc   = $('btnCloseAllocModal');
-    const btnCancelAlloc  = $('btnCancelAllocModal');
-    const allocForm       = $('fundAllocationForm');
-    const allocErrorAlert = $('allocErrorAlert');
-    const allocAmountInp  = $('alloc_amount');
-    const allocWordsDiv   = $('alloc_amount_words');
-    const methodInput     = $('selectedMethodInput');
-    const btnMethodRTGS   = $('btnMethodRTGS');
-    const btnMethodCheque = $('btnMethodCheque');
-    const allocRefInput   = $('alloc_reference');
+    const allocModal             = $('fundAllocationModal');
+    const btnOpenAlloc           = $('btnOpenCreateModal');
+    const btnCloseAlloc          = $('btnCloseAllocModal');
+    const btnCancelAlloc         = $('btnCancelAllocModal');
+    const allocForm              = $('fundAllocationForm');
+    const allocErrorAlert        = $('allocErrorAlert');
+    const allocAmountInp         = $('alloc_amount');
+    const allocWordsDiv          = $('alloc_amount_words');
+    const methodInput            = $('selectedMethodInput');
+    const btnMethodRTGS          = $('btnMethodRTGS');
+    const btnMethodCheque        = $('btnMethodCheque');
+    const allocRefInput          = $('alloc_reference');
+    const allocZoneSelect        = $('alloc_zone_id');
+    const recipientAccountBox    = $('recipientAccountBox');
+    const recipientEmptyState    = $('recipientEmptyState');
+    const recipientLoadedState   = $('recipientLoadedState');
+    const recipientWarningState  = $('recipientWarningState');
+    const recipientBankName      = $('recipientBankName');
+    const recipientBranchName    = $('recipientBranchName');
+    const recipientAccountMasked = $('recipientAccountMasked');
+    const recipientAccountLabel  = $('recipientAccountLabel');
+    const recipientIdInput       = $('alloc_recipient_bank_account_id');
+    const btnSubmitAlloc         = $('btnSubmitAlloc');
+
+    // Dynamic Recipient Bank Account Card updates
+    function updateRecipientCard(zoneId) {
+        if (!recipientAccountBox) return;
+
+        if (!zoneId) {
+            if (recipientEmptyState) recipientEmptyState.style.display = 'flex';
+            if (recipientLoadedState) recipientLoadedState.style.display = 'none';
+            if (recipientWarningState) recipientWarningState.style.display = 'none';
+            recipientAccountBox.className = 'ft-bank-box ft-bank-box-recipient ft-state-empty';
+            if (recipientIdInput) recipientIdInput.value = '';
+            if (btnSubmitAlloc) {
+                btnSubmitAlloc.disabled = true;
+                btnSubmitAlloc.title = 'Please select a target zone with a verified bank account.';
+            }
+            return;
+        }
+
+        const applyVerifiedAccount = acc => {
+            if (recipientEmptyState) recipientEmptyState.style.display = 'none';
+            if (recipientWarningState) recipientWarningState.style.display = 'none';
+            if (recipientLoadedState) recipientLoadedState.style.display = 'flex';
+            recipientAccountBox.className = 'ft-bank-box ft-bank-box-recipient ft-state-verified';
+
+            if (recipientBankName) {
+                recipientBankName.innerHTML = (acc.bank_name || 'Bank') + ' <span class="ft-bank-sub" id="recipientBranchName">(' + (acc.branch_name || 'Branch') + ')</span>';
+            }
+            if (recipientAccountMasked) {
+                recipientAccountMasked.textContent = acc.masked_account || (acc.account_number ? ('****-' + acc.account_number.slice(-4)) : '—');
+            }
+            if (recipientAccountLabel) {
+                recipientAccountLabel.textContent = acc.account_label || acc.account_name || 'Zonal Treasury Fund';
+            }
+            if (recipientIdInput) {
+                recipientIdInput.value = acc.bank_account_id;
+            }
+            if (btnSubmitAlloc) {
+                btnSubmitAlloc.disabled = false;
+                btnSubmitAlloc.title = '';
+            }
+        };
+
+        const applyWarningNoAccount = () => {
+            if (recipientEmptyState) recipientEmptyState.style.display = 'none';
+            if (recipientLoadedState) recipientLoadedState.style.display = 'none';
+            if (recipientWarningState) recipientWarningState.style.display = 'flex';
+            recipientAccountBox.className = 'ft-bank-box ft-bank-box-recipient ft-state-warning';
+
+            if (recipientIdInput) recipientIdInput.value = '';
+            if (btnSubmitAlloc) {
+                btnSubmitAlloc.disabled = true;
+                btnSubmitAlloc.title = 'Cannot transfer: No verified bank account registered for selected zone.';
+            }
+        };
+
+        // 1. Look up in preloaded config.zonalAccounts
+        const acc = (config.zonalAccounts && config.zonalAccounts[zoneId]) ? config.zonalAccounts[zoneId] : null;
+
+        if (acc) {
+            applyVerifiedAccount(acc);
+            return;
+        }
+
+        // 2. Fallback check via AJAX endpoint if not found in preloaded map
+        fetch(`${config.rootUrl}/${route}/getzonalaccount?zone_id=${encodeURIComponent(zoneId)}`, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.account) {
+                applyVerifiedAccount(data.account);
+            } else {
+                applyWarningNoAccount();
+            }
+        })
+        .catch(() => {
+            applyWarningNoAccount();
+        });
+    }
+
+    if (allocZoneSelect) {
+        allocZoneSelect.addEventListener('change', function () {
+            updateRecipientCard(this.value);
+        });
+    }
 
     function openAllocModal() {
         if (!allocModal) return;
@@ -56,6 +152,7 @@
         allocModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         if (allocErrorAlert) allocErrorAlert.hidden = true;
+        if (allocZoneSelect) updateRecipientCard(allocZoneSelect.value);
         setTimeout(() => {
             const first = allocForm.querySelector('select, input');
             if (first) first.focus();
@@ -132,6 +229,15 @@
         allocForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            // Strict client-side guard: recipient account must be verified and set
+            if (!recipientIdInput || !recipientIdInput.value) {
+                if (allocErrorAlert) {
+                    allocErrorAlert.textContent = 'Cannot authorize transfer: Selected zone does not have a verified receiving bank account registered. Use Manage Bank Accounts to register one first.';
+                    allocErrorAlert.hidden = false;
+                }
+                return;
+            }
+
             const btnSubmit = $('btnSubmitAlloc');
             if (btnSubmit) {
                 btnSubmit.disabled = true;
@@ -198,9 +304,15 @@
         setT('dtModalAmount', 'LKR ' + data.amount);
         setT('dtModalDatetime', data.datetime || '—');
         setT('dtModalZone', data.zone);
-        setT('dtModalBank', data.bank);
-        setT('dtModalBranch', data.branch);
-        setT('dtModalAccount', data.account);
+        setT('dtModalSenderBank', data.senderBank ? (data.senderBank + (data.senderBranch ? ' (' + data.senderBranch + ')' : '')) : 'Bank of Ceylon (Colombo Fort 001)');
+        setT('dtModalSenderAccount', data.senderAccount || '8620-0012-3456-7890');
+        setT('dtModalSenderLabel', data.senderLabel || 'NYSC Colombo Operational Fund');
+        setT('dtModalRecipientBank', data.recipientBank ? (data.recipientBank + (data.recipientBranch ? ' (' + data.recipientBranch + ')' : '')) : (data.bank ? (data.bank + (data.branch ? ' (' + data.branch + ')' : '')) : '—'));
+        setT('dtModalRecipientAccount', data.recipientAccount || data.account || '—');
+        setT('dtModalRecipientLabel', data.recipientLabel || 'Zonal Treasury Fund');
+        setT('dtModalBank', data.recipientBank || data.bank);
+        setT('dtModalBranch', data.recipientBranch || data.branch);
+        setT('dtModalAccount', data.recipientAccount || data.account);
         setT('dtModalMethod', data.method);
         setT('dtModalDate', data.date);
         setT('dtModalAuthorized', data.authorized);
@@ -248,19 +360,27 @@
     document.querySelectorAll('.ft-btn-view-details').forEach(btn => {
         btn.addEventListener('click', function () {
             openDetailsModal({
-                id:         this.dataset.id,
-                ref:        this.dataset.ref,
-                status:     this.dataset.status,
-                amount:     this.dataset.amount,
-                datetime:   this.dataset.datetime,
-                date:       this.dataset.date,
-                zone:       this.dataset.zone,
-                bank:       this.dataset.bank,
-                branch:     this.dataset.branch,
-                account:    this.dataset.account,
-                method:     this.dataset.method,
-                authorized: this.dataset.authorized,
-                purpose:    this.dataset.purpose,
+                id:               this.dataset.id,
+                ref:              this.dataset.ref,
+                status:           this.dataset.status,
+                amount:           this.dataset.amount,
+                datetime:         this.dataset.datetime,
+                date:             this.dataset.date,
+                zone:             this.dataset.zone,
+                senderBank:       this.dataset.senderBank,
+                senderBranch:     this.dataset.senderBranch,
+                senderAccount:    this.dataset.senderAccount,
+                senderLabel:      this.dataset.senderLabel,
+                recipientBank:    this.dataset.recipientBank,
+                recipientBranch:  this.dataset.recipientBranch,
+                recipientAccount: this.dataset.recipientAccount,
+                recipientLabel:   this.dataset.recipientLabel,
+                bank:             this.dataset.bank,
+                branch:           this.dataset.branch,
+                account:          this.dataset.account,
+                method:           this.dataset.method,
+                authorized:       this.dataset.authorized,
+                purpose:          this.dataset.purpose,
             });
         });
     });

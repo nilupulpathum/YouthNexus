@@ -62,21 +62,22 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
         </div>
     </div>
 
-    <!-- Stat Cards (4 Cards from fundTransfer.php) -->
+    <!-- Stat Cards (3 Cards) -->
     <div class="ft-cards-row">
-        <!-- 1. Fiscal Window -->
+        <!-- 1. Disbursed This Quarter -->
         <div class="ft-stat-card">
             <div class="ft-stat-head">
-                <span class="ft-stat-title"><?= htmlspecialchars(strtoupper($qLabel)) ?> FISCAL WINDOW</span>
+                <span class="ft-stat-title">Disbursed This Quarter</span>
+                <span class="ft-badge ft-badge-blue"><?= htmlspecialchars($qLabel) ?></span>
             </div>
             <div class="ft-stat-big"><?= $fmtLKR($stats['quarter_total'] ?? 0) ?></div>
             <div class="ft-stat-sub">Total across <?= count($zones) ?> <?= $isZonalMode ? 'Divisions' : 'Zonal Offices' ?></div>
         </div>
 
-        <!-- 2. In-flight Transfers -->
+        <!-- 2. Awaiting Settlement -->
         <div class="ft-stat-card">
             <div class="ft-stat-head">
-                <span class="ft-stat-title">IN-FLIGHT CLEARANCE</span>
+                <span class="ft-stat-title">Awaiting Settlement</span>
                 <?php if (($stats['in_flight_count'] ?? 0) > 0): ?>
                     <span class="ft-badge ft-badge-yellow">Needs Action</span>
                 <?php endif; ?>
@@ -99,17 +100,6 @@ unset($_SESSION['form_old'], $_SESSION['form_errors']);
             <div class="ft-progress-wrap" title="<?= $utilizedPct ?>% Utilized">
                 <div class="ft-progress-bar" style="width: <?= min(100, $utilizedPct) ?>%;"></div>
             </div>
-        </div>
-
-        <!-- 4. Core Bank Account Gateway -->
-        <div class="ft-stat-card ft-stat-card-bank">
-            <div class="ft-stat-head">
-                <span class="ft-stat-title">CORE SETTLEMENT ACCOUNT</span>
-                <span class="ft-badge ft-badge-green">Active</span>
-            </div>
-            <div class="ft-stat-big"><?= htmlspecialchars($coreAccount->bank_name ?? 'Bank of Ceylon') ?></div>
-            <div class="ft-stat-sub"><?= htmlspecialchars($coreAccount->branch_name ?? 'Colombo Fort Direct API Gateway (001)') ?></div>
-            <div class="ft-stat-detail"><?= htmlspecialchars($coreAccount->gateway_type ?? 'RTGS') ?> / SLIPS Connected</div>
         </div>
     </div>
 

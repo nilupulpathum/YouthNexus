@@ -23,6 +23,8 @@ class FundTransferModel extends Model {
                     fa.to_level,
                     fa.to_id,
                     fa.to_id AS target_zonal_id,
+                    fa.source_bank_account_id,
+                    fa.recipient_bank_account_id,
                     fa.amount,
                     fa.transfer_date,
                     fa.reference_no,
@@ -36,17 +38,28 @@ class FundTransferModel extends Model {
                     z.zonal_name           AS target_zone_name,
                     z.province             AS target_province,
                     z.hub_name             AS target_hub_name,
+                    ba.bank_name           AS source_bank_name,
+                    ba.branch_name         AS source_branch_name,
+                    ba.account_number      AS source_account_number,
+                    ba.account_label       AS source_account_name,
                     ba.bank_name,
                     ba.branch_name,
                     ba.account_number,
                     ba.account_label       AS bank_account_name,
-                    ba.gateway_type,
-                    ba.verification_status,
+                    rba.bank_name          AS recipient_bank_name,
+                    rba.branch_name        AS recipient_branch_name,
+                    rba.account_number     AS recipient_account_number,
+                    rba.account_label      AS recipient_account_name,
                     CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
                     u.role                 AS authorizer_role
                 FROM FundAllocation fa
                 LEFT JOIN Zone z        ON (fa.to_level = 'Zonal' AND fa.to_id = z.zonal_id)
                 LEFT JOIN BankAccount ba ON fa.source_bank_account_id = ba.bank_account_id
+                LEFT JOIN BankAccount rba ON (
+                    (fa.recipient_bank_account_id IS NOT NULL AND fa.recipient_bank_account_id = rba.bank_account_id)
+                    OR
+                    (fa.recipient_bank_account_id IS NULL AND rba.owner_level = 'Zonal' AND rba.owner_id = fa.to_id AND rba.status = 'Active')
+                )
                 LEFT JOIN User u         ON fa.authorized_by = u.user_id
                 WHERE 1=1";
 
@@ -119,6 +132,8 @@ class FundTransferModel extends Model {
                     fa.to_level,
                     fa.to_id,
                     fa.to_id AS target_zonal_id,
+                    fa.source_bank_account_id,
+                    fa.recipient_bank_account_id,
                     fa.amount,
                     fa.transfer_date,
                     fa.reference_no,
@@ -132,17 +147,28 @@ class FundTransferModel extends Model {
                     z.zonal_name           AS target_zone_name,
                     z.province             AS target_province,
                     z.hub_name             AS target_hub_name,
+                    ba.bank_name           AS source_bank_name,
+                    ba.branch_name         AS source_branch_name,
+                    ba.account_number      AS source_account_number,
+                    ba.account_label       AS source_account_name,
                     ba.bank_name,
                     ba.branch_name,
                     ba.account_number,
                     ba.account_label       AS bank_account_name,
-                    ba.gateway_type,
-                    ba.verification_status,
+                    rba.bank_name          AS recipient_bank_name,
+                    rba.branch_name        AS recipient_branch_name,
+                    rba.account_number     AS recipient_account_number,
+                    rba.account_label      AS recipient_account_name,
                     CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name,
                     u.role                 AS authorizer_role
                 FROM FundAllocation fa
                 LEFT JOIN Zone z        ON (fa.to_level = 'Zonal' AND fa.to_id = z.zonal_id)
                 LEFT JOIN BankAccount ba ON fa.source_bank_account_id = ba.bank_account_id
+                LEFT JOIN BankAccount rba ON (
+                    (fa.recipient_bank_account_id IS NOT NULL AND fa.recipient_bank_account_id = rba.bank_account_id)
+                    OR
+                    (fa.recipient_bank_account_id IS NULL AND rba.owner_level = 'Zonal' AND rba.owner_id = fa.to_id AND rba.status = 'Active')
+                )
                 LEFT JOIN User u         ON fa.authorized_by = u.user_id
                 WHERE fa.allocation_id = ?
                 LIMIT 1";
@@ -210,7 +236,7 @@ class FundTransferModel extends Model {
         $coreAccount = $this->single(
             "SELECT * FROM BankAccount
              WHERE owner_level = 'National' AND status = 'Active'
-             ORDER BY verification_status = 'Verified' DESC, bank_account_id ASC
+             ORDER BY bank_account_id ASC
              LIMIT 1"
         );
 
@@ -251,6 +277,7 @@ class FundTransferModel extends Model {
                             to_level,
                             to_id,
                             source_bank_account_id,
+                            recipient_bank_account_id,
                             amount,
                             transfer_date,
                             reference_no,
@@ -272,6 +299,7 @@ class FundTransferModel extends Model {
                             ?,
                             ?,
                             ?,
+                            ?,
                             NOW()
                         )";
 
@@ -279,6 +307,7 @@ class FundTransferModel extends Model {
             $stmtAlloc->execute([
                 (int)$data['target_zonal_id'],
                 (int)$data['source_account_id'],
+                !empty($data['recipient_account_id']) ? (int)$data['recipient_account_id'] : null,
                 (float)$data['amount'],
                 $data['transfer_date'],
                 $data['reference_no'],
@@ -425,10 +454,10 @@ class FundTransferModel extends Model {
      */
     public function getActiveBankAccounts() {
         return $this->resultSet(
-            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label, gateway_type, verification_status, status
+            "SELECT bank_account_id, bank_name, branch_name, account_number, account_label, status
              FROM BankAccount
              WHERE status = 'Active'
-             ORDER BY (owner_level = 'National') DESC, (verification_status = 'Verified') DESC, bank_account_id ASC"
+             ORDER BY (owner_level = 'National') DESC, bank_account_id ASC"
         );
     }
 
@@ -447,5 +476,140 @@ class FundTransferModel extends Model {
              LIMIT 1",
             [(int)$zoneId]
         );
+    }
+
+    /**
+     * Fetch all registered zonal bank accounts.
+     *
+     * @return array
+     */
+    public function getAllZonalBankAccounts() {
+        return $this->resultSet(
+            "SELECT ba.*, z.zonal_name, z.province, z.hub_name
+             FROM BankAccount ba
+             JOIN Zone z ON ba.owner_id = z.zonal_id
+             WHERE ba.owner_level = 'Zonal'
+             ORDER BY z.zonal_name ASC, ba.status ASC, ba.bank_account_id DESC"
+        );
+    }
+
+    /**
+     * Fetch active verified recipient account for a specific zone.
+     *
+     * @param  int $zoneId
+     * @return object|null
+     */
+    public function getVerifiedAccountForZone($zoneId) {
+        return $this->single(
+            "SELECT ba.*, z.zonal_name, z.province, z.hub_name
+             FROM BankAccount ba
+             JOIN Zone z ON ba.owner_id = z.zonal_id
+             WHERE ba.owner_level = 'Zonal'
+               AND ba.owner_id = ?
+               AND ba.status = 'Active'
+             LIMIT 1",
+            [(int)$zoneId]
+        );
+    }
+
+    /**
+     * Fetch a bank account by primary key ID.
+     *
+     * @param  int $id
+     * @return object|null
+     */
+    public function getBankAccountById($id) {
+        return $this->single(
+            "SELECT ba.*, z.zonal_name, z.province
+             FROM BankAccount ba
+             LEFT JOIN Zone z ON ba.owner_id = z.zonal_id
+             WHERE ba.bank_account_id = ?
+             LIMIT 1",
+            [(int)$id]
+        );
+    }
+
+    /**
+     * Register a new zonal bank account.
+     *
+     * @param  array $data
+     * @return int Created bank_account_id
+     */
+    public function createZonalBankAccount(array $data) {
+        $sql = "INSERT INTO BankAccount (
+                    owner_level,
+                    owner_id,
+                    bank_name,
+                    branch_name,
+                    account_number,
+                    account_label,
+                    status,
+                    created_at
+                ) VALUES (
+                    'Zonal',
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    'Active',
+                    NOW()
+                )";
+
+        $this->query($sql, [
+            (int)$data['zone_id'],
+            trim($data['bank_name']),
+            trim($data['branch_name']),
+            trim($data['account_number']),
+            trim($data['account_label']),
+        ]);
+
+        return (int)Database::getInstance()->getConnection()->lastInsertId();
+    }
+
+    /**
+     * Update an existing zonal bank account.
+     *
+     * @param  int   $id
+     * @param  array $data
+     * @return bool
+     */
+    public function updateZonalBankAccount($id, array $data) {
+        $sql = "UPDATE BankAccount SET
+                    owner_id = ?,
+                    bank_name = ?,
+                    branch_name = ?,
+                    account_number = ?,
+                    account_label = ?
+                WHERE bank_account_id = ? AND owner_level = 'Zonal'";
+
+        $stmt = $this->query($sql, [
+            (int)$data['zone_id'],
+            trim($data['bank_name']),
+            trim($data['branch_name']),
+            trim($data['account_number']),
+            trim($data['account_label']),
+            (int)$id,
+        ]);
+
+        return $stmt->rowCount() >= 0;
+    }
+
+    /**
+     * Soft toggle bank account status (Active <-> Inactive). Preserves transfer history references.
+     *
+     * @param  int $id
+     * @return bool
+     */
+    public function toggleAccountStatus($id) {
+        $acc = $this->getBankAccountById($id);
+        if (!$acc) return false;
+
+        $newStatus = ($acc->status === 'Active') ? 'Inactive' : 'Active';
+        $stmt = $this->query(
+            "UPDATE BankAccount SET status = ? WHERE bank_account_id = ?",
+            [$newStatus, (int)$id]
+        );
+        return $stmt->rowCount() > 0;
     }
 }

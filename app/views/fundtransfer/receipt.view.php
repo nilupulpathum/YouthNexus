@@ -97,22 +97,35 @@ $hubDetail = trim(($transfer->target_province ?? '') . ($transfer->target_hub_na
 
         <div class="receipt-body">
             <div class="grid-2">
+                <!-- 1. Source Paying Account -->
                 <div class="info-card">
-                    <h3>Recipient &amp; Account</h3>
-                    <div class="data-row"><span class="k"><?= !empty($isZonalDemo) ? 'Target Division:' : 'Target Zone:' ?></span><span class="v"><?= htmlspecialchars($transfer->target_zone_name) ?></span></div>
-                    <div class="data-row"><span class="k">Province / Hub:</span><span class="v"><?= htmlspecialchars($hubDetail ?: 'General Hub') ?></span></div>
-                    <div class="data-row"><span class="k">Bank Name:</span><span class="v"><?= htmlspecialchars($transfer->bank_name) ?></span></div>
-                    <div class="data-row"><span class="k">Branch:</span><span class="v"><?= htmlspecialchars($transfer->branch_name) ?></span></div>
-                    <div class="data-row"><span class="k">Account:</span><span class="v"><?= htmlspecialchars($transfer->account_number) ?></span></div>
+                    <h3>Paying Account (NYSC HQ)</h3>
+                    <div class="data-row"><span class="k">Disbursing Entity:</span><span class="v">NYSC National Headquarters</span></div>
+                    <div class="data-row"><span class="k">Paying Bank:</span><span class="v"><?= htmlspecialchars($transfer->source_bank_name ?? $transfer->bank_name ?? 'Bank of Ceylon') ?></span></div>
+                    <div class="data-row"><span class="k">Branch:</span><span class="v"><?= htmlspecialchars($transfer->source_branch_name ?? $transfer->branch_name ?? 'Colombo Fort (001)') ?></span></div>
+                    <div class="data-row"><span class="k">Account Number:</span><span class="v"><?= htmlspecialchars($transfer->source_account_number ?? $transfer->account_number ?? '8620-0012-3456-7890') ?></span></div>
+                    <div class="data-row"><span class="k">Account Title:</span><span class="v"><?= htmlspecialchars($transfer->source_account_name ?? $transfer->bank_account_name ?? 'NYSC Colombo Operational Fund') ?></span></div>
                 </div>
 
+                <!-- 2. Beneficiary Recipient Account -->
                 <div class="info-card">
-                    <h3>Payment &amp; Authorization</h3>
-                    <div class="data-row"><span class="k">Reference No:</span><span class="v"><?= htmlspecialchars($transfer->reference_no) ?></span></div>
-                    <div class="data-row"><span class="k">Method:</span><span class="v"><?= ($transfer->disbursement_method === 'RTGS') ? 'BOC Direct / RTGS' : 'Gov Cheque / SLIPS' ?></span></div>
+                    <h3>Crediting Account (Recipient)</h3>
+                    <div class="data-row"><span class="k"><?= !empty($isZonalDemo) ? 'Target Division:' : 'Target Zone:' ?></span><span class="v"><?= htmlspecialchars($transfer->target_zone_name) ?></span></div>
+                    <div class="data-row"><span class="k">Receiving Bank:</span><span class="v"><?= htmlspecialchars($transfer->recipient_bank_name ?? 'People\'s Bank') ?></span></div>
+                    <div class="data-row"><span class="k">Branch:</span><span class="v"><?= htmlspecialchars($transfer->recipient_branch_name ?? 'Zonal Branch') ?></span></div>
+                    <div class="data-row"><span class="k">Account Number:</span><span class="v"><strong><?= htmlspecialchars($transfer->recipient_account_number ?? '—') ?></strong></span></div>
+                    <div class="data-row"><span class="k">Beneficiary Title:</span><span class="v"><?= htmlspecialchars($transfer->recipient_account_name ?? 'Zonal Treasury Fund') ?></span></div>
+                </div>
+            </div>
+
+            <div class="info-card" style="margin-top: 15px;">
+                <h3>Payment Clearance &amp; Central Authorization</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div class="data-row"><span class="k">Reference No:</span><span class="v"><strong><?= htmlspecialchars($transfer->reference_no) ?></strong></span></div>
+                    <div class="data-row"><span class="k">Disbursement Method:</span><span class="v"><?= ($transfer->disbursement_method === 'RTGS') ? 'BOC Direct / RTGS' : 'Gov Cheque / SLIPS' ?></span></div>
                     <div class="data-row"><span class="k">Value Date:</span><span class="v"><?= date('F j, Y', strtotime($transfer->transfer_date)) ?></span></div>
-                    <div class="data-row"><span class="k">Authorized By:</span><span class="v"><?= htmlspecialchars($transfer->authorized_by_name ?? 'NYSC Admin') ?></span></div>
-                    <div class="data-row"><span class="k">Settlement Account:</span><span class="v"><?= htmlspecialchars($transfer->bank_account_name ?? 'NYSC Operational Fund') ?></span></div>
+                    <div class="data-row"><span class="k">Authorized By:</span><span class="v"><?= htmlspecialchars($transfer->authorized_by_name ?? 'NYSC Administrator') ?></span></div>
+                    <div class="data-row"><span class="k">Clearance Status:</span><span class="v"><?= htmlspecialchars($transfer->status) ?></span></div>
                 </div>
             </div>
 
