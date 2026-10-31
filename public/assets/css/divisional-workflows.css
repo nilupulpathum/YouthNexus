@@ -98,7 +98,8 @@
 /* The ten-column ledger needs its own row; status panels remain below it. */
 .dw-content-grid--ledger { grid-template-columns: minmax(0, 1fr); }
 .dw-content-grid--ledger > .dw-panel { min-width: 0; }
-.dw-content-grid--ledger > .dw-side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dw-content-grid--ledger > .dw-side-stack,
+.dw-ledger-page > .dw-side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dw-ledger-table { min-width: 1420px; }
 .dw-ledger-table th:nth-child(1) { min-width: 100px; }
 .dw-ledger-table th:nth-child(2) { min-width: 130px; }
@@ -108,7 +109,8 @@
 .dw-ledger-table td { overflow-wrap: normal; }
 .dw-ledger-table .dw-table__description { overflow-wrap: break-word; }
 @media (max-width: 720px) {
-  .dw-content-grid--ledger > .dw-side-stack { grid-template-columns: 1fr; }
+  .dw-content-grid--ledger > .dw-side-stack,
+  .dw-ledger-page > .dw-side-stack { grid-template-columns: 1fr; }
 }
 .dw-side-stack { display: grid; gap: 14px; }
 .dw-panel { border: 1px solid var(--dw-border); border-radius: var(--dw-radius-lg); background: #fff; box-shadow: var(--dw-shadow); overflow: hidden; }

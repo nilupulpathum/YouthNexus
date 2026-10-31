@@ -36,6 +36,35 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <?php endforeach; ?>
   </div>
 
+  <aside class="dw-side-stack" aria-label="Ledger status">
+    <section class="dw-panel">
+      <header class="dw-panel__header">
+        <div><h3>Reconciliation Status</h3><p>Current ledger progress</p></div>
+      </header>
+      <div class="dw-panel__body">
+        <strong class="dw-reconciliation-score"><?= (int) $reconciliation['percent'] ?>%</strong>
+        <div class="dw-progress" aria-label="<?= (int) $reconciliation['percent'] ?> percent reconciled">
+          <span style="width: <?= (int) $reconciliation['percent'] ?>%"></span>
+        </div>
+        <div class="dw-metric-list">
+          <div class="dw-metric"><span>Entries reconciled</span><strong><?= (int) $reconciliation['reconciled'] ?> / <?= (int) $reconciliation['total'] ?></strong></div>
+          <div class="dw-metric"><span>Receipts attached</span><strong><?= (int) $reconciliation['receipts'] ?> / <?= (int) $reconciliation['total'] ?></strong></div>
+          <div class="dw-metric dw-metric--danger"><span>Unreconciled difference</span><strong><?= $e($money(abs($reconciliation['difference']))) ?></strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dw-panel">
+      <header class="dw-panel__header"><div><h3>Pending Actions</h3><p>Items requiring attention</p></div></header>
+      <div class="dw-panel__body">
+        <ul class="dw-action-list">
+          <li><span><strong><?= (int) $pendingActions['missing_receipts'] ?> missing receipts</strong>Attach supporting documents to expense entries.</span></li>
+          <li><span><strong><?= (int) $pendingActions['pending_voids'] ?> pending void requests</strong>Open requests remain locked until a decision.</span></li>
+        </ul>
+      </div>
+    </section>
+  </aside>
+
   <div class="dw-toolbar" aria-label="Ledger tools">
     <div class="dw-toolbar__search dw-search dw-search--plain">
       <label class="visually-hidden" for="ledger-search">Search ledger entries</label>
@@ -179,35 +208,6 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       require __DIR__ . '/../partials/divisional/empty-state.view.php';
       ?>
     </section>
-
-    <aside class="dw-side-stack" aria-label="Ledger status">
-      <section class="dw-panel">
-        <header class="dw-panel__header">
-          <div><h3>Reconciliation Status</h3><p>Current ledger progress</p></div>
-        </header>
-        <div class="dw-panel__body">
-          <strong class="dw-reconciliation-score"><?= (int) $reconciliation['percent'] ?>%</strong>
-          <div class="dw-progress" aria-label="<?= (int) $reconciliation['percent'] ?> percent reconciled">
-            <span style="width: <?= (int) $reconciliation['percent'] ?>%"></span>
-          </div>
-          <div class="dw-metric-list">
-            <div class="dw-metric"><span>Entries reconciled</span><strong><?= (int) $reconciliation['reconciled'] ?> / <?= (int) $reconciliation['total'] ?></strong></div>
-            <div class="dw-metric"><span>Receipts attached</span><strong><?= (int) $reconciliation['receipts'] ?> / <?= (int) $reconciliation['total'] ?></strong></div>
-            <div class="dw-metric dw-metric--danger"><span>Unreconciled difference</span><strong><?= $e($money(abs($reconciliation['difference']))) ?></strong></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="dw-panel">
-        <header class="dw-panel__header"><div><h3>Pending Actions</h3><p>Items requiring attention</p></div></header>
-        <div class="dw-panel__body">
-          <ul class="dw-action-list">
-            <li><span><strong><?= (int) $pendingActions['missing_receipts'] ?> missing receipts</strong>Attach supporting documents to expense entries.</span></li>
-            <li><span><strong><?= (int) $pendingActions['pending_voids'] ?> pending void requests</strong>Open requests remain locked until a decision.</span></li>
-          </ul>
-        </div>
-      </section>
-    </aside>
   </div>
 </section>
 
