@@ -145,7 +145,7 @@
   function money(amount, signed) {
     var number = Number(amount || 0);
     var prefix = signed && number > 0 ? '+' : '';
-    return prefix + 'Rs. ' + number.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return prefix + 'LKR ' + number.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function displayDate(value) {

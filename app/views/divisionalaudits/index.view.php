@@ -6,12 +6,15 @@ $title = 'Audit Club Finance - YouthNexus';
 $pageTitle = 'Audit Club Finance';
 $pageDescription = 'Review club ledgers, receipts, and financial audit status';
 $currentRoute = 'divisionalaudits';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [
+    ROOT . '/assets/css/divisional-workflows.css',
+    ROOT . '/assets/css/divisional-tabs.css',
+];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-audits.js'];
 $summaryCards = [
-    ['value' => (string) $summary['pending'], 'label' => 'Pending Audits', 'note' => 'Require review', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => (string) $summary['completed'], 'label' => 'Completed This Year', 'note' => 'Signed off', 'icon' => 'check', 'tone' => 'green'],
-    ['value' => (string) $summary['flagged'], 'label' => 'Flagged Audits', 'note' => 'Open findings', 'icon' => 'info', 'tone' => 'red'],
+    ['value' => (string) $summary['pending'], 'label' => 'Pending Audits', 'badge' => (int) $summary['pending'] > 0 ? 'Needs Review' : 'Up to Date', 'subtitle' => 'Club finance audits awaiting review', 'tone' => (int) $summary['pending'] > 0 ? 'amber' : 'green'],
+    ['value' => (string) $summary['completed'], 'label' => 'Completed This Year', 'badge' => date('Y') . ' FY', 'subtitle' => 'Signed off and verified club audits', 'tone' => 'green'],
+    ['value' => (string) $summary['flagged'], 'label' => 'Flagged Audits', 'badge' => (int) $summary['flagged'] > 0 ? 'Open Findings' : 'Zero Flags', 'subtitle' => 'Audits with open findings or concerns', 'tone' => (int) $summary['flagged'] > 0 ? 'red' : 'green'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -23,6 +26,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>><?= yn_icon('plus') ?> Start Audit</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Audit summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
   </div>
@@ -32,8 +39,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="audit-search">Search clubs</label>
       <input id="audit-search" type="search" placeholder="Search clubs" data-audit-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="start-audit"<?= $clubs ? '' : ' disabled' ?>><?= yn_icon('plus') ?> Start Audit</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="audit-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="audit-filters" hidden>
@@ -72,7 +81,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <footer class="dw-audit-card__footer">
           <?php if ($item->audit_id): ?>
-            <a class="dw-button dw-button--ghost db-view-button" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
+            <a class="<?= $item->audit_status === 'Completed' ? 'dw-button dw-button--ghost db-view-button' : 'dw-button dw-button--primary btn-review' ?>" href="<?= ROOT ?>/divisionalaudits/review/<?= (int) $item->audit_id ?>"><?= $item->audit_status === 'Completed' ? 'View Log' : 'Review' ?></a>
           <?php elseif ((int) $item->has_active_ledger === 1): ?>
             <button class="dw-button dw-button--primary db-primary-action" type="button" data-start-club="<?= (int) $item->club_id ?>" data-modal-open="start-audit"><?= yn_icon('plus') ?> Start Audit</button>
           <?php else: ?>

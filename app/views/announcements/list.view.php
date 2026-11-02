@@ -17,10 +17,15 @@ $title           = $title ?? 'Announcements — YouthNexus';
 $pageTitle       = 'Announcements';
 $pageDescription = 'View communications relevant to your role and organisational scope';
 $currentRoute    = 'announcements';
+$userRole        = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
+$isDivisional    = str_starts_with((string)$userRole, 'Divisional');
 $pageStyles      = [
     ROOT . '/assets/css/announcements.css?v=20260929',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+if ($isDivisional) {
+    $pageStyles[] = ROOT . '/assets/css/divisional-workflows.css';
+}
 $pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
 
 require_once __DIR__ . '/../partials/icons.view.php';
@@ -78,6 +83,60 @@ $roleLabel = function ($role) {
 <!-- Summary cards                                             -->
 <!-- ========================================================= -->
 
+<?php if ($isDivisional): ?>
+    <div class="ann-stats ft-cards-row <?= $canManageAnnouncements ? 'ft-cards-row--three' : 'ft-cards-row--two' ?>" aria-label="Announcements summary">
+        <?php
+        $divisionalCards = [
+            'All' => [
+                'label'    => 'Total Announcements',
+                'badge'    => 'All Broadcasts',
+                'tone'     => 'blue',
+                'subtitle' => 'All communications for your division',
+            ],
+            'Published' => [
+                'label'    => 'Published',
+                'badge'    => 'Active',
+                'tone'     => 'green',
+                'subtitle' => 'Live active announcements',
+            ],
+            'Draft' => [
+                'label'    => 'Drafts',
+                'badge'    => 'In Progress',
+                'tone'     => 'yellow',
+                'subtitle' => 'Unpublished draft announcements',
+            ],
+        ];
+        ?>
+        <?php foreach ($divisionalCards as $key => $cardMeta): ?>
+            <?php
+            if ($key === 'Draft' && !$canManageAnnouncements) {
+                continue;
+            }
+            $statusValue = $key === 'All' ? '' : $key;
+            $badgeClass = match ($cardMeta['tone']) {
+                'green' => 'ft-badge-green',
+                'yellow', 'amber' => 'ft-badge-yellow',
+                'red' => 'ft-badge-red',
+                default => 'ft-badge-blue',
+            };
+            ?>
+            <button
+                type="button"
+                class="ann-stat-card ft-stat-card <?= $key === 'All' ? 'is-active' : '' ?>"
+                data-ann-status="<?= htmlspecialchars($statusValue, ENT_QUOTES, 'UTF-8') ?>"
+                aria-pressed="<?= $key === 'All' ? 'true' : 'false' ?>"
+                aria-controls="annResults"
+            >
+                <div class="ft-stat-head">
+                    <span class="ft-stat-title ann-stat-label"><?= htmlspecialchars($cardMeta['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="ft-badge <?= $badgeClass ?>"><?= htmlspecialchars($cardMeta['badge'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="ft-stat-big ann-stat-number"><?= (int)($counts[$key] ?? 0) ?></div>
+                <div class="ft-stat-sub"><?= htmlspecialchars($cardMeta['subtitle'], ENT_QUOTES, 'UTF-8') ?></div>
+            </button>
+        <?php endforeach; ?>
+    </div>
+<?php else: ?>
 <div class="ann-stats">
 
     <?php
@@ -154,6 +213,7 @@ $roleLabel = function ($role) {
     <?php endforeach; ?>
 
 </div>
+<?php endif; ?>
 
 
 <!-- ========================================================= -->

@@ -12,10 +12,10 @@ $currentRoute = 'divisionalsecretary';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
-    ['value' => $summary['upcoming_events'], 'label' => 'Upcoming Events', 'note' => 'Approved future events', 'icon' => 'calendar', 'tone' => 'blue'],
-    ['value' => $summary['attendance_pending'], 'label' => 'Attendance Pending', 'note' => 'Completed events without records', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => number_format((float) $summary['attendance_rate'], 1) . '%', 'label' => 'Attendance Rate', 'note' => 'Recorded attendance this year', 'icon' => 'check', 'tone' => 'green'],
-    ['value' => $summary['clubs'], 'label' => 'Active Clubs', 'note' => 'Clubs in this division', 'icon' => 'users', 'tone' => 'blue'],
+    ['value' => (string) $summary['upcoming_events'], 'label' => 'Upcoming Events', 'badge' => 'Scheduled', 'subtitle' => 'Approved future events', 'tone' => 'blue'],
+    ['value' => (string) $summary['attendance_pending'], 'label' => 'Attendance Pending', 'badge' => (int) $summary['attendance_pending'] > 0 ? 'Needs Records' : 'Up to Date', 'subtitle' => 'Completed events without records', 'tone' => (int) $summary['attendance_pending'] > 0 ? 'amber' : 'green'],
+    ['value' => number_format((float) $summary['attendance_rate'], 1) . '%', 'label' => 'Attendance Rate', 'badge' => date('Y') . ' FY', 'subtitle' => 'Recorded attendance this year', 'tone' => 'green'],
+    ['value' => (string) $summary['clubs'], 'label' => 'Active Clubs', 'badge' => $division->division_name, 'subtitle' => 'Clubs in this division', 'tone' => 'blue'],
 ];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

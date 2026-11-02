@@ -10,10 +10,15 @@ $pageDescription         = $pageDescription ?? 'Log and review attendance for ap
 $currentRoute            = 'attendance';
 $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
+$userRole                = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
+$isDivisional            = str_starts_with((string)$userRole, 'Divisional');
 $pageStyles              = [
     ROOT . '/assets/css/attendance.css?v=20260929',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+if ($isDivisional) {
+    $pageStyles[] = ROOT . '/assets/css/divisional-workflows.css';
+}
 
 require __DIR__ . '/../partials/icons.view.php';
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -29,6 +34,30 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </button>
     </div>
 
+    <!-- ============================================================
+         Stat Cards
+         ============================================================ -->
+    <?php if ($isDivisional): ?>
+        <div class="am-stats ft-cards-row ft-cards-row--two" aria-label="Attendance summary">
+            <div class="am-stat-card ft-stat-card">
+                <div class="ft-stat-head">
+                    <span class="ft-stat-title am-stat-label">Approved Events</span>
+                    <span class="ft-badge ft-badge-blue"><?= date('Y') ?> FY</span>
+                </div>
+                <div class="ft-stat-big am-stat-value"><?= (int)($stats->events_this_year ?? 0) ?></div>
+                <div class="ft-stat-sub">Approved events recorded this year</div>
+            </div>
+
+            <div class="am-stat-card ft-stat-card">
+                <div class="ft-stat-head">
+                    <span class="ft-stat-title am-stat-label">Attendance Records</span>
+                    <span class="ft-badge ft-badge-green">Active</span>
+                </div>
+                <div class="ft-stat-big am-stat-value"><?= (int)($stats->attendance_this_year ?? 0) ?></div>
+                <div class="ft-stat-sub">Participant attendances logged</div>
+            </div>
+        </div>
+    <?php else: ?>
     <!-- ============================================================
          Stat Cards
          ============================================================ -->
@@ -59,6 +88,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
         <?php endif; ?>
     </div>
+    <?php endif; ?>
 
     <!-- ============================================================
          Toolbar & Filters

@@ -47,6 +47,7 @@ class DivisionalVoidRequestModel extends Model {
              LEFT JOIN FundAllocation fa ON fa.allocation_id = le.allocation_id
              WHERE l.owner_type = 'Division' AND l.owner_id = ?
                AND l.status = 'Active' AND le.status = 'Approved'
+               AND le.allocation_id IS NULL
                AND NOT EXISTS (
                    SELECT 1 FROM VoidRequest vr
                    WHERE vr.entry_id = le.entry_id AND vr.status = 'Pending'
@@ -89,7 +90,7 @@ class DivisionalVoidRequestModel extends Model {
 
         try {
             $entryStatement = $pdo->prepare(
-                "SELECT le.entry_id, le.status,
+                "SELECT le.entry_id, le.status, le.allocation_id,
                         COALESCE(fa.reference_no, CONCAT('LDG-', LPAD(le.entry_id, 4, '0'))) AS reference_no
                  FROM LedgerEntry le
                  INNER JOIN Ledger l ON l.ledger_id = le.ledger_id
@@ -102,6 +103,10 @@ class DivisionalVoidRequestModel extends Model {
             $entry = $entryStatement->fetch();
             if (!$entry || $entry->status !== 'Approved') {
                 throw new RuntimeException('Select an approved entry from your division ledger.');
+            }
+
+            if ($entry->allocation_id !== null) {
+                throw new RuntimeException('Allocation entries cannot be voided here.');
             }
 
             $recipientStatement = $pdo->prepare(

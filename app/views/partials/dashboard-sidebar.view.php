@@ -77,7 +77,6 @@ $navigation = [
     ],
     'divisionaltreasurer' => [
         ['label' => 'Dashboard', 'route' => 'divisionaltreasurer', 'href' => $dashboardRoot . '/divisionaltreasurer', 'icon' => 'grid'],
-        ['label' => 'Log Transactions', 'route' => 'divisionaltransactions', 'href' => $dashboardRoot . '/divisionaltransactions', 'icon' => 'transfer'],
         ['label' => 'Manage Ledger', 'route' => 'divisionalledger', 'href' => $dashboardRoot . '/divisionalledger', 'icon' => 'wallet'],
         ['label' => 'Allocate Funds', 'route' => 'divisionalallocations', 'href' => $dashboardRoot . '/divisionalallocations', 'icon' => 'chart'],
         ['label' => 'Audit Club Finance', 'route' => 'divisionalaudits', 'href' => $dashboardRoot . '/divisionalaudits', 'icon' => 'audit'],

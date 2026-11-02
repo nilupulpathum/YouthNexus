@@ -17,10 +17,10 @@ $pageScripts = [
     ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
-    ['value' => $summary['units'], 'label' => 'Units In Division Store', 'note' => $division->division_name, 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => $summary['items'], 'label' => 'Asset Types', 'note' => 'With available stock', 'icon' => 'file', 'tone' => 'green'],
-    ['value' => $summary['club_pending'], 'label' => 'Pending Club Requests', 'note' => 'Waiting for your decision', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => $summary['zonal_pending'], 'label' => 'Requests To Zonal', 'note' => 'Awaiting zonal response', 'icon' => 'upload', 'tone' => 'blue'],
+    ['value' => $summary['units'], 'label' => 'Units In Division Store', 'badge' => $division->division_name, 'subtitle' => 'Equipment items in division store', 'tone' => 'blue', 'target' => 'inventory'],
+    ['value' => $summary['items'], 'label' => 'Asset Types', 'badge' => 'Active Stock', 'subtitle' => 'Categories with available stock', 'tone' => 'green', 'target' => 'inventory'],
+    ['value' => $summary['club_pending'], 'label' => 'Pending Club Requests', 'badge' => (int) $summary['club_pending'] > 0 ? 'Needs Review' : 'Up to Date', 'subtitle' => 'Waiting for your decision', 'tone' => (int) $summary['club_pending'] > 0 ? 'amber' : 'green', 'target' => 'pending'],
+    ['value' => $summary['zonal_pending'], 'label' => 'Requests To Zonal', 'badge' => (int) $summary['zonal_pending'] > 0 ? 'Awaiting Zonal' : 'All Clear', 'subtitle' => 'Asset requests sent to zonal level', 'tone' => 'blue', 'target' => 'zonal'],
 ];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
@@ -31,6 +31,11 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <button class="dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset"><?= yn_icon('plus') ?> Add Asset</button>
+  </div>
+
   <div class="dw-summary-grid" aria-label="Asset summary">
     <?php foreach ($summaryCards as $card): ?><?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?><?php endforeach; ?>
   </div>
@@ -40,9 +45,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="asset-search">Search assets and requests</label>
       <input id="asset-search" type="search" placeholder="Search by item, category, club, or request" data-asset-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="asset-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--secondary" type="button" data-modal-open="request-zonal-asset"><?= yn_icon('upload') ?> Request from Zonal</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-divisional-asset"><?= yn_icon('plus') ?> Add Asset</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="asset-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="asset-filters" hidden>
@@ -60,7 +66,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dv-tablist" role="tablist" aria-label="Asset management sections">
       <button class="dv-tab" type="button" role="tab" id="tab-pending" data-tab="pending" aria-controls="panel-pending" aria-selected="true" tabindex="0">
         <span>Pending Club Requests</span>
-        <span class="dv-tab__badge" data-tab-count="pending"><?= count($clubRequests) ?></span>
+        <span class="dv-tab__badge<?= count($clubRequests) > 0 ? ' dv-tab__badge--attention' : '' ?>" data-tab-count="pending" data-tab-attention><?= count($clubRequests) ?></span>
       </button>
       <button class="dv-tab" type="button" role="tab" id="tab-inventory" data-tab="inventory" aria-controls="panel-inventory" aria-selected="false" tabindex="-1">
         <span>Division Inventory</span>
@@ -85,7 +91,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <?php $search = strtolower(implode(' ', [$requestRef($request->asset_request_id), $request->club_name, $request->item_name, $request->category, $request->reason])); ?>
             <tr data-asset-row data-section="club-request" data-filter-match="true" data-search="<?= $e($search) ?>" data-category="<?= $e(strtolower($request->category)) ?>" data-status="pending" data-quantity="<?= (int) $request->quantity ?>" data-date="<?= $e(substr($request->requested_at, 0, 10)) ?>">
               <td class="dw-table__reference"><?= $e($requestRef($request->asset_request_id)) ?></td><td><?= $e($request->club_name) ?></td><td class="dw-table__description"><?= $e($request->item_name) ?></td><td><?= (int) $request->quantity ?> <?= $e($request->unit) ?></td><td><?= (int) $request->available_quantity ?> <?= $e($request->unit) ?></td><td><?= $e($request->reason) ?></td><td><?= $e(date('d M Y', strtotime($request->requested_at))) ?></td>
-              <td><button class="dw-button dw-button--secondary db-view-button" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
+              <td><button class="dw-button dw-button--primary btn-review" type="button" data-review-request data-modal-open="review-club-asset" data-request-id="<?= (int) $request->asset_request_id ?>" data-request-ref="<?= $e($requestRef($request->asset_request_id)) ?>" data-club="<?= $e($request->club_name) ?>" data-item="<?= $e($request->item_name) ?>" data-quantity-label="<?= (int) $request->quantity ?> <?= $e($request->unit) ?>" data-available-label="<?= (int) $request->available_quantity ?> <?= $e($request->unit) ?>" data-reason="<?= $e($request->reason) ?>" data-requester="<?= $e(trim($request->requester_name)) ?>" data-date-label="<?= $e(date('d M Y, H:i', strtotime($request->requested_at))) ?>">Review</button></td>
             </tr>
           <?php endforeach; ?>
         </tbody></table></div>

@@ -1260,3 +1260,111 @@ table.am-table {
     font-size: 14px;
 }
 
+
+/* ------------------------------------------------------------------
+   SESSION DETAIL: EVENT BRIEF DETAILS DROPDOWN LIST & 3-CARD ROW
+   ------------------------------------------------------------------ */
+.am-event-details-dropdown {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.am-event-details-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #ffffff;
+    transition: background 0.15s ease;
+}
+.am-event-details-summary::-webkit-details-marker {
+    display: none;
+}
+.am-event-details-summary:hover {
+    background: #f8fafc;
+}
+.am-event-summary-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.am-event-summary-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.am-details-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #64748b;
+    transition: transform 0.2s ease;
+}
+.am-event-details-dropdown[open] .am-details-toggle-icon {
+    transform: rotate(180deg);
+}
+.am-event-details-body {
+    padding: 14px 18px;
+    border-top: 1px solid #f1f5f9;
+    background: #fbfcfe;
+}
+.am-event-details-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.am-event-details-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+}
+.am-detail-label {
+    font-weight: 700;
+    color: #475569;
+    min-width: 110px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.am-detail-val {
+    color: #1e293b;
+    flex: 1;
+}
+
+/* 3 Stat Cards in a Single Row */
+.am-detail-stats,
+.dashboard .am-detail-stats,
+body.dashboard[data-user-role^="Divisional"] .am-detail-stats,
+body.dashboard[data-user-role^="Divisional"] .am-stats.dw-summary-grid--three {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-bottom: 24px !important;
+}
+
+@media (max-width: 900px) {
+    .am-detail-stats,
+    .dashboard .am-detail-stats,
+    body.dashboard[data-user-role^="Divisional"] .am-detail-stats,
+    body.dashboard[data-user-role^="Divisional"] .am-stats.dw-summary-grid--three {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}

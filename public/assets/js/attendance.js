@@ -466,6 +466,26 @@
         });
     }
 
+    // 5. Toggle Filter Panel Button
+    const filterToggleBtn = document.getElementById('amFilterToggleBtn');
+    const detailFilterCard = document.getElementById('amDetailFilterCard');
+    if (filterToggleBtn && detailFilterCard) {
+        filterToggleBtn.addEventListener('click', function () {
+            const isHidden = detailFilterCard.hidden || detailFilterCard.style.display === 'none' || detailFilterCard.hasAttribute('hidden');
+            if (isHidden) {
+                detailFilterCard.hidden = false;
+                detailFilterCard.removeAttribute('hidden');
+                detailFilterCard.style.display = 'block';
+                filterToggleBtn.setAttribute('aria-expanded', 'true');
+            } else {
+                detailFilterCard.hidden = true;
+                detailFilterCard.setAttribute('hidden', '');
+                detailFilterCard.style.display = 'none';
+                filterToggleBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
     // --- Main Roster Filtering Logic ---------------------------------
     function applyDetailFilters() {
         const zoneId   = detailZoneSelect ? detailZoneSelect.value : '';

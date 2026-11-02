@@ -30,7 +30,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <section class="dw-page" aria-label="Divisional reports">
   <?php if ($flash): ?><div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div><?php endif; ?>
 
-  <div class="dr-library-actions">
+  <div class="dr-library-actions dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
     <?php if ($userRole === 'DivisionalSecretary' && $aggregateTypeAvailable): ?>
       <a class="dw-button dw-button--secondary db-secondary-action" href="<?= ROOT ?>/divisionalreports/create?mode=aggregate">Aggregate Reports</a>
     <?php endif; ?>
@@ -39,7 +39,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
   <div class="dw-toolbar" aria-label="Report tools">
     <div class="dw-toolbar__search dw-search dw-search--plain"><label class="visually-hidden" for="report-search">Search reports</label><input id="report-search" type="search" placeholder="Search by report type, category, or creator" data-report-search></div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="report-filters" aria-expanded="false">Filters</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="report-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="report-filters" hidden>

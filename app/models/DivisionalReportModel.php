@@ -575,6 +575,6 @@ class DivisionalReportModel extends Model {
     }
 
     private function money($amount): string {
-        return 'Rs. ' . number_format((float) $amount, 2);
+        return 'LKR ' . number_format((float) $amount, 2);
     }
 }

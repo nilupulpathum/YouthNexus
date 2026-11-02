@@ -12,10 +12,15 @@ $unreadNotificationCount = 0;
 $isNYSCAdmin             = !empty($isNYSCAdmin);
 $isZonalSecretary        = !empty($isZonalSecretary);
 $canEditRoster           = !$isNYSCAdmin; // Administrators review attendance; secretaries edit/record
+$userRole                = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
+$isDivisional            = str_starts_with((string)$userRole, 'Divisional');
 $pageStyles              = [
     ROOT . '/assets/css/attendance.css?v=20261024',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
+if ($isDivisional) {
+    $pageStyles[] = ROOT . '/assets/css/divisional-workflows.css';
+}
 
 $eventLevel = $event->organizer_level ?? 'National';
 $eventZoneId = $event->organizer_zonal_id ?? $event->division_zonal_id ?? null;
@@ -52,68 +57,116 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
     </div>
 
-    <!-- Event Summary Information -->
-    <div class="am-event-summary-card">
-        <div class="am-event-summary-line">
-            <span class="am-badge <?= strtolower($eventLevel) ?>"><?= htmlspecialchars($eventLevel) ?></span>
-            <?php if (!empty($event->event_type)): ?>
-                <span class="am-badge type"><?= htmlspecialchars($event->event_type) ?></span>
-            <?php endif; ?>
-            <span class="am-event-summary-meta">
-                <?= $organiser ?> &nbsp;&bull;&nbsp;
-                <?= date('M j, Y \a\t g:i A', strtotime($event->start_datetime)) ?>
-                <?= !empty($event->location) ? ' &nbsp;&bull;&nbsp; ' . htmlspecialchars($event->location) : '' ?>
+    <!-- Event Brief Details as a Dropdown List -->
+    <details class="am-event-details-dropdown" open>
+        <summary class="am-event-details-summary">
+            <div class="am-event-summary-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span class="am-event-summary-title">Event Information &amp; Overview</span>
+                <span class="am-badge <?= strtolower($eventLevel) ?>"><?= htmlspecialchars($eventLevel) ?></span>
+                <?php if (!empty($event->event_type)): ?>
+                    <span class="am-badge type"><?= htmlspecialchars($event->event_type) ?></span>
+                <?php endif; ?>
+            </div>
+            <span class="am-details-toggle-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </span>
+        </summary>
+        <div class="am-event-details-body">
+            <ul class="am-event-details-list">
+                <li>
+                    <span class="am-detail-label">Organiser:</span>
+                    <span class="am-detail-val"><?= $organiser ?></span>
+                </li>
+                <li>
+                    <span class="am-detail-label">Date &amp; Time:</span>
+                    <span class="am-detail-val"><?= date('M j, Y \a\t g:i A', strtotime($event->start_datetime)) ?><?= !empty($event->end_datetime) ? ' &ndash; ' . date('M j, Y \a\t g:i A', strtotime($event->end_datetime)) : '' ?></span>
+                </li>
+                <li>
+                    <span class="am-detail-label">Location:</span>
+                    <span class="am-detail-val"><?= !empty($event->location) ? htmlspecialchars($event->location) : 'Location not set' ?></span>
+                </li>
+                <li>
+                    <span class="am-detail-label">Scope &amp; Target:</span>
+                    <span class="am-detail-val"><?= htmlspecialchars($event->target_scope ?? 'General') ?><?= !empty($event->target_club_name) ? ' &bull; ' . htmlspecialchars($event->target_club_name) : '' ?></span>
+                </li>
+                <?php if (!empty($event->description)): ?>
+                <li>
+                    <span class="am-detail-label">Description:</span>
+                    <span class="am-detail-val"><?= htmlspecialchars($event->description) ?></span>
+                </li>
+                <?php endif; ?>
+            </ul>
         </div>
-    </div>
+    </details>
 
     <!-- ============================================================
-         Stat Cards (Present / Absent / Attendance Rate)
+         Stat Cards (Present / Absent / Attendance Rate in the Same Row)
          ============================================================ -->
-    <div class="am-stats">
-        <div class="am-stat-card">
-            <div class="am-stat-icon present">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="am-stats am-detail-stats dw-summary-grid dw-summary-grid--three" aria-label="Event attendance summary">
+        <article class="dw-summary-card ft-stat-card dw-summary-card--green">
+            <div class="ft-stat-head">
+                <span class="ft-stat-title dw-summary-card__label">Present</span>
+                <span class="ft-badge ft-badge-green">Verified</span>
             </div>
-            <div class="am-stat-value" id="amPresentCount"><?= $present ?></div>
-            <div class="am-stat-label">Present</div>
-        </div>
-        <div class="am-stat-card">
-            <div class="am-stat-icon absent">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <div class="ft-stat-big dw-summary-card__value" id="amPresentCount"><?= $present ?></div>
+            <div class="ft-stat-sub dw-summary-card__note">Members checked in for event</div>
+        </article>
+
+        <article class="dw-summary-card ft-stat-card dw-summary-card--red">
+            <div class="ft-stat-head">
+                <span class="ft-stat-title dw-summary-card__label">Absent</span>
+                <span class="ft-badge ft-badge-red">Not Attended</span>
             </div>
-            <div class="am-stat-value" id="amAbsentCount"><?= $absent ?></div>
-            <div class="am-stat-label">Absent</div>
-        </div>
-        <div class="am-stat-card">
-            <div class="am-stat-icon rate">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" stroke-width="2"><path d="M5 19V9M12 19V5M19 19v-7" stroke-linecap="round"/><path d="M3 19h18" stroke-linecap="round"/></svg>
+            <div class="ft-stat-big dw-summary-card__value" id="amAbsentCount"><?= $absent ?></div>
+            <div class="ft-stat-sub dw-summary-card__note">Members absent from event</div>
+        </article>
+
+        <article class="dw-summary-card ft-stat-card dw-summary-card--blue">
+            <div class="ft-stat-head">
+                <span class="ft-stat-title dw-summary-card__label">Attendance Rate</span>
+                <span class="ft-badge ft-badge-blue">Turnout</span>
             </div>
-            <div class="am-stat-value" id="amAttendanceRate"><?= $rate ?>%</div>
-            <div class="am-stat-label">Attendance Rate</div>
-        </div>
+            <div class="ft-stat-big dw-summary-card__value" id="amAttendanceRate"><?= $rate ?>%</div>
+            <div class="ft-stat-sub dw-summary-card__note">Verified attendee percentage</div>
+        </article>
     </div>
 
     <!-- ============================================================
-         Filter Panel for Scope-based Review
+         Search Bar & Filter Button in the Same Row
+         ============================================================ -->
+    <div class="dw-toolbar am-toolbar" aria-label="Attendance search and filter tools" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div class="dw-toolbar__search dw-search dw-search--plain am-search-group" style="flex: 1; margin: 0;">
+            <label class="visually-hidden" for="amTableSearch">Search members</label>
+            <input type="text" id="amTableSearch" placeholder="Search members by name, email or club…" autocomplete="off">
+        </div>
+        <button class="dw-button dw-button--secondary" type="button" id="amFilterToggleBtn" data-filter-toggle aria-controls="amDetailFilterCard" aria-expanded="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filters
+        </button>
+    </div>
+
+    <!-- ============================================================
+         Filter Panel (Youth Club & Status Filter Mechanism)
          ============================================================ -->
     <?php
     $showZoneFilter     = ($isNYSCAdmin && $eventLevel === 'National');
     $showDivisionFilter = ($isNYSCAdmin && in_array($eventLevel, ['National', 'Zonal'])) 
                        || ($isZonalSecretary && in_array($eventLevel, ['National', 'Zonal']));
     $showClubFilter     = in_array($eventLevel, ['National', 'Zonal', 'Division']);
-    $showScopeFilter    = ($showZoneFilter || $showDivisionFilter || $showClubFilter);
     ?>
-    <?php if ($showScopeFilter): ?>
-    <div class="am-detail-filter-card" id="amDetailFilterCard">
+    <div class="am-detail-filter-card" id="amDetailFilterCard" hidden>
         <div class="am-detail-filter-header">
             <div class="am-detail-filter-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                Filter Attendance by Scope
+                Filter Attendance by Scope &amp; Status
             </div>
             <div class="am-detail-filter-actions">
                 <span class="am-scope-badge" id="amScopeBadge">
                     All records for this event
+                </span>
+                <span style="font-size:12px;color:#64748b;font-weight:600;">
+                    <strong id="amRosterCount"><?= count($roster) ?></strong> members in scope
                 </span>
                 <button type="button" class="am-filter-reset-btn" id="amDetailResetFilterBtn">
                     Reset Filter
@@ -122,8 +175,34 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
         </div>
 
         <div class="am-detail-filter-grid">
+            <?php if ($showClubFilter): ?>
+            <!-- 1. Youth Club Filter: Select a club or all clubs -->
+            <div class="am-detail-filter-field" id="clubFilterField">
+                <label for="detailFilterClub">YOUTH CLUB</label>
+                <select id="detailFilterClub" <?= ($eventLevel !== 'Division' && empty($detailClubs)) ? 'disabled' : '' ?>>
+                    <option value="">All Clubs<?= !empty($detailClubs) ? ' (' . count($detailClubs) . ')' : '' ?></option>
+                    <?php foreach (($detailClubs ?? []) as $c): ?>
+                        <option value="<?= (int)$c->club_id ?>">
+                            <?= htmlspecialchars($c->club_name) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <!-- 2. Attendance Status Filter -->
+            <div class="am-detail-filter-field" id="statusFilterField">
+                <label for="amTableStatusFilter">ATTENDANCE STATUS</label>
+                <select class="am-table-status-filter" id="amTableStatusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="unmarked">Not Recorded</option>
+                </select>
+            </div>
+
             <?php if ($showZoneFilter): ?>
-            <!-- 1. Zone Filter (for National events) -->
+            <!-- Zone Filter (for National events) -->
             <div class="am-detail-filter-field" id="zoneFilterField">
                 <label for="detailFilterZone">ZONAL OFFICE</label>
                 <select id="detailFilterZone">
@@ -138,7 +217,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
             <?php endif; ?>
 
             <?php if ($showDivisionFilter): ?>
-            <!-- 2. Division Filter (for National and Zonal events) -->
+            <!-- Division Filter (for National and Zonal events) -->
             <div class="am-detail-filter-field" id="divisionFilterField">
                 <label for="detailFilterDivision">DIVISIONAL SECRETARIAT</label>
                 <select id="detailFilterDivision" <?= ($eventLevel === 'National' && empty($detailDivisions)) ? 'disabled' : '' ?>>
@@ -151,46 +230,13 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </select>
             </div>
             <?php endif; ?>
-
-            <?php if ($showClubFilter): ?>
-            <!-- 3. Club Filter (for National, Zonal, and Division events) -->
-            <div class="am-detail-filter-field" id="clubFilterField">
-                <label for="detailFilterClub">YOUTH CLUB</label>
-                <select id="detailFilterClub" <?= ($eventLevel !== 'Division' && empty($detailClubs)) ? 'disabled' : '' ?>>
-                    <option value="">All Clubs<?= !empty($detailClubs) ? ' (' . count($detailClubs) . ')' : '' ?></option>
-                    <?php foreach (($detailClubs ?? []) as $c): ?>
-                        <option value="<?= (int)$c->club_id ?>">
-                            <?= htmlspecialchars($c->club_name) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
 
     <!-- ============================================================
          Member Roster Table
          ============================================================ -->
     <div class="am-table-wrapper">
-        <div class="am-table-toolbar">
-            <div class="am-table-search">
-                <span class="am-table-search-icon">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                </span>
-                <input type="text" id="amTableSearch" placeholder="Search members by name, email or club…" autocomplete="off">
-            </div>
-            <select class="am-table-status-filter" id="amTableStatusFilter">
-                <option value="">All Statuses</option>
-                <option value="Present">Present</option>
-                <option value="Absent">Absent</option>
-                <option value="unmarked">Not Recorded</option>
-            </select>
-            <span style="font-size:13px;color:#6b7280;margin-left:auto;">
-                <strong id="amRosterCount"><?= count($roster) ?></strong> members in scope
-            </span>
-        </div>
 
         <?php if (empty($roster)): ?>
             <div class="am-empty-state" style="padding:40px 0;">
