@@ -99,6 +99,7 @@ class Divisionalvoidrequest extends Controller {
                 'Select an approved entry from your division ledger.',
                 'The Zonal Treasurer is not available.',
                 'A void request is already pending for this entry.',
+                'Allocation entries cannot be voided here.',
             ];
             $this->setFlash(
                 'error',

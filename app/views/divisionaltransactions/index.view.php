@@ -113,7 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <?php
       $isIncome = $transaction->type === 'Income';
       $hasReceipt = !empty($transaction->attachment_url);
-      $canEdit = $transaction->status === 'Approved' && (int) $transaction->has_pending_void !== 1;
+      $canEdit = $transaction->status === 'Approved' && (int) $transaction->has_pending_void !== 1 && $transaction->allocation_id === null;
       $searchText = strtolower(implode(' ', [
           $transaction->reference_no,
           $transaction->description,

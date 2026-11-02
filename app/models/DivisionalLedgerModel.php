@@ -231,6 +231,10 @@ class DivisionalLedgerModel extends Model {
                 throw new RuntimeException('This transaction cannot be edited.');
             }
 
+            if ($entry->allocation_id !== null) {
+                throw new RuntimeException('Allocation entries cannot be edited.');
+            }
+
             $oldDelta = $entry->type === 'Income' ? (float) $entry->amount : -(float) $entry->amount;
             $newDelta = $data['type'] === 'Income' ? (float) $data['amount'] : -(float) $data['amount'];
 

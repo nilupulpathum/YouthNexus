@@ -136,6 +136,10 @@ class Divisionaltransactions extends Controller {
                 throw new RuntimeException('This transaction cannot be edited.');
             }
 
+            if ($entry->allocation_id !== null) {
+                throw new RuntimeException('Allocation entries cannot be edited.');
+            }
+
             $newAttachment = FinanceReceiptStorage::store($_FILES['receipt'] ?? null);
             $removeReceipt = isset($_POST['remove_receipt']) && $_POST['remove_receipt'] === '1';
             $data['attachment_url'] = $newAttachment ?: ($removeReceipt ? null : $entry->attachment_url);
