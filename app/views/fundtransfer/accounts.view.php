@@ -9,7 +9,7 @@ $pageDescription         = $pageDescription ?? 'Configure verified receiving com
 $currentRoute            = 'fundtransfer';
 $transferRoute           = 'fundtransfer';
 $unreadNotificationCount = 0;
-$pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20261029'];
+$pageStyles              = [ROOT . '/assets/css/fundtransfer.css?v=20261102'];
 $pageScripts             = [];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -128,7 +128,7 @@ $maskAccount = function ($acc) {
 
                             <td>
                                 <?php if ($acc->status === 'Active'): ?>
-                                    <span class="ft-badge ft-badge-blue">Active</span>
+                                    <span class="ft-badge ft-badge-green">Active</span>
                                 <?php else: ?>
                                     <span class="ft-badge ft-badge-red">Inactive</span>
                                 <?php endif; ?>
