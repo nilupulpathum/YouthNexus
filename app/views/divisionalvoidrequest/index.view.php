@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../partials/icons.view.php';
 
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
+$money = static fn($value) => 'LKR ' . number_format((float) $value, 2);
 $requestReference = static fn($id) => 'VR-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
 $title = 'Request Void - YouthNexus';
 $pageTitle = 'Request Void';
@@ -19,9 +19,9 @@ $pageScripts = [
     ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
-    ['value' => $summary['sent_this_month'], 'label' => 'Sent This Month', 'note' => 'Division to Zonal', 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => $summary['pending'], 'label' => 'Awaiting Zonal Review', 'note' => 'Pending requests', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => $summary['approved'], 'label' => 'Approved by Zonal', 'note' => 'All recorded requests', 'icon' => 'check', 'tone' => 'green'],
+    ['value' => (string) $summary['sent_this_month'], 'label' => 'Sent This Month', 'badge' => 'Division to Zonal', 'subtitle' => 'Submitted division void requests', 'tone' => 'blue', 'target' => 'requests'],
+    ['value' => (string) $summary['pending'], 'label' => 'Awaiting Zonal Review', 'badge' => (int) $summary['pending'] > 0 ? 'Pending Zonal' : 'All Clear', 'subtitle' => 'Void requests awaiting zonal decision', 'tone' => (int) $summary['pending'] > 0 ? 'amber' : 'green', 'target' => 'requests'],
+    ['value' => (string) $summary['approved'], 'label' => 'Approved by Zonal', 'badge' => 'All Time', 'subtitle' => 'Reversed division ledger entries', 'tone' => 'green', 'target' => 'requests'],
 ];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -41,31 +41,14 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>><?= yn_icon('plus') ?> New Void Request</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Void request summary">
-    <article class="dw-summary-card dw-summary-card--blue" data-tab-target="requests">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['sent_this_month']) ?></strong>
-        <span class="dw-summary-card__label">Sent This Month</span>
-        <small class="dw-summary-card__note">Division to Zonal</small>
-      </div>
-    </article>
-    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="requests">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['pending']) ?></strong>
-        <span class="dw-summary-card__label">Awaiting Zonal Review</span>
-        <small class="dw-summary-card__note">Pending requests</small>
-      </div>
-    </article>
-    <article class="dw-summary-card dw-summary-card--green" data-tab-target="requests">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['approved']) ?></strong>
-        <span class="dw-summary-card__label">Approved by Zonal</span>
-        <small class="dw-summary-card__note">All recorded requests</small>
-      </div>
-    </article>
+    <?php foreach ($summaryCards as $card): ?>
+      <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
+    <?php endforeach; ?>
   </div>
 
   <div class="dw-toolbar" aria-label="Void request tools">
@@ -73,8 +56,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="void-request-search">Search ledger entries and requests</label>
       <input id="void-request-search" type="search" placeholder="Search by entry, description, or reason" data-void-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="new-void-request"<?= (!$recipient || !$entries) ? ' disabled' : '' ?>><?= yn_icon('plus') ?> New Void Request</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="void-request-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="void-request-filters" hidden>

@@ -36,10 +36,63 @@ class DivisionalAllocationModel extends Model {
             [$divisionId, $divisionId]
         );
 
+        $month = (int) date('n');
+        $year = (int) date('Y');
+        $quarter = (int) ceil($month / 3);
+        $qStartMonth = ($quarter - 1) * 3 + 1;
+        $qEndMonth = $quarter * 3;
+        $quarterStart = sprintf('%04d-%02d-01', $year, $qStartMonth);
+        $quarterEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $year, $qEndMonth)));
+
+        $quarterAllocated = $this->single(
+            "SELECT COALESCE(SUM(fa.amount), 0) AS total
+             FROM FundAllocation fa
+             INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             WHERE fa.from_level = 'Divisional' AND fa.from_id = ?
+               AND c.division_id = ? AND fa.status = 'Completed'
+               AND fa.transfer_date >= ? AND fa.transfer_date <= ?",
+            [$divisionId, $divisionId, $quarterStart, $quarterEnd]
+        );
+
+        $totalAllocations = $this->single(
+            "SELECT COUNT(*) AS total
+             FROM FundAllocation fa
+             INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             WHERE fa.from_level = 'Divisional' AND fa.from_id = ?
+               AND c.division_id = ? AND fa.status = 'Completed'",
+            [$divisionId, $divisionId]
+        );
+
         return [
             'balance' => (float) ($ledger->current_balance ?? 0),
+            'quarter_allocated' => (float) ($quarterAllocated->total ?? 0),
+            'quarter_label' => 'Q' . $quarter . ' ' . $year,
+            'total_allocations' => (int) ($totalAllocations->total ?? 0),
             'pending' => (int) ($pending->total ?? 0),
         ];
+    }
+
+    public function getAllocationDetails(int $divisionId, int $allocationId) {
+        return $this->single(
+            "SELECT fa.*,
+                    c.club_name,
+                    c.status AS club_status,
+                    ba.bank_name,
+                    ba.branch_name,
+                    ba.account_number,
+                    ba.account_label,
+                    CONCAT(u.first_name, ' ', u.last_name) AS authorized_by_name
+             FROM FundAllocation fa
+             INNER JOIN Club c ON fa.to_level = 'Club' AND fa.to_id = c.club_id
+             LEFT JOIN BankAccount ba ON fa.source_bank_account_id = ba.bank_account_id
+             LEFT JOIN User u ON fa.authorized_by = u.user_id
+             WHERE fa.from_level = 'Divisional'
+               AND fa.from_id = ?
+               AND c.division_id = ?
+               AND fa.allocation_id = ?
+             LIMIT 1",
+            [$divisionId, $divisionId, $allocationId]
+        );
     }
 
     public function getPendingRequests(int $divisionId): array {
@@ -333,5 +386,115 @@ class DivisionalAllocationModel extends Model {
         if ($credit->rowCount() !== 1) {
             throw new RuntimeException('The club balance could not be updated.');
         }
+    }
+
+    public function getAllClubBankAccounts(int $divisionId): array {
+        return $this->query(
+            "SELECT ba.*, c.club_name, c.club_code, d.division_name
+             FROM BankAccount ba
+             INNER JOIN Club c ON c.club_id = ba.owner_id
+             INNER JOIN Division d ON d.division_id = c.division_id
+             WHERE ba.owner_level = 'Club' AND c.division_id = ?
+             ORDER BY c.club_name ASC, ba.created_at DESC",
+            [$divisionId]
+        )->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getVerifiedAccountForClub(int $clubId): ?object {
+        $res = $this->query(
+            "SELECT ba.*, c.club_name, c.club_code
+             FROM BankAccount ba
+             INNER JOIN Club c ON c.club_id = ba.owner_id
+             WHERE ba.owner_level = 'Club' AND ba.owner_id = ? AND ba.status = 'Active'
+             ORDER BY ba.created_at DESC
+             LIMIT 1",
+            [$clubId]
+        )->fetch(PDO::FETCH_OBJ);
+        return $res ?: null;
+    }
+
+    public function getAllClubVerifiedAccounts(int $divisionId): array {
+        $rows = $this->query(
+            "SELECT ba.*, c.club_name, c.club_code
+             FROM BankAccount ba
+             INNER JOIN Club c ON c.club_id = ba.owner_id
+             WHERE ba.owner_level = 'Club' AND c.division_id = ? AND ba.status = 'Active'
+             ORDER BY ba.created_at DESC",
+            [$divisionId]
+        )->fetchAll(PDO::FETCH_OBJ);
+        $result = [];
+        foreach ($rows as $r) {
+            if (!isset($result[$r->owner_id])) {
+                $clean = preg_replace('/[^\d]/', '', $r->account_number);
+                $masked = strlen($clean) >= 4 ? '****-' . substr($clean, -4) : '****-' . substr($r->account_number, -4);
+                $result[$r->owner_id] = [
+                    'bank_account_id' => (int)$r->bank_account_id,
+                    'bank_name'       => $r->bank_name,
+                    'branch_name'     => $r->branch_name,
+                    'account_number'  => $r->account_number,
+                    'masked_account'  => $masked,
+                    'account_label'   => $r->account_label,
+                    'status'          => $r->status,
+                    'club_name'       => $r->club_name,
+                ];
+            }
+        }
+        return $result;
+    }
+
+    public function getBankAccountById(int $bankAccountId): ?object {
+        $res = $this->query(
+            "SELECT ba.*, c.club_name, c.club_code, c.division_id
+             FROM BankAccount ba
+             LEFT JOIN Club c ON c.club_id = ba.owner_id
+             WHERE ba.bank_account_id = ?
+             LIMIT 1",
+            [$bankAccountId]
+        )->fetch(PDO::FETCH_OBJ);
+        return $res ?: null;
+    }
+
+    public function createClubBankAccount(array $data): int {
+        $pdo = Database::getInstance()->getConnection();
+        $stmt = $pdo->prepare(
+            "INSERT INTO BankAccount 
+                (owner_level, owner_id, bank_name, branch_name, account_number, account_label, gateway_type, verification_status, status, created_at)
+             VALUES ('Club', ?, ?, ?, ?, ?, 'RTGS', 'Verified', 'Active', NOW())"
+        );
+        $stmt->execute([
+            $data['club_id'],
+            $data['bank_name'],
+            $data['branch_name'],
+            $data['account_number'],
+            $data['account_label']
+        ]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    public function updateClubBankAccount(int $bankAccountId, array $data): bool {
+        $stmt = $this->query(
+            "UPDATE BankAccount 
+             SET owner_id = ?, bank_name = ?, branch_name = ?, account_number = ?, account_label = ?
+             WHERE bank_account_id = ? AND owner_level = 'Club'",
+            [
+                $data['club_id'],
+                $data['bank_name'],
+                $data['branch_name'],
+                $data['account_number'],
+                $data['account_label'],
+                $bankAccountId
+            ]
+        );
+        return $stmt->rowCount() >= 0;
+    }
+
+    public function toggleAccountStatus(int $bankAccountId): bool {
+        $stmt = $this->query(
+            "UPDATE BankAccount
+             SET status = CASE WHEN status = 'Active' THEN 'Inactive' ELSE 'Active' END
+             WHERE bank_account_id = ? AND owner_level = 'Club'",
+            [$bankAccountId]
+        );
+        return $stmt->rowCount() > 0;
     }
 }

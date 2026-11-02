@@ -26,8 +26,8 @@ class Divisionalledger extends Controller {
     }
 
     private function pullFlash(): ?array {
-        $flash = $_SESSION['divisional_ledger_flash'] ?? null;
-        unset($_SESSION['divisional_ledger_flash']);
+        $flash = $_SESSION['divisional_ledger_flash'] ?? $_SESSION['divisional_transaction_flash'] ?? null;
+        unset($_SESSION['divisional_ledger_flash'], $_SESSION['divisional_transaction_flash']);
         return is_array($flash) ? $flash : null;
     }
 
@@ -54,6 +54,7 @@ class Divisionalledger extends Controller {
             'entries' => $model->getEntries((int) $ledger->ledger_id),
             'reconciliation' => $model->getReconciliation((int) $ledger->ledger_id),
             'pendingActions' => $model->getPendingActions((int) $ledger->ledger_id),
+            'categories' => $model->getCategories((int) $ledger->ledger_id),
             'csrfToken' => $_SESSION['csrf_token'],
             'flash' => $this->pullFlash(),
             'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',

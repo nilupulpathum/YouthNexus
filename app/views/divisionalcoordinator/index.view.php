@@ -12,10 +12,10 @@ $currentRoute = 'divisionalcoordinator';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
-    ['value' => $summary['clubs'], 'label' => 'Active Clubs', 'note' => 'Clubs in this division', 'icon' => 'users', 'tone' => 'blue'],
-    ['value' => $summary['pending_applications'], 'label' => 'Pending Registrations', 'note' => 'Applications awaiting review', 'icon' => 'clipboard', 'tone' => 'amber'],
-    ['value' => $summary['pending_events'], 'label' => 'Pending Event Approvals', 'note' => 'Events awaiting decision', 'icon' => 'calendar', 'tone' => 'amber'],
-    ['value' => $summary['attention_clubs'], 'label' => 'Clubs Requiring Attention', 'note' => 'Health risk or open concern', 'icon' => 'info', 'tone' => 'red'],
+    ['value' => (string) $summary['clubs'], 'label' => 'Active Clubs', 'badge' => $division->division_name, 'subtitle' => 'Clubs in this division', 'tone' => 'blue'],
+    ['value' => (string) $summary['pending_applications'], 'label' => 'Pending Registrations', 'badge' => (int) $summary['pending_applications'] > 0 ? 'Needs Review' : 'All Clear', 'subtitle' => 'Applications awaiting review', 'tone' => (int) $summary['pending_applications'] > 0 ? 'amber' : 'green'],
+    ['value' => (string) $summary['pending_events'], 'label' => 'Pending Event Approvals', 'badge' => (int) $summary['pending_events'] > 0 ? 'Needs Action' : 'All Clear', 'subtitle' => 'Events awaiting decision', 'tone' => (int) $summary['pending_events'] > 0 ? 'amber' : 'green'],
+    ['value' => (string) $summary['attention_clubs'], 'label' => 'Clubs Requiring Attention', 'badge' => (int) $summary['attention_clubs'] > 0 ? 'Needs Attention' : 'All Clear', 'subtitle' => 'Health risk or open concern', 'tone' => (int) $summary['attention_clubs'] > 0 ? 'red' : 'green'],
 ];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

@@ -2,12 +2,12 @@
 require_once __DIR__ . '/../partials/icons.view.php';
 
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
+$money = static fn($value) => 'LKR ' . number_format((float) $value, 2);
 $title = 'Log Transactions - YouthNexus';
 $pageTitle = 'Log Transactions';
 $pageDescription = 'Record and review division-level income and expenses';
 $currentRoute = 'divisionaltransactions';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-tabs.css'];
 $pageScripts = [
     ROOT . '/assets/js/divisional-workflows.js',
     ROOT . '/assets/js/divisional-transactions.js',
@@ -28,6 +28,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </div>
   <?php endif; ?>
 
+  <div class="dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction"><?= yn_icon('plus') ?> Add Transaction</button>
+  </div>
+
   <div class="dw-summary-grid dw-summary-grid--three" aria-label="Transaction summary">
     <?php foreach ($summaryCards as $card): ?>
       <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
@@ -39,8 +43,10 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
       <label class="visually-hidden" for="transaction-search">Search transactions</label>
       <input id="transaction-search" type="search" placeholder="Search by reference, description, or category" data-transaction-search>
     </div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">Filters</button>
-    <button class="dw-button dw-button--primary db-primary-action" type="button" data-modal-open="add-transaction"><?= yn_icon('plus') ?> Add Transaction</button>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="transaction-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="transaction-filters" hidden>
@@ -181,7 +187,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </header>
     <div class="dw-modal__body">
       <div class="dw-field"><label for="transaction-type">Type</label><select id="transaction-type" name="type" required><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
-      <div class="dw-field"><label for="transaction-amount">Amount (Rs.)</label><input id="transaction-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
+      <div class="dw-field"><label for="transaction-amount">Amount (LKR)</label><input id="transaction-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
       <div class="dw-field"><label for="transaction-category">Category</label><input id="transaction-category" name="category" type="text" maxlength="100" required></div>
       <div class="dw-field"><label for="transaction-date">Date</label><input id="transaction-date" name="date" type="date" value="<?= date('Y-m-d') ?>" required></div>
       <div class="dw-field dw-field--span-2"><label for="transaction-description">Description</label><textarea id="transaction-description" name="description" maxlength="2000" required></textarea></div>
@@ -205,7 +211,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     </header>
     <div class="dw-modal__body">
       <div class="dw-field"><label for="edit-transaction-type">Type</label><select id="edit-transaction-type" name="type" required><option value="Income">Income</option><option value="Expense">Expense</option></select></div>
-      <div class="dw-field"><label for="edit-transaction-amount">Amount (Rs.)</label><input id="edit-transaction-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
+      <div class="dw-field"><label for="edit-transaction-amount">Amount (LKR)</label><input id="edit-transaction-amount" name="amount" type="number" min="0.01" max="9999999999999.99" step="0.01" required></div>
       <div class="dw-field"><label for="edit-transaction-category">Category</label><input id="edit-transaction-category" name="category" type="text" maxlength="100" required></div>
       <div class="dw-field"><label for="edit-transaction-date">Date</label><input id="edit-transaction-date" name="date" type="date" required></div>
       <div class="dw-field dw-field--span-2"><label for="edit-transaction-description">Description</label><textarea id="edit-transaction-description" name="description" maxlength="2000" required></textarea></div>

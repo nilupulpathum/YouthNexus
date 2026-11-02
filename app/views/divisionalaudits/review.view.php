@@ -2,12 +2,12 @@
 require_once __DIR__ . '/../partials/icons.view.php';
 
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
+$money = static fn($value) => 'LKR ' . number_format((float) $value, 2);
 $title = 'Review Club Audit - YouthNexus';
 $pageTitle = 'Audit Club Finance';
 $pageDescription = 'Review ledger entries and record the audit decision';
 $currentRoute = 'divisionalaudits';
-$pageStyles = [ROOT . '/assets/css/divisional-workflows.css'];
+$pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-tabs.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js', ROOT . '/assets/js/divisional-audits.js'];
 $openFlags = array_filter($audit->flags, static fn($flag) => $flag->status !== 'Resolved');
 $canComplete = $audit->audit_status !== 'Completed' && abs((float) $audit->difference) < 0.01 && count($openFlags) === 0;

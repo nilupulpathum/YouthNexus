@@ -46,6 +46,7 @@
 }
 
 .dashboard .ann-stat-card.is-active,
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card.is-active,
 .dashboard .ea-stat-card.is-active,
 .dashboard .cr-stat-card.is-active {
   padding: 18px;
@@ -150,4 +151,268 @@
 .dashboard .am-stat-icon svg {
   width: 17px;
   height: 17px;
+}
+
+
+/* Divisional Actor Specific: Match Allocate Funds stat card standard */
+body.dashboard[data-user-role^="Divisional"] .ann-stats,
+.dashboard .ea-stats,
+.dashboard .cr-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card,
+.dashboard .ea-stat-card,
+.dashboard .cr-stat-card {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card:hover,
+.dashboard .ea-stat-card:hover,
+.dashboard .cr-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card.is-active,
+.dashboard .ea-stat-card.is-active,
+.dashboard .cr-stat-card.is-active {
+  border-color: #2444bd;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(36, 68, 189, 0.12);
+}
+
+body.dashboard[data-user-role^="Divisional"] .ann-stat-icon,
+.dashboard .ea-stat-icon,
+.dashboard .cr-stat-icon {
+  display: none !important;
+}
+
+.dashboard .ea-stat-content,
+.dashboard .cr-stat-content {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 100%;
+}
+
+.dashboard .ea-stat-label,
+.dashboard .cr-stat-label {
+  display: block;
+  margin: 0 0 6px 0 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.75px !important;
+}
+
+.dashboard .ea-stat-value,
+.dashboard .cr-stat-value {
+  display: block;
+  margin: 0 !important;
+  color: #1e293b !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: normal !important;
+}
+
+body.dashboard[data-user-role^="Divisional"] .ann-stats {
+  max-width: none !important;
+  width: 100% !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stats.ft-cards-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card {
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 110px !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-stat-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+  width: 100% !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-stat-title,
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ann-stat-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  letter-spacing: 0.75px !important;
+  text-transform: uppercase !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  display: inline-block !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-stat-big,
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ann-stat-number {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin: 4px 0 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  display: block !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-stat-sub {
+  font-size: 12px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+  line-height: 1.3 !important;
+  display: block !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 3px 10px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-badge-blue {
+  background: #eef2ff !important;
+  color: #3154d8 !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-badge-green {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+}
+body.dashboard[data-user-role^="Divisional"] .ann-stat-card .ft-badge-yellow {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+
+/* Divisional Secretary: Manage Events & Manage Attendance stat cards matching Allocate Funds */
+body.dashboard[data-user-role^="Divisional"] .me-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-bottom: 24px !important;
+}
+body.dashboard[data-user-role^="Divisional"] .am-stats {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-bottom: 24px !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  min-height: 110px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 18px 20px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1e293b !important;
+  font: inherit !important;
+  text-align: left !important;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card):hover {
+  transform: translateY(-2px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-icon, .am-stat-icon) {
+  display: none !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-stat-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+  width: 100% !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) :is(.ft-stat-title, .me-stat-label, .am-stat-label) {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  letter-spacing: 0.75px !important;
+  text-transform: uppercase !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  display: inline-block !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) :is(.ft-stat-big, .me-stat-value, .am-stat-value) {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin: 4px 0 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  display: block !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-stat-sub {
+  font-size: 12px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+  line-height: 1.3 !important;
+  display: block !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 3px 10px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-badge-blue {
+  background: #eef2ff !important;
+  color: #3154d8 !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-badge-green {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+}
+body.dashboard[data-user-role^="Divisional"] :is(.me-stat-card, .am-stat-card) .ft-badge-yellow {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+@media (max-width: 1100px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.me-stats-grid, .am-stats) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 720px) {
+  body.dashboard[data-user-role^="Divisional"] :is(.me-stats-grid, .am-stats) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }

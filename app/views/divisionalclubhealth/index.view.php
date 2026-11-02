@@ -24,10 +24,10 @@ $pageScripts = [
     ROOT . '/assets/js/divisional-tabs.js',
 ];
 $summaryCards = [
-    ['value' => $summary['green'], 'label' => 'Healthy Clubs', 'note' => 'Score above 70', 'icon' => 'check', 'tone' => 'green'],
-    ['value' => $summary['yellow'], 'label' => 'At Risk Clubs', 'note' => 'Score from 30 to 70', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => $summary['red'], 'label' => 'Dormant Clubs', 'note' => 'Score below 30', 'icon' => 'info', 'tone' => 'red'],
-    ['value' => $summary['flagged'], 'label' => 'Open Concerns', 'note' => 'Clubs requiring review', 'icon' => 'file', 'tone' => 'red'],
+    ['value' => (string) $summary['green'], 'label' => 'Healthy Clubs', 'badge' => 'Score > 70', 'subtitle' => 'Clubs meeting active governance standards', 'tone' => 'green', 'target' => 'green'],
+    ['value' => (string) $summary['yellow'], 'label' => 'At Risk Clubs', 'badge' => (int) $summary['yellow'] > 0 ? 'Needs Attention' : 'None', 'subtitle' => 'Clubs with governance scores 30-70', 'tone' => (int) $summary['yellow'] > 0 ? 'amber' : 'green', 'target' => 'yellow'],
+    ['value' => (string) $summary['red'], 'label' => 'Dormant Clubs', 'badge' => (int) $summary['red'] > 0 ? 'Critical' : 'None', 'subtitle' => 'Clubs with health score below 30', 'tone' => (int) $summary['red'] > 0 ? 'red' : 'green', 'target' => 'red'],
+    ['value' => (string) $summary['flagged'], 'label' => 'Open Concerns', 'badge' => (int) $summary['flagged'] > 0 ? 'Active Flags' : 'Zero Flags', 'subtitle' => 'Clubs requiring operational review', 'tone' => (int) $summary['flagged'] > 0 ? 'red' : 'green'],
 ];
 $greenClubs = array_values(array_filter($clubs, static fn($c) => strtolower($c->score['health_status']) === 'green'));
 $yellowClubs = array_values(array_filter($clubs, static fn($c) => strtolower($c->score['health_status']) === 'yellow'));
@@ -88,45 +88,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
     <div class="dw-alert dw-alert--<?= $flash['type'] === 'success' ? 'success' : 'error' ?>" role="status"><?= yn_icon($flash['type'] === 'success' ? 'check' : 'info') ?><span><?= $e($flash['message']) ?></span></div>
   <?php endif; ?>
 
+  <div class="dw-top-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalclubhealth/export">
+      <?= yn_icon('download') ?> Export Club Health
+    </a>
+  </div>
+
   <div class="dw-summary-grid" aria-label="Club health summary">
-    <article class="dw-summary-card dw-summary-card--green" data-tab-target="green">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('check') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['green']) ?></strong>
-        <span class="dw-summary-card__label">Healthy Clubs</span>
-        <small class="dw-summary-card__note">Score above 70</small>
-      </div>
-    </article>
-    <article class="dw-summary-card dw-summary-card--amber" data-tab-target="yellow">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('clock') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['yellow']) ?></strong>
-        <span class="dw-summary-card__label">At Risk Clubs</span>
-        <small class="dw-summary-card__note">Score from 30 to 70</small>
-      </div>
-    </article>
-    <article class="dw-summary-card dw-summary-card--red" data-tab-target="red">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('info') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['red']) ?></strong>
-        <span class="dw-summary-card__label">Dormant Clubs</span>
-        <small class="dw-summary-card__note">Score below 30</small>
-      </div>
-    </article>
-    <article class="dw-summary-card dw-summary-card--red">
-      <span class="dw-summary-card__icon" aria-hidden="true"><?= yn_icon('file') ?></span>
-      <div>
-        <strong class="dw-summary-card__value"><?= $e((string) $summary['flagged']) ?></strong>
-        <span class="dw-summary-card__label">Open Concerns</span>
-        <small class="dw-summary-card__note">Clubs requiring review</small>
-      </div>
-    </article>
+    <?php foreach ($summaryCards as $card): ?>
+      <?php require __DIR__ . '/../partials/divisional/summary-card.view.php'; ?>
+    <?php endforeach; ?>
   </div>
 
   <div class="dw-toolbar" aria-label="Club health tools">
     <div class="dw-toolbar__search dw-search dw-search--plain"><label class="visually-hidden" for="health-search">Search clubs</label><input id="health-search" type="search" placeholder="Search by club name, code, or division" data-health-search></div>
-    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="health-filters" aria-expanded="false">Filters</button>
-    <a class="dw-button dw-button--secondary" href="<?= ROOT ?>/divisionalclubhealth/export"><?= yn_icon('download') ?> Export</a>
+    <button class="dw-button dw-button--secondary" type="button" data-filter-toggle aria-controls="health-filters" aria-expanded="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
   </div>
 
   <section class="dw-filter-panel" id="health-filters" hidden>

@@ -12,10 +12,15 @@ $pageDescription         = $isNyscAdmin
     : 'Track divisional events and club activities across ' . htmlspecialchars($division->division_name ?? 'your division');
 $currentRoute            = 'manageevents';
 $unreadNotificationCount = (int)($stats['awaiting_approval'] ?? 0);
+$userRole                = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
+$isDivisional            = str_starts_with((string)$userRole, 'Divisional');
 $pageStyles              = [
     ROOT . '/assets/css/manageevents.css?v=20261001',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20261001',
 ];
+if ($isDivisional) {
+    $pageStyles[] = ROOT . '/assets/css/divisional-workflows.css';
+}
 $pageScripts             = [ROOT . '/assets/js/manageevents.js?v=20261001'];
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -29,6 +34,41 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                 </button>
             </div>
 
+            <!-- Stat Cards -->
+            <?php if ($isDivisional): ?>
+                <div class="me-stats-grid ft-cards-row ft-cards-row--three" aria-label="Event summary">
+                    <div class="me-stat-card ft-stat-card">
+                        <div class="ft-stat-head">
+                            <span class="ft-stat-title me-stat-label">Awaiting Approval</span>
+                            <?php if ((int)$stats['awaiting_approval'] > 0): ?>
+                                <span class="ft-badge ft-badge-yellow">Needs Review</span>
+                            <?php else: ?>
+                                <span class="ft-badge ft-badge-green">All Clear</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="ft-stat-big me-stat-value"><?= (int)$stats['awaiting_approval'] ?></div>
+                        <div class="ft-stat-sub">Events requiring divisional approval</div>
+                    </div>
+
+                    <div class="me-stat-card ft-stat-card">
+                        <div class="ft-stat-head">
+                            <span class="ft-stat-title me-stat-label">Approved Upcoming</span>
+                            <span class="ft-badge ft-badge-blue">Scheduled</span>
+                        </div>
+                        <div class="ft-stat-big me-stat-value"><?= (int)$stats['approved_upcoming'] ?></div>
+                        <div class="ft-stat-sub">Upcoming approved events in division</div>
+                    </div>
+
+                    <div class="me-stat-card ft-stat-card">
+                        <div class="ft-stat-head">
+                            <span class="ft-stat-title me-stat-label">Hosted This Year</span>
+                            <span class="ft-badge ft-badge-green"><?= date('Y') ?> FY</span>
+                        </div>
+                        <div class="ft-stat-big me-stat-value"><?= (int)$stats['hosted_this_year'] ?></div>
+                        <div class="ft-stat-sub">Events completed successfully</div>
+                    </div>
+                </div>
+            <?php else: ?>
             <!-- Stat Cards -->
             <div class="me-stats-grid<?= $isNyscAdmin ? ' me-stats-grid-admin' : '' ?>">
                 <div class="me-stat-card">
@@ -73,6 +113,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     </div>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <!-- Search & Filter Toolbar -->
             <form method="GET" action="<?= ROOT ?>/manageevents" id="eventFilterForm">

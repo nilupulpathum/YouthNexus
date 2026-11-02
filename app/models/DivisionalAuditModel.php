@@ -393,7 +393,7 @@ class DivisionalAuditModel extends Model {
             $exists->execute([$auditId, $entry->entry_id]);
             $existing = $exists->fetch();
             if (!$existing) {
-                $description = 'Receipt required for ' . $entry->description . ' (Rs. ' . number_format((float) $entry->amount, 2) . ')';
+                $description = 'Receipt required for ' . $entry->description . ' (LKR ' . number_format((float) $entry->amount, 2) . ')';
                 $insert->execute([$auditId, $entry->entry_id, $description]);
             } elseif ($existing->status === 'Resolved') {
                 $reopen->execute([$existing->red_flag_id]);

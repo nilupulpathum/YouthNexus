@@ -1,21 +1,38 @@
+:root {
+  --ft-primary: #3154d8;
+  --ft-primary-dark: #2444bd;
+  --ft-border: #e2e8f0;
+  --ft-muted: #64748b;
+  --ft-text: #1e293b;
+  --ft-info-bg: #eef2ff;
+  --ft-warning-bg: #fef3c7;
+  --ft-warning: #d97706;
+  --ft-danger-bg: #fef2f2;
+  --ft-danger: #dc2626;
+  --dw-primary: #3154d8;
+  --dw-primary-dark: #2444bd;
+}
+
 /**
  * Divisional Tabs Component Styles
- * Scoped styling for tabbed tables and tab panels.
- * Strictly adheres to YouthNexus UI contract: tokens only, no hex colors.
+ * Standardized styling for divisional tabbed tables, tab panels, and table action buttons.
+ * Follows the Fund Allocation UI visual language.
  */
 
 .dv-tabs-container {
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 8px;
+  margin-bottom: 20px;
 }
 
 /* ── Tab Bar Navigation ───────────────────────────────────────────── */
 .dv-tablist {
   display: flex;
   align-items: center;
-  gap: 4px;
-  border-bottom: 1px solid var(--yn-border, rgba(231, 233, 240, 1));
+  gap: 8px;
+  border-bottom: 2px solid var(--ft-border, rgba(226, 232, 240, 1));
   margin: 0 0 16px 0;
   padding: 0;
   overflow-x: auto;
@@ -30,52 +47,50 @@
 }
 
 .dv-tablist::-webkit-scrollbar-thumb {
-  background: var(--yn-border, rgba(231, 233, 240, 1));
+  background: var(--ft-border, rgba(226, 232, 240, 1));
   border-radius: 4px;
 }
 
 /* ── Tab Item Button ──────────────────────────────────────────────── */
 .dv-tab {
-  /* Reset */
   box-sizing: border-box;
-  background: var(--yn-bg-surface-alt, rgba(241, 245, 249, 1));
-  border: 0;
-  border-bottom: 3px solid var(--yn-border, rgba(231, 233, 240, 1));
-  border-radius: 8px 8px 0 0;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
   font-family: inherit;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
 
-  /* Target specs */
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px;
-  min-height: 44px;
+  padding: 10px 18px;
+  min-height: 42px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--yn-text-secondary, rgba(71, 85, 105, 1));
-  margin-bottom: -1px;
+  color: var(--ft-muted, #64748b);
+  margin-bottom: -2px;
   text-decoration: none;
-  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.dv-tab:hover:not([aria-selected="true"]) {
-  color: var(--yn-text-primary, rgba(18, 20, 26, 1));
-  background: var(--yn-border-slate, var(--yn-border, rgba(226, 232, 240, 1)));
-  border-bottom-color: var(--yn-border-strong, rgba(203, 213, 225, 1));
+.dv-tab:hover:not([aria-selected="true"]):not(.is-active) {
+  color: var(--ft-text, #1e293b);
+  background: transparent !important;
 }
 
-.dv-tab[aria-selected="true"] {
-  background: var(--yn-bg-surface, rgba(255, 255, 255, 1));
-  color: var(--yn-primary, rgba(30, 64, 175, 1));
-  border-bottom-color: var(--yn-primary, rgba(30, 64, 175, 1));
+.dv-tab[aria-selected="true"],
+.dv-tab.is-active {
+  background: transparent !important;
+  color: var(--ft-primary, #3154d8) !important;
+  border-bottom-color: var(--ft-primary, #3154d8) !important;
   font-weight: 600;
 }
 
 .dv-tab:focus-visible {
-  outline: 2px solid var(--yn-primary, rgba(30, 64, 175, 1));
+  outline: 2px solid var(--ft-primary, #3154d8);
   outline-offset: 2px;
 }
 
@@ -90,42 +105,33 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  border: 1px solid transparent;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-
-  /* Neutral: subtle surface background, muted text */
-  background: var(--yn-bg-surface-alt, var(--yn-border, rgba(231, 233, 240, 1)));
-  color: var(--yn-text-muted, rgba(107, 114, 128, 1));
+  border: none;
+  background: var(--ft-info-bg, #eff6ff);
+  color: var(--ft-primary, #3154d8);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Active tab badge: primary tint background, primary text */
-.dv-tab[aria-selected="true"] .dv-tab__badge {
-  background: var(--yn-primary-soft, var(--yn-primary-bg, rgba(30, 64, 175, 0.08)));
-  color: var(--yn-primary, rgba(30, 64, 175, 1));
-  border-color: transparent;
-}
-
-/* Attention (Pending with count > 0, active OR inactive): warning bg, warning text, 1px solid warning border; attention wins over active/neutral */
+/* Attention (Pending requests, needs review): warm amber/yellow pill */
 .dv-tab__badge--attention,
 .dv-tab[data-tab="pending"] .dv-tab__badge.dv-tab__badge--attention,
-.dv-tab[data-tab="pending"][aria-selected="true"] .dv-tab__badge.dv-tab__badge--attention {
-  background: var(--yn-warning-bg, var(--yn-warning-soft, rgba(255, 247, 237, 1)));
-  color: var(--yn-warning-text, var(--yn-warning, rgba(146, 64, 14, 1)));
-  border-color: var(--yn-warning-border, var(--yn-warning-accent, rgba(254, 243, 199, 1)));
+.dv-tab[data-tab="requests"] .dv-tab__badge.dv-tab__badge--attention,
+.dv-tab[data-tab="yellow"] .dv-tab__badge {
+  background: var(--ft-warning-bg, #fef3c7);
+  color: var(--ft-warning, #d97706);
 }
 
 /* ── Responsive Viewports ─────────────────────────────────────────── */
 @media (max-width: 640px) {
   .dv-tab {
-    padding: 10px 14px;
+    padding: 8px 12px;
     font-size: 13px;
   }
 }
@@ -148,8 +154,8 @@
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--yn-bg-surface-alt, var(--yn-bg-page, rgba(241, 245, 249, 1)));
-  border: 1px solid var(--yn-border, rgba(231, 233, 240, 1));
-  color: var(--yn-text-muted, var(--yn-text-secondary, rgba(107, 114, 128, 1)));
+  border: 1px solid var(--ft-border, rgba(226, 232, 240, 1));
+  color: var(--ft-muted, #64748b);
   font-size: 12px;
   font-weight: 500;
 }
@@ -165,11 +171,311 @@
 }
 
 .js-tabs .dw-summary-card:hover {
-  border-color: var(--yn-border-strong, rgba(203, 213, 225, 1));
+  border-color: var(--ft-border, rgba(203, 213, 225, 1));
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .js-tabs .dw-summary-card:focus-visible {
-  outline: 2px solid var(--yn-primary, rgba(30, 64, 175, 1));
+  outline: 2px solid var(--ft-primary, #3154d8);
   outline-offset: 2px;
+}
+
+/* ── Audit Tabs Component ─────────────────────────────────────────── */
+.dw-audit-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--ft-border, #e2e8f0);
+  background: transparent !important;
+  padding: 0 !important;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.dw-audit-tabs button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ft-muted, #64748b);
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.dw-audit-tabs button.is-active {
+  color: var(--ft-primary, #3154d8) !important;
+  border-bottom-color: var(--ft-primary, #3154d8) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ── Table Action Buttons Matching Fund Allocation UI ─────────────── */
+.dw-table td .ft-btn-table-sm,
+.dw-table td .dw-button,
+.dw-table td .ft-link-btn,
+.dw-table td .db-view-button,
+.dw-table td button,
+.dw-table td a.dw-button {
+  min-height: 28px !important;
+  padding: 5px 13px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+  border: 1px solid transparent !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.dw-table td .dw-button svg,
+.dw-table td .ft-btn-table-sm svg,
+.dw-table td .ft-link-btn svg,
+.dw-table td .db-view-button svg,
+.dw-table td a svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Primary Action Buttons in Table (Allocate, Review, Approve, Confirm) */
+.dw-table td .dw-button--primary,
+.dw-table td .ft-btn-allocate,
+.dw-table td button[data-action="approve"],
+.dw-table td button[data-review-request],
+.dw-table td button[data-review-allocation] {
+  background: var(--ft-primary, #3154d8) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+.dw-table td .dw-button--primary:hover,
+.dw-table td .ft-btn-allocate:hover,
+.dw-table td button[data-action="approve"]:hover,
+.dw-table td button[data-review-request]:hover,
+.dw-table td button[data-review-allocation]:hover {
+  background: var(--ft-primary-dark, #2444bd) !important;
+  color: #ffffff !important;
+}
+
+/* Destructive Action Buttons in Table (Reject, Cancel) */
+.dw-table td .dw-button--danger,
+.dw-table td .ft-btn-reject,
+.dw-table td button[data-action="reject"],
+.dw-table td .btn-reject {
+  background: var(--ft-danger-bg, #fef2f2) !important;
+  color: var(--ft-danger, #dc2626) !important;
+  border-color: #fee2e2 !important;
+}
+
+.dw-table td .dw-button--danger:hover,
+.dw-table td .ft-btn-reject:hover,
+.dw-table td button[data-action="reject"]:hover,
+.dw-table td .btn-reject:hover {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+/* Secondary / Ghost / View / Details / Receipt / Status Buttons in Table */
+.dw-table td .dw-button--secondary,
+.dw-table td .dw-button--ghost,
+.dw-table td .ft-link-btn,
+.dw-table td .db-view-button,
+.dw-table td button[data-request-status],
+.dw-table td button[data-request-entry],
+.dw-table td button[data-reconcile-entry],
+.dw-table td button[data-adjust-asset],
+.dw-table td button[data-transfer-asset],
+.dw-table td button[data-request-receipt] {
+  background: var(--ft-info-bg, #eff6ff) !important;
+  color: var(--ft-primary, #3154d8) !important;
+  border-color: transparent !important;
+}
+
+.dw-table td .dw-button--secondary:hover,
+.dw-table td .dw-button--ghost:hover,
+.dw-table td .ft-link-btn:hover,
+.dw-table td .db-view-button:hover,
+.dw-table td button[data-request-status]:hover,
+.dw-table td button[data-request-entry]:hover,
+.dw-table td button[data-reconcile-entry]:hover,
+.dw-table td button[data-adjust-asset]:hover,
+.dw-table td button[data-transfer-asset]:hover,
+.dw-table td button[data-request-receipt]:hover {
+  background: #dbeafe !important;
+  color: var(--ft-primary-dark, #2444bd) !important;
+}
+
+.dw-table td .dw-row-actions,
+.dw-table td .ft-row-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* ── Standardized Table Cards & Header for Divisional Tab Panels ── */
+.dv-tabpanel .dw-panel,
+.dv-tabpanel .ft-table-card {
+  background: #ffffff !important;
+  border: 1px solid var(--ft-border, #e2e8f0) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+  margin-bottom: 24px !important;
+}
+
+.dv-tabpanel .dw-panel__header,
+.dv-tabpanel .ft-panel-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid var(--ft-border, #e2e8f0) !important;
+  background: #ffffff !important;
+}
+
+.dv-tabpanel .dw-panel__header h2,
+.dv-tabpanel .ft-panel-header h2 {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--ft-text, #1e293b) !important;
+  margin: 0 0 2px 0 !important;
+}
+
+.dv-tabpanel .dw-panel__header p,
+.dv-tabpanel .ft-panel-header p {
+  font-size: 12px !important;
+  color: var(--ft-muted, #64748b) !important;
+  margin: 0 !important;
+}
+
+.dv-tabpanel .dw-panel__header .dw-count,
+.dv-tabpanel .ft-panel-header .ft-count-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  background: var(--ft-warning-bg, #fef3c7) !important;
+  color: var(--ft-warning, #b45309) !important;
+  border: 1px solid #fde68a !important;
+}
+
+.dv-tabpanel[data-tab="inventory"] .dw-count,
+.dv-tabpanel[data-tab="transfers"] .dw-count,
+.dv-tabpanel[data-tab="zonal"] .dw-count,
+.dv-tabpanel[data-tab="decided"] .dw-count,
+.dv-tabpanel[data-tab="history"] .dw-count {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.dv-tabpanel .dw-table-wrap,
+.dv-tabpanel .ft-table-wrap {
+  overflow-x: auto !important;
+  width: 100% !important;
+}
+
+.dv-tabpanel .dw-table,
+.dv-tabpanel .ft-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 13px !important;
+  text-align: left !important;
+}
+
+.dv-tabpanel .dw-table th,
+.dv-tabpanel .ft-table th {
+  background: #f8fafc !important;
+  color: var(--ft-muted, #64748b) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--ft-border, #e2e8f0) !important;
+  white-space: nowrap !important;
+}
+
+.dv-tabpanel .dw-table td,
+.dv-tabpanel .ft-table td {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: var(--ft-text, #1e293b) !important;
+  vertical-align: middle !important;
+}
+
+.dv-tabpanel .dw-table tr:hover td,
+.dv-tabpanel .ft-table tr:hover td {
+  background: #fafbfe !important;
+}
+
+/* ── Consistent Review Action Buttons across all Divisional UIs ── */
+button[data-review-request],
+button[data-review-allocation],
+button[data-review-void],
+.dw-table td button[data-review-request],
+.dw-table td a[data-review-request],
+.dw-table td .btn-review,
+.ft-table td .btn-review,
+a.btn-review,
+button.btn-review,
+.btn-review-action,
+.dashboard .dw-table td button[data-review-request],
+.dashboard .dw-table td .btn-review {
+  background: var(--dw-primary, #3154d8) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--dw-primary, #3154d8) !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  line-height: 1.2 !important;
+  min-height: 28px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+button[data-review-request]::after,
+button[data-review-allocation]::after,
+.btn-review::after,
+.dw-table td button[data-review-request]::after,
+.dw-table td .btn-review::after,
+.dashboard .dw-table td button[data-review-request]::after,
+.dashboard .dw-table td .btn-review::after {
+  content: none !important;
+  display: none !important;
+}
+
+button[data-review-request]:hover,
+button[data-review-allocation]:hover,
+button[data-review-void]:hover,
+.dw-table td button[data-review-request]:hover,
+.dw-table td a[data-review-request]:hover,
+.dw-table td .btn-review:hover,
+.ft-table td .btn-review:hover,
+a.btn-review:hover,
+button.btn-review:hover,
+.btn-review-action:hover,
+.dashboard .dw-table td button[data-review-request]:hover,
+.dashboard .dw-table td .btn-review:hover {
+  background: var(--dw-primary-dark, #2444bd) !important;
+  border-color: var(--dw-primary-dark, #2444bd) !important;
+  color: #ffffff !important;
 }

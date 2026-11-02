@@ -1,0 +1,606 @@
+/**
+ * divisional-allocations.css
+ * Rebuilt fund-allocation UI for Divisional Allocate Funds page
+ * Uses ONLY --ft-* tokens from fundtransfer.css
+ */
+
+.divisional-allocations-module {
+    margin-top: 8px;
+}
+
+/* ── 4 Stat Cards Row ────────────────────────────────────────── */
+.divisional-allocations-module .ft-cards-row--four {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1100px) {
+    .divisional-allocations-module .ft-cards-row--four {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .divisional-allocations-module .ft-cards-row--four {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Header Title & Actions ───────────────────────────────────── */
+.divisional-allocations-module .ft-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.divisional-allocations-module .ft-header-titles {
+    flex: 1;
+    min-width: 260px;
+}
+
+.divisional-allocations-module .ft-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Primary Action Button (New Fund Allocation & Register Account) ─────────────── */
+.divisional-allocations-module #btnOpenCreateModal,
+.divisional-allocations-module #btnOpenRegisterModal,
+.divisional-allocations-module #btnSubmitAlloc,
+.divisional-allocations-module #btnSubmitAccount,
+.divisional-allocations-module .ft-btn-primary,
+.divisional-allocations-module .ft-btn-authorize,
+.dashboard .divisional-allocations-module .ft-btn-primary,
+.dashboard .divisional-allocations-module .ft-btn-authorize,
+.dashboard .divisional-allocations-module button.ft-btn-primary,
+.dashboard .divisional-allocations-module button.db-primary-action {
+    background: var(--dw-primary, #3154d8) !important;
+    color: #ffffff !important;
+}
+
+.divisional-allocations-module #btnOpenCreateModal svg,
+.divisional-allocations-module #btnOpenRegisterModal svg,
+.divisional-allocations-module .ft-btn-primary svg,
+.divisional-allocations-module .ft-btn-authorize svg,
+.dashboard .divisional-allocations-module .ft-btn-primary svg,
+.dashboard .divisional-allocations-module .ft-btn-authorize svg,
+.dashboard .divisional-allocations-module button.ft-btn-primary svg,
+.dashboard .divisional-allocations-module button.db-primary-action svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+}
+
+.divisional-allocations-module #btnOpenCreateModal:hover,
+.divisional-allocations-module #btnOpenCreateModal:focus,
+.divisional-allocations-module #btnOpenCreateModal:active,
+.divisional-allocations-module #btnOpenRegisterModal:hover,
+.divisional-allocations-module #btnOpenRegisterModal:focus,
+.divisional-allocations-module #btnOpenRegisterModal:active,
+.divisional-allocations-module #btnSubmitAlloc:hover,
+.divisional-allocations-module #btnSubmitAccount:hover,
+.divisional-allocations-module .ft-btn-primary:hover,
+.divisional-allocations-module .ft-btn-primary:focus,
+.divisional-allocations-module .ft-btn-primary:active,
+.divisional-allocations-module .ft-btn-authorize:hover,
+.divisional-allocations-module .ft-btn-authorize:focus,
+.divisional-allocations-module .ft-btn-authorize:active,
+.dashboard .divisional-allocations-module .ft-btn-primary:hover,
+.dashboard .divisional-allocations-module .ft-btn-primary:focus,
+.dashboard .divisional-allocations-module .ft-btn-primary:active,
+.dashboard .divisional-allocations-module .ft-btn-authorize:hover,
+.dashboard .divisional-allocations-module button.db-primary-action:hover {
+    background: var(--dw-primary-dark, #2444bd) !important;
+    color: #ffffff !important;
+}
+
+.divisional-allocations-module #btnOpenCreateModal:hover svg,
+.divisional-allocations-module #btnOpenCreateModal:focus svg,
+.divisional-allocations-module #btnOpenCreateModal:active svg,
+.divisional-allocations-module #btnOpenRegisterModal:hover svg,
+.divisional-allocations-module #btnOpenRegisterModal:focus svg,
+.divisional-allocations-module #btnOpenRegisterModal:active svg,
+.divisional-allocations-module .ft-btn-primary:hover svg,
+.divisional-allocations-module .ft-btn-primary:focus svg,
+.divisional-allocations-module .ft-btn-primary:active svg,
+.divisional-allocations-module .ft-btn-authorize:hover svg,
+.dashboard .divisional-allocations-module .ft-btn-primary:hover svg,
+.dashboard .divisional-allocations-module .ft-btn-primary:focus svg,
+.dashboard .divisional-allocations-module .ft-btn-primary:active svg,
+.dashboard .divisional-allocations-module button.db-primary-action:hover svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+/* ── Tab Navigation Integration ──────────────────────────────── */
+.divisional-allocations-module .dv-tabs-container {
+    margin-top: 8px;
+    margin-bottom: 20px;
+}
+
+.divisional-allocations-module .dv-tablist {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--ft-border);
+    padding-bottom: 0;
+    margin-bottom: 16px;
+}
+
+.divisional-allocations-module .dv-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ft-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.divisional-allocations-module .dv-tab:hover {
+    color: var(--ft-text);
+}
+
+.divisional-allocations-module .dv-tab[aria-selected="true"],
+.divisional-allocations-module .dv-tab.is-active {
+    color: var(--ft-primary);
+    border-bottom-color: var(--ft-primary);
+}
+
+.divisional-allocations-module .dv-tab__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--ft-info-bg);
+    color: var(--ft-primary);
+}
+
+.divisional-allocations-module .dv-tab__badge--attention {
+    background: var(--ft-warning-bg);
+    color: var(--ft-warning);
+}
+
+/* ── Filter Panel Styling (Zonal Style) ──────────────────────── */
+.divisional-allocations-module .ft-filter-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.divisional-allocations-module .ft-search-box-wrap {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.divisional-allocations-module .ft-filter-input {
+    width: 100%;
+    padding: 9px 12px 9px 38px;
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--ft-surface);
+    color: var(--ft-text);
+    transition: border-color 0.15s ease;
+}
+
+.divisional-allocations-module .ft-filter-input:focus {
+    border-color: var(--ft-primary);
+    outline: none;
+}
+
+.divisional-allocations-module .ft-search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--ft-muted);
+    pointer-events: none;
+}
+
+.divisional-allocations-module .ft-filter-panel {
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.divisional-allocations-module .ft-filter-panel__heading {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ft-text);
+    margin: 0 0 16px;
+}
+
+.divisional-allocations-module .ft-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 992px) {
+    .divisional-allocations-module .ft-filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .divisional-allocations-module .ft-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.divisional-allocations-module .ft-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ft-text);
+    margin-bottom: 6px;
+}
+
+.divisional-allocations-module .ft-field select,
+.divisional-allocations-module .ft-field input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--ft-border);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ft-text);
+    background: var(--ft-surface);
+}
+
+.divisional-allocations-module .ft-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ft-border);
+}
+
+/* ── Panel Section Header ────────────────────────────────────── */
+.divisional-allocations-module .ft-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--ft-border);
+    background: var(--ft-surface);
+    border-radius: 10px 10px 0 0;
+}
+
+.divisional-allocations-module .ft-panel-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ft-text);
+    margin: 0 0 2px;
+}
+
+.divisional-allocations-module .ft-panel-header p {
+    font-size: 12px;
+    color: var(--ft-muted);
+    margin: 0;
+}
+
+.divisional-allocations-module .ft-count-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ft-muted);
+    background: var(--ft-bg-page);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--ft-border);
+}
+
+/* ── Action Buttons inside Rows ──────────────────────────────── */
+.divisional-allocations-module .ft-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.divisional-allocations-module .ft-btn-table-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.divisional-allocations-module .ft-btn-allocate {
+    background: var(--ft-primary);
+    color: #ffffff;
+}
+
+.divisional-allocations-module .ft-btn-allocate:hover {
+    background: var(--ft-primary-dark);
+}
+
+.divisional-allocations-module .ft-btn-reject {
+    background: var(--ft-danger-bg);
+    color: var(--ft-danger);
+    border-color: var(--ft-border);
+}
+
+.divisional-allocations-module .ft-btn-reject:hover {
+    background: #ffe4e6;
+}
+
+/* ── Review Modal Table Styling ────────────────────────────── */
+.ft-review-table-wrap {
+    border: 1px solid var(--ft-border);
+    border-radius: 10px;
+    background: var(--ft-surface);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ft-review-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.ft-review-table th {
+    width: 32%;
+    background: var(--ft-bg-page);
+    color: var(--ft-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--ft-border);
+    border-right: 1px solid var(--ft-border);
+    vertical-align: middle;
+}
+
+.ft-review-table td {
+    padding: 13px 18px;
+    color: var(--ft-text);
+    border-bottom: 1px solid var(--ft-border);
+    vertical-align: middle;
+    background: var(--ft-surface);
+}
+
+.ft-review-table tr:last-child th,
+.ft-review-table tr:last-child td {
+    border-bottom: none;
+}
+
+.ft-review-table .ft-review-club-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ft-text);
+}
+
+.ft-review-table .ft-review-chip {
+    margin-left: 0;
+    font-family: monospace, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--ft-info-bg);
+    color: var(--ft-primary-dark);
+    padding: 3px 10px;
+    border-radius: 5px;
+}
+
+.ft-review-table .ft-review-amount-text {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ft-primary-dark);
+}
+
+.ft-review-table .ft-review-purpose-cell {
+    line-height: 1.5;
+    color: var(--ft-text);
+    word-break: break-word;
+}
+
+.ft-alert-warning {
+    background: var(--ft-warning-bg);
+    color: var(--ft-warning);
+    border: 1px solid var(--ft-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ft-alert-warning svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+/* ── Table Empty State in Zonal Style ────────────────────────── */
+.divisional-allocations-module .ft-empty-table-state {
+    padding: 40px 20px;
+    text-align: center;
+    background: var(--ft-surface);
+}
+
+.divisional-allocations-module .ft-empty-table-state:not(.is-visible) {
+    display: none;
+}
+
+.divisional-allocations-module .ft-empty-table-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 12px;
+    color: var(--ft-muted);
+    opacity: 0.6;
+}
+
+.divisional-allocations-module .ft-empty-table-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ft-text);
+    margin: 0 0 4px;
+}
+
+.divisional-allocations-module .ft-empty-table-desc {
+    font-size: 13px;
+    color: var(--ft-muted);
+    margin: 0;
+}
+
+
+/* ── Overlay & Fullscreen Centering Fix ────────────────────── */
+.ft-overlay,
+div.ft-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(4px);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
+}
+
+.ft-overlay[hidden] {
+    display: none !important;
+}
+
+.ft-overlay .ft-popup {
+    margin: auto !important;
+    max-width: 760px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+.ft-overlay .ft-popup-wide {
+    max-width: 900px !important;
+}
+
+/* ── Modal Footer Layout (Authorizer Left, Buttons Right) ── */
+.ft-popup-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 16px 25px !important;
+    box-sizing: border-box !important;
+    background: var(--ft-bg-page) !important;
+    border-top: 1px solid var(--ft-border) !important;
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+}
+
+.ft-authorizer {
+    margin-right: auto !important;
+    text-align: left !important;
+    font-size: 13px !important;
+    color: var(--ft-muted) !important;
+    flex: 1 1 auto !important;
+    min-width: 220px !important;
+}
+
+.ft-footer-buttons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* ── Toolbar & Filter Panel Spacing ──────────────────────────── */
+.divisional-allocations-module .dw-toolbar {
+    margin-bottom: 20px;
+}
+
+.divisional-allocations-module .dw-filter-panel {
+    margin-bottom: 20px;
+}
+
+.divisional-allocations-module .dw-button--primary,
+.dashboard .divisional-allocations-module .dw-button--primary {
+    color: #ffffff !important;
+}
+
+.divisional-allocations-module .dw-button--primary svg,
+.dashboard .divisional-allocations-module .dw-button--primary svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+}
+
+/* ── Top Actions Row (Above Cards, Right-Aligned) ────────────── */
+.divisional-allocations-module .ft-top-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* ── Account Modal Header Typography (Reduced to Match Other Windows) ── */
+.ft-popup-account .ft-popup-header {
+    padding: 18px 24px !important;
+}
+
+.ft-popup-account .ft-popup-header h1,
+#accModalTitle,
+.ft-popup-account .ft-popup-title h1 {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: var(--ft-text, #1e293b) !important;
+    letter-spacing: -0.2px !important;
+    line-height: 1.3 !important;
+    margin: 0 0 3px 0 !important;
+}
+
+.ft-popup-account .ft-popup-header p,
+#accModalDesc,
+.ft-popup-account .ft-popup-title p {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: var(--ft-muted, #64748b) !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+}

@@ -57,42 +57,20 @@ class Divisionaltransactions extends Controller {
 
     public function index(): void {
         $this->requireTreasurer();
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
-        $model = $this->model('DivisionalLedgerModel');
-        $division = $model->getDivision((int) $_SESSION['division_id']);
-        $ledger = $model->ensureDivisionLedger((int) $_SESSION['division_id']);
-        if (!$division || !$ledger) {
-            http_response_code(500);
-            exit('The division finance profile could not be loaded.');
-        }
-
-        $this->view('divisionaltransactions/index', [
-            'division' => $division,
-            'summary' => $model->getSummary((int) $ledger->ledger_id),
-            'transactions' => $model->getEntries((int) $ledger->ledger_id),
-            'categories' => $model->getCategories((int) $ledger->ledger_id),
-            'csrfToken' => $_SESSION['csrf_token'],
-            'flash' => $this->pullFlash(),
-            'userName' => $_SESSION['user_name'] ?? 'Divisional Treasurer',
-            'userRole' => $_SESSION['user_role'],
-            'userEmail' => $_SESSION['user_email'] ?? '',
-        ]);
+        $this->redirect('divisionalledger');
     }
 
     public function create(): void {
         $this->requireTreasurer();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
             $this->setFlash('error', 'The request could not be verified. Please try again.');
-            $this->redirect('divisionaltransactions');
+            $this->redirect('divisionalledger');
         }
 
         $data = $this->validatedEntry();
         if (!$data) {
             $this->setFlash('error', 'Enter a valid type, amount, date, category, and description.');
-            $this->redirect('divisionaltransactions');
+            $this->redirect('divisionalledger');
         }
 
         $attachmentUrl = null;
@@ -111,20 +89,20 @@ class Divisionaltransactions extends Controller {
                 : 'The transaction could not be saved.');
         }
 
-        $this->redirect('divisionaltransactions');
+        $this->redirect('divisionalledger');
     }
 
     public function update($entryId = null): void {
         $this->requireTreasurer();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !$this->verifyCsrf()) {
             $this->setFlash('error', 'The request could not be verified. Please try again.');
-            $this->redirect('divisionaltransactions');
+            $this->redirect('divisionalledger');
         }
 
         $data = $this->validatedEntry();
         if (!$data || (int) $entryId < 1) {
             $this->setFlash('error', 'Enter a valid type, amount, date, category, and description.');
-            $this->redirect('divisionaltransactions');
+            $this->redirect('divisionalledger');
         }
 
         $newAttachment = null;
@@ -159,6 +137,6 @@ class Divisionaltransactions extends Controller {
             $this->setFlash('error', $message);
         }
 
-        $this->redirect('divisionaltransactions');
+        $this->redirect('divisionalledger');
     }
 }

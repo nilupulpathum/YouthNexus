@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../partials/icons.view.php';
 $e = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$money = static fn($value) => 'Rs. ' . number_format((float) $value, 2);
+$money = static fn($value) => 'LKR ' . number_format((float) $value, 2);
 $date = static function ($value): string {
     $timestamp = strtotime((string) $value);
     return $timestamp ? date('d M Y', $timestamp) : 'Not recorded';
@@ -29,10 +29,10 @@ $currentRoute = 'divisionaltreasurer';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-dashboard.css?v=20260927-window-grid'];
 $pageScripts = [ROOT . '/assets/js/divisional-workflows.js'];
 $summaryCards = [
-    ['value' => $money($summary['balance']), 'label' => 'Divisional Balance', 'note' => 'Current ledger balance', 'icon' => 'file', 'tone' => 'blue'],
-    ['value' => $summary['pending_voids'], 'label' => 'Pending Void Approvals', 'note' => 'Club requests awaiting review', 'icon' => 'clock', 'tone' => 'amber'],
-    ['value' => $summary['pending_funds'], 'label' => 'Pending Fund Requests', 'note' => 'Club requests awaiting decision', 'icon' => 'file', 'tone' => 'amber'],
-    ['value' => $summary['attention_clubs'], 'label' => 'Clubs Requiring Attention', 'note' => 'Health risk or open concern', 'icon' => 'info', 'tone' => 'red'],
+    ['value' => $money($summary['balance']), 'label' => 'Divisional Balance', 'badge' => $division->division_name, 'subtitle' => 'Current ledger balance', 'tone' => 'blue'],
+    ['value' => (string) $summary['pending_voids'], 'label' => 'Pending Void Approvals', 'badge' => (int) $summary['pending_voids'] > 0 ? 'Needs Review' : 'Up to Date', 'subtitle' => 'Club requests awaiting review', 'tone' => (int) $summary['pending_voids'] > 0 ? 'amber' : 'green'],
+    ['value' => (string) $summary['pending_funds'], 'label' => 'Pending Fund Requests', 'badge' => (int) $summary['pending_funds'] > 0 ? 'Needs Action' : 'All Clear', 'subtitle' => 'Club requests awaiting decision', 'tone' => (int) $summary['pending_funds'] > 0 ? 'amber' : 'green'],
+    ['value' => (string) $summary['attention_clubs'], 'label' => 'Clubs Requiring Attention', 'badge' => (int) $summary['attention_clubs'] > 0 ? 'Needs Attention' : 'All Clear', 'subtitle' => 'Health risk or open concern', 'tone' => (int) $summary['attention_clubs'] > 0 ? 'red' : 'green'],
 ];
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>

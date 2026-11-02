@@ -9,6 +9,7 @@
   var quickType = document.querySelector('[data-ledger-quick-type]');
   var status = document.querySelector('[data-filter-status]');
   var reconciliation = document.querySelector('[data-filter-reconciliation]');
+  var category = document.querySelector('[data-filter-category]');
   var receipt = document.querySelector('[data-filter-receipt]');
   var dateFrom = document.querySelector('[data-filter-date-from]');
   var dateTo = document.querySelector('[data-filter-date-to]');
@@ -24,6 +25,7 @@
     var typeValue = valueOf(quickType);
     var statusValue = valueOf(status);
     var reconciliationValue = valueOf(reconciliation);
+    var categoryValue = valueOf(category);
     var receiptValue = valueOf(receipt);
     var fromValue = dateFrom ? dateFrom.value : '';
     var toValue = dateTo ? dateTo.value : '';
@@ -34,6 +36,7 @@
         && (!typeValue || row.dataset.type === typeValue)
         && (!statusValue || row.dataset.status === statusValue)
         && (!reconciliationValue || row.dataset.reconciled === reconciliationValue)
+        && (!categoryValue || row.dataset.category === categoryValue)
         && (!receiptValue || row.dataset.receipt === receiptValue)
         && (!fromValue || row.dataset.date >= fromValue)
         && (!toValue || row.dataset.date <= toValue);
@@ -50,7 +53,7 @@
   });
   document.querySelector('[data-filter-apply]')?.addEventListener('click', applyFilters);
   document.querySelector('[data-filter-reset]')?.addEventListener('click', function () {
-    [search, quickType, status, reconciliation, receipt, dateFrom, dateTo].forEach(function (control) {
+    [search, quickType, status, reconciliation, category, receipt, dateFrom, dateTo].forEach(function (control) {
       if (control) control.value = '';
     });
     applyFilters();
@@ -81,16 +84,37 @@
     });
   });
 
-  var createForm = document.querySelector('[data-ledger-create-form]');
-  if (createForm) {
-    createForm.addEventListener('submit', function (event) {
-      var amount = Number(createForm.elements.amount.value);
+  var editForm = document.querySelector('[data-edit-transaction-form]');
+  document.querySelectorAll('[data-edit-transaction]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      if (!editForm) return;
+      var row = button.closest('[data-ledger-row]');
+      editForm.action = editForm.dataset.updateBase + row.dataset.entryId;
+      editForm.elements.type.value = row.dataset.typeLabel;
+      editForm.elements.amount.value = row.dataset.amount;
+      editForm.elements.category.value = row.dataset.categoryLabel;
+      editForm.elements.date.value = row.dataset.date;
+      editForm.elements.description.value = row.dataset.description;
+      editForm.elements.receipt.value = '';
+      if (editForm.elements.remove_receipt) {
+        editForm.elements.remove_receipt.checked = false;
+      }
+      var fileLabel = document.querySelector('[data-file-name-for="edit-transaction-receipt"]');
+      if (fileLabel) fileLabel.textContent = 'Choose a PDF, JPG, or PNG receipt';
+      var removeRow = editForm.querySelector('[data-remove-receipt-row]');
+      if (removeRow) removeRow.hidden = row.dataset.receipt !== 'attached';
+    });
+  });
+
+  document.querySelectorAll('[data-transaction-form], [data-edit-transaction-form], [data-ledger-create-form]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      var amount = Number(form.elements.amount.value);
       if (!Number.isFinite(amount) || amount <= 0) {
         event.preventDefault();
-        createForm.elements.amount.focus();
+        form.elements.amount.focus();
       }
     });
-  }
+  });
 
   applyFilters();
 })();
