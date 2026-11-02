@@ -99,9 +99,11 @@ try {
         $pdo->exec("ALTER TABLE `FundAllocation`
                     ADD COLUMN `recipient_bank_account_id` INT NULL
                     AFTER `source_bank_account_id`,
-                    ADD CONSTRAINT `fk_fundallocation_recipient_bank`
-                    FOREIGN KEY (`recipient_bank_account_id`)
-                    REFERENCES `BankAccount`(`bank_account_id`)");
+                    ADD INDEX `idx_recipient_bank` (`recipient_bank_account_id`),
+                    ADD CONSTRAINT `fk_fund_alloc_recipient_ba`
+                        FOREIGN KEY (`recipient_bank_account_id`)
+                        REFERENCES `BankAccount`(`bank_account_id`)
+                        ON DELETE SET NULL");
         echo "Added `recipient_bank_account_id` column to FundAllocation.\n";
     } else {
         echo "FundAllocation.recipient_bank_account_id already present, skipping.\n";
