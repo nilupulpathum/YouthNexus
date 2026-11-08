@@ -448,6 +448,51 @@ class FundTransferModel extends Model {
     }
 
     /**
+     * Zones that do NOT own any zonal bank account (any status).
+     * Powers the "Target Zonal Office" dropdown of the Register form:
+     * a zone that already has an account must not be selectable again.
+     *
+     * @return array
+     */
+    public function getZonesWithoutBankAccount() {
+        return $this->resultSet(
+            "SELECT z.zonal_id, z.zonal_name, z.province, z.hub_name
+             FROM Zone z
+             WHERE NOT EXISTS (
+                 SELECT 1
+                 FROM BankAccount ba
+                 WHERE ba.owner_level = 'Zonal'
+                   AND ba.owner_id = z.zonal_id
+             )
+             ORDER BY z.zonal_name ASC"
+        );
+    }
+
+    /**
+     * True when the zone already owns a bank account row (Active or Inactive).
+     *
+     * @param  int      $zoneId
+     * @param  int|null $excludeAccountId  Account to ignore — the record being
+     *                                     edited must not count as its own duplicate.
+     * @return bool
+     */
+    public function zoneHasBankAccount($zoneId, $excludeAccountId = null) {
+        $sql = "SELECT bank_account_id
+                FROM BankAccount
+                WHERE owner_level = 'Zonal'
+                  AND owner_id = ?";
+        $params = [(int)$zoneId];
+
+        if (!empty($excludeAccountId)) {
+            $sql .= " AND bank_account_id <> ?";
+            $params[] = (int)$excludeAccountId;
+        }
+
+        $sql .= " LIMIT 1";
+        return (bool)$this->single($sql, $params);
+    }
+
+    /**
      * Fetch active national disbursement bank accounts.
      *
      * @return array

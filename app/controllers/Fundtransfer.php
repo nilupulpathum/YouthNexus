@@ -431,7 +431,8 @@ class Fundtransfer extends Controller {
 
         $model    = $this->model('FundTransferModel');
         $accounts = $model->getAllZonalBankAccounts();
-        $zones    = $model->getAllZones();
+        $zones    = $model->getAllZones();                       // kept: footer "across N zones" count
+        $availableZones = $model->getZonesWithoutBankAccount();  // register dropdown: only account-less zones
 
         $this->view('fundtransfer/accounts', [
             'title'           => 'Manage Zonal Bank Accounts — YouthNexus',
@@ -443,6 +444,7 @@ class Fundtransfer extends Controller {
             'userDesignation' => 'Div. Secretary',
             'accounts'        => $accounts,
             'zones'           => $zones,
+            'availableZones'  => $availableZones,
             'csrf_token'      => $_SESSION['csrf_token'],
             'flashSuccess'    => $_SESSION['flash_success'] ?? null,
             'flashError'      => $_SESSION['flash_error'] ?? null,
@@ -531,6 +533,13 @@ class Fundtransfer extends Controller {
         if (empty($accountNumber)) $errors['account_number'] = 'Account number is required.';
         if (empty($accountLabel)) $errors['account_label'] = 'Account label / beneficiary title is required.';
 
+        // One zone may own exactly one bank account
+        if ($zoneId && !isset($errors['zone_id']) && $model->zoneHasBankAccount($zoneId)) {
+            $errors['zone_id'] = 'This zonal office already has a registered bank account. '
+                . 'One zone can only have one account — edit or reactivate the existing '
+                . 'account from the table instead of registering a new one.';
+        }
+
         if (!empty($errors)) {
             if ($isJson) {
                 header('Content-Type: application/json');
@@ -543,13 +552,34 @@ class Fundtransfer extends Controller {
             $this->redirect('fundtransfer/accounts');
         }
 
-        $newId = $model->createZonalBankAccount([
-            'zone_id'             => $zoneId,
-            'bank_name'           => $bankName,
-            'branch_name'         => $branchName,
-            'account_number'      => $accountNumber,
-            'account_label'       => $accountLabel,
-        ]);
+        try {
+            $newId = $model->createZonalBankAccount([
+                'zone_id'             => $zoneId,
+                'bank_name'           => $bankName,
+                'branch_name'         => $branchName,
+                'account_number'      => $accountNumber,
+                'account_label'       => $accountLabel,
+            ]);
+        } catch (PDOException $e) {
+            // 23000 = integrity constraint violation: the unique index
+            // uq_bankaccount_zonal_owner rejected a second row for this zone
+            // (race condition — two concurrent submits for the same zone).
+            if ($e->getCode() === '23000') {
+                $dupError = 'This zonal office already has a registered bank account. '
+                    . 'One zone can only have one account — edit or reactivate the '
+                    . 'existing account instead.';
+                if ($isJson) {
+                    header('Content-Type: application/json');
+                    http_response_code(422);
+                    echo json_encode(['success' => false, 'errors' => ['zone_id' => $dupError]]);
+                    exit();
+                }
+                $_SESSION['flash_errors'] = ['zone_id' => $dupError];
+                $_SESSION['flash_old']    = $_POST;
+                $this->redirect('fundtransfer/accounts');
+            }
+            throw $e; // any other DB error keeps its normal stack trace
+        }
 
         $_SESSION['flash_success'] = "Zonal receiving account for {$bankName} registered successfully.";
 
@@ -617,6 +647,13 @@ class Fundtransfer extends Controller {
         if (empty($branchName)) $errors['branch_name'] = 'Branch name is required.';
         if (empty($accountNumber)) $errors['account_number'] = 'Account number is required.';
         if (empty($accountLabel)) $errors['account_label'] = 'Account label is required.';
+
+        // Keep one-zone-one-account when re-pointing an account;
+        // exclude the record being edited so an unchanged save never trips the check.
+        if ($zoneId && !isset($errors['zone_id']) && $model->zoneHasBankAccount($zoneId, $id)) {
+            $errors['zone_id'] = 'The selected zonal office is already linked to a '
+                . 'different bank account. One zone can only have one account.';
+        }
 
         if (!empty($errors)) {
             if ($isJson) {

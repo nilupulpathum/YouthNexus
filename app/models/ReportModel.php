@@ -252,6 +252,44 @@ class ReportModel extends Model {
     }
 
     // ---------------------------------------------------------------
+    // SCOPE TARGETS — options for the create-form target picker
+    // ---------------------------------------------------------------
+
+    /** Zone/division/club options for the scope target picker. */
+    public function getScopeTargets(): array {
+        try {
+            return [
+                'zones'     => $this->resultSet(
+                    "SELECT zonal_id AS id, zonal_name AS name FROM Zone ORDER BY zonal_name"
+                ),
+                'divisions' => $this->resultSet(
+                    "SELECT division_id AS id, division_name AS name, zonal_id FROM Division ORDER BY division_name"
+                ),
+                'clubs'     => $this->resultSet(
+                    "SELECT club_id AS id, club_name AS name, division_id FROM Club WHERE status = 'Active' ORDER BY club_name"
+                ),
+            ];
+        } catch (Exception $e) {
+            return ['zones' => [], 'divisions' => [], 'clubs' => []];
+        }
+    }
+
+    /** Validate a posted scope target against the chosen level. */
+    public function validateScopeTarget(string $level, int $id): bool {
+        $map = [
+            'Zonal'      => "SELECT zonal_id FROM Zone WHERE zonal_id = ?",
+            'Divisional' => "SELECT division_id FROM Division WHERE division_id = ?",
+            'Club'       => "SELECT club_id FROM Club WHERE club_id = ?",
+        ];
+        if (!isset($map[$level])) return false;
+        try {
+            return (bool)$this->single($map[$level], [$id]);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    // ---------------------------------------------------------------
     // STATISTICS FOR PREVIEW (live data aggregation)
     // ---------------------------------------------------------------
 
@@ -287,8 +325,10 @@ class ReportModel extends Model {
                 return $this->buildClubHealthPreview($typeName, $scopeLevel, $scopeId, $dateStart, $dateEnd);
             case 'User Interactions':
                 return $this->buildUserInteractionsPreview($typeName, $scopeLevel, $scopeId, $dateStart, $dateEnd);
-            default:
-                return $this->buildFinancialPreview();
+            case 'Financial':
+                return $this->buildFinancialPreview($typeName, $dateStart, $dateEnd);
+            default: // legacy rows without a mapped category — statutory rollup
+                return $this->buildFinancialPreview($typeName, $dateStart, $dateEnd);
         }
     }
 
@@ -311,11 +351,14 @@ class ReportModel extends Model {
     private function buildAttendancePreview(string $scopeLevel, ?int $scopeId, string $start, string $end): array {
         $clubWhere = '';
         $params    = [$start, $end];
-        if ($scopeLevel === 'Zone' && $scopeId) {
-            $clubWhere = ' AND d.zonal_id = ?';
+        if ($scopeLevel === 'Zonal' && $scopeId) {
+            $clubWhere = ' AND z.zonal_id = ?';
             $params[]  = $scopeId;
-        } elseif ($scopeLevel === 'Division' && $scopeId) {
-            $clubWhere = ' AND c.division_id = ?';
+        } elseif ($scopeLevel === 'Divisional' && $scopeId) {
+            $clubWhere = ' AND d.division_id = ?';
+            $params[]  = $scopeId;
+        } elseif ($scopeLevel === 'Club' && $scopeId) {
+            $clubWhere = ' AND e.organizer_club_id = ?';
             $params[]  = $scopeId;
         }
 
@@ -326,10 +369,10 @@ class ReportModel extends Model {
                     COUNT(a.attendance_id) AS marked
              FROM event e
              JOIN club c          ON c.club_id = e.organizer_club_id
-             LEFT JOIN division d ON d.division_id = c.division_id
-             LEFT JOIN zone z     ON z.zonal_id = d.zonal_id
+             LEFT JOIN division d ON d.division_id = COALESCE(e.organizer_division_id, c.division_id)
+             LEFT JOIN zone z     ON z.zonal_id = COALESCE(e.organizer_zonal_id, d.zonal_id)
              JOIN attendance a    ON a.event_id = e.event_id
-             WHERE e.start_datetime BETWEEN ? AND ? {$clubWhere}
+             WHERE DATE(e.start_datetime) BETWEEN ? AND ? {$clubWhere}
              GROUP BY c.club_id, c.club_name, d.division_name, z.zonal_name
              ORDER BY c.club_name",
             $params
@@ -395,11 +438,14 @@ class ReportModel extends Model {
     private function buildEventsPreview(string $typeName, string $scopeLevel, ?int $scopeId, string $start, string $end): array {
         $clubWhere = '';
         $params    = [$start, $end];
-        if ($scopeLevel === 'Zone' && $scopeId) {
-            $clubWhere = ' AND d.zonal_id = ?';
+        if ($scopeLevel === 'Zonal' && $scopeId) {
+            $clubWhere = ' AND z.zonal_id = ?';
             $params[]  = $scopeId;
-        } elseif ($scopeLevel === 'Division' && $scopeId) {
-            $clubWhere = ' AND c.division_id = ?';
+        } elseif ($scopeLevel === 'Divisional' && $scopeId) {
+            $clubWhere = ' AND d.division_id = ?';
+            $params[]  = $scopeId;
+        } elseif ($scopeLevel === 'Club' && $scopeId) {
+            $clubWhere = ' AND e.organizer_club_id = ?';
             $params[]  = $scopeId;
         }
 
@@ -410,9 +456,10 @@ class ReportModel extends Model {
                         COUNT(a.attendance_id) AS marked
                  FROM event e
                  LEFT JOIN club c       ON c.club_id = e.organizer_club_id
-                 LEFT JOIN division d   ON d.division_id = c.division_id
+                 LEFT JOIN division d   ON d.division_id = COALESCE(e.organizer_division_id, c.division_id)
+                 LEFT JOIN zone z       ON z.zonal_id = COALESCE(e.organizer_zonal_id, d.zonal_id)
                  LEFT JOIN attendance a ON a.event_id = e.event_id
-                 WHERE e.start_datetime BETWEEN ? AND ? {$clubWhere}
+                 WHERE DATE(e.start_datetime) BETWEEN ? AND ? {$clubWhere}
                  GROUP BY e.event_id, e.title, c.club_name, e.start_datetime
                  ORDER BY e.start_datetime DESC",
                 $params
@@ -458,8 +505,9 @@ class ReportModel extends Model {
             "SELECT e.status, COUNT(*) AS cnt
              FROM event e
              LEFT JOIN club c       ON c.club_id = e.organizer_club_id
-             LEFT JOIN division d   ON d.division_id = c.division_id
-             WHERE e.start_datetime BETWEEN ? AND ? {$clubWhere}
+             LEFT JOIN division d   ON d.division_id = COALESCE(e.organizer_division_id, c.division_id)
+             LEFT JOIN zone z       ON z.zonal_id = COALESCE(e.organizer_zonal_id, d.zonal_id)
+             WHERE DATE(e.start_datetime) BETWEEN ? AND ? {$clubWhere}
              GROUP BY e.status",
             $params
         );
@@ -476,9 +524,9 @@ class ReportModel extends Model {
                     SUM(e.status = 'Rejected')  AS rejected
              FROM event e
              LEFT JOIN club c       ON c.club_id = e.organizer_club_id
-             LEFT JOIN division d   ON d.division_id = c.division_id
-             LEFT JOIN zone z       ON z.zonal_id = d.zonal_id
-             WHERE e.start_datetime BETWEEN ? AND ? {$clubWhere}
+             LEFT JOIN division d   ON d.division_id = COALESCE(e.organizer_division_id, c.division_id)
+             LEFT JOIN zone z       ON z.zonal_id = COALESCE(e.organizer_zonal_id, d.zonal_id)
+             WHERE DATE(e.start_datetime) BETWEEN ? AND ? {$clubWhere}
              GROUP BY z.zonal_id, z.zonal_name
              ORDER BY z.zonal_name",
             $params
@@ -497,8 +545,9 @@ class ReportModel extends Model {
             "SELECT e.title, e.status, e.start_datetime, c.club_name
              FROM event e
              LEFT JOIN club c       ON c.club_id = e.organizer_club_id
-             LEFT JOIN division d   ON d.division_id = c.division_id
-             WHERE e.start_datetime BETWEEN ? AND ? {$clubWhere}
+             LEFT JOIN division d   ON d.division_id = COALESCE(e.organizer_division_id, c.division_id)
+             LEFT JOIN zone z       ON z.zonal_id = COALESCE(e.organizer_zonal_id, d.zonal_id)
+             WHERE DATE(e.start_datetime) BETWEEN ? AND ? {$clubWhere}
              ORDER BY e.start_datetime DESC",
             $params
         );
@@ -576,7 +625,7 @@ class ReportModel extends Model {
             ];
         }
 
-        if ($typeName === 'Request Status Summary') {
+        if (in_array($typeName, ['Request Status Summary', 'Asset Transfer Report'], true)) {
             $rows0 = $this->resultSet(
                 "SELECT t.status, COUNT(*) AS transfers, SUM(t.quantity) AS units
                  FROM assettransfer t GROUP BY t.status"
@@ -690,25 +739,28 @@ class ReportModel extends Model {
     private function buildClubHealthPreview(string $typeName, string $scopeLevel, ?int $scopeId, string $start, string $end): array {
         $clubWhere = '';
         $params    = [];
-        if ($scopeLevel === 'Zone' && $scopeId) {
+        if ($scopeLevel === 'Zonal' && $scopeId) {
             $clubWhere = ' AND d.zonal_id = ?';
             $params[]  = $scopeId;
-        } elseif ($scopeLevel === 'Division' && $scopeId) {
+        } elseif ($scopeLevel === 'Divisional' && $scopeId) {
             $clubWhere = ' AND c.division_id = ?';
+            $params[]  = $scopeId;
+        } elseif ($scopeLevel === 'Club' && $scopeId) {
+            $clubWhere = ' AND c.club_id = ?';
             $params[]  = $scopeId;
         }
 
         if ($typeName === 'Health Score Trend') {
             $trend = $this->resultSet(
-                "SELECT DATE_FORMAT(chs.calculated_at, '%b %Y') AS month,
-                        ROUND(AVG(chs.total_score), 1) AS avg_score,
-                        SUM(chs.status = 'Green') AS green,
-                        SUM(chs.status = 'Red')   AS red,
+                "SELECT DATE_FORMAT(chs.calculated_date, '%b %Y') AS month,
+                        ROUND(AVG(chs.overall_score), 1) AS avg_score,
+                        SUM(chs.health_status = 'Green') AS green,
+                        SUM(chs.health_status = 'Red')   AS red,
                         COUNT(*) AS snapshots
                  FROM clubhealthscore chs
-                 WHERE chs.calculated_at BETWEEN ? AND ?
-                 GROUP BY DATE_FORMAT(chs.calculated_at, '%Y-%m'), DATE_FORMAT(chs.calculated_at, '%b %Y')
-                 ORDER BY MIN(chs.calculated_at)",
+                 WHERE chs.calculated_date BETWEEN ? AND ?
+                 GROUP BY DATE_FORMAT(chs.calculated_date, '%Y-%m'), DATE_FORMAT(chs.calculated_date, '%b %Y')
+                 ORDER BY MIN(chs.calculated_date)",
                 [$start, $end]
             );
             $trendRows = [];
@@ -884,10 +936,10 @@ class ReportModel extends Model {
             $members = $this->resultSet(
                 "SELECT CONCAT(u.first_name, ' ', u.last_name) AS member,
                         c.club_name, d.division_name, z.zonal_name,
-                        SUM(v.hours) AS hours, COUNT(v.log_id) AS logs
+                        SUM(v.hours) AS hours, COUNT(v.history_id) AS logs
                  FROM volunteerhistory v
-                 JOIN user u           ON u.user_id = v.member_id
-                 LEFT JOIN club c      ON c.club_id = u.club_id
+                 JOIN user u           ON u.user_id = v.user_id
+                 LEFT JOIN club c      ON c.club_id = COALESCE(v.club_id, u.club_id)
                  LEFT JOIN division d  ON d.division_id = c.division_id
                  LEFT JOIN zone z      ON z.zonal_id = d.zonal_id
                  WHERE v.status = 'Verified' AND v.date BETWEEN ? AND ?
@@ -984,42 +1036,388 @@ class ReportModel extends Model {
         ];
     }
 
-    /** Financial category (and legacy reports without a type) — statutory rollup. */
-    private function buildFinancialPreview(): array {
+    /** Financial category — one builder per ReportTypeCatalog type. */
+    private function buildFinancialPreview(string $typeName, string $start, string $end): array {
+        switch ($typeName) {
+            case 'Income Summary':
+                return $this->buildLedgerEntriesSummary('Income', $start, $end);
+            case 'Expense Summary':
+                return $this->buildLedgerEntriesSummary('Expense', $start, $end);
+            case 'Fund Allocation vs Utilisation':
+            case 'Club Fund Allocation Report': // legacy catalog alias
+                return $this->buildFundAllocationVsUtilisation($start, $end);
+            case 'Void Rate Report':
+            case 'Void Request Activity': // legacy catalog alias
+                return $this->buildVoidRateReport($start, $end);
+            default: // 'National Consolidated Financial Rollup' (+ legacy 'Divisional Financial Summary' / 'Club Audit Compliance Report')
+                return $this->buildNationalFinancialRollup($start, $end);
+        }
+    }
+
+    /** Compliance band for void rates: <10% healthy, <25% review, else critical. */
+    private function voidBand(float $rate): string {
+        if ($rate < 10) return 'Healthy';
+        if ($rate < 25) return 'Review';
+        return 'Critical';
+    }
+
+    /** Income Summary / Expense Summary — approved LedgerEntry amounts grouped by category. */
+    private function buildLedgerEntriesSummary(string $type, string $start, string $end): array {
+        $isIncome = $type === 'Income';
+        $rows = $this->resultSet(
+            "SELECT COALESCE(NULLIF(le.category, ''), 'Uncategorised') AS src,
+                    COUNT(*) AS entries,
+                    SUM(le.amount) AS total
+             FROM LedgerEntry le
+             WHERE le.type = ?
+               AND le.status = 'Approved'
+               AND le.date BETWEEN ? AND ?
+             GROUP BY src
+             ORDER BY total DESC",
+            [$type, $start, $end]
+        );
+
+        $grand = 0.0; $entries = 0; $dataRows = [];
+        foreach ($rows as $r) {
+            $grand    += (float)$r->total;
+            $entries  += (int)$r->entries;
+            $dataRows[] = ['cells' => [
+                $r->src, (int)$r->entries, number_format((float)$r->total, 2),
+            ], 'status' => 'Verified'];
+        }
+
+        $detailRows = [];
+        foreach ($this->resultSet(
+            "SELECT le.description, le.date,
+                    COALESCE(NULLIF(le.category, ''), 'Uncategorised') AS category,
+                    le.amount, le.status
+             FROM LedgerEntry le
+             WHERE le.type = ?
+               AND le.status = 'Approved'
+               AND le.date BETWEEN ? AND ?
+             ORDER BY le.date DESC, le.entry_id DESC
+             LIMIT 25",
+            [$type, $start, $end]
+        ) as $d) {
+            $detailRows[] = ['cells' => [
+                $d->description !== '' ? $d->description : '—',
+                date('d M Y', strtotime($d->date)),
+                $d->category,
+                number_format((float)$d->amount, 2),
+            ], 'status' => $d->status];
+        }
+
+        // Overall totals for the KPI cards (approved entries of the selected type only).
+        $totals = $this->single(
+            "SELECT COALESCE(SUM(le.amount), 0) AS grand, COUNT(*) AS cnt
+             FROM LedgerEntry le
+             WHERE le.type = ? AND le.status = 'Approved' AND le.date BETWEEN ? AND ?",
+            [$type, $start, $end]
+        );
+
+        $top = isset($rows[0]) ? $rows[0] : null;
+        $typeLabel  = $isIncome ? 'INCOME' : 'EXPENDITURE';
+        $sourceLabel = $isIncome ? 'Income Source' : 'Expense Category';
+
         return [
             'kpis' => [
-                ['label'=>'TOTAL ALLOCATED FUNDS', 'value'=>'LKR 84.5M', 'note'=>'+12% vs Last Year',         'tone'=>'green'],
-                ['label'=>'TOTAL EXPENDITURE',     'value'=>'LKR 61.2M', 'note'=>'72.4% Spend Ratio',         'tone'=>'blue'],
-                ['label'=>'SUB-LEDGER VOID RATE',  'value'=>'2.1%',      'note'=>'Healthy compliance (<10%)',  'tone'=>'green'],
+                ['label' => "TOTAL {$typeLabel}", 'value' => 'LKR ' . number_format((float)$totals->grand, 2),
+                 'note' => "Approved {$typeLabel} entries in range", 'tone' => 'green'],
+                ['label' => "{$typeLabel} SOURCES", 'value' => (string)count($rows),
+                 'note' => 'Distinct ledger categories', 'tone' => 'blue'],
+                ['label' => 'APPROVED ENTRIES', 'value' => (string)(int)$totals->cnt,
+                 'note' => 'Ledger entries counted', 'tone' => 'blue'],
+                ['label' => 'TOP SOURCE SHARE',
+                 'value' => ($grand > 0 && $top)
+                     ? round((float)$top->total / $grand * 100, 1) . '%' : '0%',
+                 'note' => $top ? $top->src : "No {$typeLabel} recorded", 'tone' => 'green'],
             ],
             'summary' => [
-                'headers' => ['Province / Zone', 'Allocated (LKR)', 'Disbursed (LKR)', 'Expenses Logged', 'Void Count', 'Status'],
-                'rows' => [
-                    ['cells' => ['Western Province (Hub 01)',  '24,500,000', '24,500,000', '19,850,000', 4], 'status' => 'Reconciled'],
-                    ['cells' => ['Central Province (Hub 02)',  '18,200,000', '18,200,000', '14,100,000', 2], 'status' => 'Reconciled'],
-                    ['cells' => ['Southern Province (Hub 03)', '16,000,000', '16,000,000', '12,450,000', 1], 'status' => 'Reconciled'],
-                    ['cells' => ['Northern Province (Hub 04)', '14,800,000', '14,800,000', '9,800,000',  3], 'status' => 'Reconciled'],
-                    ['cells' => ['Eastern Province (Hub 05)',  '11,000,000', '11,000,000', '5,000,000',  0], 'status' => 'Reconciled'],
-                ],
+                'headers' => [$sourceLabel, 'Entries', 'Amount (LKR)', 'Status'],
+                'rows'    => $dataRows,
             ],
             'raw' => [
-                'headers' => ['Division', 'Zone (Hub)', 'Allocated (LKR)', 'Disbursed (LKR)', 'Expenses', 'Voids', 'Submitted By', 'Status'],
-                'rows' => [
-                    ['cells' => ['Colombo Division',     'Western Province (Hub 01)',  '14,200,000','14,200,000','11,600,000', 2, 'K. Perera'],       'status' => 'Verified'],
-                    ['cells' => ['Gampaha Division',     'Western Province (Hub 01)',  '10,300,000','10,300,000','8,250,000',  2, 'S. Silva'],        'status' => 'Verified'],
-                    ['cells' => ['Kandy Division',       'Central Province (Hub 02)',  '11,500,000','11,500,000','8,900,000',  1, 'M. Jayawardena'],  'status' => 'Verified'],
-                    ['cells' => ['Matale Division',      'Central Province (Hub 02)',  '6,700,000', '6,700,000', '5,200,000',  1, 'R. Bandara'],      'status' => 'Verified'],
-                    ['cells' => ['Galle Division',       'Southern Province (Hub 03)', '9,400,000', '9,400,000', '7,300,000',  1, 'N. Wickramasinghe'], 'status' => 'Verified'],
-                    ['cells' => ['Matara Division',      'Southern Province (Hub 03)', '6,600,000', '6,600,000', '5,150,000',  0, 'T. Fernando'],     'status' => 'Verified'],
-                    ['cells' => ['Jaffna Division',      'Northern Province (Hub 04)', '9,200,000', '9,200,000', '6,100,000',  2, 'A. Rajasingham'],  'status' => 'Verified'],
-                    ['cells' => ['Vavuniya Division',    'Northern Province (Hub 04)', '5,600,000', '5,600,000', '3,700,000',  1, 'P. Anandarajah'],  'status' => 'Verified'],
-                    ['cells' => ['Batticaloa Division',  'Eastern Province (Hub 05)',  '6,400,000', '6,400,000', '2,900,000',  0, 'S. Chandran'],     'status' => 'Verified'],
-                    ['cells' => ['Trincomalee Division', 'Eastern Province (Hub 05)',  '4,600,000', '4,600,000', '2,100,000',  0, 'L. Iqbal'],        'status' => 'Verified'],
-                ],
+                'headers' => ['Entry', 'Date', 'Category', 'Amount (LKR)', 'Status'],
+                'rows'    => $detailRows,
+            ],
+            'syncLabel' => 'Ledgers Synced',
+            'noteTitle' => $isIncome ? 'Income Ledger Verification:' : 'Expense Ledger Verification:',
+            'note'      => "Approved {$type} ledger entries aggregated by category for the selected range. Pending, Rejected and Voided entries are excluded.",
+        ];
+    }
+
+    /** Fund Allocation vs Utilisation — allocations mirrored against utilisation via allocation_id. */
+    private function buildFundAllocationVsUtilisation(string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT COALESCE(
+                        CASE fa.to_level
+                            WHEN 'Zonal'     THEN z.zonal_name
+                            WHEN 'Divisional' THEN d.division_name
+                            WHEN 'Club'      THEN c.club_name
+                        END,
+                        CONCAT(UCASE(fa.to_level), ' #', fa.to_id)) AS dest,
+                    COALESCE(SUM(fa.amount), 0) AS allocated,
+                    COALESCE(SUM(CASE WHEN le.type = 'Expense' AND le.status = 'Approved'
+                                      THEN le.amount ELSE 0 END), 0) AS utilised
+             FROM FundAllocation fa
+             LEFT JOIN Zone     z ON fa.to_level = 'Zonal'      AND z.zonal_id     = fa.to_id
+             LEFT JOIN division d ON fa.to_level = 'Divisional' AND d.division_id  = fa.to_id
+             LEFT JOIN club     c ON fa.to_level = 'Club'       AND c.club_id      = fa.to_id
+             LEFT JOIN LedgerEntry le ON le.allocation_id = fa.allocation_id
+             WHERE fa.transfer_date BETWEEN ? AND ?
+             GROUP BY dest
+             ORDER BY allocated DESC",
+            [$start, $end]
+        );
+
+        $grandAlloc = 0.0; $grandUtil = 0.0; $dataRows = [];
+        foreach ($rows as $r) {
+            $grandAlloc += (float)$r->allocated;
+            $grandUtil  += (float)$r->utilised;
+            $rate = (float)$r->allocated > 0 ? (float)$r->utilised / (float)$r->allocated * 100 : 0.0;
+            $dataRows[] = ['cells' => [
+                $r->dest,
+                number_format((float)$r->allocated, 2),
+                number_format((float)$r->utilised, 2),
+                round($rate, 1) . '%',
+            ], 'status' => $this->rateBand($rate)];
+        }
+
+        $transferRows = [];
+        foreach ($this->resultSet(
+            "SELECT fa.reference_no, fa.transfer_date, fa.amount, fa.status, fa.purpose_description,
+                    COALESCE(
+                        CASE fa.to_level
+                            WHEN 'Zonal'     THEN z.zonal_name
+                            WHEN 'Divisional' THEN d.division_name
+                            WHEN 'Club'      THEN c.club_name
+                        END,
+                        CONCAT(UCASE(fa.to_level), ' #', fa.to_id)) AS dest
+             FROM FundAllocation fa
+             LEFT JOIN Zone     z ON fa.to_level = 'Zonal'      AND z.zonal_id     = fa.to_id
+             LEFT JOIN division d ON fa.to_level = 'Divisional' AND d.division_id  = fa.to_id
+             LEFT JOIN club     c ON fa.to_level = 'Club'       AND c.club_id      = fa.to_id
+             WHERE fa.transfer_date BETWEEN ? AND ?
+             ORDER BY fa.transfer_date DESC, fa.allocation_id DESC
+             LIMIT 25",
+            [$start, $end]
+        ) as $t) {
+            $transferRows[] = ['cells' => [
+                $t->reference_no,
+                $t->dest,
+                date('d M Y', strtotime($t->transfer_date)),
+                number_format((float)$t->amount, 2),
+                $t->purpose_description,
+            ], 'status' => $t->status === 'Completed' ? 'Healthy' : ($t->status === 'Failed' ? 'Critical' : 'Review')];
+        }
+
+        $rate = $grandAlloc > 0 ? $grandUtil / $grandAlloc * 100 : 0.0;
+
+        return [
+            'kpis' => [
+                ['label' => 'TOTAL ALLOCATED', 'value' => 'LKR ' . number_format($grandAlloc, 2),
+                 'note' => 'Completed allocations in range', 'tone' => 'blue'],
+                ['label' => 'TOTAL UTILISED', 'value' => 'LKR ' . number_format($grandUtil, 2),
+                 'note' => 'Approved expenses tied to allocations', 'tone' => 'blue'],
+                ['label' => 'UTILISATION RATE', 'value' => round($rate, 1) . '%',
+                 'note' => 'Utilised vs allocated overall', 'tone' => 'green'],
+                ['label' => 'UNUTILISED BALANCE', 'value' => 'LKR ' . number_format(max($grandAlloc - $grandUtil, 0), 2),
+                 'note' => 'Funds not yet expended', 'tone' => 'green'],
+            ],
+            'summary' => [
+                'headers' => ['Zone / Division', 'Allocated (LKR)', 'Utilised (LKR)', 'Utilisation %', 'Status'],
+                'rows'    => $dataRows,
+            ],
+            'raw' => [
+                'headers' => ['Reference', 'Destination', 'Date', 'Amount (LKR)', 'Purpose', 'Status'],
+                'rows'    => $transferRows,
+            ],
+            'syncLabel' => 'Zone Ledger Synced',
+            'noteTitle' => 'Utilisation Verification:',
+            'note'      => 'Allocated funds compared against approved expense ledger entries linked by allocation. Only completed allocations in the selected range are counted.',
+        ];
+    }
+
+    /** Void Rate Report — monthly void rate plus the VoidRequest trail. */
+    private function buildVoidRateReport(string $start, string $end): array {
+        $months = $this->resultSet(
+            "SELECT DATE_FORMAT(le.date, '%Y-%m') AS ym,
+                    COUNT(*) AS total_entries,
+                    SUM(CASE WHEN le.status = 'Voided' THEN 1 ELSE 0 END) AS voided
+             FROM LedgerEntry le
+             WHERE le.date BETWEEN ? AND ?
+             GROUP BY ym
+             ORDER BY ym ASC",
+            [$start, $end]
+        );
+
+        $totalEntries = 0; $totalVoided = 0; $dataRows = []; $worstMonth = null; $worstRate = -1;
+        foreach ($months as $m) {
+            $totalEntries += (int)$m->total_entries;
+            $totalVoided  += (int)$m->voided;
+            $rate = (float)$m->total_entries > 0 ? (float)$m->voided / (float)$m->total_entries * 100 : 0.0;
+            if ($rate > $worstRate) { $worstRate = $rate; $worstMonth = $m->ym; }
+            $dataRows[] = ['cells' => [
+                date('M Y', strtotime($m->ym . '-01')),
+                (int)$m->total_entries,
+                (int)$m->voided,
+                round($rate, 1) . '%',
+            ], 'status' => $this->voidBand($rate)];
+        }
+
+        $overallRate = $totalEntries > 0 ? $totalVoided / $totalEntries * 100 : 0.0;
+
+        $openRequests = (int)$this->single(
+            "SELECT COUNT(*) AS c FROM VoidRequest WHERE status = 'Pending'"
+        )->c;
+
+        $trailRows = [];
+        foreach ($this->resultSet(
+            "SELECT vr.void_request_id, vr.reason, vr.status, vr.requested_at,
+                    le.description, le.amount, le.date
+             FROM VoidRequest vr
+             JOIN LedgerEntry le ON le.entry_id = vr.entry_id
+             WHERE vr.requested_at BETWEEN ? AND ?
+             ORDER BY vr.requested_at DESC
+             LIMIT 25",
+            [$start, $end]
+        ) as $vr) {
+            $trailRows[] = ['cells' => [
+                '#' . $vr->void_request_id,
+                $vr->description !== '' ? $vr->description : '—',
+                number_format((float)$vr->amount, 2),
+                date('d M Y', strtotime($vr->date)),
+                $vr->reason,
+                date('d M Y', strtotime($vr->requested_at)),
+            ], 'status' => $vr->status];
+        }
+
+        return [
+            'kpis' => [
+                ['label' => 'OVERALL VOID RATE', 'value' => round($overallRate, 1) . '%',
+                 'note' => $overallRate < 10 ? 'Healthy compliance (<10%)' : 'Above compliance threshold', 'tone' => $overallRate < 10 ? 'green' : 'blue'],
+                ['label' => 'VOIDED ENTRIES', 'value' => (string)$totalVoided,
+                 'note' => "Of {$totalEntries} entries logged", 'tone' => 'blue'],
+                ['label' => 'OPEN VOID REQUESTS', 'value' => (string)$openRequests,
+                 'note' => 'Pending VoidRequest reviews', 'tone' => 'blue'],
+                ['label' => 'WORST MONTH',
+                 'value' => $worstMonth !== null ? round($worstRate, 1) . '%' : '0%',
+                 'note' => $worstMonth !== null ? date('M Y', strtotime($worstMonth . '-01')) : 'No entries in range', 'tone' => 'blue'],
+            ],
+            'summary' => [
+                'headers' => ['Month', 'Entries Logged', 'Voided', 'Void Rate %', 'Status'],
+                'rows'    => $dataRows,
+            ],
+            'raw' => [
+                'headers' => ['Request', 'Ledger Entry', 'Amount (LKR)', 'Entry Date', 'Reason', 'Requested At', 'Status'],
+                'rows'    => $trailRows,
+            ],
+            'syncLabel' => 'Void Trail Synced',
+            'noteTitle' => 'Void Compliance Verification:',
+            'note'      => 'Rate of voided ledger entries against all entries logged per month. A void rate below 10% is considered healthy compliance.',
+        ];
+    }
+
+    /** National Consolidated Financial Rollup — per-zone live rollup (statutory layout). */
+    private function buildNationalFinancialRollup(string $start, string $end): array {
+        $rows = $this->resultSet(
+            "SELECT z.zonal_id, z.zonal_name,
+                    COALESCE(a.total_amount, 0) AS allocated,
+                    COALESCE(f.income_amount, 0) AS income,
+                    COALESCE(f.expense_amount, 0) AS expense,
+                    COALESCE(f.voided_count, 0) AS voided
+             FROM Zone z
+             LEFT JOIN (
+                 SELECT fa.to_id, SUM(fa.amount) AS total_amount
+                 FROM FundAllocation fa
+                 WHERE fa.to_level = 'Zonal' AND fa.status = 'Completed'
+                   AND fa.transfer_date BETWEEN ? AND ?
+                 GROUP BY fa.to_id
+             ) a ON a.to_id = z.zonal_id
+             LEFT JOIN (
+                 SELECT l.owner_id,
+                        SUM(CASE WHEN le.type = 'Income'  AND le.status = 'Approved' THEN le.amount ELSE 0 END) AS income_amount,
+                        SUM(CASE WHEN le.type = 'Expense' AND le.status = 'Approved' THEN le.amount ELSE 0 END) AS expense_amount,
+                        SUM(CASE WHEN le.status = 'Voided' THEN 1 ELSE 0 END) AS voided_count
+                 FROM LedgerEntry le
+                 JOIN Ledger l ON l.ledger_id = le.ledger_id
+                 WHERE l.owner_type = 'Zone' AND le.date BETWEEN ? AND ?
+                 GROUP BY l.owner_id
+             ) f ON f.owner_id = z.zonal_id
+             HAVING allocated > 0 OR income > 0 OR expense > 0
+             ORDER BY allocated DESC",
+            [$start, $end, $start, $end]
+        );
+
+        $grandAlloc = 0.0; $grandIncome = 0.0; $grandExpense = 0.0; $grandVoided = 0;
+        $dataRows = [];
+        foreach ($rows as $r) {
+            $grandAlloc   += (float)$r->allocated;
+            $grandIncome  += (float)$r->income;
+            $grandExpense += (float)$r->expense;
+            $grandVoided  += (int)$r->voided;
+            $net = (float)$r->income - (float)$r->expense;
+            $dataRows[] = ['cells' => [
+                $r->zonal_name,
+                number_format((float)$r->allocated, 2),
+                number_format((float)$r->income, 2),
+                number_format((float)$r->expense, 2),
+                number_format($net, 2),
+            ], 'status' => $net >= 0 ? 'Healthy' : 'Review'];
+        }
+
+        $detailRows = [];
+        foreach ($this->resultSet(
+            "SELECT le.description, le.category, le.type, le.amount, le.status, le.date, z.zonal_name
+             FROM LedgerEntry le
+             JOIN Ledger l ON l.ledger_id = le.ledger_id
+             LEFT JOIN Zone z ON z.zonal_id = l.owner_id AND l.owner_type = 'Zone'
+             WHERE l.owner_type = 'Zone' AND le.date BETWEEN ? AND ?
+             ORDER BY le.date DESC, le.entry_id DESC
+             LIMIT 25",
+            [$start, $end]
+        ) as $d) {
+            $detailRows[] = ['cells' => [
+                $d->zonal_name ?? '—',
+                date('d M Y', strtotime($d->date)),
+                $d->type,
+                $d->description !== '' ? $d->description : '—',
+                number_format((float)$d->amount, 2),
+            ], 'status' => $d->status];
+        }
+
+        $overallVoidRate = $this->single(
+            "SELECT CASE WHEN COUNT(*) = 0 THEN 0
+                    ELSE SUM(CASE WHEN le.status = 'Voided' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) END AS rate
+             FROM LedgerEntry le
+             WHERE le.date BETWEEN ? AND ?",
+            [$start, $end]
+        );
+
+        return [
+            'kpis' => [
+                ['label' => 'TOTAL ALLOCATED FUNDS', 'value' => 'LKR ' . number_format($grandAlloc, 2),
+                 'note' => 'Completed transfers to zones in range', 'tone' => 'green'],
+                ['label' => 'TOTAL INCOME', 'value' => 'LKR ' . number_format($grandIncome, 2),
+                 'note' => 'Approved income across zonal ledgers', 'tone' => 'blue'],
+                ['label' => 'TOTAL EXPENDITURE', 'value' => 'LKR ' . number_format($grandExpense, 2),
+                 'note' => 'Approved expenses across zonal ledgers', 'tone' => 'blue'],
+                ['label' => 'OVERALL VOID RATE',
+                 'value' => round((float)($overallVoidRate->rate ?? 0), 1) . '%',
+                 'note' => (float)($overallVoidRate->rate ?? 0) < 10 ? 'Healthy compliance (<10%)' : 'Above compliance threshold',
+                 'tone' => (float)($overallVoidRate->rate ?? 0) < 10 ? 'green' : 'blue'],
+            ],
+            'summary' => [
+                'headers' => ['Province / Zone', 'Allocated (LKR)', 'Income (LKR)', 'Expense (LKR)', 'Net (LKR)', 'Status'],
+                'rows'    => $dataRows,
+            ],
+            'raw' => [
+                'headers' => ['Zonal Ledger', 'Date', 'Type', 'Entry', 'Amount (LKR)', 'Status'],
+                'rows'    => $detailRows,
             ],
             'syncLabel' => 'Zonal Hubs Synced',
             'noteTitle' => 'Statutory Ledger Compliance Verification:',
-            'note'      => 'Verified statutory aggregation rolled up from 10 Divisional reports submitted by Zonal Secretaries. Data sealed under NYSC FinAct ' . date('Y') . '.',
+            'note'      => 'Live statutory aggregation across completed fund transfers and approved zonal ledger entries for the selected range, sealed under NYSC FinAct ' . date('Y') . '.',
         ];
     }
 }
