@@ -106,7 +106,7 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 
             <!-- Row 2b: Scope Target picker (see JS: updateScopeTargets) -->
             <div class="rpt-form-row rpt-form-row--single">
-                <div class="rpt-field" id="rpt-scope-target-wrap" style="display:none">
+                <div class="rpt-field rpt-hidden" id="rpt-scope-target-wrap">
                     <label class="rpt-field__label" for="rpt-scope-target">Scope Target</label>
                     <div class="rpt-select-wrap rpt-select-wrap--full">
                         <select id="rpt-scope-target" name="scope_id"></select>
