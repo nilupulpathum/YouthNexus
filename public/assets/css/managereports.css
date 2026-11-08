@@ -25,6 +25,9 @@
     font-weight: 500;
     margin-bottom: 20px;
 }
+/* Initial hidden state for JS-toggled panels (e.g. the scope target picker).
+   JS then overrides with an inline style.display value at runtime. */
+.rpt-hidden { display: none; }
 .rpt-flash--success { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
 .rpt-flash--error   { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 .rpt-flash__close   { margin-left: auto; background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; opacity: .7; }

@@ -26,7 +26,7 @@ $formats = $formats ?? [
 
 $defaultCategory = array_key_first($catalog) ?? 'Financial';
 $defaultFrom     = date('Y-01-01');
-$defaultTo       = date('Y-06-30');
+$defaultTo       = date('Y-12-31');   // full year — events are always future-dated, a mid-year end date guarantees an empty window
 $defaultScopeKey = 'National';
 
 require __DIR__ . '/../layouts/dashboard-start.view.php';
@@ -100,6 +100,21 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
                     <div class="rpt-field__hint">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         National Summary aggregates verified figures already submitted by Zonal Secretaries.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2b: Scope Target picker (see JS: updateScopeTargets) -->
+            <div class="rpt-form-row rpt-form-row--single">
+                <div class="rpt-field rpt-hidden" id="rpt-scope-target-wrap">
+                    <label class="rpt-field__label" for="rpt-scope-target">Scope Target</label>
+                    <div class="rpt-select-wrap rpt-select-wrap--full">
+                        <select id="rpt-scope-target" name="scope_id"></select>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="rpt-select-arrow"><polyline points="7 6 12 11 17 6"/><polyline points="7 13 12 18 17 13"/></svg>
+                    </div>
+                    <div class="rpt-field__hint">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Leave on “All” to roll up every unit at the selected level.
                     </div>
                 </div>
             </div>
@@ -188,6 +203,24 @@ require __DIR__ . '/../layouts/dashboard-start.view.php';
 <script>
 /* ── Catalog data from PHP ── */
 var typesByCategory = <?= json_encode($catalog) ?>;
+var scopeTargets    = <?= json_encode($scopeTargets ?? ['zones' => [], 'divisions' => [], 'clubs' => []]) ?>;
+
+function updateScopeTargets() {
+    var level = document.getElementById('rpt-scope').value || '';
+    var wrap  = document.getElementById('rpt-scope-target-wrap');
+    var sel   = document.getElementById('rpt-scope-target');
+    sel.options.length = 0;
+    sel.options[0] = new Option('All (roll up everything at this level)', '');
+    var pool = level.indexOf('Zonal') === 0 ? (scopeTargets.zones || [])
+             : level.indexOf('Divisional') === 0 ? (scopeTargets.divisions || [])
+             : level.indexOf('Club') === 0 ? (scopeTargets.clubs || []) : [];
+    for (var i = 0; i < pool.length; i++) {
+        sel.options[i + 1] = new Option(pool[i].name, pool[i].id);
+    }
+    wrap.style.display = pool.length ? 'block' : 'none';
+}
+document.getElementById('rpt-scope').addEventListener('change', updateScopeTargets);
+updateScopeTargets();
 
 function updateTypes() {
     var cat  = document.getElementById('rpt-category').value;

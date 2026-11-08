@@ -90,16 +90,25 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // 5. ENSURE Notification TABLE
+    // Canonical shape — matches migrate_annual_audit.php / migrate_manage_assets.php /
+    // migrate_divisional_club_audit.php and the 19 INSERT sites across 14 models.
+    // (Previously this file used a legacy shape: user_id, title, is_read. Because
+    // CREATE TABLE IF NOT EXISTS means the first migration to run decides the
+    // schema, and this file runs before the others in run_migrations.php, fresh
+    // installs would inherit the legacy shape and crash on the canonical INSERTs.
+    // database/migrate_notification_align.php converges existing legacy tables.)
     echo "Checking / Creating Notification table...\n";
     $pdo->exec("CREATE TABLE IF NOT EXISTS `Notification` (
-        `notification_id` INT AUTO_INCREMENT PRIMARY KEY,
-        `user_id`         INT NOT NULL,
-        `type`            VARCHAR(50) NOT NULL,
-        `title`           VARCHAR(255) NOT NULL,
-        `message`         TEXT NOT NULL,
-        `is_read`         TINYINT(1) NOT NULL DEFAULT 0,
-        `created_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user_read (`user_id`, `is_read`)
+        `notification_id`     INT AUTO_INCREMENT PRIMARY KEY,
+        `recipient_id`        INT NOT NULL,
+        `type`                VARCHAR(50) NOT NULL DEFAULT 'General',
+        `message`             VARCHAR(500) NOT NULL,
+        `related_entity_type` VARCHAR(50) DEFAULT NULL,
+        `related_entity_id`   INT DEFAULT NULL,
+        `read_status`         BOOLEAN NOT NULL DEFAULT FALSE,
+        `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`recipient_id`) REFERENCES `User`(`user_id`) ON DELETE CASCADE,
+        INDEX idx_recipient (`recipient_id`, `read_status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // Check Club columns for overall_health_score & health_status

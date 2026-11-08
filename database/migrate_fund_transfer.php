@@ -177,9 +177,11 @@ try {
         `gateway_type`        ENUM('RTGS','SLIPS','API','Cheque') NOT NULL DEFAULT 'RTGS',
         `verification_status` ENUM('Verified','Unverified') NOT NULL DEFAULT 'Verified',
         `status`              ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+        `zonal_uniq` INT GENERATED ALWAYS AS (IF(`owner_level` = 'Zonal', `owner_id`, NULL)) STORED,
         `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_owner (`owner_level`, `owner_id`),
-        INDEX idx_status (`status`)
+        INDEX idx_status (`status`),
+        UNIQUE KEY uq_bankaccount_zonal_owner (`zonal_uniq`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     echo "Table `BankAccount` ready.\n";
 

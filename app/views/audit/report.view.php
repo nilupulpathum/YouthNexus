@@ -102,19 +102,19 @@ $steps = [
         <div class="audit-stat-card">
             <h3>Self-Raised Income</h3>
             <div class="num"><?= $fmtLKR($audit->total_income) ?></div>
-            <div class="sub gray">Fundraising &amp; events (FY <?= (int)$audit->financial_year ?>)</div>
+            
         </div>
 
         <div class="audit-stat-card">
             <h3>Transfers Received</h3>
             <div class="num"><?= $fmtLKR($audit->total_transfers_received) ?></div>
-            <div class="sub gray">Grants from upper levels</div>
+            
         </div>
 
         <div class="audit-stat-card">
             <h3>Total Expenses</h3>
             <div class="num"><?= $fmtLKR($audit->total_expenses) ?></div>
-            <div class="sub gray">Logged by the entity</div>
+            
         </div>
 
         <div class="audit-stat-card <?= $unresolvedCount > 0 ? 'audit-stat-alert' : '' ?>">
@@ -130,13 +130,12 @@ $steps = [
             </h3>
             <?php if ($locked): ?>
                 <div class="num" style="color:#1e9e5a;">Signed Off</div>
-                <div class="sub green">&#10003;&nbsp; Ledger locked for FY <?= (int)$audit->financial_year ?></div>
             <?php elseif ($unresolvedCount > 0): ?>
                 <div class="num" style="color:#b91c1c;"><?= (int)$unresolvedCount ?></div>
                 <div class="sub red">&#9679;&nbsp; Unresolved red flag<?= $unresolvedCount !== 1 ? 's' : '' ?></div>
             <?php else: ?>
                 <div class="num">Ready</div>
-                <div class="sub gray">All flags resolved — eligible for sign-off</div>
+                
             <?php endif; ?>
         </div>
     </div>

@@ -139,6 +139,7 @@ class Reports extends Controller {
             'catalog'      => $catalog,
             'scopes'       => $scopes,
             'formats'      => $formats,
+            'scopeTargets' => $model->getScopeTargets(),
             'csrf_token'   => $_SESSION['csrf_token'],
         ]);
     }
@@ -184,19 +185,27 @@ class Reports extends Controller {
         $dateEnd    = trim($_POST['date_to']   ?? '');
         $format     = in_array($_POST['format'] ?? '', ['PDF','CSV','OnScreen']) ? $_POST['format'] : 'PDF';
 
-        // Resolve type ID
+        // Resolve type ID — reject unknown type names instead of silently saving the first type
         $typeId = $model->getTypeId($category, $typeName);
         if (!$typeId) {
-            // Fallback: create with first type in category
-            $catalog = $model->getCatalog();
-            $firstType = $catalog[$category][0] ?? '';
-            $typeId = $model->getTypeId($category, $firstType) ?: 1;
+            $_SESSION['reports_flash_error'] = "Unknown report type \"{$typeName}\" for category \"{$category}\". Please pick a type from the list.";
+            $this->redirect('reports');
+        }
+
+        // Resolve the scope target: 0 means "All" (level-wide rollup, no filter)
+        $scopeId = null;
+        if (in_array($scopeLevel, ['Zonal', 'Divisional', 'Club'], true)) {
+            $candidate = (int)($_POST['scope_id'] ?? 0);
+            if ($candidate > 0 && $model->validateScopeTarget($scopeLevel, $candidate)) {
+                $scopeId = $candidate;           // specific zone/division/club
+            }
+            // $candidate === 0 → user left the picker on "All": level-wide rollup, no filter
         }
 
         $reportId = $model->createReport([
             'report_type_id'  => $typeId,
             'scope_level'     => $scopeLevel,
-            'scope_id'        => null,
+            'scope_id'        => $scopeId,
             'date_range_start'=> $dateStart,
             'date_range_end'  => $dateEnd,
             'format'          => $format,

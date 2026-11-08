@@ -34,6 +34,10 @@ $orderedMigrations = [
     'migrate_handover_log.php',
     'migrate_manage_user.php',
     'migrate_cv_skill_endorsement.php',
+    'migrate_notification_prefs.php',
+    'migrate_recipient_bank_accounts.php',
+    'migrate_zonal_account_uniqueness.php',
+    'migrate_notification_align.php',
 ];
 
 echo "=== YouthNexus Master Migration Runner ===\n\n";

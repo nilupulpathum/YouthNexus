@@ -59,10 +59,6 @@ $formatColors = [
     <!-- ── Page action row ─────────────────────────────────────────── -->
     <div class="rpt-header-bar rpt-action-row db-action-row">
         <div class="rpt-header-actions">
-            <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--outline db-secondary-action" id="btn-aggregate">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                Aggregate Reports
-            </a>
             <a href="<?= ROOT ?>/reports/create" class="rpt-btn rpt-btn--primary db-primary-action" id="btn-create-report">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create New Report

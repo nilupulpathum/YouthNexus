@@ -138,6 +138,7 @@ $maskAccount = function ($acc) {
                                     title="Edit Account Details"
                                     data-id="<?= (int)$acc->bank_account_id ?>"
                                     data-zone-id="<?= (int)$acc->owner_id ?>"
+                                    data-zone-name="<?= htmlspecialchars($acc->zonal_name, ENT_QUOTES) ?>"
                                     data-bank="<?= htmlspecialchars($acc->bank_name, ENT_QUOTES) ?>"
                                     data-branch="<?= htmlspecialchars($acc->branch_name, ENT_QUOTES) ?>"
                                     data-account="<?= htmlspecialchars($acc->account_number, ENT_QUOTES) ?>"
@@ -191,13 +192,13 @@ $maskAccount = function ($acc) {
                 <label for="acc_zone_id">Target Zonal Office <span class="ft-required">*</span></label>
                 <select class="ft-input" name="zone_id" id="acc_zone_id" required>
                     <option value="">— Select Target Zonal Office —</option>
-                    <?php foreach ($zones as $z): ?>
+                    <?php foreach (($availableZones ?? []) as $z): ?>
                         <option value="<?= (int)$z->zonal_id ?>">
                             <?= htmlspecialchars($z->zonal_name) ?><?= !empty($z->province) ? ' — ' . htmlspecialchars($z->province) : '' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <div class="ft-hint">The provincial zone authorized to receive allocations through this account.</div>
+                <div class="ft-hint">Only offices without a registered account are listed. Offices that already have an account can be edited or reactivated from the table below.</div>
             </div>
 
             <div class="ft-form-row">
@@ -285,8 +286,21 @@ $maskAccount = function ($acc) {
         modalDesc.textContent = 'Update receiving account information and verification status';
         btnSubmit.textContent = 'Update Account';
 
-        inpId.value        = btn.dataset.id || '';
-        selZone.value      = btn.dataset.zoneId || '';
+        inpId.value = btn.dataset.id || '';
+
+        var zoneId   = btn.dataset.zoneId   || '';
+        var zoneName = btn.dataset.zoneName || ('Zone #' + zoneId);
+
+        // The register dropdown only lists zones WITHOUT an account, so the
+        // edited account's own zone is usually absent — inject it on the fly.
+        var hasZone = false;
+        for (var i = 0; i < selZone.options.length; i++) {
+            if (selZone.options[i].value === String(zoneId)) { hasZone = true; break; }
+        }
+        if (zoneId && !hasZone) {
+            selZone.add(new Option(zoneName + ' — current account', zoneId, true, true));
+        }
+        selZone.value = zoneId;
         
         // Match bank name in select or create option if custom
         var bankName = btn.dataset.bank || '';
