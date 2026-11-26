@@ -26,13 +26,23 @@ try {
     $catCount = $pdo->query("SELECT COUNT(*) FROM ReportTypeCatalog")->fetchColumn();
     echo "Types: $catCount\n";
 
-    $aggregateType = $pdo->query(
-        "SELECT report_type_id FROM ReportTypeCatalog WHERE type_name = 'Club Activity Aggregate' LIMIT 1"
-    )->fetchColumn();
-    if (!$aggregateType) {
-        throw new RuntimeException('Club Activity Aggregate report type is missing. Run migrate_divisional_reports.php.');
+    foreach (['Financial Summary', 'fund allocation report'] as $requiredType) {
+        $typeId = $pdo->query(
+            "SELECT report_type_id FROM ReportTypeCatalog WHERE type_name = " . $pdo->quote($requiredType) . " LIMIT 1"
+        )->fetchColumn();
+        if (!$typeId) {
+            throw new RuntimeException("{$requiredType} report type is missing. Run the report catalog cleanup migration.");
+        }
     }
-    echo "Secretary aggregate report type: ready\n";
+
+    $retired = ['National Consolidated Financial Rollup', 'Fund Allocation vs Utilisation', 'Void Rate Report'];
+    $placeholders = implode(', ', array_fill(0, count($retired), '?'));
+    $retiredCheck = $pdo->prepare("SELECT COUNT(*) FROM ReportTypeCatalog WHERE type_name IN ($placeholders)");
+    $retiredCheck->execute($retired);
+    if ((int) $retiredCheck->fetchColumn() !== 0) {
+        throw new RuntimeException('Retired financial report types are still present. Run the report catalog cleanup migration.');
+    }
+    echo "Renamed financial report types: ready\n";
 
     echo "\nAll OK - Manage Reports module DB is ready.\n";
 

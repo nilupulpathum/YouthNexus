@@ -124,7 +124,10 @@ try {
     $secCatalog = $reports->getCatalog('ZonalSecretary');
     $secTypes = [];
     foreach ($secCatalog as $types) foreach ($types as $t) $secTypes[] = $t->type_name;
-    expectZonalParity(in_array('Club Activity Aggregate', $secTypes, true), 'The secretary catalog must offer the aggregate type.');
+    expectZonalParity(
+        in_array('Event Status Summary', $secTypes, true) && !in_array('Club Activity Aggregate', $secTypes, true),
+        'The secretary catalog must offer event reports without the retired aggregate type.'
+    );
     $coordTypes = [];
     foreach ($reports->getCatalog('ZonalCoordinator') as $types) foreach ($types as $t) $coordTypes[] = $t->type_name;
     expectZonalParity(in_array('Event Approval Summary', $coordTypes, true) && !in_array('Void Request Activity', $coordTypes, true), 'The coordinator catalog must match its role.');

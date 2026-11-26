@@ -97,23 +97,23 @@ try {
     // 4. Seed ReportTypeCatalog (idempotent — uses INSERT IGNORE)
     // ---------------------------------------------------------------
     $seeds = [
-        ['Financial',         'National Consolidated Financial Rollup',   'Aggregated SUM(Income), SUM(Expense), Allocated vs Spent, Void Rate across all zones.', 1],
-        ['Financial',         'Income Summary',                           'Total income broken down by source across the selected scope and date range.',           2],
-        ['Financial',         'Expense Summary',                          'Total expenditure by category across the selected scope and date range.',                  3],
-        ['Financial',         'Fund Allocation vs Utilisation',           'Side-by-side comparison of funds allocated and actual funds spent per zone/division.',    4],
-        ['Financial',         'Void Rate Report',                         'Rate of voided/reversed ledger entries; identifies compliance outliers.',                  5],
+        ['Financial',         'Financial Summary',                        'Income, expenses, net movement, and reconciliation by category.',                           1],
+        ['Financial',         'fund allocation report',                   'Funds allocated from the division to clubs during the selected period.',                     2],
+        ['Financial',         'Void Request Activity',                    'Club and divisional void requests and their decisions.',                                     3],
+        ['Financial',         'Income Summary',                           'Total income broken down by source across the selected scope and date range.',           4],
+        ['Financial',         'Expense Summary',                          'Total expenditure by category across the selected scope and date range.',                  5],
         ['Assets',            'Inventory by Category',                    'Asset counts grouped by category (Equipment, Furniture, IT, etc.).',                      1],
         ['Assets',            'Inventory by Condition',                   'Asset distribution by condition (Good, Fair, Poor, Condemned).',                           2],
         ['Assets',            'Request Status Summary',                    'Summary of asset distribution requests by status (Pending, Approved, Rejected).',        3],
-        ['Events',            'Event Status Summary',                     'Count of events by status (Upcoming, Ongoing, Completed, Cancelled) in scope.',            1],
+        ['Events',            'Event Approval Summary',                   'Event approval requests and decisions within the selected period.',                          1],
+        ['Events',            'Event Status Summary',                     'Count of events by status (Upcoming, Ongoing, Completed, Cancelled) in scope.',            2],
         ['Events',            'Event Attendance Rate',                    'Ratio of actual attendees to expected attendees per event within the date range.',          2],
         ['Attendance',        'Attendance Rate by Club / Division / Zone','Member attendance rate aggregated at club, divisional, or zonal level.',                   1],
-        ['Club Health',       'Health Status Distribution',               'Distribution of clubs across Green/Yellow/Red health bands.',                              1],
-        ['Club Health',       'Health Score Trend',                       'Month-over-month club health score movement within the selected scope.',                   2],
-        ['User Interactions', 'Login Activity',                           'Login frequency, unique active users, and inactive user count.',                           1],
-        ['User Interactions', 'Role Distribution',                        'Breakdown of registered users by system role.',                                             2],
-        ['User Interactions', 'Announcement Read Rate',                   'Percentage of users who have read each broadcast announcement.',                           3],
-        ['User Interactions', 'Volunteer Hours',                          'Total and average volunteer hours logged per member within the date range.',                4],
+        ['Club Health',       'Club Health Summary',                      'Latest calculated health score for each club in the selected period.',                        1],
+        ['Club Health',       'Health Status Distribution',               'Distribution of clubs across Green/Yellow/Red health bands.',                              2],
+        ['User Interactions', 'Role Distribution',                        'Breakdown of registered users by system role.',                                             1],
+        ['User Interactions', 'Announcement Read Rate',                   'Percentage of users who have read each broadcast announcement.',                           2],
+        ['User Interactions', 'Volunteer Hours',                          'Total and average volunteer hours logged per member within the date range.',                3],
     ];
 
     $insertType = $pdo->prepare(
@@ -145,9 +145,9 @@ try {
             [$typeIds['Attendance Rate by Club / Division / Zone'] ?? 11, 'Zonal',     null, '2026-04-01', '2026-06-30', 'PDF',      $adminId, '2026-07-05 09:10:00'],
             [$typeIds['Role Distribution']                         ?? 15, 'Zonal',     null, '2026-04-01', '2026-06-30', 'CSV',      $adminId, '2026-06-28 14:22:00'],
             [$typeIds['Event Status Summary']                      ?? 9,  'Divisional', null, '2026-04-01', '2026-06-30', 'OnScreen', $adminId, '2026-06-20 11:05:00'],
-            [$typeIds['Fund Allocation vs Utilisation']           ?? 4,  'Zonal',     null, '2026-01-01', '2026-03-31', 'PDF',      $adminId, '2026-04-04 08:30:00'],
+            [$typeIds['fund allocation report']                    ?? 2,  'Zonal',     null, '2026-01-01', '2026-03-31', 'PDF',      $adminId, '2026-04-04 08:30:00'],
             [$typeIds['Health Status Distribution']               ?? 12, 'National',  null, '2026-01-01', '2026-06-30', 'CSV',      $adminId, '2026-06-15 16:45:00'],
-            [$typeIds['Void Rate Report']                          ?? 5,  'National',  null, '2026-01-01', '2026-06-30', 'PDF',      $adminId, '2026-06-10 10:00:00'],
+            [$typeIds['Void Request Activity']                     ?? 8,  'National',  null, '2026-01-01', '2026-06-30', 'PDF',      $adminId, '2026-06-10 10:00:00'],
         ];
 
         foreach ($sampleReports as $sr) {
