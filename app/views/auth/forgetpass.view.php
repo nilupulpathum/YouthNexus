@@ -34,7 +34,7 @@
     <div class="brand-label">YouthNexus Pulse</div>
 
     <h2>Forgot password?</h2>
-    <p class="desc">Enter the email used for your account and we'll send you a link to reset your password.</p>
+    <p class="desc">Enter the email used for your account and we'll send you a 6-digit code to reset your password.</p>
 
     <?php if (!empty($errorMsg)): ?>
       <div class="alert alert-error"><?= htmlspecialchars($errorMsg) ?></div>
@@ -50,7 +50,7 @@
       </div>
 
       <button type="submit" class="btn">
-        Send Reset Link
+        Send Reset Code
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
           <line x1="5" y1="12" x2="19" y2="12"/>
           <polyline points="12 5 19 12 12 19"/>
@@ -88,11 +88,24 @@
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
       </div>
-      <h2>Email Sent!</h2>
-      <p>A password reset link has been sent to your inbox. Please check your email and follow the instructions.</p>
-      <a href="<?= ROOT ?>/auth/signin" class="popup-btn">Back to Sign In</a>
+      <h2>Check Your Inbox</h2>
+      <?php if (!empty($emailSent)): ?>
+        <p>A 6-digit reset code has been sent. Open the email or use the button below to enter it.</p>
+        <?php if (!empty($verifyLink)): ?>
+          <a href="<?= htmlspecialchars($verifyLink, ENT_QUOTES, 'UTF-8') ?>" class="popup-btn">Enter Code</a>
+        <?php endif; ?>
+        <?php if (!empty($devCode)): ?>
+          <p style="margin-top:16px;color:#666;font-size:13px;">
+            Local test mode: your code is <strong style="color:#002d72;font-size:18px;letter-spacing:3px;"><?= htmlspecialchars($devCode, ENT_QUOTES) ?></strong>
+            (also written to the local mail outbox).
+          </p>
+        <?php endif; ?>
+      <?php else: ?>
+        <p>If an account exists for that email address, a reset code has been sent. Please check your inbox.</p>
+        <a href="<?= ROOT ?>/auth/signin" class="popup-btn">Back to Sign In</a>
+      <?php endif; ?>
       <div class="popup-footer">
-        Didn't receive the email? <a href="<?= ROOT ?>/auth/forgetpass">Resend Email</a>
+        Didn't receive the email? <a href="<?= ROOT ?>/auth/forgetpass">Request another code</a>
       </div>
     </div>
   </div>

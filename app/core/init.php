@@ -9,6 +9,7 @@ require 'functions.php';
 require 'Database.php';
 require 'Model.php';
 require 'Controller.php';
+require 'Mailer.php';
 require 'FinanceReceipt.php';
 require 'EventEvidence.php';
 require 'ClubOverview.php';

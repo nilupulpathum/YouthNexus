@@ -198,11 +198,17 @@ CREATE TABLE ClubApplicationPhoto (
 CREATE TABLE PasswordReset (
     reset_id    INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL,
+    -- SHA-256 hash of the 6-digit OTP (never the plain code)
     otp_code    VARCHAR(255) NOT NULL,
-    expires_at  TIMESTAMP NOT NULL,
+    -- SHA-256 hash of the random token placed in the emailed reset link
+    token_hash  VARCHAR(255) NULL,
+    attempts    TINYINT NOT NULL DEFAULT 0,
+    -- No ON UPDATE: a failed OTP attempt must not reset the expiry.
+    expires_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_used     BOOLEAN NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
+    FOREIGN KEY (user_id) REFERENCES User(user_id),
+    INDEX idx_password_reset_token (token_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE Certificate (

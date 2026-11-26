@@ -29,4 +29,9 @@ class Model {
     protected function rowCount($sql, $params = []) {
         return $this->query($sql, $params)->rowCount();
     }
+
+    // ID of the last INSERT (used for password-reset records)
+    protected function lastInsertId() {
+        return $this->pdo->lastInsertId();
+    }
 }
