@@ -38,6 +38,7 @@ $orderedMigrations = [
     'migrate_recipient_bank_accounts.php',
     'migrate_zonal_account_uniqueness.php',
     'migrate_notification_align.php',
+    'migrate_password_reset_otp.php',
 ];
 
 echo "=== YouthNexus Master Migration Runner ===\n\n";

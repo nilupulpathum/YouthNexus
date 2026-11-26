@@ -451,50 +451,103 @@ class UserModel extends Model {
 
     // ---------------------------------------------------------------
     // PASSWORD RESET DB HELPERS
+    // Only SHA-256 hashes of the OTP and link token are stored. The raw
+    // values exist solely in the email sent to the account owner.
     // ---------------------------------------------------------------
 
     /**
-     * Create a password reset record in the PasswordReset table.
+     * Invalidate any outstanding reset requests and start a new one.
      *
-     * @param int    $userId
-     * @param string $otpCode
-     * @return bool
+     * @param  int    $userId
+     * @param  string $otpHash    hash('sha256', 6-digit OTP)
+     * @param  string $tokenHash  hash('sha256', random link token)
+     * @return int                 reset_id of the new record
      */
-    public function createPasswordReset($userId, $otpCode) {
+    public function createPasswordReset($userId, $otpHash, $tokenHash) {
+        $this->invalidatePasswordResets($userId);
         $this->query(
-            "INSERT INTO PasswordReset (user_id, otp_code, expires_at, is_used, created_at)
-             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR), FALSE, NOW())",
-            [$userId, $otpCode]
+            "INSERT INTO PasswordReset
+                (user_id, otp_code, token_hash, expires_at, is_used, attempts, created_at)
+             VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), FALSE, 0, NOW())",
+            [$userId, $otpHash, $tokenHash]
+        );
+        return (int) $this->lastInsertId();
+    }
+
+    /** Fetch an active reset record by the hashed token from the email link. */
+    public function getPasswordResetByToken($tokenHash) {
+        return $this->single(
+            "SELECT * FROM PasswordReset
+             WHERE token_hash = ? AND is_used = FALSE AND expires_at > NOW()
+             ORDER BY created_at DESC LIMIT 1",
+            [$tokenHash]
+        );
+    }
+
+    /** Fetch an active reset record by id (used after the link was validated). */
+    public function getPasswordResetById($resetId) {
+        return $this->single(
+            "SELECT * FROM PasswordReset
+             WHERE reset_id = ? AND is_used = FALSE AND expires_at > NOW() LIMIT 1",
+            [(int) $resetId]
+        );
+    }
+
+    /** Replace the OTP on an existing record (resend) and reset its attempts. */
+    public function refreshPasswordResetOtp($resetId, $otpHash) {
+        $this->query(
+            "UPDATE PasswordReset
+             SET otp_code = ?, attempts = 0,
+                 expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE),
+                 created_at = NOW()
+             WHERE reset_id = ? AND is_used = FALSE",
+            [$otpHash, (int) $resetId]
         );
         return true;
     }
 
-    /**
-     * Fetch a valid (unused and non-expired) password reset record.
-     *
-     * @param int    $userId
-     * @param string $otpCode
-     * @return object|false
-     */
-    public function getValidPasswordReset($userId, $otpCode) {
-        return $this->single(
-            "SELECT * FROM PasswordReset 
-             WHERE user_id = ? AND otp_code = ? AND is_used = FALSE AND expires_at > NOW() 
-             ORDER BY created_at DESC LIMIT 1",
-            [$userId, $otpCode]
+    public function incrementPasswordResetAttempt($resetId) {
+        $this->query(
+            "UPDATE PasswordReset SET attempts = attempts + 1 WHERE reset_id = ?",
+            [(int) $resetId]
         );
+        return true;
     }
 
-    /**
-     * Mark a password reset record as used.
-     *
-     * @param int $resetId
-     * @return bool
-     */
+    /** True when a code was generated for this user within $seconds. */
+    public function hasRecentPasswordReset($userId, $seconds = 60) {
+        $seconds = max(1, (int) $seconds);
+        $row = $this->single(
+            "SELECT COUNT(*) AS total FROM PasswordReset
+             WHERE user_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL $seconds SECOND)",
+            [$userId]
+        );
+        return (int) ($row->total ?? 0) > 0;
+    }
+
+    /** Mark one reset record as used. */
     public function markPasswordResetUsed($resetId) {
         $this->query(
             "UPDATE PasswordReset SET is_used = TRUE WHERE reset_id = ?",
-            [$resetId]
+            [(int) $resetId]
+        );
+        return true;
+    }
+
+    /** Invalidate all outstanding reset links/codes for a user. */
+    public function invalidatePasswordResets($userId) {
+        $this->query(
+            "UPDATE PasswordReset SET is_used = TRUE WHERE user_id = ? AND is_used = FALSE",
+            [$userId]
+        );
+        return true;
+    }
+
+    /** Update a password by user id (never trusts an email from the URL). */
+    public function updatePasswordById($userId, $hashedPassword) {
+        $this->query(
+            "UPDATE User SET password_hash = ? WHERE user_id = ?",
+            [$hashedPassword, (int) $userId]
         );
         return true;
     }
