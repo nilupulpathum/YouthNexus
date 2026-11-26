@@ -1232,6 +1232,89 @@
   text-transform: uppercase;
 }
 
+.ann-audience-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+  border-radius: 10px;
+}
+
+.ann-audience-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ann-audience-table th,
+.ann-audience-table td {
+  padding: 12px;
+  border-right: 1px solid var(--db-border);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.ann-audience-table th:last-child,
+.ann-audience-table td:last-child {
+  border-right: 0;
+}
+
+.ann-audience-table th {
+  background: #f8fafc;
+  color: var(--db-text-dark);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .35px;
+  text-transform: uppercase;
+}
+
+.ann-audience-table tbody tr:first-child td {
+  border-top: 1px solid var(--db-border);
+}
+
+.ann-audience-empty {
+  color: var(--db-text-grey);
+  font-size: 12px;
+}
+
+.ann-audience-level-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ann-audience-level-list .ann-audience-detail {
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--db-border);
+}
+
+.ann-audience-level-list .ann-audience-detail:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.ann-audience-level-list .ann-audience-role {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.ann-audience-level-list .ann-audience-mode {
+  align-self: flex-start;
+}
+
+.ann-audience-level-list .ann-field-help {
+  margin-top: 0;
+}
+
 .ann-selected-recipient-list {
   display: grid;
   gap: 6px;

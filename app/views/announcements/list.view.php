@@ -20,7 +20,7 @@ $currentRoute    = 'announcements';
 $userRole        = $userRole ?? ($_SESSION['user_role'] ?? 'UnassignedUser');
 $isDivisional    = str_starts_with((string)$userRole, 'Divisional');
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css?v=20260929',
+    ROOT . '/assets/css/announcements.css?v=20261126',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 if ($isDivisional) {
@@ -487,24 +487,10 @@ $roleLabel = function ($role) {
             }
 
 
-            $targetRoleLabels =
-                array_map(
-                    $roleLabel,
-                    $targetRoles
-                );
-
-
-            $targetLabel =
-                !empty($targetRoleLabels)
-                    ? implode(
-                        ', ',
-                        $targetRoleLabels
-                    )
-                    : 'No recipients selected';
-
-
             /*
              * Used only for browser-side filtering.
+             * Target roles are intentionally hidden on the card; they are
+             * shown in the announcement detail view.
              */
             $targetRolesData =
                 implode(
@@ -616,19 +602,6 @@ $roleLabel = function ($role) {
                     ) ?>
 
                 </p>
-
-
-                <div class="ann-card-target">
-
-                    Target roles:
-
-                    <?= htmlspecialchars(
-                        $targetLabel,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>
-
-                </div>
 
 
                 <div class="ann-card-meta">

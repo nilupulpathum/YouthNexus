@@ -18,7 +18,7 @@ $pageTitle       = 'Announcement Details';
 $pageDescription = 'View announcement information, recipients and attachments';
 $currentRoute    = 'announcements';
 $pageStyles      = [
-    ROOT . '/assets/css/announcements.css?v=20260929',
+    ROOT . '/assets/css/announcements.css?v=20261126',
     ROOT . '/assets/css/divisional-summary-standard.css?v=20260924',
 ];
 $pageScripts     = [ROOT . '/assets/js/announcements.js?v=20260929'];
@@ -46,6 +46,30 @@ $roleLabel = function ($role) {
 
 
 /**
+ * Organisational level for each targetable role.
+ * Used to lay out target roles as level columns in the audience table.
+ */
+$roleLevel = function ($role) {
+    $levels = [
+        'NYSCAdministrator'     => 'National',
+        'UnassignedUser'        => 'National',
+        'ZonalCoordinator'      => 'Zonal',
+        'ZonalSecretary'        => 'Zonal',
+        'ZonalTreasurer'        => 'Zonal',
+        'DivisionalCoordinator' => 'Divisional',
+        'DivisionalSecretary'   => 'Divisional',
+        'DivisionalTreasurer'   => 'Divisional',
+        'ClubPresident'         => 'Club',
+        'ClubSecretary'         => 'Club',
+        'ClubTreasurer'         => 'Club',
+        'ClubMember'            => 'Club',
+    ];
+
+    return $levels[$role] ?? '';
+};
+
+
+/**
  * New detailed audience structure supplied by controller:
  *
  * [
@@ -63,6 +87,19 @@ $roleLabel = function ($role) {
  */
 $audienceTargets =
     $audienceTargets ?? [];
+
+
+$targetLevels = ['National', 'Zonal', 'Divisional', 'Club'];
+$targetsByLevel = array_fill_keys($targetLevels, []);
+
+foreach ($audienceTargets as $target) {
+    $role = (string) ($target['target_role'] ?? '');
+    $level = $roleLevel($role);
+
+    if ($level !== '') {
+        $targetsByLevel[$level][] = $target;
+    }
+}
 
 
 /**
@@ -658,203 +695,118 @@ switch ($announcement->level ?? '') {
             <?php else: ?>
 
 
-                <div class="ann-audience-list">
-
-
-                    <?php foreach (
-                        $audienceTargets
-                        as $target
-                    ): ?>
-
-
-                        <?php
-                        $targetRole =
-                            $target['target_role']
-                            ?? '';
-
-                        $selectionMode =
-                            $target['selection_mode']
-                            ?? 'All';
-
-                        $selectedUsers =
-                            $target['users']
-                            ?? [];
-                        ?>
-
-
-                        <div class="ann-audience-detail">
-
-
-                            <div class="ann-audience-role">
-
-                                <strong>
-
-                                    <?= htmlspecialchars(
-                                        $roleLabel(
-                                            $targetRole
-                                        ),
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-
-                                </strong>
-
-
-                                <?php if (
-                                    $selectionMode === 'All'
-                                ): ?>
-
-                                    <span class="ann-audience-mode">
-                                        All
-                                    </span>
-
-                                <?php else: ?>
-
-                                    <span class="ann-audience-mode">
-                                        Selected
-                                    </span>
-
-                                <?php endif; ?>
-
-                            </div>
-
-
-                            <?php if (
-                                $selectionMode === 'All'
-                            ): ?>
-
-                                <div class="ann-field-help">
-
-                                    All eligible
-
-                                    <?= htmlspecialchars(
-                                        $roleLabel(
-                                            $targetRole
-                                        ),
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-
-                                    users in this announcement's scope.
-
-                                </div>
-
-
-                            <?php else: ?>
-
-                                <div class="ann-field-help">
-
-                                    <?= count(
-                                        $selectedUsers
-                                    ) ?>
-
-                                    selected
-                                    recipient<?= count($selectedUsers) === 1
-                                        ? ''
-                                        : 's' ?>
-
-                                </div>
-
-
-                                <?php if (
-                                    !empty($canManage)
-                                    && !empty($selectedUsers)
-                                ): ?>
-
-                                    <!--
-                                        Only the announcement manager sees
-                                        the full list of specifically selected
-                                        people.
-
-                                        Normal recipients do not need to see
-                                        everyone else who was selected.
-                                    -->
-
-                                    <div class="ann-selected-recipient-list">
-
-
-                                        <?php foreach (
-                                            $selectedUsers
-                                            as $recipient
-                                        ): ?>
-
-
-                                            <?php
-                                            $recipientName =
-                                                $recipient['name']
-                                                ?? 'YouthNexus User';
-
-
-                                            $recipientContext =
-                                                $recipient['club_name']
-                                                ?? $recipient['division_name']
-                                                ?? $recipient['zonal_name']
-                                                ?? null;
-                                            ?>
-
-
-                                            <div class="ann-selected-recipient">
-
-                                                <span>
-
-                                                    <?= htmlspecialchars(
-                                                        $recipientName,
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>
-
-                                                </span>
-
-
-                                                <?php if (
-                                                    !empty(
-                                                        $recipientContext
-                                                    )
-                                                ): ?>
-
-                                                    <small>
-
-                                                        <?= htmlspecialchars(
-                                                            $recipientContext,
-                                                            ENT_QUOTES,
-                                                            'UTF-8'
-                                                        ) ?>
-
-                                                    </small>
-
-                                                <?php endif; ?>
-
-                                            </div>
-
-
-                                        <?php endforeach; ?>
-
-
-                                    </div>
-
-                                <?php endif; ?>
-
-
-                                <?php if (
-                                    empty($canManage)
-                                    && !empty($isRecipient)
-                                ): ?>
-
-                                    <div class="ann-field-help">
-                                        You are one of the selected recipients.
-                                    </div>
-
-                                <?php endif; ?>
-
-                            <?php endif; ?>
-
-
-                        </div>
-
-
-                    <?php endforeach; ?>
-
-
+                <div class="ann-audience-table-wrap">
+                    <table class="ann-audience-table">
+                        <thead>
+                            <tr>
+                                <?php foreach ($targetLevels as $level): ?>
+                                    <th scope="col">
+                                        <?= htmlspecialchars($level, ENT_QUOTES, 'UTF-8') ?>
+                                    </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <?php foreach ($targetLevels as $level): ?>
+                                    <td>
+                                        <?php if (empty($targetsByLevel[$level])): ?>
+                                            <span class="ann-audience-empty">—</span>
+                                        <?php else: ?>
+                                            <ul class="ann-audience-level-list">
+                                                <?php foreach ($targetsByLevel[$level] as $target): ?>
+                                                    <?php
+                                                    $targetRole =
+                                                        (string) ($target['target_role'] ?? '');
+
+                                                    $selectionMode =
+                                                        $target['selection_mode'] ?? 'All';
+
+                                                    $selectedUsers =
+                                                        $target['users'] ?? [];
+                                                    ?>
+                                                    <li class="ann-audience-detail">
+                                                        <div class="ann-audience-role">
+                                                            <strong>
+                                                                <?= htmlspecialchars(
+                                                                    $roleLabel($targetRole),
+                                                                    ENT_QUOTES,
+                                                                    'UTF-8'
+                                                                ) ?>
+                                                            </strong>
+                                                            <span class="ann-audience-mode">
+                                                                <?= $selectionMode === 'All' ? 'All' : 'Selected' ?>
+                                                            </span>
+                                                        </div>
+
+                                                        <?php if ($selectionMode === 'All'): ?>
+                                                            <div class="ann-field-help">
+                                                                All eligible
+                                                                <?= htmlspecialchars(
+                                                                    $roleLabel($targetRole),
+                                                                    ENT_QUOTES,
+                                                                    'UTF-8'
+                                                                ) ?>
+                                                                users in this announcement's scope.
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <div class="ann-field-help">
+                                                                <?= count($selectedUsers) ?>
+                                                                selected
+                                                                recipient<?= count($selectedUsers) === 1 ? '' : 's' ?>
+                                                            </div>
+
+                                                            <?php if (!empty($canManage) && !empty($selectedUsers)): ?>
+                                                                <div class="ann-selected-recipient-list">
+                                                                    <?php foreach ($selectedUsers as $recipient): ?>
+                                                                        <?php
+                                                                        $recipientName =
+                                                                            $recipient['name']
+                                                                            ?? 'YouthNexus User';
+
+                                                                        $recipientContext =
+                                                                            $recipient['club_name']
+                                                                            ?? $recipient['division_name']
+                                                                            ?? $recipient['zonal_name']
+                                                                            ?? null;
+                                                                        ?>
+                                                                        <div class="ann-selected-recipient">
+                                                                            <span>
+                                                                                <?= htmlspecialchars(
+                                                                                    $recipientName,
+                                                                                    ENT_QUOTES,
+                                                                                    'UTF-8'
+                                                                                ) ?>
+                                                                            </span>
+                                                                            <?php if (!empty($recipientContext)): ?>
+                                                                                <small>
+                                                                                    <?= htmlspecialchars(
+                                                                                        $recipientContext,
+                                                                                        ENT_QUOTES,
+                                                                                        'UTF-8'
+                                                                                    ) ?>
+                                                                                </small>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                            <?php endif; ?>
+
+                                                            <?php if (empty($canManage) && !empty($isRecipient)): ?>
+                                                                <div class="ann-field-help">
+                                                                    You are one of the selected recipients.
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endforeach; ?>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
 
