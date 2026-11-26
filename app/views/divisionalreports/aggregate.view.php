@@ -16,11 +16,6 @@ foreach ($catalog as $category => $types) {
             $selectedType = $type;
             $selectedCategory = $category;
         }
-        if ($type->type_name === 'Club Activity Aggregate') {
-            $selectedType = $type;
-            $selectedCategory = $category;
-            break 2;
-        }
     }
 }
 require __DIR__ . '/../layouts/dashboard-start.view.php';

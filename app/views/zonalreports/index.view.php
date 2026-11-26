@@ -15,7 +15,7 @@ $categoryPresentation = [
     'Club Health' => ['tone' => 'red', 'icon' => 'heart'],
     'User Interactions' => ['tone' => 'slate', 'icon' => 'user'],
 ];
-$aggregateReportTypeName = 'Club Activity Aggregate';
+$aggregateReportTypeName = '';
 $aggregateTypeAvailable = false;
 foreach ($catalog as $types) {
     foreach ($types as $type) {

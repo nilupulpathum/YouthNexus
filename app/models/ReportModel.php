@@ -43,12 +43,12 @@ class ReportModel extends Model {
     /** Static fallback matching the source PHP files exactly. */
     private function fallbackCatalog(): array {
         return [
-            'Financial'         => ['National Consolidated Financial Rollup', 'Income Summary', 'Expense Summary', 'Fund Allocation vs Utilisation', 'Void Rate Report'],
+            'Financial'         => ['Financial Summary', 'fund allocation report', 'Void Request Activity', 'Income Summary', 'Expense Summary'],
             'Assets'            => ['Inventory by Category', 'Inventory by Condition', 'Request Status Summary'],
-            'Events'            => ['Event Status Summary', 'Event Attendance Rate'],
+            'Events'            => ['Event Approval Summary', 'Event Status Summary', 'Event Attendance Rate'],
             'Attendance'        => ['Attendance Rate by Club / Division / Zone'],
-            'Club Health'       => ['Health Status Distribution', 'Health Score Trend'],
-            'User Interactions' => ['Login Activity', 'Role Distribution', 'Announcement Read Rate', 'Volunteer Hours'],
+            'Club Health'       => ['Club Health Summary', 'Health Status Distribution'],
+            'User Interactions' => ['Role Distribution', 'Announcement Read Rate', 'Volunteer Hours'],
         ];
     }
 
@@ -110,9 +110,9 @@ class ReportModel extends Model {
             (object)['report_id'=>1,'scope_level'=>'Zonal',    'category'=>'Attendance',        'type_name'=>'Attendance Rate by Club / Division / Zone', 'format'=>'PDF',      'generated_at'=>'2026-07-05 09:10:00','first_name'=>'N.','last_name'=>'Fernando'],
             (object)['report_id'=>2,'scope_level'=>'Zonal',    'category'=>'User Interactions', 'type_name'=>'Role Distribution',                           'format'=>'CSV',      'generated_at'=>'2026-06-28 14:22:00','first_name'=>'N.','last_name'=>'Fernando'],
             (object)['report_id'=>3,'scope_level'=>'Divisional','category'=>'Events',           'type_name'=>'Event Status Summary',                        'format'=>'OnScreen', 'generated_at'=>'2026-06-20 11:05:00','first_name'=>'N.','last_name'=>'Fernando'],
-            (object)['report_id'=>4,'scope_level'=>'Zonal',    'category'=>'Financial',         'type_name'=>'Fund Allocation vs Utilisation',              'format'=>'PDF',      'generated_at'=>'2026-04-04 08:30:00','first_name'=>'N.','last_name'=>'Fernando'],
+            (object)['report_id'=>4,'scope_level'=>'Zonal',    'category'=>'Financial',         'type_name'=>'fund allocation report',                      'format'=>'PDF',      'generated_at'=>'2026-04-04 08:30:00','first_name'=>'N.','last_name'=>'Fernando'],
             (object)['report_id'=>5,'scope_level'=>'National', 'category'=>'Club Health',       'type_name'=>'Health Status Distribution',                  'format'=>'CSV',      'generated_at'=>'2026-06-15 16:45:00','first_name'=>'N.','last_name'=>'Fernando'],
-            (object)['report_id'=>6,'scope_level'=>'National', 'category'=>'Financial',         'type_name'=>'Void Rate Report',                            'format'=>'PDF',      'generated_at'=>'2026-06-10 10:00:00','first_name'=>'N.','last_name'=>'Fernando'],
+            (object)['report_id'=>6,'scope_level'=>'National', 'category'=>'Financial',         'type_name'=>'Void Request Activity',                       'format'=>'PDF',      'generated_at'=>'2026-06-10 10:00:00','first_name'=>'N.','last_name'=>'Fernando'],
         ];
 
         return array_values(array_filter($all, function($r) use ($category, $typeName, $search) {
@@ -735,7 +735,7 @@ class ReportModel extends Model {
         ];
     }
 
-    /** Club Health: Health Status Distribution & Health Score Trend. */
+    /** Club Health: Health Status Distribution (and legacy Health Score Trend snapshots). */
     private function buildClubHealthPreview(string $typeName, string $scopeLevel, ?int $scopeId, string $start, string $end): array {
         $clubWhere = '';
         $params    = [];
@@ -851,7 +851,7 @@ class ReportModel extends Model {
         ];
     }
 
-    /** User Interactions: Login Activity, Role Distribution, Announcement Read Rate, Volunteer Hours. */
+    /** User Interactions: Role Distribution, Announcement Read Rate, Volunteer Hours. */
     private function buildUserInteractionsPreview(string $typeName, string $scopeLevel, ?int $scopeId, string $start, string $end): array {
         if ($typeName === 'Role Distribution') {
             $roles = $this->resultSet(
@@ -1043,13 +1043,13 @@ class ReportModel extends Model {
                 return $this->buildLedgerEntriesSummary('Income', $start, $end);
             case 'Expense Summary':
                 return $this->buildLedgerEntriesSummary('Expense', $start, $end);
-            case 'Fund Allocation vs Utilisation':
+            case 'fund allocation report':
             case 'Club Fund Allocation Report': // legacy catalog alias
                 return $this->buildFundAllocationVsUtilisation($start, $end);
-            case 'Void Rate Report':
-            case 'Void Request Activity': // legacy catalog alias
+            case 'Void Request Activity':
+            case 'Void Rate Report': // legacy catalog alias
                 return $this->buildVoidRateReport($start, $end);
-            default: // 'National Consolidated Financial Rollup' (+ legacy 'Divisional Financial Summary' / 'Club Audit Compliance Report')
+            default: // 'Financial Summary' (+ legacy 'Divisional Financial Summary' rollups)
                 return $this->buildNationalFinancialRollup($start, $end);
         }
     }
@@ -1146,7 +1146,7 @@ class ReportModel extends Model {
         ];
     }
 
-    /** Fund Allocation vs Utilisation — allocations mirrored against utilisation via allocation_id. */
+    /** fund allocation report — allocations mirrored against utilisation via allocation_id. */
     private function buildFundAllocationVsUtilisation(string $start, string $end): array {
         $rows = $this->resultSet(
             "SELECT COALESCE(
@@ -1238,7 +1238,7 @@ class ReportModel extends Model {
         ];
     }
 
-    /** Void Rate Report — monthly void rate plus the VoidRequest trail. */
+    /** Void Request Activity — monthly void rate plus the VoidRequest trail. */
     private function buildVoidRateReport(string $start, string $end): array {
         $months = $this->resultSet(
             "SELECT DATE_FORMAT(le.date, '%Y-%m') AS ym,
@@ -1318,7 +1318,7 @@ class ReportModel extends Model {
         ];
     }
 
-    /** National Consolidated Financial Rollup — per-zone live rollup (statutory layout). */
+    /** Financial Summary — per-zone live rollup (statutory layout). */
     private function buildNationalFinancialRollup(string $start, string $end): array {
         $rows = $this->resultSet(
             "SELECT z.zonal_id, z.zonal_name,

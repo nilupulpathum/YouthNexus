@@ -3,21 +3,18 @@
 class DivisionalReportModel extends Model {
     private const ROLE_TYPES = [
         'DivisionalCoordinator' => [
-            'Club Registration Status',
             'Event Approval Summary',
             'Club Health Summary',
         ],
         'DivisionalSecretary' => [
-            'Club Activity Aggregate',
             'Event Status Summary',
             'Event Attendance Rate',
             'Club Health Summary',
         ],
         'DivisionalTreasurer' => [
-            'Divisional Financial Summary',
-            'Club Fund Allocation Report',
+            'Financial Summary',
+            'fund allocation report',
             'Void Request Activity',
-            'Club Audit Compliance Report',
             'Asset Transfer Report',
             'Club Health Summary',
         ],
@@ -153,15 +150,12 @@ class DivisionalReportModel extends Model {
         $start = (string) $report->date_range_start;
         $end = (string) $report->date_range_end;
         return match ($report->type_name) {
-            'Club Registration Status' => $this->registrations($divisionId, $start, $end),
             'Event Approval Summary' => $this->eventApprovals($divisionId, $start, $end),
-            'Club Activity Aggregate' => $this->clubActivityAggregate($divisionId, $start, $end),
             'Event Status Summary' => $this->events($divisionId, $start, $end),
             'Event Attendance Rate' => $this->attendance($divisionId, $start, $end),
-            'Divisional Financial Summary' => $this->financial($divisionId, $start, $end),
-            'Club Fund Allocation Report' => $this->allocations($divisionId, $start, $end),
+            'Financial Summary' => $this->financial($divisionId, $start, $end),
+            'fund allocation report' => $this->allocations($divisionId, $start, $end),
             'Void Request Activity' => $this->voids($divisionId, $start, $end),
-            'Club Audit Compliance Report' => $this->audits($divisionId, $start, $end),
             'Asset Transfer Report' => $this->assets($divisionId, $start, $end),
             'Club Health Summary' => $this->health($divisionId, $start, $end),
             default => ['kpis' => [], 'columns' => [], 'rows' => []],

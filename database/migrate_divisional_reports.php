@@ -46,15 +46,12 @@ try {
         echo "Added archive actor to Report.\n";
     }
     $seeds = [
-        ['User Interactions','Club Registration Status','Club registration applications and decisions within the selected period.',1],
-        ['Events','Club Activity Aggregate','Club-level event, attendance, membership, and health figures rolled up for the division.',1],
         ['Events','Event Approval Summary','Event approval requests and decisions within the selected period.',1],
         ['Events','Event Status Summary','Divisional and club events grouped by their current status.',2],
         ['Events','Event Attendance Rate','Recorded attendance and attendance rates for events in the division.',3],
-        ['Financial','Divisional Financial Summary','Income, expenses, net movement, and reconciliation by category.',1],
-        ['Financial','Club Fund Allocation Report','Funds allocated from the division to clubs during the selected period.',2],
+        ['Financial','Financial Summary','Income, expenses, net movement, and reconciliation by category.',1],
+        ['Financial','fund allocation report','Funds allocated from the division to clubs during the selected period.',2],
         ['Financial','Void Request Activity','Club and divisional void requests and their decisions.',3],
-        ['Financial','Club Audit Compliance Report','Club audit completion and unresolved financial findings.',4],
         ['Assets','Asset Transfer Report','Assets transferred from the division store to clubs.',1],
         ['Club Health','Club Health Summary','Latest calculated health score for each club in the selected period.',1],
     ];

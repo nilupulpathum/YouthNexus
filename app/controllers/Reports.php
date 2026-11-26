@@ -241,7 +241,7 @@ class Reports extends Controller {
             $report = (object)[
                 'report_id'       => 0,
                 'category'        => 'Financial',
-                'type_name'       => 'National Consolidated Financial Rollup',
+                'type_name'       => 'Financial Summary',
                 'scope_level'     => 'National',
                 'date_range_start'=> '2026-01-01',
                 'date_range_end'  => '2026-06-30',

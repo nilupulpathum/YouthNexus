@@ -8,7 +8,7 @@ $currentRoute = 'zonalreports';
 $pageStyles = [ROOT . '/assets/css/divisional-workflows.css', ROOT . '/assets/css/divisional-reports.css'];
 $pageScripts = [ROOT . '/assets/js/divisional-report-create.js?v=1'];
 
-$preferredTypeName = $aggregateMode ? 'Club Activity Aggregate' : '';
+$preferredTypeName = '';
 $selectedType = null;
 $selectedCategory = '';
 foreach ($catalog as $category => $types) {
@@ -20,7 +20,7 @@ foreach ($catalog as $category => $types) {
         if ($type->type_name === $preferredTypeName) break 2;
     }
 }
-$isAggregate = $selectedType && $selectedType->type_name === 'Club Activity Aggregate';
+$isAggregate = false;
 require __DIR__ . '/../layouts/dashboard-start.view.php';
 ?>
 <section class="dw-page dr-create" aria-label="Create zonal report">

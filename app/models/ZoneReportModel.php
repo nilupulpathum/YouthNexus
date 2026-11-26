@@ -9,21 +9,18 @@
 class ZoneReportModel extends Model {
     private const ROLE_TYPES = [
         'ZonalCoordinator' => [
-            'Club Registration Status',
             'Event Approval Summary',
             'Club Health Summary',
         ],
         'ZonalSecretary' => [
-            'Club Activity Aggregate',
             'Event Status Summary',
             'Event Attendance Rate',
             'Club Health Summary',
         ],
         'ZonalTreasurer' => [
-            'Divisional Financial Summary',
-            'Club Fund Allocation Report',
+            'Financial Summary',
+            'fund allocation report',
             'Void Request Activity',
-            'Club Audit Compliance Report',
             'Asset Transfer Report',
             'Club Health Summary',
         ],
@@ -159,15 +156,12 @@ class ZoneReportModel extends Model {
         $start = (string) $report->date_range_start;
         $end = (string) $report->date_range_end;
         return match ($report->type_name) {
-            'Club Registration Status' => $this->registrations($zonalId, $start, $end),
             'Event Approval Summary' => $this->eventApprovals($zonalId, $start, $end),
-            'Club Activity Aggregate' => $this->clubActivityAggregate($zonalId, $start, $end),
             'Event Status Summary' => $this->events($zonalId, $start, $end),
             'Event Attendance Rate' => $this->attendance($zonalId, $start, $end),
-            'Divisional Financial Summary' => $this->financial($zonalId, $start, $end),
-            'Club Fund Allocation Report' => $this->allocations($zonalId, $start, $end),
+            'Financial Summary' => $this->financial($zonalId, $start, $end),
+            'fund allocation report' => $this->allocations($zonalId, $start, $end),
             'Void Request Activity' => $this->voids($zonalId, $start, $end),
-            'Club Audit Compliance Report' => $this->audits($zonalId, $start, $end),
             'Asset Transfer Report' => $this->assets($zonalId, $start, $end),
             'Club Health Summary' => $this->health($zonalId, $start, $end),
             default => ['kpis' => [], 'columns' => [], 'rows' => []],
